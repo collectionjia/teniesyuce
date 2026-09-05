@@ -1,0 +1,46 @@
+# 本地 / 测试环境：独立 MySQL + Redis（不碰生产）
+# 用法:
+#   docker compose -f docker-compose.test.yml up -d
+#   然后用 server/.env.test 启动 API / 前端
+#
+# 若本机没有 Docker，可用 scripts/dev-test.ps1：
+#   - MySQL 使用远端 tennisv2_test
+#   - Redis 在 Lightsail 起测试容器 + SSH 隧道
+
+services:
+  mysql-test:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: testroot
+      MYSQL_DATABASE: tennisv2_test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: testpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ptestroot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis-test:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mysql_test_data:
+  redis_test_data:

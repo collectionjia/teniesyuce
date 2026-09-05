@@ -1,0 +1,57 @@
+# secrets / env
+.env
+.env.*
+!.env.example
+server/.env
+server/.env.*
+!server/.env.example
+
+# dependencies & build
+node_modules/
+dist/
+.vite/
+coverage/
+*.log
+npm-debug.log*
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# archives / extract dumps
+*.tgz
+*.tar.gz
+*.zip
+_board_extract/
+bbbbb/
+dota2elo-deploy.tgz
+dota2elo-extract/
+dota2elo-v1.0.0/
+dota2elo-v1.0.0.zip
+dota2elo/
+
+# temp / local scratch
+tmp_*
+scripts/tmp_*
+scripts/node_modules/
+
+# docs binaries (local only)
+*.docx
+*.pdf
+
+# docker local volumes / data
+board/持仓/
+**/持仓/
+
+basketball/data/cache.json
+dota2/data/cache.json
+client/src/api.js.remote
+

@@ -1,0 +1,29 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js",
+    "dev:test": "node scripts/run-test.js",
+    "setup:test-db": "node -e \"process.env.ENV_FILE='.env.test';require('./scripts/setup-test-db.js')\"",
+    "init-db": "node scripts/init-db.js",
+    "init-admin": "node scripts/seed.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@polymarket/clob-client-v2": "^1.1.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mysql2": "^3.24.2",
+    "redis": "^4.7.1"
+  }
+}
