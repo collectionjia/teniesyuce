@@ -20,7 +20,7 @@ const PRODUCT = {
   tag: 'tennis-range',
   gradient: 'linear-gradient(135deg,#0f766e,#14b8a6)',
   url: '#',
-  description: '双方 Top100 场次，按强者排名分档现差：Top10≥10 / Top20≥20 / Top50≥50 / Top100≥100。',
+  description: '任一方 Top100 场次，按强者排名分档现差：Top10≥10 / Top20≥20 / Top50≥50 / Top100≥100。',
   price_month: Number(process.env.TENNIS_RANGE_PRICE_MONTH || 2),
   price_week: Number(process.env.TENNIS_RANGE_PRICE_WEEK || 1),
   price_day: Number(process.env.TENNIS_RANGE_PRICE_DAY || 0.5),

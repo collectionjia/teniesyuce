@@ -63,7 +63,7 @@ function mergeEventsIntoBundle(base, extraEvents) {
   };
 }
 
-function filterTop100BothPlayers(bundle) {
+function filterTop100EitherSide(bundle) {
   const rankings = bundle?.rankingsByPlayer || {};
   const all = allEventsFromBundle(bundle);
   const top100 = all.filter((m) => {
@@ -72,7 +72,7 @@ function filterTop100BothPlayers(bundle) {
     const { currentRankOf } = require('./tennisRangeFilter');
     const homeR = currentRankOf(home, rankings);
     const awayR = currentRankOf(away, rankings);
-    return homeR != null && awayR != null && homeR <= 100 && awayR <= 100;
+    return (homeR != null && homeR <= 100) || (awayR != null && awayR <= 100);
   });
   const scheduled = groupEventsByTournament(top100);
   return {
@@ -88,7 +88,7 @@ function filterTop100BothPlayers(bundle) {
  * 构建区间网球 Redis 包：
  * 1. 优先监控 Top100 全量赛程
  * 2. 否则合并主包 + live 全量事件
- * 3. 筛双方 Top100，再应用区间现差规则
+ * 3. 筛任一方 Top100，再应用区间现差规则
  */
 async function refreshRangeBundleFromMonitor() {
   if (refreshPromise) return refreshPromise;
@@ -112,7 +112,7 @@ async function refreshRangeBundleFromMonitor() {
       } catch (e) {
         console.error('[tennis/range] live merge:', e.message);
       }
-      base = filterTop100BothPlayers(base);
+      base = filterTop100EitherSide(base);
     }
 
     if (base) {
@@ -143,11 +143,9 @@ async function refreshRangeBundleFromMonitor() {
     rangeBundle.fetched_at = rangeBundle.fetched_at || new Date().toISOString();
     await tennisRangeCache.setCachedBundle(rangeBundle, rangeBundle.fetched_at);
 
-    const { currentRankOf } = require('./tennisRangeFilter');
     const totalTop100 = allEventsFromBundle(base).filter((m) => {
-      const homeR = currentRankOf(m.homePlayer || { name: m.home }, base.rankingsByPlayer || {});
-      const awayR = currentRankOf(m.awayPlayer || { name: m.away }, base.rankingsByPlayer || {});
-      return homeR != null && awayR != null && homeR <= 100 && awayR <= 100;
+      const { passesTop100Pool } = require('./tennisRangeFilter');
+      return passesTop100Pool(m, base.rankingsByPlayer || {});
     }).length;
     console.log(
       `[tennis/range] cached date=${rangeBundle.date} range=${rangeBundle.events} top100_pool=${totalTop100}`,

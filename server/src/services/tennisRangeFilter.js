@@ -1,4 +1,4 @@
-/** 区间网球：双方 Top100 + 按强者排名分档的最小现差 */
+/** 区间网球：任一方 Top100 + 按强者排名分档的最小现差 */
 
 const TOP_RANK_MAX = 100;
 
@@ -41,13 +41,22 @@ function matchMetrics(m, rankingsByPlayer = {}) {
   };
 }
 
-/** 双方均在 Top100 且现差满足区间规则 */
-function passesRangeTennis(m, rankingsByPlayer = {}, { requireBothTop100 = true } = {}) {
+function passesTop100Pool(m, rankingsByPlayer = {}) {
+  const home = m?.homePlayer || { name: m?.home, ranking: null };
+  const away = m?.awayPlayer || { name: m?.away, ranking: null };
+  const homeR = currentRankOf(home, rankingsByPlayer);
+  const awayR = currentRankOf(away, rankingsByPlayer);
+  return (
+    (homeR != null && homeR <= TOP_RANK_MAX)
+    || (awayR != null && awayR <= TOP_RANK_MAX)
+  );
+}
+
+/** 任一方 Top100；双方有排名时再按区间现差规则过滤 */
+function passesRangeTennis(m, rankingsByPlayer = {}) {
+  if (!passesTop100Pool(m, rankingsByPlayer)) return false;
   const metrics = matchMetrics(m, rankingsByPlayer);
-  if (!metrics.ready) return false;
-  if (requireBothTop100 && (metrics.homeR > TOP_RANK_MAX || metrics.awayR > TOP_RANK_MAX)) {
-    return false;
-  }
+  if (!metrics.ready) return true;
   return metrics.gap >= metrics.minGap;
 }
 
@@ -168,6 +177,7 @@ module.exports = {
   currentRankOf,
   requiredMinGap,
   matchMetrics,
+  passesTop100Pool,
   passesRangeTennis,
   tierLabel,
   allEventsFromBundle,

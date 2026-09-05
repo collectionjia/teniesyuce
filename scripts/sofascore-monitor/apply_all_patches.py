@@ -11,6 +11,8 @@ PATCHES = [
     "patch_monitor_server.py",
     "patch_schedule.py",
     "patch_sofascore_client.py",
+    "patch_sofascore_proxy.py",
+    "patch_top100_bundle.py",
     "patch_monitor_errors.py",
     "patch_collect_log_error.py",
 ]

@@ -1,4 +1,4 @@
-/** 区间网球筛选：双方 Top100 + 分档现差 */
+/** 区间网球筛选：任一方 Top100 + 分档现差 */
 
 export const TOP_RANK_MAX = 100
 
@@ -26,7 +26,7 @@ export function matchRangeMetrics(m, rankingsByPlayer = {}) {
   const homeR = currentRankOf(home, rankingsByPlayer)
   const awayR = currentRankOf(away, rankingsByPlayer)
   if (homeR == null || awayR == null) {
-    return { gap: -1, strongRank: null, ready: false, minGap: Infinity }
+    return { gap: -1, strongRank: null, homeR, awayR, ready: false, minGap: Infinity }
   }
   const gap = Math.abs(homeR - awayR)
   const strongRank = Math.min(homeR, awayR)
@@ -40,10 +40,16 @@ export function matchRangeMetrics(m, rankingsByPlayer = {}) {
   }
 }
 
+export function passesTop100Pool(m, rankingsByPlayer = {}) {
+  const homeR = currentRankOf(m?.homePlayer || { name: m?.home }, rankingsByPlayer)
+  const awayR = currentRankOf(m?.awayPlayer || { name: m?.away }, rankingsByPlayer)
+  return (homeR != null && homeR <= TOP_RANK_MAX) || (awayR != null && awayR <= TOP_RANK_MAX)
+}
+
 export function passesRangeTennis(m, rankingsByPlayer = {}) {
+  if (!passesTop100Pool(m, rankingsByPlayer)) return false
   const metrics = matchRangeMetrics(m, rankingsByPlayer)
-  if (!metrics.ready) return false
-  if (metrics.homeR > TOP_RANK_MAX || metrics.awayR > TOP_RANK_MAX) return false
+  if (!metrics.ready) return true
   return metrics.gap >= metrics.minGap
 }
 
@@ -57,4 +63,4 @@ export function tierLabel(strongRank) {
   return '—'
 }
 
-export const RANGE_RULES_TEXT = '双方 Top100 · Top10差≥10 / Top20差≥20 / Top50差≥50 / Top100差≥100'
+export const RANGE_RULES_TEXT = '任一方 Top100 · Top10差≥10 / Top20差≥20 / Top50差≥50 / Top100差≥100'
