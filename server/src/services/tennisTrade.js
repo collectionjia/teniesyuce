@@ -1,4 +1,5 @@
 const tennisCache = require('./tennisCache');
+const tennisRangeCache = require('./tennisRangeCache');
 const btcWallet = require('./btcWallet');
 const polymarketTrade = require('./polymarketTrade');
 const tradeRecords = require('./tradeRecords');
@@ -40,7 +41,7 @@ function pickSide(match, rankingsByPlayer) {
   return homeR < awayR ? 'home' : 'away';
 }
 
-async function placeBatchOrders(userId, { orders = [], amountUsd } = {}) {
+async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'tennis' } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
   }
@@ -52,7 +53,10 @@ async function placeBatchOrders(userId, { orders = [], amountUsd } = {}) {
   if (!(amount >= 1)) throw new Error('每场投注金额至少 $1');
 
   const secrets = await btcWallet.loadWalletSecrets(userId);
-  const bundle = await tennisCache.getBundle();
+  const tradeProduct = String(product || 'tennis').toLowerCase();
+  const bundle = tradeProduct === 'tennis-range'
+    ? await tennisRangeCache.getBundle()
+    : await tennisCache.getBundle();
   if (!bundle) throw new Error('网球数据尚未就绪');
 
   const results = [];
@@ -110,7 +114,7 @@ async function placeBatchOrders(userId, { orders = [], amountUsd } = {}) {
       const label = `${homeName || '?'} vs ${awayName || '?'}`;
       try {
         await tradeRecords.addTradeRecord(userId, {
-          product: 'tennis',
+          product: tradeProduct,
           action: 'buy',
           market: String(eventId),
           side,
@@ -141,7 +145,7 @@ async function placeBatchOrders(userId, { orders = [], amountUsd } = {}) {
       console.error('[tennis/trade]', eventId, e.message || e);
       try {
         await tradeRecords.addTradeRecord(userId, {
-          product: 'tennis',
+          product: tradeProduct,
           action: 'buy',
           market: String(eventId),
           side,

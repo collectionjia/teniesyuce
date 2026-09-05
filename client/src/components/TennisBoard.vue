@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
+import { passesRangeTennis, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT } from '../utils/tennisRangeFilter'
 
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
@@ -8,9 +9,12 @@ const props = defineProps({
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
+  /** classic=原 Top20 网球；range=区间网球 */
+  boardMode: { type: String, default: 'classic' },
 })
 
-const API = '/api/tennis'
+const isRangeMode = computed(() => props.boardMode === 'range')
+const apiPath = computed(() => (isRangeMode.value ? '/api/tennis-range' : '/api/tennis'))
 const PAGE_SIZE = 5
 const data = ref(null)
 const loading = ref(true)
@@ -27,15 +31,19 @@ const batchAmountUsd = ref('1')
 const batchSubmitting = ref(false)
 const batchNotice = ref('')
 const batchError = ref('')
-const AUTO_BET_KEY = 'yuce.tennis.autoBet.v1'
-const AUTO_PLACED_KEY = 'yuce.tennis.autoPlaced.v1'
+const AUTO_BET_KEY = computed(() => (
+  isRangeMode.value ? 'yuce.tennisRange.autoBet.v1' : 'yuce.tennis.autoBet.v1'
+))
+const AUTO_PLACED_KEY = computed(() => (
+  isRangeMode.value ? 'yuce.tennisRange.autoPlaced.v1' : 'yuce.tennis.autoPlaced.v1'
+))
 const autoBetEnabled = ref(false)
 const autoPlacedIds = ref(new Set())
 
 function loadTennisAutoState() {
   try {
-    autoBetEnabled.value = localStorage.getItem(AUTO_BET_KEY) === '1'
-    const raw = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY) || '[]')
+    autoBetEnabled.value = localStorage.getItem(AUTO_BET_KEY.value) === '1'
+    const raw = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')
     autoPlacedIds.value = new Set(Array.isArray(raw) ? raw.map(String) : [])
   } catch {
     autoBetEnabled.value = false
@@ -44,8 +52,8 @@ function loadTennisAutoState() {
 }
 
 function saveTennisAutoState() {
-  localStorage.setItem(AUTO_BET_KEY, autoBetEnabled.value ? '1' : '0')
-  localStorage.setItem(AUTO_PLACED_KEY, JSON.stringify([...autoPlacedIds.value].slice(-200)))
+  localStorage.setItem(AUTO_BET_KEY.value, autoBetEnabled.value ? '1' : '0')
+  localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify([...autoPlacedIds.value].slice(-200)))
 }
 
 async function toggleAutoBet(ev) {
@@ -214,6 +222,9 @@ function matchPassesTour(m) {
 function matchPassesRank(m) {
   if (!matchPassesTour(m)) return false
   if (!props.isMember) return true
+  if (isRangeMode.value) {
+    return passesRangeTennis(m, data.value?.rankingsByPlayer || {})
+  }
   const metrics = matchMetrics(m)
   if (gapMin.value !== 'all') {
     if (!metrics.ready || metrics.gap < Number(gapMin.value)) return false
@@ -373,7 +384,9 @@ async function submitBatchTrade({ auto = false } = {}) {
   }
   batchSubmitting.value = true
   try {
-    const resp = await api.placeTennisBatchTrade({ orders, amountUsd: amount })
+    const resp = isRangeMode.value
+      ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
+      : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
     const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
     if (resp.success > 0) {
       const okLines = lines.filter((_, i) => resp.results[i]?.ok)
@@ -478,9 +491,12 @@ const filterSummary = computed(() => {
   if (tour.value === 'ATP') parts.push('男子')
   else if (tour.value === 'WTA') parts.push('女子')
   if (props.isMember) {
-    if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
-    if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
-    if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
+    if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
+    else {
+      if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
+      if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
+      if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
+    }
   }
   return parts.join(' · ')
 })
@@ -742,7 +758,7 @@ async function loadOnce({ silent = false } = {}) {
   if (!silent) loading.value = true
   try {
     const token = localStorage.getItem('token') || ''
-    const res = await fetch(`${API}/today`, {
+    const res = await fetch(`${apiPath.value}/today`, {
       cache: 'no-store',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
@@ -778,6 +794,19 @@ onUnmounted(() => {
 })
 
 function gapInfo(m) {
+  if (isRangeMode.value) {
+    const metrics = matchRangeMetrics(m, data.value?.rankingsByPlayer || {})
+    if (!metrics.ready) return { ready: false }
+    return {
+      ready: true,
+      gap: metrics.gap,
+      homeR: metrics.homeR,
+      awayR: metrics.awayR,
+      strongNow: metrics.strongRank,
+      minGap: metrics.minGap,
+      tier: tierLabel(metrics.strongRank),
+    }
+  }
   const home = m.homePlayer || { name: m.home }
   const away = m.awayPlayer || { name: m.away }
   const homeR = currentRankOf(home)
@@ -851,7 +880,7 @@ function gapInfo(m) {
           <button type="button" class="chip-btn" :class="{ active: tour === 'WTA' }" @click="tour = 'WTA'">女</button>
         </div>
 
-        <template v-if="isMember">
+        <template v-if="isMember && !isRangeMode">
           <div class="filter-row">
             <span class="label">现差</span>
             <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
@@ -876,6 +905,10 @@ function gapInfo(m) {
             <button type="button" class="chip-btn" :class="{ active: strongRankMax === '20' }" @click="strongRankMax = '20'">≤20</button>
           </div>
         </template>
+        <div v-else-if="isMember && isRangeMode" class="filter-row range-rules">
+          <span class="label">区间</span>
+          <span class="range-rules-text">{{ RANGE_RULES_TEXT }}</span>
+        </div>
       </div>
     </div>
 
@@ -1292,6 +1325,13 @@ function gapInfo(m) {
 .filter-row:last-child { margin-bottom: 0; }
 .filter-row .label {
   color: #64748b; font-size: 0.72rem; font-weight: 600; min-width: 2rem;
+}
+.range-rules-text {
+  flex: 1;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #475569;
+  font-weight: 600;
 }
 .chip-btn, .filters button { cursor: pointer; padding: 6px 12px; font-size: 0.82rem; }
 .chip-btn.active, .filters button.active {

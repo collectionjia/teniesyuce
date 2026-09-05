@@ -112,6 +112,12 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     console.log(
       `[tennis/monitor-redis] cached date=${bundle.date} events=${bundle.events} live=${bundle.live?.eventCount || 0}`,
     );
+    try {
+      const tennisRangeFromMonitor = require('./tennisRangeFromMonitor');
+      await tennisRangeFromMonitor.refreshRangeBundleFromMonitor();
+    } catch (e) {
+      console.error('[tennis/monitor-redis] range refresh:', e.message);
+    }
     return bundle;
   })()
     .catch((e) => {

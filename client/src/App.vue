@@ -345,7 +345,10 @@ function setTradeProductFilter(product) {
 }
 
 function tradeProductLabel(p) {
-  return p === 'btc' ? 'BTC' : p === 'tennis' ? '网球' : p
+  if (p === 'btc') return 'BTC'
+  if (p === 'tennis-range') return '区间网球'
+  if (p === 'tennis') return '网球'
+  return p
 }
 
 function tradeActionLabel(a) {
@@ -2032,7 +2035,14 @@ function isDirectProduct(product) {
 }
 
 /** Sofascore Courtline 网球：详情页用 Vue 直出，不用 iframe */
+function isTennisRangeProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-range') return true
+  return /区间网球/.test(String(product?.name || ''))
+}
+
 function isTennisProduct(product) {
+  if (isTennisRangeProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis') return true
   return /网球|tennis/i.test(String(product?.name || ''))
@@ -2071,6 +2081,7 @@ function isDotaProduct(product) {
 function isNativeBoardProduct(product) {
   return (
     isTennisProduct(product) ||
+    isTennisRangeProduct(product) ||
     isBtcBoardProduct(product) ||
     isDotaProduct(product) ||
     isDota2Product(product) ||
@@ -2365,7 +2376,7 @@ function productEmbedUrl(product) {
           <main
             class="flex-1 overflow-y-auto no-scrollbar"
             :class="[
-              showProductDetail && (isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct))
+              showProductDetail && (isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))
                 ? 'px-2 py-2 space-y-2'
                 : showShopList
                   ? 'px-3 py-2'
@@ -2405,7 +2416,7 @@ function productEmbedUrl(product) {
             </section>
 
             <section v-else-if="showProductDetail" class="space-y-2 fade-up">
-              <template v-if="isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct)">
+              <template v-if="isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct)">
                 <button
                   type="button"
                   @click="go(shopRoute())"
@@ -2447,7 +2458,7 @@ function productEmbedUrl(product) {
               <div v-else class="flex items-center gap-2 min-h-0">
                 <button @click="go(shopRoute())" class="text-xs text-primary-700 flex items-center gap-0.5 shrink-0 py-0.5"><span v-html="icon('back')"></span>返回</button>
               </div>
-              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
+              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
                 <div class="flex items-center gap-3">
                   <ProductIcon :product="openedProduct" size="md" />
                   <div>
@@ -2477,13 +2488,21 @@ function productEmbedUrl(product) {
               </div>
               <div
                 :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct))
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
                 <!-- 网球：登录用户统一看全量数据 -->
-                <div v-if="isTennisProduct(openedProduct)" class="p-0">
+                <div v-if="isTennisRangeProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="range"
+                    :show-filters="canShowTennisFilters"
+                    :is-member="isActive(openedProduct.id)"
+                    :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     :show-filters="canShowTennisFilters"
                     :is-member="isActive(openedProduct.id)"
@@ -2571,6 +2590,7 @@ function productEmbedUrl(product) {
                       { id: 'all', label: '全部' },
                       { id: 'btc', label: 'BTC' },
                       { id: 'tennis', label: '网球' },
+                      { id: 'tennis-range', label: '区间网球' },
                     ]"
                     :key="opt.id"
                     type="button"

@@ -403,6 +403,16 @@ export async function placeTennisBatchTrade(payload) {
   return data
 }
 
+export async function placeTennisRangeBatchTrade(payload) {
+  const { data } = await api.post('/tennis-range/trade/batch', payload)
+  return data
+}
+
+export async function refreshTennisRangeCache() {
+  const { data } = await api.post('/tennis-range/cache/refresh')
+  return data
+}
+
 export async function fetchAdminBtcCrawl() {
   const { data } = await api.get('/admin/btc-board/crawl')
   return data

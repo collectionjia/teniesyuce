@@ -25,6 +25,7 @@ const dotaRoutes = require('./routes/dota');
 const nbaRoutes = require('./routes/nba');
 const dota2Routes = require('./routes/dota2');
 const tradesRoutes = require('./routes/trades');
+const tennisRangeRoutes = require('./routes/tennisRange');
 
 const app = express();
 app.use(cors());
@@ -49,6 +50,7 @@ app.use('/api/dota', dotaRoutes);
 app.use('/api/nba', nbaRoutes);
 app.use('/api/dota2', dota2Routes);
 app.use('/api/trades', tradesRoutes);
+app.use('/api/tennis-range', tennisRangeRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
