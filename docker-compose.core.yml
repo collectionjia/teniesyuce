@@ -1,0 +1,66 @@
+# 核心服务：redis + board + server + web（不含 basketball / dota2）
+# 用法: docker compose -f docker-compose.core.yml up -d --build
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 3001
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://board:8890/}
+      SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
+    depends_on:
+      redis:
+        condition: service_healthy
+      board:
+        condition: service_started
+    expose:
+      - "3001"
+
+  board:
+    build:
+      context: ./board
+    restart: unless-stopped
+    environment:
+      ALCHEMY_KEY: ${ALCHEMY_KEY:-}
+      FILTER_MARKET_MAKERS: ${FILTER_MARKET_MAKERS:-true}
+      STREAK_MIN_ROUNDS: ${STREAK_MIN_ROUNDS:-3}
+      CRAWL_ENABLED: ${CRAWL_ENABLED:-true}
+      PYTHONUTF8: "1"
+    volumes:
+      - board_data:/app/持仓
+    expose:
+      - "8890"
+    ports:
+      - "${BOARD_PORT:-8890}:8890"
+
+  web:
+    build:
+      context: ./client
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-9001}:80"
+    depends_on:
+      - server
+
+volumes:
+  board_data:
+  redis_data:
