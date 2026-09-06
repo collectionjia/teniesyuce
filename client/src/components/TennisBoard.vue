@@ -15,6 +15,9 @@ const props = defineProps({
 const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
 const isNewMode = computed(() => props.boardMode === 'new')
+const isClassicMode = computed(() => !isRangeMode.value && !isLiveMode.value && !isNewMode.value)
+/** 网球 / 网球自投：列表不展示已结束场次 */
+const hideEndedEvents = computed(() => isClassicMode.value)
 const apiPath = computed(() => {
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
@@ -29,7 +32,7 @@ const filter = ref('Not started') // all | Not started | liveish | ended
 const tour = ref('all') // all | ATP | WTA
 const gapMin = ref('50') // all | 50 | 70 | 90
 const diffMax = ref('0') // all | 0 | -30 | -50 | -70
-const strongRankMax = ref('20') // all | 10 | 20
+const strongRankMax = ref('20') // all | 10 | 20 | 50 | 100
 const pmFilter = ref('all') // all | yes | no — 是否只看有 Polymarket 外链的场次
 const topPoolMax = ref('50') // 20 | 50（新网球列表 · Top50 池内筛选）
 const filtersOpen = ref(false)
@@ -268,6 +271,7 @@ function matchPassesPm(m) {
 }
 
 function matchPassesFilter(m, statusFilter) {
+  if (hideEndedEvents.value && isMatchEnded(m)) return false
   const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
   if (!matchPassesTour(m)) return false
   if (!matchPassesPm(m)) return false
@@ -493,6 +497,7 @@ function goPage(page) {
 }
 
 function setStatusFilter(mode) {
+  if (hideEndedEvents.value && mode === 'ended') return
   if (filter.value === mode) return
   filter.value = mode
   currentPage.value = 1
@@ -818,6 +823,7 @@ async function loadOnce({ silent = false } = {}) {
 
 onMounted(() => {
   loadTennisAutoState()
+  if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
   loadOnce()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
   const refreshMs = isLiveMode.value ? 120000 : 60000
@@ -885,7 +891,13 @@ function gapInfo(m) {
         <button type="button" class="stat stat-btn" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">
           <b>{{ stats.live }}</b><span>进行</span>
         </button>
-        <button type="button" class="stat stat-btn" :class="{ active: filter === 'ended' }" @click="setStatusFilter('ended')">
+        <button
+          v-if="!hideEndedEvents"
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: filter === 'ended' }"
+          @click="setStatusFilter('ended')"
+        >
           <b>{{ stats.ended }}</b><span>结束</span>
         </button>
       </div>
@@ -912,7 +924,7 @@ function gapInfo(m) {
           <button type="button" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">全部</button>
           <button type="button" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">未开始</button>
           <button type="button" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">进行中</button>
-          <button type="button" :class="{ active: filter === 'ended' }" @click="setStatusFilter('ended')">已结束</button>
+          <button v-if="!hideEndedEvents" type="button" :class="{ active: filter === 'ended' }" @click="setStatusFilter('ended')">已结束</button>
         </div>
 
         <div class="filter-row">
@@ -952,6 +964,8 @@ function gapInfo(m) {
             <button type="button" class="chip-btn" :class="{ active: strongRankMax === 'all' }" @click="strongRankMax = 'all'">不限</button>
             <button type="button" class="chip-btn" :class="{ active: strongRankMax === '10' }" @click="strongRankMax = '10'">≤10</button>
             <button type="button" class="chip-btn" :class="{ active: strongRankMax === '20' }" @click="strongRankMax = '20'">≤20</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '50' }" @click="strongRankMax = '50'">≤50</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '100' }" @click="strongRankMax = '100'">≤100</button>
           </div>
         </template>
         <div v-else-if="isMember && isRangeMode" class="filter-row range-rules">
