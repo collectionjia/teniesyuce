@@ -38,9 +38,9 @@ sudo rsync -a \
 
 cd "$RUN_DIR"
 
-log "构建 web + server"
+log "构建并启动 web + server + redis"
 sudo docker compose -f docker-compose.core.yml build web server
-sudo docker compose -f docker-compose.core.yml up -d redis web server
+sudo docker compose -f docker-compose.core.yml up -d
 
 log "注册产品"
 sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js
