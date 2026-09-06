@@ -225,6 +225,9 @@ def _attach_matches(board: dict[str, Any], events: list[dict]) -> None:
                     "customId": ev.get("customId"),
                     "url": ev.get("url"),
                     "tournament": ev.get("tournament"),
+                    "tournamentShort": ev.get("tournamentShort"),
+                    "level": ev.get("level"),
+                    "tour": ev.get("tour"),
                     "round": ev.get("roundLabel"),
                 }
             )

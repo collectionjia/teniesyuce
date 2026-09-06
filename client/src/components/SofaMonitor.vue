@@ -15,6 +15,8 @@ const liveData = ref(null)
 const logs = ref(null)
 const tab = ref('atp') // atp | wta | live | logs
 const topPoolMax = ref('100') // 20 | 50 | 100
+const tierFilter = ref({ gs: true, t1000: true, t500: true })
+const onlyWithMatches = ref(false)
 const expanded = ref({})
 const schedule = ref(null)
 const scheduleSaving = ref(false)
@@ -124,12 +126,60 @@ const summary = computed(() => ({
     ?? lastRun.value?.total_events
     ?? top100Collect.value?.summary?.total_matches,
 }))
-const players = computed(() => {
-  const list = tab.value === 'wta' ? top100Board.value?.wta : top100Board.value?.atp
+
+const TIER_OPTIONS = [
+  { key: 'gs', label: '大满贯' },
+  { key: 't1000', label: '1000' },
+  { key: 't500', label: '500' },
+]
+
+function matchTierKey(m) {
+  const level = String(m?.level || '').toLowerCase()
+  const tour = String(m?.tournament || m?.tournamentShort || '').toLowerCase()
+  const combined = `${level} ${tour}`
+  if (
+    /\bgs\b/.test(level)
+    || combined.includes('grand slam')
+    || ['australian open', 'roland garros', 'french open', 'wimbledon', 'us open'].some((x) => combined.includes(x))
+  ) return 'gs'
+  if (/\b1000\b/.test(level) || combined.includes('masters')) return 't1000'
+  if (/\b500\b/.test(level) || /\b500\b/.test(tour)) return 't500'
+  return 'other'
+}
+
+function tierFilterActive() {
+  return TIER_OPTIONS.some((o) => tierFilter.value[o.key])
+}
+
+function matchPassesTier(m) {
+  if (!tierFilterActive()) return true
+  const key = matchTierKey(m)
+  if (key === 'other') return false
+  return !!tierFilter.value[key]
+}
+
+function playerMatchesFiltered(p) {
+  return (Array.isArray(p?.matches) ? p.matches : []).filter(matchPassesTier)
+}
+
+function rankPoolPlayers(list) {
   const max = Number(topPoolMax.value) || 100
   return (Array.isArray(list) ? list : []).filter((p) => {
     const rank = Number(p.rank)
     return Number.isFinite(rank) && rank > 0 && rank <= max
+  })
+}
+
+const players = computed(() => {
+  const list = tab.value === 'wta' ? top100Board.value?.wta : top100Board.value?.atp
+  return rankPoolPlayers(list).filter((p) => {
+    const matches = playerMatchesFiltered(p)
+    if (onlyWithMatches.value && !matches.length) return false
+    if (tierFilterActive() && !matches.length) return false
+    return true
+  }).map((p) => {
+    const matches = playerMatchesFiltered(p)
+    return { ...p, matches, matchCount: matches.length }
   })
 })
 const poolSummary = computed(() => {
@@ -491,6 +541,15 @@ function setLogPage(page) {
   logPage.value = Math.min(Math.max(1, page), logPageCount.value)
 }
 
+function toggleTier(key) {
+  tierFilter.value = { ...tierFilter.value, [key]: !tierFilter.value[key] }
+}
+
+function tierFilterSummary() {
+  const on = TIER_OPTIONS.filter((o) => tierFilter.value[o.key]).map((o) => o.label)
+  return on.length ? on.join(' · ') : '未选'
+}
+
 function playerPageLabel() {
   if (!players.value.length) return '0 条'
   const start = (playerPage.value - 1) * PLAYER_PAGE_SIZE + 1
@@ -512,7 +571,7 @@ function logPageLabel() {
   return `${start}-${end} / ${logLines.value.length}`
 }
 
-watch([tab, topPoolMax], () => {
+watch([tab, topPoolMax, tierFilter, onlyWithMatches], () => {
   playerPage.value = 1
   expanded.value = {}
 })
@@ -719,12 +778,36 @@ onUnmounted(() => {
         <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
       </div>
 
-      <div v-if="tab === 'atp' || tab === 'wta'" class="pool-bar">
-        <span class="pool-label">排名池</span>
-        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
-        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
-        <span class="pool-meta">{{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场</span>
+      <div v-if="tab === 'atp' || tab === 'wta'" class="filter-bars">
+        <div class="pool-bar">
+          <span class="pool-label">排名池</span>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+        </div>
+        <div class="pool-bar">
+          <span class="pool-label">赛事</span>
+          <button
+            v-for="opt in TIER_OPTIONS"
+            :key="opt.key"
+            type="button"
+            class="chip-btn"
+            :class="{ active: tierFilter[opt.key] }"
+            @click="toggleTier(opt.key)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+        <div class="pool-bar pool-bar-tail">
+          <label class="match-only">
+            <input v-model="onlyWithMatches" type="checkbox">
+            <span>仅有赛事</span>
+          </label>
+          <span class="pool-meta">
+            {{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场
+            <template v-if="tierFilterActive()"> · {{ tierFilterSummary() }}</template>
+          </span>
+        </div>
       </div>
 
       <div v-if="tab === 'live'" class="panel">
@@ -791,7 +874,10 @@ onUnmounted(() => {
         <div v-else-if="top100Board?.loading && !players.length" class="empty">
           正在拉取 Sofascore Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
         </div>
-        <div v-else-if="!players.length" class="empty">暂无 Top{{ topPoolMax }} 球员数据</div>
+        <div v-else-if="!players.length" class="empty">
+          暂无符合条件的球员
+          <template v-if="onlyWithMatches || tierFilterActive()">（可取消「仅有赛事」或调整 500/1000/大满贯 筛选）</template>
+        </div>
 
         <template v-else>
           <div class="pager">
@@ -831,6 +917,7 @@ onUnmounted(() => {
                 </div>
                 <div class="m-bot">
                   <span>{{ m.tournament || '—' }}</span>
+                  <span v-if="m.level" class="lv">{{ m.level }}</span>
                   <span>{{ m.round || '' }}</span>
                 </div>
               </a>
@@ -1005,8 +1092,15 @@ onUnmounted(() => {
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
   padding: 0 2px;
 }
-.pool-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-right: 2px; }
-.pool-meta { margin-left: auto; font-size: 0.72rem; color: #64748b; font-weight: 600; }
+.filter-bars { display: flex; flex-direction: column; gap: 6px; }
+.pool-bar-tail { justify-content: space-between; }
+.pool-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-right: 2px; white-space: nowrap; }
+.pool-meta { margin-left: auto; font-size: 0.72rem; color: #64748b; font-weight: 600; text-align: right; }
+.match-only {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.76rem; font-weight: 600; color: #475569; cursor: pointer; user-select: none;
+}
+.match-only input { accent-color: #4f46e5; }
 .chip-btn {
   border: 1px solid #cbd5e1; background: #fff; color: #64748b;
   border-radius: 999px; padding: 5px 11px; font-size: 0.76rem; font-weight: 600; cursor: pointer;
@@ -1067,6 +1161,10 @@ onUnmounted(() => {
   flex-wrap: wrap;
 }
 .m-bot span:first-child { flex: 1 1 auto; min-width: 0; word-break: break-word; }
+.lv {
+  flex: 0 0 auto; font-size: 0.68rem; font-weight: 700; color: #6d28d9;
+  background: #f5f3ff; border-radius: 999px; padding: 1px 6px;
+}
 .m-mid { margin: 4px 0; font-size: 0.84rem; font-weight: 600; color: #0f172a; word-break: break-word; }
 .st { font-weight: 700; color: #b45309; }
 .rk { margin-left: 6px; color: #94a3b8; font-weight: 500; font-size: 0.75rem; }
