@@ -35,11 +35,12 @@ async function main() {
     /* ignore if already wide enough */
   }
 
-  const [[byName]] = await pool.query(
+  const [rows] = await pool.query(
     `SELECT id, name, url FROM products
      WHERE LOWER(COALESCE(tag,'')) = 'tennis-new'
         OR name = ?
         OR name LIKE '%新网球列表%'
+        OR name LIKE '%新网球%'
      ORDER BY
        CASE WHEN LOWER(COALESCE(tag,'')) = 'tennis-new' THEN 0
             WHEN name = ? THEN 1
@@ -48,8 +49,9 @@ async function main() {
      LIMIT 1`,
     [PRODUCT.name, PRODUCT.name],
   );
+  const existing = rows[0];
 
-  if (byName) {
+  if (existing) {
     await pool.query(
       `UPDATE products SET name=?, tag=?, gradient=?, url=?, description=?,
        price_month=?, price_week=?, price_day=?, default_plan=?, online=? WHERE id=?`,
@@ -64,11 +66,11 @@ async function main() {
         PRODUCT.price_day,
         PRODUCT.default_plan,
         PRODUCT.online,
-        byName.id,
+        existing.id,
       ],
     );
-    console.log(`已更新产品 #${byName.id}「${PRODUCT.name}」`);
-  } else {
+    console.log(`已更新产品 #${existing.id}「${PRODUCT.name}」`);
+  } else if (process.env.FORCE_PRODUCT_UPSERT === '1' || process.argv.includes('--create')) {
     const [result] = await pool.query(
       `INSERT INTO products
        (name, tag, gradient, url, description, price_month, price_week, price_day, default_plan, online)
@@ -87,6 +89,8 @@ async function main() {
       ],
     );
     console.log(`已创建产品 #${result.insertId}「${PRODUCT.name}」`);
+  } else {
+    console.log('未找到已有「新网球列表」产品，跳过创建（避免发版重复）。首次请: FORCE_PRODUCT_UPSERT=1 node scripts/upsert-tennis-new-product.js');
   }
   process.exit(0);
 }
