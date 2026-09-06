@@ -40,7 +40,7 @@ cd "$RUN_DIR"
 
 log "构建 web + server"
 sudo docker compose -f docker-compose.core.yml build web server
-sudo docker compose -f docker-compose.core.yml up -d web server
+sudo docker compose -f docker-compose.core.yml up -d redis web server
 
 log "注册产品"
 sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js

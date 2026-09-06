@@ -1,5 +1,5 @@
 # 核心服务：board + server + web（不含 basketball / dota2）
-# MySQL 用 server/.env 远程库；Redis 用 compose 内 redis 服务（对外 9003）
+# MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
 # 用法: docker compose -f docker-compose.core.yml up -d --build
 
 services:
@@ -10,7 +10,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "${REDIS_PORT:-9003}:6379"
+      - "127.0.0.1:9014:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
