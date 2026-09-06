@@ -43,9 +43,7 @@ log "构建并启动 web + server + redis"
 sudo docker compose -f docker-compose.core.yml build web server
 sudo docker compose -f docker-compose.core.yml up -d
 
-log "注册产品"
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-new-product.js
+# 产品注册请手动执行 upsert-tennis-*-product.js（发版不自动跑，避免重复创建）
 
 log "重启 Sofascore 监控"
 sudo systemctl restart sofascore-monitor

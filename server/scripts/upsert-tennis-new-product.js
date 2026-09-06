@@ -39,8 +39,14 @@ async function main() {
     `SELECT id, name, url FROM products
      WHERE LOWER(COALESCE(tag,'')) = 'tennis-new'
         OR name = ?
-     ORDER BY id LIMIT 1`,
-    [PRODUCT.name],
+        OR name LIKE '%新网球列表%'
+     ORDER BY
+       CASE WHEN LOWER(COALESCE(tag,'')) = 'tennis-new' THEN 0
+            WHEN name = ? THEN 1
+            ELSE 2 END,
+       id ASC
+     LIMIT 1`,
+    [PRODUCT.name, PRODUCT.name],
   );
 
   if (byName) {

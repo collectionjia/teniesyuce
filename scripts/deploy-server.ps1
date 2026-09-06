@@ -95,9 +95,8 @@ echo "=== build web server ==="
 sudo docker compose -f docker-compose.core.yml build web server
 sudo docker compose -f docker-compose.core.yml up -d web server
 
-echo "=== upsert products ==="
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-new-product.js
+# 产品注册脚本仅首次或手动维护时运行，发版默认不执行（避免重复 INSERT）
+# 需要时: docker compose exec server node scripts/upsert-tennis-live-product.js
 
 echo "=== restart monitor ==="
 sudo systemctl restart sofascore-monitor

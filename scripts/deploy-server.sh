@@ -43,9 +43,6 @@ sudo docker compose -f docker-compose.core.yml build web server
 echo "=== up web server ==="
 sudo docker compose -f docker-compose.core.yml up -d web server
 
-echo "=== upsert tennis-live product ==="
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js
-
 echo "=== restart monitor ==="
 sudo systemctl restart sofascore-monitor
 sleep 4

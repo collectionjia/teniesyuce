@@ -12,8 +12,7 @@ print("patched redis port -> 127.0.0.1:9014")
 PY
 sudo docker rm -f bbbbb-redis-1 bbbbb-server-1 bbbbb-web-1 2>/dev/null || true
 sudo docker compose -f docker-compose.core.yml up -d
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-live-product.js
-sudo docker compose -f docker-compose.core.yml exec -T server node scripts/upsert-tennis-new-product.js
+# 产品注册请手动执行 upsert-tennis-*-product.js
 sudo systemctl restart sofascore-monitor
 sleep 4
 curl -sf -X POST http://127.0.0.1:9004/schedule \
