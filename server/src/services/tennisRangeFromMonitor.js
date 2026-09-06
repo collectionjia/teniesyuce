@@ -165,4 +165,5 @@ async function refreshRangeBundleFromMonitor() {
 module.exports = {
   refreshRangeBundleFromMonitor,
   fetchMonitorTop100Source,
+  mergeEventsIntoBundle,
 };

@@ -27,6 +27,7 @@ const dota2Routes = require('./routes/dota2');
 const tradesRoutes = require('./routes/trades');
 const tennisRangeRoutes = require('./routes/tennisRange');
 const tennisLiveRoutes = require('./routes/tennisLive');
+const tennisNewRoutes = require('./routes/tennisNew');
 const tennisLiveMonitorRoutes = require('./routes/tennisLiveMonitor');
 const tennisLiveScraperRoutes = require('./routes/tennisLiveScraper');
 
@@ -55,6 +56,7 @@ app.use('/api/dota2', dota2Routes);
 app.use('/api/trades', tradesRoutes);
 app.use('/api/tennis-range', tennisRangeRoutes);
 app.use('/api/tennis-live', tennisLiveRoutes);
+app.use('/api/tennis-new', tennisNewRoutes);
 app.use('/api/admin/tennis-live-monitor', tennisLiveMonitorRoutes);
 app.use('/api/admin/tennis-live-scraper', tennisLiveScraperRoutes);
 

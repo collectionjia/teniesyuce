@@ -172,6 +172,12 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     } catch (e) {
       console.error('[tennis/monitor-redis] live refresh:', e.message);
     }
+    try {
+      const tennisNewFromMonitor = require('./tennisNewFromMonitor');
+      await tennisNewFromMonitor.refreshNewBundleFromMonitor();
+    } catch (e) {
+      console.error('[tennis/monitor-redis] new refresh:', e.message);
+    }
     return bundle;
   })()
     .catch((e) => {

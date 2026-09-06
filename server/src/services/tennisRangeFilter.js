@@ -52,6 +52,17 @@ function passesTop100Pool(m, rankingsByPlayer = {}) {
   );
 }
 
+/** 任一方在 Top N 内（N=10/20/50/100） */
+function passesTopPool(m, maxRank, rankingsByPlayer = {}) {
+  const n = Number(maxRank);
+  if (!Number.isFinite(n) || n <= 0) return false;
+  const home = m?.homePlayer || { name: m?.home, ranking: null };
+  const away = m?.awayPlayer || { name: m?.away, ranking: null };
+  const homeR = currentRankOf(home, rankingsByPlayer);
+  const awayR = currentRankOf(away, rankingsByPlayer);
+  return (homeR != null && homeR <= n) || (awayR != null && awayR <= n);
+}
+
 /** 任一方 Top100；双方有排名时再按区间现差规则过滤 */
 function passesRangeTennis(m, rankingsByPlayer = {}) {
   if (!passesTop100Pool(m, rankingsByPlayer)) return false;
@@ -172,15 +183,60 @@ function buildRangeBundle(sourceBundle, { requirePoly = false } = {}) {
   };
 }
 
+/** 新网球列表：Top100 池全量（前端按 Top10/20/50/100 筛选） */
+function buildNewBundle(sourceBundle) {
+  if (!sourceBundle) return null;
+  const rankingsByPlayer = sourceBundle.rankingsByPlayer || {};
+  const filtered = allEventsFromBundle(sourceBundle).filter((m) =>
+    passesTop100Pool(m, rankingsByPlayer),
+  );
+
+  const liveMatches = filtered.filter((m) => {
+    const st = String(m.status || '').toLowerCase();
+    const stType = String(m.statusType || '').toLowerCase();
+    if (st === 'ended' || st === 'finished' || stType === 'finished') return false;
+    return (
+      st.includes('live')
+      || st === 'inprogress'
+      || st === 'started'
+      || st.includes('1st')
+      || st.includes('2nd')
+      || st.includes('set')
+    );
+  });
+
+  const scheduled = groupEventsByTournament(filtered);
+
+  return {
+    ...sourceBundle,
+    sport: 'tennis',
+    filter: 'tennis-new',
+    top_rank_max: TOP_RANK_MAX,
+    poolRules: { top10: 10, top20: 20, top50: 50, top100: 100 },
+    scheduled,
+    live: {
+      tournaments: [],
+      tournamentCount: 0,
+      eventCount: liveMatches.length,
+      matches: liveMatches,
+    },
+    events: filtered.length,
+    message: `tennis-new · ${filtered.length} events`,
+    source: sourceBundle.source || 'sofascore-monitor',
+  };
+}
+
 module.exports = {
   TOP_RANK_MAX,
   currentRankOf,
   requiredMinGap,
   matchMetrics,
   passesTop100Pool,
+  passesTopPool,
   passesRangeTennis,
   tierLabel,
   allEventsFromBundle,
   buildRangeBundle,
+  buildNewBundle,
   groupEventsByTournament,
 };

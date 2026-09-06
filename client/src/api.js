@@ -450,6 +450,16 @@ export async function placeTennisLiveBatchTrade(payload) {
   return data
 }
 
+export async function placeTennisNewBatchTrade(payload) {
+  const { data } = await api.post('/tennis-new/trade/batch', payload)
+  return data
+}
+
+export async function refreshTennisNewCache() {
+  const { data } = await api.post('/tennis-new/cache/refresh')
+  return data
+}
+
 export async function refreshTennisLiveCache() {
   const { data } = await api.post('/tennis-live/cache/refresh')
   return data

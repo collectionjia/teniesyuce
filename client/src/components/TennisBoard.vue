@@ -1,22 +1,24 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
-import { passesRangeTennis, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT } from '../utils/tennisRangeFilter'
+import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT } from '../utils/tennisRangeFilter'
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100 */
+  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top100 池 */
   boardMode: { type: String, default: 'classic' },
 })
 
 const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
+const isNewMode = computed(() => props.boardMode === 'new')
 const apiPath = computed(() => {
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
+  if (isNewMode.value) return '/api/tennis-new'
   return '/api/tennis'
 })
 const PAGE_SIZE = 5
@@ -28,6 +30,7 @@ const tour = ref('all') // all | ATP | WTA
 const gapMin = ref('50') // all | 50 | 70 | 90
 const diffMax = ref('0') // all | 0 | -30 | -50 | -70
 const strongRankMax = ref('20') // all | 10 | 20
+const topPoolMax = ref('100') // 10 | 20 | 50 | 100（新网球列表）
 const filtersOpen = ref(false)
 const detailMatch = ref(null)
 const selectedIds = ref(new Set())
@@ -38,11 +41,13 @@ const batchError = ref('')
 const AUTO_BET_KEY = computed(() => {
   if (isRangeMode.value) return 'yuce.tennisRange.autoBet.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoBet.v1'
+  if (isNewMode.value) return 'yuce.tennisNew.autoBet.v1'
   return 'yuce.tennis.autoBet.v1'
 })
 const AUTO_PLACED_KEY = computed(() => {
   if (isRangeMode.value) return 'yuce.tennisRange.autoPlaced.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoPlaced.v1'
+  if (isNewMode.value) return 'yuce.tennisNew.autoPlaced.v1'
   return 'yuce.tennis.autoPlaced.v1'
 })
 const autoBetEnabled = ref(false)
@@ -233,6 +238,9 @@ function matchPassesRank(m) {
   if (isRangeMode.value) {
     return passesRangeTennis(m, data.value?.rankingsByPlayer || {})
   }
+  if (isNewMode.value) {
+    return passesTopPool(m, topPoolMax.value, data.value?.rankingsByPlayer || {})
+  }
   const metrics = matchMetrics(m)
   if (gapMin.value !== 'all') {
     if (!metrics.ready || metrics.gap < Number(gapMin.value)) return false
@@ -398,7 +406,9 @@ async function submitBatchTrade({ auto = false } = {}) {
       ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
       : isLiveMode.value
         ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
-        : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
+        : isNewMode.value
+          ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
+          : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
     const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
     if (resp.success > 0) {
       const okLines = lines.filter((_, i) => resp.results[i]?.ok)
@@ -450,7 +460,7 @@ async function maybeAutoBatchTrade() {
   await submitBatchTrade({ auto: true })
 }
 
-watch([filter, tour, gapMin, diffMax, strongRankMax], () => {
+watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax], () => {
   currentPage.value = 1
   clearSelection()
 })
@@ -506,6 +516,7 @@ const filterSummary = computed(() => {
   else if (tour.value === 'WTA') parts.push('女子')
   if (props.isMember) {
     if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
+    else if (isNewMode.value) parts.push(`Top${topPoolMax.value}`)
     else {
       if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
       if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
@@ -894,7 +905,7 @@ function gapInfo(m) {
           <button type="button" class="chip-btn" :class="{ active: tour === 'WTA' }" @click="tour = 'WTA'">女</button>
         </div>
 
-        <template v-if="isMember && !isRangeMode">
+        <template v-if="isMember && !isRangeMode && !isNewMode">
           <div class="filter-row">
             <span class="label">现差</span>
             <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
@@ -922,6 +933,17 @@ function gapInfo(m) {
         <div v-else-if="isMember && isRangeMode" class="filter-row range-rules">
           <span class="label">区间</span>
           <span class="range-rules-text">{{ RANGE_RULES_TEXT }}</span>
+        </div>
+        <div v-else-if="isMember && isNewMode" class="filter-row">
+          <span class="label">排名池</span>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '10' }" @click="topPoolMax = '10'">Top10</button>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+        </div>
+        <div v-if="isMember && isNewMode" class="filter-row range-rules">
+          <span class="label">规则</span>
+          <span class="range-rules-text">{{ NEW_POOL_RULES_TEXT }}</span>
         </div>
       </div>
     </div>

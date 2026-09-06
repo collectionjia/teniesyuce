@@ -353,6 +353,7 @@ function tradeProductLabel(p) {
   if (p === 'btc') return 'BTC'
   if (p === 'tennis-range') return '区间网球'
   if (p === 'tennis-live') return '盘中网球'
+  if (p === 'tennis-new') return '新网球列表'
   if (p === 'tennis') return '网球'
   return p
 }
@@ -2049,6 +2050,12 @@ function isTennisLiveProduct(product) {
   return /盘中/.test(String(product?.name || ''))
 }
 
+function isTennisNewProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-new') return true
+  return /新网球列表/.test(String(product?.name || ''))
+}
+
 function isTennisRangeProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-range') return true
@@ -2056,7 +2063,7 @@ function isTennisRangeProduct(product) {
 }
 
 function isTennisProduct(product) {
-  if (isTennisRangeProduct(product) || isTennisLiveProduct(product)) return false
+  if (isTennisRangeProduct(product) || isTennisLiveProduct(product) || isTennisNewProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis') return true
   return /网球|tennis/i.test(String(product?.name || ''))
@@ -2097,6 +2104,7 @@ function isNativeBoardProduct(product) {
     isTennisProduct(product) ||
     isTennisRangeProduct(product) ||
     isTennisLiveProduct(product) ||
+    isTennisNewProduct(product) ||
     isBtcBoardProduct(product) ||
     isDotaProduct(product) ||
     isDota2Product(product) ||
@@ -2503,7 +2511,7 @@ function productEmbedUrl(product) {
               </div>
               <div
                 :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct))
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
@@ -2512,6 +2520,14 @@ function productEmbedUrl(product) {
                 <div v-if="isTennisLiveProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     board-mode="live"
+                    :show-filters="canShowTennisFilters"
+                    :is-member="isActive(openedProduct.id)"
+                    :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisNewProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="new"
                     :show-filters="canShowTennisFilters"
                     :is-member="isActive(openedProduct.id)"
                     :can-batch-trade="canShowWallet && walletConfigured"
@@ -2613,6 +2629,7 @@ function productEmbedUrl(product) {
                       { id: 'all', label: '全部' },
                       { id: 'btc', label: 'BTC' },
                       { id: 'tennis', label: '网球' },
+                      { id: 'tennis-new', label: '新网球列表' },
                       { id: 'tennis-range', label: '区间网球' },
                       { id: 'tennis-live', label: 'ATP·WTA 盘中' },
                     ]"

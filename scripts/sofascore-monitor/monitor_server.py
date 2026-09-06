@@ -97,7 +97,7 @@ def _read_schedule_config() -> dict[str, Any]:
                 return {"interval_hours": hours}
         except Exception:
             pass
-    return {"interval_hours": 6}
+    return {"interval_hours": 4}
 
 
 def _write_schedule_config(interval_hours: int) -> None:
@@ -113,11 +113,14 @@ def _cron_expr_for_interval(hours: int) -> str:
 
 
 def _apply_collect_schedule(interval_hours: int) -> list[str]:
-    marker = "# sofascore-tennis-scraper"
+    marker = "# sofascore-top100-collect"
     python = str(APP_DIR / "venv" / "bin" / "python")
     if not Path(python).exists():
         python = "python3"
-    cron_line = f"{_cron_expr_for_interval(interval_hours)} cd {APP_DIR} && {python} -c \"from monitor_server import _run_collect; _run_collect('cron')\""
+    cron_line = (
+        f"{_cron_expr_for_interval(interval_hours)} cd {APP_DIR} && {python} -c "
+        "\"from monitor_server import _run_top100_collect; _run_top100_collect('cron')\""
+    )
     try:
         raw = subprocess.check_output(["crontab", "-l"], text=True, stderr=subprocess.DEVNULL)
         lines = raw.splitlines()
@@ -126,14 +129,19 @@ def _apply_collect_schedule(interval_hours: int) -> list[str]:
     kept: list[str] = []
     skip = False
     for line in lines:
-        if marker in line:
+        if marker in line or "sofascore-tennis-scraper" in line:
             skip = True
             continue
         if skip:
-            if line.startswith("CRON_TZ") or "monitor_server" in line or "run_collect" in line:
+            if (
+                line.startswith("CRON_TZ")
+                or "monitor_server" in line
+                or "run_collect" in line
+                or "run_top100_collect" in line
+            ):
                 continue
             skip = False
-        if "run_collect" in line or "monitor_server" in line:
+        if "run_collect" in line or "run_top100_collect" in line or "monitor_server" in line:
             continue
         kept.append(line)
     block = [marker, "CRON_TZ=Asia/Shanghai", cron_line]
@@ -147,9 +155,10 @@ def _schedule_payload() -> dict[str, Any]:
     return {
         "ok": True,
         "interval_hours": hours,
+        "collect_target": "top100",
         "allowed_intervals": list(ALLOWED_COLLECT_INTERVALS),
-        "cron_line": f"{_cron_expr_for_interval(hours)} collect",
-        "label": f"每 {hours} 小时",
+        "cron_line": f"{_cron_expr_for_interval(hours)} top100-collect",
+        "label": f"每 {hours} 小时 Top100",
     }
 
 
@@ -277,6 +286,13 @@ def _refresh_server_redis() -> None:
             ".refreshLiveBundleFromMonitor()"
             ".then(b=>console.log('[monitor→redis-live]',b.date,b.events))"
             ".catch(e=>{console.error('[monitor→redis-live]',e.message);process.exit(0)})",
+        ),
+        (
+            "new",
+            "require('./src/services/tennisNewFromMonitor')"
+            ".refreshNewBundleFromMonitor()"
+            ".then(b=>console.log('[monitor→redis-new]',b.date,b.events))"
+            ".catch(e=>{console.error('[monitor→redis-new]',e.message);process.exit(0)})",
         ),
     ]
     for label, node in scripts:
@@ -702,13 +718,13 @@ class Handler(BaseHTTPRequestHandler):
         if path != "/collect":
             self._json(404, {"error": "not found"})
             return
-        with _lock:
-            if _running:
-                self._json(409, {"error": "collect already running", "last_run": dict(_last_run)})
+        with _top100_lock:
+            if _top100_running:
+                self._json(409, {"error": "top100 collect already running", "last": dict(_last_top100)})
                 return
-        threading.Thread(target=_run_collect, args=("manual-http",), daemon=True).start()
+        threading.Thread(target=_run_top100_collect, args=("manual-http",), daemon=True).start()
         time.sleep(0.2)
-        self._json(202, {"ok": True, "message": "collect started", "last_run": dict(_last_run)})
+        self._json(202, {"ok": True, "message": "top100 collect started", "last": dict(_last_top100)})
 
 
 def main() -> None:

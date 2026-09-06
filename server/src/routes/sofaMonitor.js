@@ -57,7 +57,7 @@ function scheduleRedisRefreshAfterCollect() {
   const poll = async () => {
     try {
       const { body } = await monitorFetch('/status', { timeoutMs: 10000 });
-      if (body?.running) {
+      if (body?.running || body?.top100_collect?.running) {
         if (Date.now() < deadline) setTimeout(poll, 3000);
         return;
       }

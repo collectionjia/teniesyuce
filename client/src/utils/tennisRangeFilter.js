@@ -46,6 +46,14 @@ export function passesTop100Pool(m, rankingsByPlayer = {}) {
   return (homeR != null && homeR <= TOP_RANK_MAX) || (awayR != null && awayR <= TOP_RANK_MAX)
 }
 
+export function passesTopPool(m, maxRank, rankingsByPlayer = {}) {
+  const n = Number(maxRank)
+  if (!Number.isFinite(n) || n <= 0) return false
+  const homeR = currentRankOf(m?.homePlayer || { name: m?.home }, rankingsByPlayer)
+  const awayR = currentRankOf(m?.awayPlayer || { name: m?.away }, rankingsByPlayer)
+  return (homeR != null && homeR <= n) || (awayR != null && awayR <= n)
+}
+
 export function passesRangeTennis(m, rankingsByPlayer = {}) {
   if (!passesTop100Pool(m, rankingsByPlayer)) return false
   const metrics = matchRangeMetrics(m, rankingsByPlayer)
@@ -64,3 +72,4 @@ export function tierLabel(strongRank) {
 }
 
 export const RANGE_RULES_TEXT = '任一方 Top100 · Top10差≥10 / Top20差≥20 / Top50差≥50 / Top100差≥100'
+export const NEW_POOL_RULES_TEXT = '任一方在 Top N 内 · 可选 Top10 / Top20 / Top50 / Top100'

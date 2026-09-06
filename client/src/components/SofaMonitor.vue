@@ -34,19 +34,23 @@ const top20LoadingSince = ref(0)
 const top20LoadingSec = ref(0)
 let top20LoadingTick = null
 
-const running = computed(() => !!status.value?.running)
+const running = computed(() => !!(
+  status.value?.top100_collect?.running
+  || status.value?.running
+))
+const top100Collect = computed(() => status.value?.top100_collect || {})
+const lastRun = computed(() => top100Collect.value?.last || status.value?.last_run || {})
 const livePoll = computed(() => status.value?.live_poll?.last || liveData.value?.last || {})
 const liveRunning = computed(() => !!(status.value?.live_poll?.running || liveData.value?.running))
 const liveMatches = computed(() => {
   const list = livePoll.value?.events || []
   return Array.isArray(list) ? list : []
 })
-const lastRun = computed(() => status.value?.last_run || {})
 const bundle = computed(() => status.value?.latest_bundle || {})
 const cronLines = computed(() => (status.value?.cron || []).filter((l) => l && !String(l).startsWith('#')))
 const collectIntervalHours = computed(() => {
   const hours = Number(schedule.value?.interval_hours ?? status.value?.schedule?.interval_hours)
-  return INTERVAL_OPTIONS.some((o) => o.hours === hours) ? hours : 6
+  return INTERVAL_OPTIONS.some((o) => o.hours === hours) ? hours : 4
 })
 const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
@@ -226,9 +230,9 @@ async function waitCollectDone() {
         error.value = formatMonitorError(err)
       } else if (lastRun.value?.status === 'success') {
         error.value = ''
-        const n = bundle.value?.event_count ?? '—'
-        showNotice(`采集完成：${bundle.value?.date || '—'} · ${n} 场比赛`)
+        showNotice(`Top100 采集完成：${lastRun.value?.total_events ?? bundle.value?.event_count ?? '—'} 场比赛`)
         api.refreshTennisCache().catch(() => {})
+        api.refreshTennisNewCache().catch(() => {})
         await loadTop20(false)
       }
       return
@@ -378,7 +382,7 @@ onUnmounted(() => {
     <div class="toolbar">
       <div class="titles">
         <div class="title">Sofascore 监控</div>
-        <div class="sub">采集状态 · Top20 赛程 · 进行中比分（每分钟） · 自动采集 {{ collectIntervalLabel }}</div>
+        <div class="sub">Top100 赛程 · 进行中比分（每分钟） · 自动采集 {{ collectIntervalLabel }} Top100</div>
       </div>
       <div class="actions">
         <label class="interval-select">
@@ -398,7 +402,7 @@ onUnmounted(() => {
           {{ liveRunning ? '拉取中…' : liveCollecting ? '触发中…' : '拉取进行中' }}
         </button>
         <button type="button" class="btn primary" :disabled="collecting || running" @click="triggerCollect">
-          {{ running ? '采集中…' : collecting ? '触发中…' : '立即采集' }}
+          {{ running ? 'Top100 采集中…' : collecting ? '触发中…' : '立即采集 Top100' }}
         </button>
       </div>
     </div>
