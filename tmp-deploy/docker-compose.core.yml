@@ -1,0 +1,69 @@
+# 核心服务：board + server + web（不含 basketball / dota2）
+# MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
+# 用法: docker compose -f docker-compose.core.yml up -d --build
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:9014:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      PORT: 3001
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://board:8890/}
+      SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+      board:
+        condition: service_started
+    expose:
+      - "3001"
+
+  board:
+    build:
+      context: ./board
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      FILTER_MARKET_MAKERS: ${FILTER_MARKET_MAKERS:-true}
+      STREAK_MIN_ROUNDS: ${STREAK_MIN_ROUNDS:-3}
+      PYTHONUTF8: "1"
+    volumes:
+      - board_data:/app/持仓
+    expose:
+      - "8890"
+    ports:
+      - "${BOARD_PORT:-8890}:8890"
+
+  web:
+    build:
+      context: ./client
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-9001}:80"
+    depends_on:
+      - server
+
+volumes:
+  board_data:
+  redis_data:

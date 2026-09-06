@@ -227,15 +227,6 @@ def collect_top100_snapshot(*, include_scheduled: bool = True, force_schedule: b
             error=error,
             odds_by_event=odds_by_event,
         )
-        from events_collector import get_collect_stats
-
-        client_stats = client.get_request_stats()
-        collect_stats = get_collect_stats()
-        snap["requests"] = {
-            **client_stats,
-            "collect": collect_stats,
-            "estimated_formula": "warmup + rankings + live + schedule + odds",
-        }
         _last_snapshot = snap
         return snap
 
@@ -255,7 +246,6 @@ def refresh_top100_live() -> dict[str, Any]:
     odds_by_event = dict(_last_snapshot.get("oddsByEvent") or {})
 
     skip_warm = os.environ.get("SOFA_SKIP_WARM_ON_LIVE", "1") == "1"
-    client_stats: dict[str, int] = {}
     with SofascoreClient(skip_warm=skip_warm) as client:
         try:
             live_raw = list((client.get_live_tennis_events().get("events") or []))
@@ -287,7 +277,6 @@ def refresh_top100_live() -> dict[str, Any]:
                 print(f"[top100/live] odds refreshed for {len(fresh_odds)} live events")
             except Exception as exc:
                 print(f"[top100/live] odds failed: {exc}")
-        client_stats = client.get_request_stats()
 
     snap = _snapshot_from_events(
         board,
@@ -298,7 +287,6 @@ def refresh_top100_live() -> dict[str, Any]:
         odds_by_event=odds_by_event,
     )
     snap["collect_mode"] = "live"
-    snap["requests"] = client_stats
     _last_snapshot = snap
     return snap
 

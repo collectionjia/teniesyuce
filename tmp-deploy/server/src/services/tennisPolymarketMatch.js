@@ -343,24 +343,14 @@ async function enrichBundlePolymarket(bundle) {
 
 /** 所有网球 Redis 包共用：先补外链，再刷盘口价 */
 async function applyPolymarketLinks(bundle) {
-  const started = Date.now();
-  const matchStarted = Date.now();
   const match = await enrichBundlePolymarket(bundle);
-  const matchMs = Date.now() - matchStarted;
   let prices = { updated: 0, failed: 0 };
-  const priceStarted = Date.now();
   try {
     prices = await tennisPolymarket.refreshPolymarketPrices(bundle);
   } catch (e) {
     console.error('[tennis/poly-match] price refresh:', e.message || e);
   }
-  const priceMs = Date.now() - priceStarted;
-  const totalMs = Date.now() - started;
-  return {
-    ...match,
-    prices,
-    timingMs: { match: matchMs, prices: priceMs, total: totalMs },
-  };
+  return { ...match, prices };
 }
 
 module.exports = {

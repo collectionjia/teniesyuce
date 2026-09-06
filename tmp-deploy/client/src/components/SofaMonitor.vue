@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import * as api from '../api'
 import { sofaTennisMatchUrl } from '../utils/sofaMatchUrl'
 
@@ -20,14 +20,6 @@ const schedule = ref(null)
 const scheduleSaving = ref(false)
 const dataSource = ref(null)
 const dataSourceSaving = ref(false)
-const playerPage = ref(1)
-const livePage = ref(1)
-const logPage = ref(1)
-const cronOpen = ref(false)
-
-const PLAYER_PAGE_SIZE = 15
-const LIVE_PAGE_SIZE = 12
-const LOG_PAGE_SIZE = 60
 
 const INTERVAL_OPTIONS = [
   { hours: 2, label: '2 小时' },
@@ -79,34 +71,6 @@ const redisUpstreamLabel = computed(() => {
   if (String(up).includes('sofa') || String(up).includes('ipwo')) return 'Sofascore · IPWO'
   return up
 })
-const collectRequests = computed(() => (
-  top100Collect.value?.last?.requests
-  || top100Board.value?.requests
-  || dataSource.value?.collect_requests
-  || null
-))
-const polyMatchStats = computed(() => dataSource.value?.poly_match || null)
-const redisRefreshStats = computed(() => dataSource.value?.redis_refresh || null)
-
-function formatMs(ms) {
-  const n = Number(ms)
-  if (!Number.isFinite(n) || n < 0) return '—'
-  if (n < 1000) return `${Math.round(n)} ms`
-  return `${(n / 1000).toFixed(1)} s`
-}
-
-function collectRequestHint(req) {
-  if (!req || typeof req !== 'object') return '—'
-  const parts = [
-    `预热 ${req.warmup ?? 0}`,
-    `API ${req.api ?? 0}`,
-    `重试 ${req.retries ?? 0}`,
-  ]
-  const tier = req.collect?.tier
-  if (tier != null) parts.push(`tier ${tier}`)
-  return parts.join(' · ')
-}
-
 const summary = computed(() => ({
   ...(top100Board.value?.summary || {}),
   ...(top100Collect.value?.summary || {}),
@@ -128,25 +92,6 @@ const poolSummary = computed(() => {
   let matches = 0
   for (const p of players.value) matches += Number(p.matchCount) || 0
   return { max, players: players.value.length, matches }
-})
-const playerPageCount = computed(() => Math.max(1, Math.ceil(players.value.length / PLAYER_PAGE_SIZE)))
-const pagedPlayers = computed(() => {
-  const start = (playerPage.value - 1) * PLAYER_PAGE_SIZE
-  return players.value.slice(start, start + PLAYER_PAGE_SIZE)
-})
-const livePageCount = computed(() => Math.max(1, Math.ceil(liveMatches.value.length / LIVE_PAGE_SIZE)))
-const pagedLiveMatches = computed(() => {
-  const start = (livePage.value - 1) * LIVE_PAGE_SIZE
-  return liveMatches.value.slice(start, start + LIVE_PAGE_SIZE)
-})
-const logLines = computed(() => {
-  const raw = logs.value?.content || status.value?.latest_log_tail || ''
-  return String(raw).split('\n')
-})
-const logPageCount = computed(() => Math.max(1, Math.ceil(logLines.value.length / LOG_PAGE_SIZE)))
-const pagedLogText = computed(() => {
-  const start = (logPage.value - 1) * LOG_PAGE_SIZE
-  return logLines.value.slice(start, start + LOG_PAGE_SIZE).join('\n') || '(暂无日志)'
 })
 
 const statusLabel = computed(() => {
@@ -325,7 +270,6 @@ async function waitCollectDone() {
         api.refreshTennisCache().catch(() => {})
         api.refreshTennisNewCache().catch(() => {})
         await loadTop100(false)
-        await loadDataSource()
       }
       return
     }
@@ -470,53 +414,6 @@ async function refreshTop100() {
   }
 }
 
-function clampPage(pageRef, page, max) {
-  pageRef.value = Math.min(Math.max(1, page), max)
-}
-
-function playerPageLabel() {
-  if (!players.value.length) return '0 条'
-  const start = (playerPage.value - 1) * PLAYER_PAGE_SIZE + 1
-  const end = Math.min(playerPage.value * PLAYER_PAGE_SIZE, players.value.length)
-  return `${start}-${end} / ${players.value.length}`
-}
-
-function livePageLabel() {
-  if (!liveMatches.value.length) return '0 条'
-  const start = (livePage.value - 1) * LIVE_PAGE_SIZE + 1
-  const end = Math.min(livePage.value * LIVE_PAGE_SIZE, liveMatches.value.length)
-  return `${start}-${end} / ${liveMatches.value.length}`
-}
-
-function logPageLabel() {
-  if (!logLines.value.length) return '0 行'
-  const start = (logPage.value - 1) * LOG_PAGE_SIZE + 1
-  const end = Math.min(logPage.value * LOG_PAGE_SIZE, logLines.value.length)
-  return `${start}-${end} / ${logLines.value.length}`
-}
-
-watch([tab, topPoolMax], () => {
-  playerPage.value = 1
-  expanded.value = {}
-})
-watch(tab, () => {
-  livePage.value = 1
-  logPage.value = 1
-})
-watch(players, (list) => {
-  if (playerPage.value > Math.max(1, Math.ceil(list.length / PLAYER_PAGE_SIZE))) {
-    playerPage.value = 1
-  }
-})
-watch(liveMatches, (list) => {
-  if (livePage.value > Math.max(1, Math.ceil(list.length / LIVE_PAGE_SIZE))) {
-    livePage.value = 1
-  }
-})
-watch(logLines, () => {
-  if (logPage.value > logPageCount.value) logPage.value = 1
-})
-
 onMounted(() => {
   refreshAll()
   pollTimer = setInterval(() => {
@@ -542,9 +439,46 @@ onUnmounted(() => {
     <div class="toolbar">
       <div class="titles">
         <div class="title">Sofascore 监控</div>
-        <div class="sub">Top100 赛程 · 进行中比分 · Redis 写入 {{ tennisDataSourceLabel }}</div>
+        <div class="sub">Top100 赛程 · 进行中比分 · 网球页只读 Redis · 当前写入 {{ tennisDataSourceLabel }}</div>
       </div>
-      <div class="actions-primary">
+      <div class="actions">
+        <div class="source-group" role="radiogroup" aria-label="网球页 Redis 写入源">
+          <span class="source-label">网球数据源</span>
+          <label class="source-opt" :class="{ on: tennisDataSource === 'ipwo' }">
+            <input
+              type="radio"
+              name="tennis-data-source"
+              value="ipwo"
+              :checked="tennisDataSource === 'ipwo'"
+              :disabled="dataSourceSaving || loading"
+              @change="onDataSourceChange('ipwo')"
+            >
+            IPWO
+          </label>
+          <label class="source-opt" :class="{ on: tennisDataSource === 'api', disabled: !dataSource?.api_available }">
+            <input
+              type="radio"
+              name="tennis-data-source"
+              value="api"
+              :checked="tennisDataSource === 'api'"
+              :disabled="dataSourceSaving || loading || !dataSource?.api_available"
+              @change="onDataSourceChange('api')"
+            >
+            API
+          </label>
+        </div>
+        <label class="interval-select">
+          <span>更新频度</span>
+          <select
+            :value="collectIntervalHours"
+            :disabled="scheduleSaving || loading || running"
+            @change="onIntervalChange"
+          >
+            <option v-for="opt in INTERVAL_OPTIONS" :key="opt.hours" :value="opt.hours">
+              {{ opt.label }}
+            </option>
+          </select>
+        </label>
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
         <button type="button" class="btn ghost" :disabled="liveCollecting || liveRunning" @click="triggerLiveCollect">
           {{ liveRunning ? '拉取中…' : liveCollecting ? '触发中…' : '拉取进行中' }}
@@ -555,117 +489,60 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="!loading" class="settings-row">
-      <div class="source-group" role="radiogroup" aria-label="网球页 Redis 写入源">
-        <span class="source-label">网球数据源</span>
-        <label class="source-opt" :class="{ on: tennisDataSource === 'ipwo' }">
-          <input
-            type="radio"
-            name="tennis-data-source"
-            value="ipwo"
-            :checked="tennisDataSource === 'ipwo'"
-            :disabled="dataSourceSaving || loading"
-            @change="onDataSourceChange('ipwo')"
-          >
-          IPWO
-        </label>
-        <label class="source-opt" :class="{ on: tennisDataSource === 'api', disabled: !dataSource?.api_available }">
-          <input
-            type="radio"
-            name="tennis-data-source"
-            value="api"
-            :checked="tennisDataSource === 'api'"
-            :disabled="dataSourceSaving || loading || !dataSource?.api_available"
-            @change="onDataSourceChange('api')"
-          >
-          API
-        </label>
-      </div>
-      <label class="interval-select">
-        <span>更新频度</span>
-        <select
-          :value="collectIntervalHours"
-          :disabled="scheduleSaving || loading || running"
-          @change="onIntervalChange"
-        >
-          <option v-for="opt in INTERVAL_OPTIONS" :key="opt.hours" :value="opt.hours">
-            {{ opt.label }}
-          </option>
-        </select>
-      </label>
-    </div>
-
     <div v-if="notice" class="banner ok">{{ notice }}</div>
     <div v-if="error" class="banner err">{{ error }}</div>
     <div v-if="loading" class="banner">加载中…</div>
 
     <template v-else>
-      <div class="cards cards-compact">
+      <div class="cards">
         <div class="card">
           <div class="label">状态</div>
           <div class="value"><span class="pill" :class="statusTone">{{ statusLabel }}</span></div>
+          <div class="hint">{{ status?.time || '—' }}</div>
         </div>
         <div class="card">
           <div class="label">最近采集</div>
-          <div class="value mono sm">{{ fmtTime(lastRun.finished_at || lastRun.started_at) }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Bundle</div>
-          <div class="value sm">{{ bundle.event_count ?? 0 }} 场</div>
-          <div class="hint">{{ bundle.date || '—' }}</div>
-        </div>
-        <div class="card">
-          <div class="label">进行中</div>
-          <div class="value sm">{{ livePoll.live_count ?? liveMatches.length }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Redis</div>
-          <div class="value sm">{{ redisUpstreamLabel }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Top100</div>
-          <div class="value sm">{{ summary.total_matches ?? '—' }}</div>
-          <div class="hint">A{{ summary.atp_matches ?? 0 }} · W{{ summary.wta_matches ?? 0 }}</div>
-        </div>
-      </div>
-
-      <div class="metrics panel">
-        <div class="metric">
-          <div class="metric-label">采集 HTTP 请求</div>
-          <div class="metric-value">{{ collectRequests?.total ?? '—' }} 次</div>
-          <div class="metric-hint">{{ collectRequestHint(collectRequests) }}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">采集耗时</div>
-          <div class="metric-value">{{ formatMs(top100Collect?.last?.elapsed_sec != null ? top100Collect.last.elapsed_sec * 1000 : top100Board?.elapsed_sec * 1000) }}</div>
-          <div class="metric-hint">Top100 最近一轮</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Polymarket 外链</div>
-          <div class="metric-value">{{ formatMs(polyMatchStats?.timingMs?.total ?? redisRefreshStats?.polyMs) }}</div>
-          <div class="metric-hint">
-            匹配 {{ formatMs(polyMatchStats?.timingMs?.match ?? redisRefreshStats?.polyMatchMs) }}
-            · 刷价 {{ formatMs(polyMatchStats?.timingMs?.prices ?? redisRefreshStats?.polyPriceMs) }}
-            · 链接 {{ polyMatchStats?.matched ?? '—' }} 场
+          <div class="value mono">{{ fmtTime(lastRun.finished_at || lastRun.started_at) }}</div>
+          <div class="hint">
+            退出码 {{ lastRun.exit_code ?? '—' }}
+            <span v-if="lastRun.error"> · {{ formatMonitorError(lastRun.error) }}</span>
           </div>
         </div>
-        <div class="metric">
-          <div class="metric-label">写入 Redis 总耗时</div>
-          <div class="metric-value">{{ formatMs(redisRefreshStats?.totalMs) }}</div>
-          <div class="metric-hint">含 PM 外链 · {{ fmtTime(dataSource?.redis_fetched_at) }}</div>
+        <div class="card">
+          <div class="label">最新 Bundle</div>
+          <div class="value">{{ bundle.date || '—' }}</div>
+          <div class="hint">{{ bundle.event_count ?? 0 }} 场 · {{ bundle.tournament_count ?? 0 }} 站</div>
+        </div>
+        <div class="card">
+          <div class="label">进行中采集</div>
+          <div class="value">{{ livePoll.live_count ?? liveMatches.length }}</div>
+          <div class="hint">
+            {{ liveRunning ? '拉取中…' : `更新 ${fmtTime(livePoll.finished_at || livePoll.fetched_at)}` }}
+            <span v-if="livePoll.updated != null"> · 写入 {{ livePoll.updated }}</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="label">网球 Redis</div>
+          <div class="value">{{ redisUpstreamLabel }}</div>
+          <div class="hint">页面读 Redis · 写入 {{ tennisDataSourceLabel }}<span v-if="dataSource?.redis_fetched_at"> · {{ fmtTime(dataSource.redis_fetched_at) }}</span></div>
+        </div>
+        <div class="card">
+          <div class="label">Top100 赛事</div>
+          <div class="value">{{ summary.total_matches ?? '—' }}</div>
+          <div class="hint">ATP {{ summary.atp_matches ?? 0 }} · WTA {{ summary.wta_matches ?? 0 }} · 榜 {{ summary.atp_players ?? 0 }}/{{ summary.wta_players ?? 0 }}</div>
         </div>
       </div>
 
-      <details v-if="cronLines.length || schedule" class="panel panel-fold" :open="cronOpen" @toggle="cronOpen = $event.target.open">
-        <summary class="panel-h row fold-summary">
-          <span>定时任务 · {{ collectIntervalLabel }}</span>
-          <span class="muted panel-meta">{{ cronOpen ? '收起' : '展开' }}</span>
-        </summary>
+      <div v-if="cronLines.length || schedule" class="panel">
+        <div class="panel-h row">
+          <span>定时任务</span>
+          <span class="muted panel-meta">当前 {{ collectIntervalLabel }}</span>
+        </div>
         <div class="cron-list">
           <code v-for="(line, i) in cronLines" :key="i">{{ line }}</code>
           <code v-if="!cronLines.length && schedule?.cron_line">{{ schedule.cron_line }}</code>
         </div>
-      </details>
+      </div>
 
       <div class="tabs">
         <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
@@ -693,16 +570,8 @@ onUnmounted(() => {
         </div>
         <div v-if="livePoll.error" class="banner err">{{ formatMonitorError(livePoll.error) }}</div>
         <div v-else-if="!liveMatches.length" class="empty">当前没有进行中的比赛</div>
-        <template v-else>
-          <div class="pager">
-            <span class="pager-info">第 {{ livePage }} / {{ livePageCount }} 页 · {{ livePageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="clampPage(livePage, livePage - 1, livePageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="clampPage(livePage, livePage + 1, livePageCount)">下一页</button>
-            </div>
-          </div>
-          <div class="live-list">
-          <div v-for="m in pagedLiveMatches" :key="m.id" class="live-row">
+        <div v-else class="live-list">
+          <div v-for="m in liveMatches" :key="m.id" class="live-row">
             <div class="live-top">
               <span class="st live">{{ m.status || '进行中' }}</span>
             </div>
@@ -723,15 +592,7 @@ onUnmounted(() => {
               <span> · {{ m.tour || '' }}</span>
             </div>
           </div>
-          </div>
-          <div class="pager pager-bottom">
-            <span class="pager-info">{{ livePageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="clampPage(livePage, livePage - 1, livePageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="clampPage(livePage, livePage + 1, livePageCount)">下一页</button>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
 
       <div v-else-if="tab !== 'logs'" class="panel">
@@ -749,16 +610,8 @@ onUnmounted(() => {
         </div>
         <div v-else-if="!players.length" class="empty">暂无 Top{{ topPoolMax }} 球员数据</div>
 
-        <template v-else>
-          <div class="pager">
-            <span class="pager-info">第 {{ playerPage }} / {{ playerPageCount }} 页 · {{ playerPageLabel() }} · 每页 {{ PLAYER_PAGE_SIZE }} 人</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="clampPage(playerPage, playerPage - 1, playerPageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="clampPage(playerPage, playerPage + 1, playerPageCount)">下一页</button>
-            </div>
-          </div>
-          <div class="plist">
-          <div v-for="p in pagedPlayers" :key="p.id" class="player">
+        <div v-else class="plist">
+          <div v-for="p in players" :key="p.id" class="player">
             <button type="button" class="player-h" @click="toggle(p.id)">
               <span class="rank">#{{ p.rank }}</span>
               <span class="player-main">
@@ -792,15 +645,7 @@ onUnmounted(() => {
               </a>
             </div>
           </div>
-          </div>
-          <div class="pager pager-bottom">
-            <span class="pager-info">{{ playerPageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="clampPage(playerPage, playerPage - 1, playerPageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="clampPage(playerPage, playerPage + 1, playerPageCount)">下一页</button>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
 
       <div v-else class="panel">
@@ -808,21 +653,7 @@ onUnmounted(() => {
           <span>采集日志</span>
           <span class="muted truncate">{{ logs?.log_file || status?.latest_log || '—' }}</span>
         </div>
-        <div class="pager">
-          <span class="pager-info">第 {{ logPage }} / {{ logPageCount }} 页 · {{ logPageLabel() }}</span>
-          <div class="pager-actions">
-            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="clampPage(logPage, logPage - 1, logPageCount)">上一页</button>
-            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="clampPage(logPage, logPage + 1, logPageCount)">下一页</button>
-          </div>
-        </div>
-        <pre class="log">{{ pagedLogText }}</pre>
-        <div class="pager pager-bottom">
-          <span class="pager-info">{{ logPageLabel() }}</span>
-          <div class="pager-actions">
-            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="clampPage(logPage, logPage - 1, logPageCount)">上一页</button>
-            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="clampPage(logPage, logPage + 1, logPageCount)">下一页</button>
-          </div>
-        </div>
+        <pre class="log">{{ logs?.content || status?.latest_log_tail || '(暂无日志)' }}</pre>
       </div>
     </template>
   </div>
@@ -830,16 +661,10 @@ onUnmounted(() => {
 
 <style scoped>
 .sofa { display: flex; flex-direction: column; gap: 12px; }
-.toolbar {
-  display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
-}
+.toolbar { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
 .titles .title { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
 .titles .sub { margin-top: 2px; font-size: 0.75rem; color: #94a3b8; }
-.actions-primary { display: flex; gap: 8px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
-.settings-row {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  padding: 10px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
-}
+.actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
 .source-group {
   display: flex; align-items: center; gap: 4px;
   padding: 3px; border-radius: 10px; background: #f1f5f9; border: 1px solid #e2e8f0;
@@ -882,23 +707,11 @@ onUnmounted(() => {
 .banner.ok { background: #ecfdf5; color: #047857; }
 
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.cards-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .card {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;
 }
-.cards-compact .card { padding: 10px 12px; }
-.metrics {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
-}
-.metric {
-  padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fafbfc;
-}
-.metric-label { font-size: 0.72rem; color: #94a3b8; font-weight: 700; }
-.metric-value { margin-top: 4px; font-size: 1rem; font-weight: 800; color: #0f172a; }
-.metric-hint { margin-top: 4px; font-size: 0.7rem; color: #64748b; line-height: 1.35; }
 .card .label { font-size: 0.72rem; color: #94a3b8; }
 .card .value { margin-top: 4px; font-size: 1rem; font-weight: 700; color: #0f172a; }
-.card .value.sm { font-size: 0.92rem; }
 .card .value.mono { font-size: 0.86rem; font-weight: 600; }
 .card .hint { margin-top: 4px; font-size: 0.72rem; color: #64748b; line-height: 1.35; }
 
@@ -913,10 +726,6 @@ onUnmounted(() => {
 .panel {
   background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;
 }
-.panel-fold { padding-top: 8px; }
-.fold-summary { cursor: pointer; list-style: none; margin-bottom: 0; }
-.fold-summary::-webkit-details-marker { display: none; }
-.panel-fold[open] .fold-summary { margin-bottom: 8px; }
 .panel-h { font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px; }
 .panel-h.row {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px;
@@ -956,20 +765,7 @@ onUnmounted(() => {
   color: #4f46e5; background: #eef2ff; border-color: #c7d2fe;
 }
 
-.plist { display: flex; flex-direction: column; gap: 6px; }
-.pager {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-  padding: 6px 2px; margin-bottom: 8px;
-}
-.pager-bottom { margin-bottom: 0; margin-top: 8px; }
-.pager-info { font-size: 0.72rem; color: #64748b; font-weight: 600; }
-.pager-actions { display: flex; gap: 6px; }
-.pager-btn {
-  border: 1px solid #cbd5e1; background: #fff; color: #475569;
-  border-radius: 8px; padding: 5px 10px; font-size: 0.76rem; font-weight: 600; cursor: pointer;
-}
-.pager-btn:disabled { opacity: .45; cursor: not-allowed; }
-.pager-btn:not(:disabled):hover { border-color: #a5b4fc; color: #4f46e5; }
+.plist { display: flex; flex-direction: column; gap: 6px; max-height: 52vh; overflow: auto; }
 .player { border: 1px solid #e2e8f0; border-radius: 12px; background: #fafbfc; }
 .player-h {
   width: 100%; display: flex; gap: 8px; align-items: flex-start;
@@ -1030,13 +826,7 @@ onUnmounted(() => {
 
 .log {
   margin: 0; background: #0f172a; color: #e2e8f0; border-radius: 10px;
-  padding: 12px; font-size: 0.72rem; line-height: 1.45; min-height: 240px;
-  max-height: 42vh; overflow: auto; white-space: pre-wrap; word-break: break-word;
-}
-
-@media (max-width: 720px) {
-  .cards-compact { grid-template-columns: 1fr 1fr; }
-  .metrics { grid-template-columns: 1fr; }
-  .settings-row, .actions-primary { width: 100%; }
+  padding: 12px; font-size: 0.72rem; line-height: 1.45; max-height: 48vh;
+  overflow: auto; white-space: pre-wrap; word-break: break-word;
 }
 </style>

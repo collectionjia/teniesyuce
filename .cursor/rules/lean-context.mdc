@@ -1,0 +1,17 @@
+---
+description: Minimize token use: targeted reads, no repo-wide fishing
+alwaysApply: true
+---
+
+# Lean context
+
+Keep each turn cheap. Extra exploration is worse than asking one short question.
+
+- Start from the user's paths, errors, and names. Do not scan the whole repo.
+- Prefer `Grep` with a tight pattern and path. Avoid `**` globs and "read everything."
+- Read only the needed slice (`offset`/`limit`). Default max ~80 lines unless the user asked for a full file.
+- Cap first-pass tools at 4. Stop when you can act. No parallel "just in case" reads.
+- Do not launch explore/subagents for a single file or a named symbol.
+- Do not dump file contents, git status, or long logs into the reply.
+- Do not re-read files already in this chat unless they may have changed.
+- If the target is unclear after one targeted search, ask one specific question instead of widening the search.

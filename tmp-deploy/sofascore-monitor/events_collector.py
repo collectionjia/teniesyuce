@@ -205,12 +205,6 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
         "kept_events": len(kept),
         "wta_kept": wta,
         "tournaments": [slim_tournament(t) for t in tier_tournaments],
-        "requests": {
-            "live": 1,
-            "scheduled_pages": pages,
-            "tier_detail": detail_fetched * 2,
-            "estimated": 2 + 1 + pages + detail_fetched * 2,
-        },
     }
     print(
         f"[events] {d}: listed={len(listed)} pages={pages} tier={len(tier_tournaments)} "

@@ -214,10 +214,8 @@ router.get('/data-source', async (_req, res) => {
     const tennisDataSource = require('../services/tennisDataSource');
     const allsports = require('../services/allsports');
     const tennisCache = require('../services/tennisCache');
-    const tennisFromMonitor = require('../services/tennisFromMonitor');
     const pref = await tennisDataSource.get();
     const bundle = await tennisCache.getBundle();
-    const lastRedis = tennisFromMonitor.getLastRedisRefresh();
     res.json({
       ok: true,
       source: pref,
@@ -226,9 +224,6 @@ router.get('/data-source', async (_req, res) => {
       redis_read: true,
       redis_upstream: bundle?.upstream || bundle?.source || null,
       redis_fetched_at: bundle?.fetched_at || null,
-      collect_requests: bundle?.requests || lastRedis?.requests || null,
-      poly_match: bundle?.polyMatch || lastRedis?.poly || null,
-      redis_refresh: bundle?.redisRefresh || lastRedis?.redisRefresh || null,
     });
   } catch (err) {
     console.error('[sofa-monitor/data-source]', err);

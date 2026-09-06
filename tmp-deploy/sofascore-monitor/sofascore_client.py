@@ -64,17 +64,6 @@ class SofascoreClient:
         self._last_request_at = 0.0
         self._skip_warm = skip_warm
         self._warmed = bool(skip_warm)
-        self._stats = {"total": 0, "warmup": 0, "api": 0, "retries": 0}
-
-    def get_request_stats(self) -> dict[str, int]:
-        return dict(self._stats)
-
-    def _count_request(self, kind: str, *, retry: bool = False) -> None:
-        self._stats["total"] += 1
-        if kind in self._stats:
-            self._stats[kind] += 1
-        if retry:
-            self._stats["retries"] += 1
 
     def __enter__(self) -> "SofascoreClient":
         return self
@@ -99,7 +88,6 @@ class SofascoreClient:
                 self._throttle()
                 r = self.session.get(page, timeout=25, headers={"Accept": "text/html,application/xhtml+xml"})
                 self._last_request_at = time.time()
-                self._count_request("warmup")
                 if r.status_code >= 400:
                     print(f"[sofascore] warm_up {page} HTTP {r.status_code}")
             except Exception as exc:
@@ -112,7 +100,6 @@ class SofascoreClient:
             try:
                 self._throttle()
                 self._last_request_at = time.time()
-                self._count_request("api", retry=attempt > 0)
                 return self.session.get(url, timeout=_REQUEST_TIMEOUT, headers=headers)
             except Exception as exc:
                 last_exc = exc

@@ -11,7 +11,6 @@ const REFRESH_MS = Number(process.env.TENNIS_REDIS_REFRESH_MS || 60000);
 let refreshPromise = null;
 let lastRefreshAt = 0;
 let timer = null;
-let lastRedisRefresh = {};
 
 async function monitorGet(pathname, timeoutMs = 15000) {
   const res = await fetch(`${MONITOR_BASE}${pathname}`, {
@@ -95,9 +94,6 @@ function normalizeBundle(raw) {
     polymarketByEvent: raw.polymarketByEvent || {},
     theOddsApiByEvent: raw.theOddsApiByEvent || {},
     birthYearByPlayer: raw.birthYearByPlayer || {},
-    requests: raw.requests || null,
-    polyMatch: raw.polyMatch || null,
-    redisRefresh: raw.redisRefresh || null,
     ok: true,
     member: true,
     events: eventCount,
@@ -115,7 +111,6 @@ function normalizeBundle(raw) {
 async function refreshRedisFromMonitor({ includeLive = true } = {}) {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
-    const redisStarted = Date.now();
     const pref = await tennisDataSource.get();
     const useAllsports = pref === 'api';
     let bundle;
@@ -161,36 +156,16 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       }
     }
 
-    let polyStats = null;
     try {
-      polyStats = await applyPolymarketLinks(bundle);
-      bundle.polyMatch = polyStats;
+      const polyStats = await applyPolymarketLinks(bundle);
       if (polyStats.fromGamma || polyStats.fromMysql || polyStats.prices?.updated) {
         console.log(
-          `[tennis/monitor-redis] poly linked=${polyStats.matched} gamma=${polyStats.fromGamma} ` +
-            `prices=${polyStats.prices?.updated || 0} ms=${polyStats.timingMs?.total || 0}`,
+          `[tennis/monitor-redis] poly linked=${polyStats.matched} gamma=${polyStats.fromGamma} prices=${polyStats.prices?.updated || 0}`,
         );
       }
     } catch (e) {
       console.error('[tennis/monitor-redis] poly match:', e.message);
     }
-
-    const redisRefreshMs = Date.now() - redisStarted;
-    bundle.redisRefresh = {
-      totalMs: redisRefreshMs,
-      polyMs: polyStats?.timingMs?.total || 0,
-      polyMatchMs: polyStats?.timingMs?.match || 0,
-      polyPriceMs: polyStats?.timingMs?.prices || 0,
-      at: new Date().toISOString(),
-    };
-    lastRedisRefresh = {
-      requests: bundle.requests || null,
-      poly: polyStats,
-      redisRefresh: bundle.redisRefresh,
-      upstream: bundle.upstream,
-      events: bundle.events,
-      at: bundle.fetched_at,
-    };
 
     bundle.serverTime = Math.floor(Date.now() / 1000);
     if (!bundle.live || typeof bundle.live !== 'object') {
@@ -253,8 +228,5 @@ module.exports = {
   buildRankingsFromEvents,
   get lastRefreshAt() {
     return lastRefreshAt;
-  },
-  getLastRedisRefresh() {
-    return { ...lastRedisRefresh };
   },
 };

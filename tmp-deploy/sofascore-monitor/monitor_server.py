@@ -466,7 +466,6 @@ def _top100_api_from_snap(snap: dict[str, Any]) -> dict[str, Any]:
         "wta": top100.get("wta") or [],
         "summary": _top100_summary_from_board(top100, snap),
         "elapsed_sec": snap.get("elapsed_sec"),
-        "requests": snap.get("requests") or {},
         "error": snap.get("error"),
     }
 
@@ -498,12 +497,9 @@ def _run_top100_collect(trigger: str = "auto") -> None:
                 "error": snap.get("error"),
                 "total_events": snap.get("total_events"),
                 "live_count": snap.get("live_count"),
-                "elapsed_sec": snap.get("elapsed_sec"),
-                "requests": snap.get("requests") or {},
             }
         _append_log(
-            f"top100 ok events={snap.get('total_events')} live={snap.get('live_count')} "
-            f"elapsed={snap.get('elapsed_sec')}s requests={((snap.get('requests') or {}).get('total'))}"
+            f"top100 ok events={snap.get('total_events')} live={snap.get('live_count')} elapsed={snap.get('elapsed_sec')}s"
         )
         _refresh_server_redis()
     except Exception as exc:
@@ -578,8 +574,6 @@ def _build_top100_bundle() -> dict[str, Any]:
         "birthYearByPlayer": snap.get("birthYearByPlayer") or {},
         "events": len(events),
         "live_count": len(live),
-        "elapsed_sec": snap.get("elapsed_sec"),
-        "requests": snap.get("requests") or {},
         "error": snap.get("error"),
     }
 
