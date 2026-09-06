@@ -30,7 +30,7 @@ const tour = ref('all') // all | ATP | WTA
 const gapMin = ref('50') // all | 50 | 70 | 90
 const diffMax = ref('0') // all | 0 | -30 | -50 | -70
 const strongRankMax = ref('20') // all | 10 | 20
-const topPoolMax = ref('100') // 10 | 20 | 50 | 100（新网球列表）
+const topPoolMax = ref('100') // 20 | 50 | 100（新网球列表 · Top100 池内筛选）
 const filtersOpen = ref(false)
 const detailMatch = ref(null)
 const selectedIds = ref(new Set())
@@ -883,7 +883,6 @@ function gapInfo(m) {
 
     <div v-if="isMember && isNewMode" class="new-pool-bar">
       <span class="label">排名池</span>
-      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '10' }" @click="topPoolMax = '10'">Top10</button>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>

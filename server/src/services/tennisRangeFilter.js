@@ -221,7 +221,7 @@ function buildNewBundle(sourceBundle) {
     filter: 'tennis-new',
     top_rank_max: TOP_RANK_MAX,
     top100: sourceBundle.top100 || {},
-    poolRules: { top10: 10, top20: 20, top50: 50, top100: 100 },
+    poolRules: { top20: 20, top50: 50, top100: 100 },
     scheduled,
     live: {
       tournaments: [],

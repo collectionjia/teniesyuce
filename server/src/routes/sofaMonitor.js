@@ -91,6 +91,21 @@ router.get('/status', async (_req, res) => {
   }
 });
 
+router.get('/top100', async (req, res) => {
+  try {
+    sendProxy(
+      res,
+      await monitorFetch('/top100', {
+        query: { refresh: req.query.refresh || '0' },
+        timeoutMs: 120000,
+      }),
+    );
+  } catch (err) {
+    console.error('[sofa-monitor/top100]', err);
+    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+  }
+});
+
 router.get('/top20', async (req, res) => {
   try {
     sendProxy(

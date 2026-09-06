@@ -302,6 +302,13 @@ export async function fetchSofaMonitorStatus() {
   return data
 }
 
+export async function fetchSofaMonitorTop100(refresh = false) {
+  const { data } = await api.get('/admin/sofa-monitor/top100', {
+    params: refresh ? { refresh: 1 } : {},
+  })
+  return data
+}
+
 export async function fetchSofaMonitorTop20(refresh = false) {
   const { data } = await api.get('/admin/sofa-monitor/top20', {
     params: refresh ? { refresh: 1 } : {},
@@ -336,38 +343,6 @@ export async function fetchSofaMonitorSchedule() {
 
 export async function updateSofaMonitorSchedule(intervalHours) {
   const { data } = await api.post('/admin/sofa-monitor/schedule', { interval_hours: intervalHours })
-  return data
-}
-
-export async function fetchTennisLiveScraperStatus() {
-  const { data } = await api.get('/admin/tennis-live-scraper/status')
-  return data
-}
-
-export async function fetchTennisLiveScraperTop100(refresh = false) {
-  const { data } = await api.get('/admin/tennis-live-scraper/top100', {
-    params: refresh ? { refresh: 1 } : {},
-  })
-  return data
-}
-
-export async function triggerTennisLiveScraperTop100Collect() {
-  const { data } = await api.post('/admin/tennis-live-scraper/top100/collect')
-  return data
-}
-
-export async function fetchTennisLiveScraperLive() {
-  const { data } = await api.get('/admin/tennis-live-scraper/live')
-  return data
-}
-
-export async function triggerTennisLiveScraperLiveCollect() {
-  const { data } = await api.post('/admin/tennis-live-scraper/live/collect')
-  return data
-}
-
-export async function fetchTennisLiveScraperLogs(lines = 120) {
-  const { data } = await api.get('/admin/tennis-live-scraper/logs', { params: { lines } })
   return data
 }
 
@@ -462,28 +437,6 @@ export async function refreshTennisNewCache() {
 
 export async function refreshTennisLiveCache() {
   const { data } = await api.post('/tennis-live/cache/refresh')
-  return data
-}
-
-export async function fetchTennisLiveMonitorPlayers(refresh = false) {
-  const { data } = await api.get('/admin/tennis-live-monitor/players', {
-    params: { refresh: refresh ? '1' : '0' },
-  })
-  return data
-}
-
-export async function fetchTennisLiveMonitorStatus() {
-  const { data } = await api.get('/admin/tennis-live-monitor/status')
-  return data
-}
-
-export async function fetchTennisLiveMonitorPreview(tier = 'all') {
-  const { data } = await api.get('/admin/tennis-live-monitor/preview', { params: { tier } })
-  return data
-}
-
-export async function refreshTennisLiveMonitorCache() {
-  const { data } = await api.post('/admin/tennis-live-monitor/refresh')
   return data
 }
 

@@ -28,8 +28,6 @@ const tradesRoutes = require('./routes/trades');
 const tennisRangeRoutes = require('./routes/tennisRange');
 const tennisLiveRoutes = require('./routes/tennisLive');
 const tennisNewRoutes = require('./routes/tennisNew');
-const tennisLiveMonitorRoutes = require('./routes/tennisLiveMonitor');
-const tennisLiveScraperRoutes = require('./routes/tennisLiveScraper');
 
 const app = express();
 app.use(cors());
@@ -57,8 +55,6 @@ app.use('/api/trades', tradesRoutes);
 app.use('/api/tennis-range', tennisRangeRoutes);
 app.use('/api/tennis-live', tennisLiveRoutes);
 app.use('/api/tennis-new', tennisNewRoutes);
-app.use('/api/admin/tennis-live-monitor', tennisLiveMonitorRoutes);
-app.use('/api/admin/tennis-live-scraper', tennisLiveScraperRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

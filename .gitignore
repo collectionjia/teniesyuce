@@ -7,6 +7,7 @@
 server/.env
 server/.env.*
 !server/.env.example
+scripts/sofascore-monitor/monitor.env
 
 # dependencies & build
 node_modules/

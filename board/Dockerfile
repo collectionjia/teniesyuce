@@ -22,4 +22,4 @@ EXPOSE 8890
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://127.0.0.1:8890/api/state || exit 1
 
-CMD ["python3", "quick_trade.py"]
+CMD ["python3", "onchain_leaderboard.py"]

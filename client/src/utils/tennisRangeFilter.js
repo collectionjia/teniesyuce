@@ -72,4 +72,4 @@ export function tierLabel(strongRank) {
 }
 
 export const RANGE_RULES_TEXT = '任一方 Top100 · Top10差≥10 / Top20差≥20 / Top50差≥50 / Top100差≥100'
-export const NEW_POOL_RULES_TEXT = '任一方在 Top N 内 · 可选 Top10 / Top20 / Top50 / Top100'
+export const NEW_POOL_RULES_TEXT = 'Top100 运动员赛事 · 任一方在 Top N 内 · 可选 Top20 / Top50 / Top100'

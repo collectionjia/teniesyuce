@@ -10,10 +10,11 @@ const liveCollecting = ref(false)
 const error = ref('')
 const notice = ref('')
 const status = ref(null)
-const top20 = ref(null)
+const top100Board = ref(null)
 const liveData = ref(null)
 const logs = ref(null)
 const tab = ref('atp') // atp | wta | live | logs
+const topPoolMax = ref('100') // 20 | 50 | 100
 const expanded = ref({})
 const schedule = ref(null)
 const scheduleSaving = ref(false)
@@ -26,13 +27,13 @@ const INTERVAL_OPTIONS = [
 ]
 
 let pollTimer = null
-let top20Timer = null
+let top100Timer = null
 let liveTimer = null
 let noticeTimer = null
 
-const top20LoadingSince = ref(0)
-const top20LoadingSec = ref(0)
-let top20LoadingTick = null
+const top100LoadingSince = ref(0)
+const top100LoadingSec = ref(0)
+let top100LoadingTick = null
 
 const running = computed(() => !!(
   status.value?.top100_collect?.running
@@ -56,10 +57,27 @@ const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
   return opt?.label || `每 ${collectIntervalHours.value} 小时`
 })
-const summary = computed(() => top20.value?.summary || {})
+const summary = computed(() => ({
+  ...(top100Board.value?.summary || {}),
+  ...(top100Collect.value?.summary || {}),
+  total_matches:
+    top100Board.value?.summary?.total_matches
+    ?? lastRun.value?.total_events
+    ?? top100Collect.value?.summary?.total_matches,
+}))
 const players = computed(() => {
-  const list = tab.value === 'wta' ? top20.value?.wta : top20.value?.atp
-  return Array.isArray(list) ? list : []
+  const list = tab.value === 'wta' ? top100Board.value?.wta : top100Board.value?.atp
+  const max = Number(topPoolMax.value) || 100
+  return (Array.isArray(list) ? list : []).filter((p) => {
+    const rank = Number(p.rank)
+    return Number.isFinite(rank) && rank > 0 && rank <= max
+  })
+})
+const poolSummary = computed(() => {
+  const max = Number(topPoolMax.value) || 100
+  let matches = 0
+  for (const p of players.value) matches += Number(p.matchCount) || 0
+  return { max, players: players.value.length, matches }
 })
 
 const statusLabel = computed(() => {
@@ -83,7 +101,7 @@ const busy = computed(() => (
   || collecting.value
   || liveCollecting.value
   || liveRunning.value
-  || !!top20.value?.loading
+  || !!top100Board.value?.loading
 ))
 
 function showNotice(msg) {
@@ -95,26 +113,26 @@ function showNotice(msg) {
   }, 8000)
 }
 
-function startTop20LoadingClock() {
-  top20LoadingSince.value = Date.now()
-  top20LoadingSec.value = 0
-  if (top20LoadingTick) clearInterval(top20LoadingTick)
-  top20LoadingTick = setInterval(() => {
-    if (!top20.value?.loading) {
-      stopTop20LoadingClock()
+function startTop100LoadingClock() {
+  top100LoadingSince.value = Date.now()
+  top100LoadingSec.value = 0
+  if (top100LoadingTick) clearInterval(top100LoadingTick)
+  top100LoadingTick = setInterval(() => {
+    if (!top100Board.value?.loading) {
+      stopTop100LoadingClock()
       return
     }
-    top20LoadingSec.value = Math.floor((Date.now() - top20LoadingSince.value) / 1000)
+    top100LoadingSec.value = Math.floor((Date.now() - top100LoadingSince.value) / 1000)
   }, 1000)
 }
 
-function stopTop20LoadingClock() {
-  if (top20LoadingTick) {
-    clearInterval(top20LoadingTick)
-    top20LoadingTick = null
+function stopTop100LoadingClock() {
+  if (top100LoadingTick) {
+    clearInterval(top100LoadingTick)
+    top100LoadingTick = null
   }
-  top20LoadingSince.value = 0
-  top20LoadingSec.value = 0
+  top100LoadingSince.value = 0
+  top100LoadingSec.value = 0
 }
 
 function toggle(id) {
@@ -157,20 +175,20 @@ async function loadStatus() {
   status.value = await api.fetchSofaMonitorStatus()
 }
 
-async function loadTop20(force = false) {
-  const data = await api.fetchSofaMonitorTop20(force)
-  top20.value = data
+async function loadTop100(force = false) {
+  const data = await api.fetchSofaMonitorTop100(force)
+  top100Board.value = data
   if (data?.loading) {
-    startTop20LoadingClock()
-    if (!top20Timer) {
-      top20Timer = setInterval(async () => {
+    startTop100LoadingClock()
+    if (!top100Timer) {
+      top100Timer = setInterval(async () => {
         try {
-          const next = await api.fetchSofaMonitorTop20(false)
-          top20.value = next
+          const next = await api.fetchSofaMonitorTop100(false)
+          top100Board.value = next
           if (!next?.loading) {
-            clearInterval(top20Timer)
-            top20Timer = null
-            stopTop20LoadingClock()
+            clearInterval(top100Timer)
+            top100Timer = null
+            stopTop100LoadingClock()
             if (next?.error) {
               error.value = formatMonitorError(next.error)
             }
@@ -181,10 +199,10 @@ async function loadTop20(force = false) {
       }, 2000)
     }
   } else {
-    stopTop20LoadingClock()
-    if (top20Timer) {
-      clearInterval(top20Timer)
-      top20Timer = null
+    stopTop100LoadingClock()
+    if (top100Timer) {
+      clearInterval(top100Timer)
+      top100Timer = null
     }
   }
 }
@@ -208,7 +226,7 @@ async function refreshAll({ silent = false } = {}) {
     notice.value = ''
   }
   try {
-    await Promise.all([loadStatus(), loadTop20(false), loadLive(), loadLogs(), loadSchedule()])
+    await Promise.all([loadStatus(), loadTop100(false), loadLive(), loadLogs(), loadSchedule()])
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
   } finally {
@@ -233,7 +251,7 @@ async function waitCollectDone() {
         showNotice(`Top100 采集完成：${lastRun.value?.total_events ?? bundle.value?.event_count ?? '—'} 场比赛`)
         api.refreshTennisCache().catch(() => {})
         api.refreshTennisNewCache().catch(() => {})
-        await loadTop20(false)
+        await loadTop100(false)
       }
       return
     }
@@ -343,17 +361,17 @@ async function onIntervalChange(event) {
   }
 }
 
-async function refreshTop20() {
+async function refreshTop100() {
   if (running.value) {
-    error.value = '每日采集进行中，请稍后再重拉榜'
+    error.value = 'Top100 采集进行中，请稍后再重拉'
     return
   }
   error.value = ''
   notice.value = ''
   try {
-    await loadTop20(true)
+    await loadTop100(true)
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '刷新 Top20 失败')
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '刷新 Top100 失败')
   }
 }
 
@@ -370,10 +388,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
-  if (top20Timer) clearInterval(top20Timer)
+  if (top100Timer) clearInterval(top100Timer)
   if (liveTimer) clearInterval(liveTimer)
   if (noticeTimer) clearTimeout(noticeTimer)
-  stopTop20LoadingClock()
+  stopTop100LoadingClock()
 })
 </script>
 
@@ -440,9 +458,9 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="card">
-          <div class="label">Top20 今日</div>
+          <div class="label">Top100 赛事</div>
           <div class="value">{{ summary.total_matches ?? '—' }}</div>
-          <div class="hint">ATP {{ summary.atp_matches ?? 0 }} · WTA {{ summary.wta_matches ?? 0 }}</div>
+          <div class="hint">ATP {{ summary.atp_matches ?? 0 }} · WTA {{ summary.wta_matches ?? 0 }} · 榜 {{ summary.atp_players ?? 0 }}/{{ summary.wta_players ?? 0 }}</div>
         </div>
       </div>
 
@@ -458,11 +476,19 @@ onUnmounted(() => {
       </div>
 
       <div class="tabs">
-        <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP Top20</button>
-        <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA Top20</button>
+        <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
+        <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
         <button type="button" :class="{ on: tab === 'live' }" @click="tab = 'live'">进行中</button>
         <button type="button" :class="{ on: tab === 'logs' }" @click="tab = 'logs'">日志</button>
-        <button type="button" class="link" :disabled="busy || running" @click="refreshTop20">重拉榜</button>
+        <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
+      </div>
+
+      <div v-if="tab === 'atp' || tab === 'wta'" class="pool-bar">
+        <span class="pool-label">排名池</span>
+        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+        <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+        <span class="pool-meta">{{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场</span>
       </div>
 
       <div v-if="tab === 'live'" class="panel">
@@ -502,18 +528,18 @@ onUnmounted(() => {
 
       <div v-else-if="tab !== 'logs'" class="panel">
         <div class="panel-h row">
-          <span class="panel-title">{{ tab.toUpperCase() }} · {{ top20?.date || '—' }}</span>
+          <span class="panel-title">{{ tab.toUpperCase() }} Top{{ topPoolMax }} · {{ top100Board?.date || '—' }}</span>
           <span class="muted panel-meta">
-            <template v-if="top20?.loading">拉取中…<span v-if="top20LoadingSec"> · 已 {{ top20LoadingSec }}s</span></template>
-            <template v-else>更新 {{ fmtTime(top20?.fetched_at) }}</template>
+            <template v-if="top100Board?.loading">拉取中…<span v-if="top100LoadingSec"> · 已 {{ top100LoadingSec }}s</span></template>
+            <template v-else>更新 {{ fmtTime(top100Board?.fetched_at) }}</template>
           </span>
         </div>
 
-        <div v-if="top20?.error" class="banner err">{{ formatMonitorError(top20.error) }}</div>
-        <div v-else-if="top20?.loading && !players.length" class="empty">
-          正在拉取 Sofascore Top20…<span v-if="top20LoadingSec">（已 {{ top20LoadingSec }} 秒，通常 30～60 秒）</span>
+        <div v-if="top100Board?.error" class="banner err">{{ formatMonitorError(top100Board.error) }}</div>
+        <div v-else-if="top100Board?.loading && !players.length" class="empty">
+          正在拉取 Sofascore Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
         </div>
-        <div v-else-if="!players.length" class="empty">暂无球员数据</div>
+        <div v-else-if="!players.length" class="empty">暂无 Top{{ topPoolMax }} 球员数据</div>
 
         <div v-else class="plist">
           <div v-for="p in players" :key="p.id" class="player">
@@ -640,6 +666,20 @@ onUnmounted(() => {
 .tabs button.on { background: #4f46e5; color: #fff; }
 .tabs .link { background: transparent; color: #4f46e5; padding-inline: 8px; }
 .tabs .link:disabled { opacity: .45; cursor: not-allowed; }
+
+.pool-bar {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  padding: 0 2px;
+}
+.pool-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-right: 2px; }
+.pool-meta { margin-left: auto; font-size: 0.72rem; color: #64748b; font-weight: 600; }
+.chip-btn {
+  border: 1px solid #cbd5e1; background: #fff; color: #64748b;
+  border-radius: 999px; padding: 5px 11px; font-size: 0.76rem; font-weight: 600; cursor: pointer;
+}
+.chip-btn.active {
+  color: #4f46e5; background: #eef2ff; border-color: #c7d2fe;
+}
 
 .plist { display: flex; flex-direction: column; gap: 6px; max-height: 52vh; overflow: auto; }
 .player { border: 1px solid #e2e8f0; border-radius: 12px; background: #fafbfc; }
