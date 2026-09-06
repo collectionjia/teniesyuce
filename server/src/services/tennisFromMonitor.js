@@ -208,6 +208,7 @@ module.exports = {
   kickRefreshBackground,
   startBackgroundRefresh,
   normalizeBundle,
+  buildRankingsFromEvents,
   get lastRefreshAt() {
     return lastRefreshAt;
   },

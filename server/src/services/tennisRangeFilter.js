@@ -187,6 +187,7 @@ function buildRangeBundle(sourceBundle, { requirePoly = false } = {}) {
 function buildNewBundle(sourceBundle) {
   if (!sourceBundle) return null;
   const rankingsByPlayer = sourceBundle.rankingsByPlayer || {};
+  const polyMap = sourceBundle.polymarketByEvent || {};
   const filtered = allEventsFromBundle(sourceBundle).filter((m) =>
     passesTop100Pool(m, rankingsByPlayer),
   );
@@ -206,12 +207,20 @@ function buildNewBundle(sourceBundle) {
   });
 
   const scheduled = groupEventsByTournament(filtered);
+  const filteredPoly = {};
+  for (const m of filtered) {
+    if (m?.id == null) continue;
+    const key = String(m.id);
+    const poly = polyMap[m.id] || polyMap[key];
+    if (poly) filteredPoly[key] = poly;
+  }
 
   return {
     ...sourceBundle,
     sport: 'tennis',
     filter: 'tennis-new',
     top_rank_max: TOP_RANK_MAX,
+    top100: sourceBundle.top100 || {},
     poolRules: { top10: 10, top20: 20, top50: 50, top100: 100 },
     scheduled,
     live: {
@@ -220,6 +229,7 @@ function buildNewBundle(sourceBundle) {
       eventCount: liveMatches.length,
       matches: liveMatches,
     },
+    polymarketByEvent: filteredPoly,
     events: filtered.length,
     message: `tennis-new · ${filtered.length} events`,
     source: sourceBundle.source || 'sofascore-monitor',

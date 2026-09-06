@@ -819,7 +819,7 @@ onUnmounted(() => {
 })
 
 function gapInfo(m) {
-  if (isRangeMode.value) {
+  if (isRangeMode.value || isNewMode.value) {
     const metrics = matchRangeMetrics(m, data.value?.rankingsByPlayer || {})
     if (!metrics.ready) return { ready: false }
     return {
@@ -881,6 +881,15 @@ function gapInfo(m) {
       </div>
     </div>
 
+    <div v-if="isMember && isNewMode" class="new-pool-bar">
+      <span class="label">排名池</span>
+      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '10' }" @click="topPoolMax = '10'">Top10</button>
+      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+      <span class="new-pool-hint">{{ NEW_POOL_RULES_TEXT }}</span>
+    </div>
+
     <div v-if="showFilters" class="filter-panel">
       <button type="button" class="filter-toggle" @click="filtersOpen = !filtersOpen">
         <span class="filter-toggle-main">
@@ -933,17 +942,6 @@ function gapInfo(m) {
         <div v-else-if="isMember && isRangeMode" class="filter-row range-rules">
           <span class="label">区间</span>
           <span class="range-rules-text">{{ RANGE_RULES_TEXT }}</span>
-        </div>
-        <div v-else-if="isMember && isNewMode" class="filter-row">
-          <span class="label">排名池</span>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '10' }" @click="topPoolMax = '10'">Top10</button>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
-        </div>
-        <div v-if="isMember && isNewMode" class="filter-row range-rules">
-          <span class="label">规则</span>
-          <span class="range-rules-text">{{ NEW_POOL_RULES_TEXT }}</span>
         </div>
       </div>
     </div>
@@ -1020,6 +1018,7 @@ function gapInfo(m) {
             <span class="badge level">{{ matchLevelLabel(m) }}</span>
             <span v-if="isMember && oddsOf(m.id)?.full_time" class="badge odds">报</span>
             <span v-if="isMember && polyOf(m.id)?.url" class="badge poly">外</span>
+            <span v-if="isMember && isNewMode && gapInfo(m).ready" class="badge live-tier">{{ gapInfo(m).tier }}</span>
           </div>
         </div>
         <div class="row-main">
@@ -1127,21 +1126,28 @@ function gapInfo(m) {
 
             <div class="kv-grid">
               <template v-if="gapInfo(detailMatch).ready">
-                <div class="kv">
-                  <span class="k">现差</span>
-                  <span class="v warn">{{ gapInfo(detailMatch).gap }}</span>
-                  <span class="s">{{ rankText(gapInfo(detailMatch).homeR) }}/{{ rankText(gapInfo(detailMatch).awayR) }} · {{ gapInfo(detailMatch).better }}高</span>
+                <div class="kv" v-if="isRangeMode || isNewMode">
+                  <span class="k">{{ isNewMode ? '档位' : '区间' }}</span>
+                  <span class="v">{{ gapInfo(detailMatch).tier }}</span>
+                  <span class="s">现差 {{ gapInfo(detailMatch).gap }} · 需≥{{ gapInfo(detailMatch).minGap }}</span>
                 </div>
-                <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
-                  <span class="k">排差</span>
-                  <span class="v warn">{{ gapInfo(detailMatch).rankDiff > 0 ? '+' : '' }}{{ gapInfo(detailMatch).rankDiff }}</span>
-                  <span class="s">强{{ rankText(gapInfo(detailMatch).strongNow) }}−弱高{{ rankText(gapInfo(detailMatch).weakBest) }}</span>
-                </div>
-                <div class="kv" v-else>
-                  <span class="k">排差</span>
-                  <span class="v muted">—</span>
-                  <span class="s">缺最高排名</span>
-                </div>
+                <template v-else>
+                  <div class="kv">
+                    <span class="k">现差</span>
+                    <span class="v warn">{{ gapInfo(detailMatch).gap }}</span>
+                    <span class="s">{{ rankText(gapInfo(detailMatch).homeR) }}/{{ rankText(gapInfo(detailMatch).awayR) }} · {{ gapInfo(detailMatch).better }}高</span>
+                  </div>
+                  <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
+                    <span class="k">排差</span>
+                    <span class="v warn">{{ gapInfo(detailMatch).rankDiff > 0 ? '+' : '' }}{{ gapInfo(detailMatch).rankDiff }}</span>
+                    <span class="s">强{{ rankText(gapInfo(detailMatch).strongNow) }}−弱高{{ rankText(gapInfo(detailMatch).weakBest) }}</span>
+                  </div>
+                  <div class="kv" v-else>
+                    <span class="k">排差</span>
+                    <span class="v muted">—</span>
+                    <span class="s">缺最高排名</span>
+                  </div>
+                </template>
               </template>
               <div class="kv" v-else>
                 <span class="k">现差</span>
@@ -1369,6 +1375,29 @@ function gapInfo(m) {
   line-height: 1.35;
   color: #475569;
   font-weight: 600;
+}
+.new-pool-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+.new-pool-bar .label {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+}
+.new-pool-hint {
+  flex: 1 1 160px;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  line-height: 1.35;
 }
 .live-tier-rules {
   display: flex;
