@@ -1,5 +1,6 @@
 const tennisCache = require('./tennisCache');
 const tennisRangeCache = require('./tennisRangeCache');
+const tennisLiveCache = require('./tennisLiveCache');
 const btcWallet = require('./btcWallet');
 const polymarketTrade = require('./polymarketTrade');
 const tradeRecords = require('./tradeRecords');
@@ -54,9 +55,14 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
 
   const secrets = await btcWallet.loadWalletSecrets(userId);
   const tradeProduct = String(product || 'tennis').toLowerCase();
-  const bundle = tradeProduct === 'tennis-range'
-    ? await tennisRangeCache.getBundle()
-    : await tennisCache.getBundle();
+  let bundle;
+  if (tradeProduct === 'tennis-range') {
+    bundle = await tennisRangeCache.getBundle();
+  } else if (tradeProduct === 'tennis-live') {
+    bundle = await tennisLiveCache.getBundle();
+  } else {
+    bundle = await tennisCache.getBundle();
+  }
   if (!bundle) throw new Error('网球数据尚未就绪');
 
   const results = [];

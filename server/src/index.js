@@ -26,6 +26,9 @@ const nbaRoutes = require('./routes/nba');
 const dota2Routes = require('./routes/dota2');
 const tradesRoutes = require('./routes/trades');
 const tennisRangeRoutes = require('./routes/tennisRange');
+const tennisLiveRoutes = require('./routes/tennisLive');
+const tennisLiveMonitorRoutes = require('./routes/tennisLiveMonitor');
+const tennisLiveScraperRoutes = require('./routes/tennisLiveScraper');
 
 const app = express();
 app.use(cors());
@@ -51,6 +54,9 @@ app.use('/api/nba', nbaRoutes);
 app.use('/api/dota2', dota2Routes);
 app.use('/api/trades', tradesRoutes);
 app.use('/api/tennis-range', tennisRangeRoutes);
+app.use('/api/tennis-live', tennisLiveRoutes);
+app.use('/api/admin/tennis-live-monitor', tennisLiveMonitorRoutes);
+app.use('/api/admin/tennis-live-scraper', tennisLiveScraperRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -65,6 +71,19 @@ app.listen(PORT, () => {
       const tennisFromMonitor = require('./services/tennisFromMonitor');
       await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
       tennisFromMonitor.startBackgroundRefresh();
+      try {
+        const tennisLiveFromMonitor = require('./services/tennisLiveFromMonitor');
+        await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
+        tennisLiveFromMonitor.startBackgroundRefresh();
+        console.log('[tennis/live-cache] warmed from Sofascore monitor → Redis');
+      } catch (err) {
+        console.error('[tennis/live-cache] warm failed:', err.message);
+        try {
+          require('./services/tennisLiveFromMonitor').startBackgroundRefresh();
+        } catch (_) {
+          /* ignore */
+        }
+      }
       console.log('[tennis/cache] warmed from Sofascore monitor → Redis');
     } catch (err) {
       console.error('[tennis/cache] warm failed:', err.message);

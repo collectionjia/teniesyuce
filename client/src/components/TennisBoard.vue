@@ -2,19 +2,23 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
 import { passesRangeTennis, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT } from '../utils/tennisRangeFilter'
-
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic=原 Top20 网球；range=区间网球 */
+  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100 */
   boardMode: { type: String, default: 'classic' },
 })
 
 const isRangeMode = computed(() => props.boardMode === 'range')
-const apiPath = computed(() => (isRangeMode.value ? '/api/tennis-range' : '/api/tennis'))
+const isLiveMode = computed(() => props.boardMode === 'live')
+const apiPath = computed(() => {
+  if (isRangeMode.value) return '/api/tennis-range'
+  if (isLiveMode.value) return '/api/tennis-live'
+  return '/api/tennis'
+})
 const PAGE_SIZE = 5
 const data = ref(null)
 const loading = ref(true)
@@ -31,12 +35,16 @@ const batchAmountUsd = ref('1')
 const batchSubmitting = ref(false)
 const batchNotice = ref('')
 const batchError = ref('')
-const AUTO_BET_KEY = computed(() => (
-  isRangeMode.value ? 'yuce.tennisRange.autoBet.v1' : 'yuce.tennis.autoBet.v1'
-))
-const AUTO_PLACED_KEY = computed(() => (
-  isRangeMode.value ? 'yuce.tennisRange.autoPlaced.v1' : 'yuce.tennis.autoPlaced.v1'
-))
+const AUTO_BET_KEY = computed(() => {
+  if (isRangeMode.value) return 'yuce.tennisRange.autoBet.v1'
+  if (isLiveMode.value) return 'yuce.tennisLive.autoBet.v1'
+  return 'yuce.tennis.autoBet.v1'
+})
+const AUTO_PLACED_KEY = computed(() => {
+  if (isRangeMode.value) return 'yuce.tennisRange.autoPlaced.v1'
+  if (isLiveMode.value) return 'yuce.tennisLive.autoPlaced.v1'
+  return 'yuce.tennis.autoPlaced.v1'
+})
 const autoBetEnabled = ref(false)
 const autoPlacedIds = ref(new Set())
 
@@ -238,20 +246,22 @@ function matchPassesRank(m) {
   return true
 }
 
-function matchPassesFilter(m) {
+const STATUS_TABS = new Set(['all', 'Not started', 'liveish', 'ended'])
+
+function matchPassesFilter(m, statusFilter) {
+  const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
   if (!matchPassesTour(m)) return false
-  // 无外链场次不展示
-  if (!polyUrlOf(m)) return false
-  if (isMatchEnded(m) && filter.value === 'liveish') return false
-  if (filter.value === 'liveish') {
+  if (!isRangeMode.value && !polyUrlOf(m)) return false
+  if (isMatchEnded(m) && mode === 'liveish') return false
+  if (mode === 'liveish') {
     // 进行中列表：不过排名筛选（live 常无排名）
     return isMatchLive(m)
   }
-  if (filter.value === 'ended') {
+  if (mode === 'ended') {
     // 已结束：不过排名筛选
     return isMatchEnded(m)
   }
-  if (filter.value === 'Not started') {
+  if (mode === 'Not started') {
     if (!isMatchNotStarted(m)) return false
     return matchPassesRank(m)
   }
@@ -296,7 +306,7 @@ function sortMatches(list) {
 }
 
 const rawMatches = computed(() => allMatches(data.value))
-const matches = computed(() => sortMatches(rawMatches.value.filter(matchPassesFilter)))
+const matches = computed(() => sortMatches(rawMatches.value.filter((m) => matchPassesFilter(m))))
 const currentPage = ref(1)
 const totalPages = computed(() => Math.max(1, Math.ceil(matches.value.length / PAGE_SIZE)))
 const paginatedMatches = computed(() => {
@@ -386,7 +396,9 @@ async function submitBatchTrade({ auto = false } = {}) {
   try {
     const resp = isRangeMode.value
       ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
-      : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
+      : isLiveMode.value
+        ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
+        : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
     const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
     if (resp.success > 0) {
       const okLines = lines.filter((_, i) => resp.results[i]?.ok)
@@ -466,19 +478,21 @@ function setStatusFilter(mode) {
 }
 
 const stats = computed(() => {
-  // 顶部数字只统计有外链的场次（与列表一致）
-  const all = rawMatches.value.filter((m) => !!polyUrlOf(m))
-  const ranked = all.filter(matchPassesRank)
-  const toured = all.filter(matchPassesTour)
+  const pool = rawMatches.value.filter((m) => {
+    if (!matchPassesTour(m)) return false
+    if (!isRangeMode.value && !polyUrlOf(m)) return false
+    return true
+  })
+  const countTab = (tab) => pool.filter((m) => matchPassesFilter(m, tab)).length
   return {
     date: data.value?.date || '—',
     tournaments: data.value?.scheduled?.tournamentCount ?? 0,
-    total: all.length,
-    all: ranked.length,
+    total: pool.length,
+    all: countTab('all'),
     shown: matches.value.length,
-    open: ranked.filter((m) => isMatchNotStarted(m)).length,
-    live: toured.filter((m) => isMatchLive(m)).length,
-    ended: toured.filter((m) => isMatchEnded(m)).length,
+    open: countTab('Not started'),
+    live: countTab('liveish'),
+    ended: countTab('ended'),
   }
 })
 
@@ -785,8 +799,8 @@ onMounted(() => {
   loadTennisAutoState()
   loadOnce()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
-  // 后台约每分钟同步一次，及时收口完赛状态
-  refreshTimer = setInterval(() => { loadOnce({ silent: true }) }, 60000)
+  const refreshMs = isLiveMode.value ? 120000 : 60000
+  refreshTimer = setInterval(() => { loadOnce({ silent: true }) }, refreshMs)
 })
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
@@ -915,8 +929,9 @@ function gapInfo(m) {
     <div v-if="loading && !data" class="empty">加载赛程中…</div>
     <div v-else-if="error && !data" class="empty err">{{ error }}</div>
     <div v-else-if="!matches.length" class="empty">
-      当前筛选下没有场次（已过滤 {{ stats.total }} 场）
-      <div v-if="data?.update?.message" class="hint">{{ data.update.message }}</div>
+      当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
+      <div v-if="data?.message" class="hint">{{ data.message }}</div>
+      <div v-else-if="data?.update?.message" class="hint">{{ data.update.message }}</div>
     </div>
 
     <template v-else>
@@ -1331,6 +1346,46 @@ function gapInfo(m) {
   font-size: 0.72rem;
   line-height: 1.35;
   color: #475569;
+  font-weight: 600;
+}
+.live-tier-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.live-tier-rule {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.live-tier-rule.on {
+  color: #6d28d9;
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+}
+.live-gap-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: #475569;
+  margin: 2px 0 4px;
+  padding: 0 2px;
+}
+.live-gap-strip b { color: #b45309; font-weight: 800; }
+.live-gap-strip .muted { color: #94a3b8; font-weight: 600; }
+.badge.live-tier { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.badge.live-tier.ok { background: #ecfdf5; color: #047857; border-color: #bbf7d0; }
+.badge.live-tier.warn { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.live-only-label {
+  font-size: 0.82rem;
+  color: #7c3aed;
   font-weight: 600;
 }
 .chip-btn, .filters button { cursor: pointer; padding: 6px 12px; font-size: 0.82rem; }

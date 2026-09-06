@@ -32,6 +32,7 @@ const NAME_RULES = [
   [/足球|soccer|football/i, 'football'],
   [/\bnba\b|篮球|basketball/i, 'basketball'],
   [/区间网球|tennis-range/i, 'tennis'],
+  [/盘中|tennis-live/i, 'tennis'],
   [/网球|tennis/i, 'tennis'],
   [/dota\s*2|dota2/i, 'radar'],
   [/股票|证券|stock/i, 'stock'],
@@ -49,6 +50,7 @@ const FALLBACK_KEYS = Object.keys(ICONS)
 export function getProductIconKey(product) {
   const tag = String(product?.tag || '').trim().toLowerCase()
   if (tag === 'tennis-range') return 'tennis'
+  if (tag === 'tennis-live') return 'tennis'
   if (tag === 'nba' || tag === 'basketball') return 'basketball'
   if (tag === 'dota2' || tag === 'dota') return tag === 'dota2' ? 'radar' : 'radar'
   if (ICONS[tag]) return tag

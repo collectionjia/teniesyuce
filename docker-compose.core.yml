@@ -1,4 +1,5 @@
-# 核心服务：redis + board + server + web（不含 basketball / dota2）
+# 核心服务：board + server + web（不含 basketball / dota2）
+# MySQL 用 server/.env 远程库；Redis 用 compose 内 redis 服务（对外 9003）
 # 用法: docker compose -f docker-compose.core.yml up -d --build
 
 services:
@@ -8,8 +9,8 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    expose:
-      - "6379"
+    ports:
+      - "${REDIS_PORT:-9003}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -27,6 +28,8 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://board:8890/}
       SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_healthy

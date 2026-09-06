@@ -1,6 +1,7 @@
 const tennisCache = require('./tennisCache');
 const tennisLive = require('./tennisLive');
 const tennisPolymarket = require('./tennisPolymarket');
+const { enrichBundlePolymarket } = require('./tennisPolymarketMatch');
 
 const MONITOR_BASE = (process.env.SOFA_MONITOR_URL || 'http://172.17.0.1:9004').replace(/\/$/, '');
 const MONITOR_TOKEN = (process.env.SOFA_MONITOR_TOKEN || 'sofascore-monitor-2026').trim();
@@ -22,6 +23,45 @@ async function monitorGet(pathname, timeoutMs = 15000) {
   return res.json();
 }
 
+function buildRankingsFromEvents(bundle) {
+  const map = { ...(bundle.rankingsByPlayer || {}) };
+  for (const t of bundle?.scheduled?.tournaments || []) {
+    for (const ev of t.events || []) {
+      for (const side of [ev.homePlayer, ev.awayPlayer]) {
+        if (!side?.id) continue;
+        const key = String(side.id);
+        const rank = side.rank ?? side.ranking ?? side.currentRank;
+        if (rank == null) continue;
+        const prev = map[key] || {};
+        map[key] = {
+          current: prev.current ?? rank,
+          previous: prev.previous ?? null,
+          best: prev.best ?? rank,
+          live: prev.live ?? rank,
+          utr: prev.utr ?? null,
+        };
+      }
+    }
+  }
+  for (const ev of bundle?.live?.matches || []) {
+    for (const side of [ev.homePlayer, ev.awayPlayer]) {
+      if (!side?.id) continue;
+      const key = String(side.id);
+      const rank = side.rank ?? side.ranking ?? side.currentRank;
+      if (rank == null) continue;
+      const prev = map[key] || {};
+      map[key] = {
+        current: prev.current ?? rank,
+        previous: prev.previous ?? null,
+        best: prev.best ?? rank,
+        live: prev.live ?? rank,
+        utr: prev.utr ?? null,
+      };
+    }
+  }
+  bundle.rankingsByPlayer = map;
+}
+
 function normalizeBundle(raw) {
   if (!raw || typeof raw !== 'object') return null;
   const scheduled = raw.scheduled || { tournaments: [], tournamentCount: 0, eventCount: 0 };
@@ -30,7 +70,7 @@ function normalizeBundle(raw) {
     scheduled.eventCount ??
     tournaments.reduce((n, t) => n + ((t.events || []).length), 0);
 
-  return {
+  const out = {
     sport: raw.sport || 'tennis',
     date: raw.date,
     serverTime: Math.floor(Date.now() / 1000),
@@ -59,6 +99,8 @@ function normalizeBundle(raw) {
     message: `monitor→redis · ${eventCount} events`,
     bundle_file: raw.bundle_file || null,
   };
+  buildRankingsFromEvents(out);
+  return out;
 }
 
 /**
@@ -92,6 +134,12 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     }
 
     try {
+      await enrichBundlePolymarket(bundle);
+    } catch (e) {
+      console.error('[tennis/monitor-redis] poly match:', e.message);
+    }
+
+    try {
       const polyStats = await tennisPolymarket.refreshPolymarketPrices(bundle);
       if (polyStats.updated || polyStats.failed) {
         console.log(
@@ -117,6 +165,12 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       await tennisRangeFromMonitor.refreshRangeBundleFromMonitor();
     } catch (e) {
       console.error('[tennis/monitor-redis] range refresh:', e.message);
+    }
+    try {
+      const tennisLiveFromMonitor = require('./tennisLiveFromMonitor');
+      await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
+    } catch (e) {
+      console.error('[tennis/monitor-redis] live refresh:', e.message);
     }
     return bundle;
   })()

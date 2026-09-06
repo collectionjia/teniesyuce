@@ -9,6 +9,8 @@ import BasketballBoard from './components/BasketballBoard.vue'
 import Dota2Board from './components/Dota2Board.vue'
 import BtcBoardAdmin from './components/BtcBoardAdmin.vue'
 import SofaMonitor from './components/SofaMonitor.vue'
+import TennisLiveMonitor from './components/TennisLiveMonitor.vue'
+import LiveTop100Scraper from './components/LiveTop100Scraper.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
 import { startBackgroundRunner, stopBackgroundRunner, loadSimState, setLiveTradeHandler, setLiveSellHandler } from './btcVirtualBet'
@@ -289,6 +291,9 @@ const paymentResult = reactive({
 })
 
 const roleTitle = computed(() => ({ user: '普通用户', agent: '代理', admin: '管理员' }[role.value]))
+function userRoleLabel(u) {
+  return { user: '用户', agent: '代理', admin: '管理员' }[u?.role] || '用户'
+}
 const displayUserName = computed(() => {
   const name = (currentUser.name || '').trim()
   if (name) return name
@@ -347,6 +352,7 @@ function setTradeProductFilter(product) {
 function tradeProductLabel(p) {
   if (p === 'btc') return 'BTC'
   if (p === 'tennis-range') return '区间网球'
+  if (p === 'tennis-live') return '盘中网球'
   if (p === 'tennis') return '网球'
   return p
 }
@@ -431,7 +437,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'sofa-monitor': 'Sofascore 监控', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'sofa-monitor': 'Sofascore 监控', 'tennis-live-scraper': '盘中 Top100 采集', 'tennis-live-monitor': '盘中网球监控', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -473,7 +479,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'sofa-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'sofa-monitor', 'tennis-live-scraper', 'tennis-live-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 const adminManageSections = [
   {
     key: 'manage',
@@ -495,6 +501,8 @@ const adminManageSections = [
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
       { view: 'sofa-monitor', label: 'Sofascore 监控', desc: '网球数据采集与 Top20', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-live-scraper', label: '盘中 Top100 采集', desc: 'Top100 运动员赛事拉取', icon: 'tennis', color: 'from-violet-600 to-purple-500' },
+      { view: 'tennis-live-monitor', label: '盘中网球监控', desc: 'Top100 进行中场次 · 2 分钟轮询', icon: 'tennis', color: 'from-violet-500 to-fuchsia-500' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
     ],
   },
@@ -2035,6 +2043,12 @@ function isDirectProduct(product) {
 }
 
 /** Sofascore Courtline 网球：详情页用 Vue 直出，不用 iframe */
+function isTennisLiveProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-live') return true
+  return /盘中/.test(String(product?.name || ''))
+}
+
 function isTennisRangeProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-range') return true
@@ -2042,7 +2056,7 @@ function isTennisRangeProduct(product) {
 }
 
 function isTennisProduct(product) {
-  if (isTennisRangeProduct(product)) return false
+  if (isTennisRangeProduct(product) || isTennisLiveProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis') return true
   return /网球|tennis/i.test(String(product?.name || ''))
@@ -2082,6 +2096,7 @@ function isNativeBoardProduct(product) {
   return (
     isTennisProduct(product) ||
     isTennisRangeProduct(product) ||
+    isTennisLiveProduct(product) ||
     isBtcBoardProduct(product) ||
     isDotaProduct(product) ||
     isDota2Product(product) ||
@@ -2376,7 +2391,7 @@ function productEmbedUrl(product) {
           <main
             class="flex-1 overflow-y-auto no-scrollbar"
             :class="[
-              showProductDetail && (isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))
+              showProductDetail && (isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct))
                 ? 'px-2 py-2 space-y-2'
                 : showShopList
                   ? 'px-3 py-2'
@@ -2416,7 +2431,7 @@ function productEmbedUrl(product) {
             </section>
 
             <section v-else-if="showProductDetail" class="space-y-2 fade-up">
-              <template v-if="isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct)">
+              <template v-if="isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct)">
                 <button
                   type="button"
                   @click="go(shopRoute())"
@@ -2458,7 +2473,7 @@ function productEmbedUrl(product) {
               <div v-else class="flex items-center gap-2 min-h-0">
                 <button @click="go(shopRoute())" class="text-xs text-primary-700 flex items-center gap-0.5 shrink-0 py-0.5"><span v-html="icon('back')"></span>返回</button>
               </div>
-              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
+              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
                 <div class="flex items-center gap-3">
                   <ProductIcon :product="openedProduct" size="md" />
                   <div>
@@ -2488,13 +2503,21 @@ function productEmbedUrl(product) {
               </div>
               <div
                 :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct))
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
                 <!-- 网球：登录用户统一看全量数据 -->
-                <div v-if="isTennisRangeProduct(openedProduct)" class="p-0">
+                <div v-if="isTennisLiveProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="live"
+                    :show-filters="canShowTennisFilters"
+                    :is-member="isActive(openedProduct.id)"
+                    :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisRangeProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     board-mode="range"
                     :show-filters="canShowTennisFilters"
@@ -2591,6 +2614,7 @@ function productEmbedUrl(product) {
                       { id: 'btc', label: 'BTC' },
                       { id: 'tennis', label: '网球' },
                       { id: 'tennis-range', label: '区间网球' },
+                      { id: 'tennis-live', label: 'ATP·WTA 盘中' },
                     ]"
                     :key="opt.id"
                     type="button"
@@ -3067,6 +3091,20 @@ function productEmbedUrl(product) {
               <BtcBoardAdmin />
             </section>
 
+            <section v-else-if="role==='admin' && view==='tennis-live-scraper'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <LiveTop100Scraper />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='tennis-live-monitor'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <TennisLiveMonitor />
+            </section>
+
             <section v-else-if="role==='admin' && view==='sofa-monitor'" class="space-y-3 fade-up">
               <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
                 <span v-html="icon('back')"></span>返回管理中心
@@ -3493,9 +3531,16 @@ function productEmbedUrl(product) {
               <div v-for="u in pagedUsers.items" :key="u.id" class="bg-white rounded-xl px-3 py-3 shadow-sm ring-1 ring-slate-100">
                 <div class="flex items-center justify-between gap-2">
                   <div>
-                    <div class="font-medium">{{ u.name }} <span class="text-xs text-slate-400 font-normal">{{ u.role==='agent'?'代理':'用户' }}</span></div>
+                    <div class="font-medium">{{ u.name }} <span class="text-xs font-normal" :class="u.role==='admin'?'text-amber-600':'text-slate-400'">{{ userRoleLabel(u) }}</span></div>
                     <div class="text-xs text-slate-400 mt-0.5">{{ u.account }}</div>
-                    <div class="text-xs text-slate-400 mt-1">余额 ¥{{ u.balance }}<span v-if="u.agentName"> · 代理 {{ u.agentName }}</span><span v-if="u.tennisFilterEnabled"> · 网球自动投注</span><span v-if="u.btcSimEnabled"> · BTC自动投注</span><span v-if="userSubSummaryLine(u)"> · {{ userSubSummaryLine(u) }}</span></div>
+                    <div class="text-xs text-slate-400 mt-1">
+                      <template v-if="u.role!=='admin'">余额 ¥{{ u.balance }}</template>
+                      <template v-else>管理员账号</template>
+                      <span v-if="u.agentName"> · 代理 {{ u.agentName }}</span>
+                      <span v-if="u.tennisFilterEnabled"> · 网球自动投注</span>
+                      <span v-if="u.btcSimEnabled"> · BTC自动投注</span>
+                      <span v-if="userSubSummaryLine(u)"> · {{ userSubSummaryLine(u) }}</span>
+                    </div>
                     <div v-if="u.subscriptions?.length" class="mt-1.5 flex flex-wrap gap-1">
                       <span
                         v-for="sub in u.subscriptions.slice(0, 4)"
@@ -3510,7 +3555,7 @@ function productEmbedUrl(product) {
                   <button @click="openAdminModal('user','edit',u)" class="flex-1 py-1.5 rounded-lg border border-primary-200 text-primary-700 text-xs font-medium">编辑</button>
                   <button @click="openResetPwdModal(u)" class="flex-1 py-1.5 rounded-lg border border-amber-200 text-amber-700 text-xs font-medium">重置密码</button>
                   <button @click="loadUserSubModal(u)" class="flex-1 py-1.5 rounded-lg border border-emerald-200 text-emerald-700 text-xs font-medium">订阅</button>
-                  <button @click="deleteAdminItem('user',u.id)" class="flex-1 py-1.5 rounded-lg border border-danger/30 text-danger text-xs font-medium">删除</button>
+                  <button v-if="u.role!=='admin'" @click="deleteAdminItem('user',u.id)" class="flex-1 py-1.5 rounded-lg border border-danger/30 text-danger text-xs font-medium">删除</button>
                 </div>
               </div>
               <div v-if="pagedUsers.total > 0" class="flex items-center justify-between bg-white rounded-2xl px-3 py-2 shadow-sm text-sm">
@@ -3893,8 +3938,10 @@ function productEmbedUrl(product) {
                 <select v-model="adminModal.form.role" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none">
                   <option value="user">普通用户</option>
                   <option value="agent">代理</option>
+                  <option value="admin">管理员</option>
                 </select>
-                <input v-model.number="adminModal.form.balance" type="number" placeholder="账户余额" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"/>
+                <input v-if="adminModal.form.role!=='admin'" v-model.number="adminModal.form.balance" type="number" placeholder="账户余额" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"/>
+                <p v-if="adminModal.form.role==='admin'" class="text-xs text-slate-400">管理员无余额账户；下方权限开关用于控制网球/BTC 自动投注能力（管理员默认拥有全部后台权限）。</p>
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                   <input type="checkbox" v-model="adminModal.form.tennisFilterEnabled" class="accent-primary-600"/> 开通网球自动投注（筛选+批量）
                 </label>

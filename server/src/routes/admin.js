@@ -433,7 +433,7 @@ router.post('/orders', auth(['admin']), async (req, res) => {
     await conn.beginTransaction();
 
     const [[user]] = await conn.query(
-      "SELECT id FROM users WHERE id=? AND role IN ('user','agent')",
+      "SELECT id FROM users WHERE id=? AND role IN ('user','agent','admin')",
       [userId]
     );
     const [[product]] = await conn.query('SELECT * FROM products WHERE id=?', [productId]);
@@ -490,13 +490,21 @@ router.delete('/orders/:id', auth(['admin']), async (req, res) => {
   }
 });
 
+const MANAGED_ROLES = ['user', 'agent', 'admin'];
+const MANAGED_ROLES_SQL = "('user','agent','admin')";
+
+async function countAdmins(connOrPool = pool) {
+  const [[row]] = await connOrPool.query("SELECT COUNT(*) AS cnt FROM users WHERE role='admin'");
+  return Number(row.cnt) || 0;
+}
+
 router.get('/users', auth(['admin']), async (req, res) => {
   try {
     await userService.ensureUserColumns();
     const [rows] = await pool.query(
       `SELECT u.id, u.account, u.name, u.role, u.balance, u.agent_id, u.tennis_filter_enabled, u.btc_sim_enabled, a.name AS agent_name
        FROM users u LEFT JOIN users a ON u.agent_id=a.id
-       WHERE u.role IN ('user','agent') ORDER BY u.id DESC`
+       WHERE u.role IN ${MANAGED_ROLES_SQL} ORDER BY FIELD(u.role,'admin','agent','user'), u.id DESC`
     );
     const userIds = rows.map((u) => u.id);
     const subMap = {};
@@ -544,7 +552,7 @@ router.post('/users', auth(['admin']), async (req, res) => {
   if (!account || !password || password.length < 6) {
     return res.status(400).json({ error: '请填写账号和密码（6位以上）' });
   }
-  if (!['user', 'agent'].includes(role)) {
+  if (!MANAGED_ROLES.includes(role)) {
     return res.status(400).json({ error: '角色无效' });
   }
   try {
@@ -556,7 +564,7 @@ router.post('/users', auth(['admin']), async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO users (account, password_hash, name, role, balance, invite_code, agent_status, commission_rate, tennis_filter_enabled, btc_sim_enabled)
        VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [account.trim(), hash, name || account, role, balance, invite,
+      [account.trim(), hash, name || account, role, role === 'admin' ? 0 : balance, invite,
         role === 'agent' ? 'approved' : 'approved', role === 'agent' ? 25 : 0,
         tennisFilterEnabled ? 1 : 0, btcSimEnabled ? 1 : 0]
     );
@@ -572,14 +580,30 @@ router.put('/users/:id', auth(['admin']), async (req, res) => {
     await userService.ensureUserColumns();
     const [[user]] = await pool.query('SELECT id, role FROM users WHERE id=?', [req.params.id]);
     if (!user) return res.status(404).json({ error: '用户不存在' });
-    if (user.role === 'admin') return res.status(403).json({ error: '不能修改管理员账号' });
+
+    if (user.role === 'admin' && role !== undefined && role !== 'admin') {
+      const admins = await countAdmins();
+      if (admins <= 1) {
+        return res.status(403).json({ error: '至少保留一名管理员' });
+      }
+    }
+    if (Number(req.params.id) === req.user.id && role !== undefined && role !== 'admin') {
+      return res.status(403).json({ error: '不能修改自己的管理员角色' });
+    }
+
     const fields = [];
     const values = [];
     if (name !== undefined) { fields.push('name=?'); values.push(name); }
-    if (balance !== undefined) { fields.push('balance=?'); values.push(balance); }
-    if (role !== undefined && ['user', 'agent'].includes(role)) {
+    if (user.role !== 'admin' && balance !== undefined) {
+      fields.push('balance=?');
+      values.push(balance);
+    }
+    if (role !== undefined && MANAGED_ROLES.includes(role)) {
       fields.push('role=?');
       values.push(role);
+      if (role === 'admin') {
+        fields.push('agent_id=NULL');
+      }
     }
     if (tennisFilterEnabled !== undefined) {
       fields.push('tennis_filter_enabled=?');
@@ -610,7 +634,6 @@ router.post('/users/:id/reset-password', auth(['admin']), async (req, res) => {
       [req.params.id],
     );
     if (!user) return res.status(404).json({ error: '用户不存在' });
-    if (user.role === 'admin') return res.status(403).json({ error: '不能重置管理员密码' });
     if (Number(user.id) === Number(req.user.id)) {
       return res.status(400).json({ error: '请使用「修改密码」修改自己的密码' });
     }
@@ -655,8 +678,11 @@ router.delete('/users/:id', auth(['admin']), async (req, res) => {
       return res.status(404).json({ error: '用户不存在' });
     }
     if (user.role === 'admin') {
-      await conn.rollback();
-      return res.status(403).json({ error: '不能删除管理员' });
+      const admins = await countAdmins(conn);
+      if (admins <= 1) {
+        await conn.rollback();
+        return res.status(403).json({ error: '至少保留一名管理员' });
+      }
     }
     await conn.query('UPDATE users SET agent_id=NULL WHERE agent_id=?', [req.params.id]);
     await conn.query('DELETE FROM subscriptions WHERE user_id=?', [req.params.id]);
@@ -676,7 +702,7 @@ router.delete('/users/:id', auth(['admin']), async (req, res) => {
 router.get('/users/:id/subscriptions', auth(['admin']), async (req, res) => {
   try {
     const [[user]] = await pool.query(
-      "SELECT id, name, account, role FROM users WHERE id=? AND role IN ('user','agent')",
+      `SELECT id, name, account, role FROM users WHERE id=? AND role IN ${MANAGED_ROLES_SQL}`,
       [req.params.id]
     );
     if (!user) return res.status(404).json({ error: '用户不存在' });
@@ -716,7 +742,7 @@ router.post('/subscriptions/grant', auth(['admin']), async (req, res) => {
     await conn.beginTransaction();
 
     const [[user]] = await conn.query(
-      "SELECT id FROM users WHERE id=? AND role IN ('user','agent')",
+      "SELECT id FROM users WHERE id=? AND role IN ('user','agent','admin')",
       [userId]
     );
     const [[product]] = await conn.query('SELECT * FROM products WHERE id=?', [productId]);

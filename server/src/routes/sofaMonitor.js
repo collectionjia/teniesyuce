@@ -49,6 +49,37 @@ function sendProxy(res, result) {
   res.status(result.status).json(result.body);
 }
 
+/** 等 9004 采集结束后再把 bundle 刷进 Redis */
+function scheduleRedisRefreshAfterCollect() {
+  const tennisFromMonitor = require('../services/tennisFromMonitor');
+  const deadline = Date.now() + 120000;
+
+  const poll = async () => {
+    try {
+      const { body } = await monitorFetch('/status', { timeoutMs: 10000 });
+      if (body?.running) {
+        if (Date.now() < deadline) setTimeout(poll, 3000);
+        return;
+      }
+      await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
+      console.log('[sofa-monitor] redis refreshed after collect');
+      try {
+        const tennisLiveFromMonitor = require('../services/tennisLiveFromMonitor');
+        await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
+        console.log('[sofa-monitor] redis-live refreshed after collect');
+      } catch (err) {
+        console.error('[sofa-monitor] redis-live refresh:', err.message);
+      }
+    } catch (err) {
+      console.error('[sofa-monitor] redis refresh:', err.message);
+      if (Date.now() < deadline) setTimeout(poll, 5000);
+      else tennisFromMonitor.kickRefreshBackground();
+    }
+  };
+
+  setTimeout(poll, 5000);
+}
+
 router.use(auth(['admin']));
 
 router.get('/status', async (_req, res) => {
@@ -91,6 +122,7 @@ router.get('/logs', async (req, res) => {
 router.post('/collect', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/collect', { method: 'POST' }));
+    scheduleRedisRefreshAfterCollect();
   } catch (err) {
     console.error('[sofa-monitor/collect]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
@@ -118,12 +150,7 @@ router.get('/bundle', async (_req, res) => {
 router.post('/live/collect', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/live/collect', { method: 'POST' }));
-    // live 采集触发后，后台把监控数据刷进 Redis
-    try {
-      require('../services/tennisFromMonitor').kickRefreshBackground();
-    } catch (_) {
-      /* ignore */
-    }
+    scheduleRedisRefreshAfterCollect();
   } catch (err) {
     console.error('[sofa-monitor/live/collect]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
