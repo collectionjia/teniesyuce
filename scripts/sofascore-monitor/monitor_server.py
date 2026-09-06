@@ -63,8 +63,14 @@ def _friendly_error(exc: Exception | str) -> str:
     low = msg.lower()
     if "431" in msg or "traffic limit" in low or "exceeds the sub user" in low:
         return "IPWO 代理子账号流量已用尽，请到 ipwo.net 充值或更换子账号"
+    if "sub user status" in low or ("424" in msg and "407" in msg):
+        return "IPWO 子账号状态异常（流量用尽或已停用），请到 ipwo.net 检查子账号"
+    if "user status error" in low:
+        return "IPWO 主账号状态异常（欠费/停用/密码错误），请检查 ipwo.net 或 monitor.env 密码"
     if "407" in msg or "418" in msg or "421" in msg or "auth info" in low or "password wrong" in low:
         return "IPWO 代理认证失败，请检查 monitor.env 用户名/密码/Zone（格式：用户名_custom_zone_US）"
+    if "connect tunnel failed" in low and ("403" in msg or "407" in msg):
+        return "IPWO 代理拒绝连接（账号状态或认证问题），并非直连 Sofascore；请到 ipwo.net 检查流量与密码"
     if "proxyerror" in low or "tunnel connection failed" in low or "unable to connect to proxy" in low:
         return "无法连接 IPWO 代理，请检查 monitor.env 与账号流量"
     if "timeout" in low or "timed out" in low:

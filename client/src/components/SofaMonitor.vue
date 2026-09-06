@@ -24,6 +24,8 @@ const playerPage = ref(1)
 const livePage = ref(1)
 const logPage = ref(1)
 const cronOpen = ref(false)
+const statsOpen = ref(false)
+const metricsOpen = ref(false)
 
 const PLAYER_PAGE_SIZE = 15
 const LIVE_PAGE_SIZE = 12
@@ -87,6 +89,13 @@ const collectRequests = computed(() => (
 ))
 const polyMatchStats = computed(() => dataSource.value?.poly_match || null)
 const redisRefreshStats = computed(() => dataSource.value?.redis_refresh || null)
+const collectElapsedMs = computed(() => {
+  const sec = top100Collect.value?.last?.elapsed_sec ?? top100Board.value?.elapsed_sec
+  return sec != null ? sec * 1000 : null
+})
+const polyElapsedMs = computed(() => (
+  polyMatchStats.value?.timingMs?.total ?? redisRefreshStats.value?.polyMs ?? null
+))
 
 function formatMs(ms) {
   const n = Number(ms)
@@ -470,8 +479,16 @@ async function refreshTop100() {
   }
 }
 
-function clampPage(pageRef, page, max) {
-  pageRef.value = Math.min(Math.max(1, page), max)
+function setPlayerPage(page) {
+  playerPage.value = Math.min(Math.max(1, page), playerPageCount.value)
+}
+
+function setLivePage(page) {
+  livePage.value = Math.min(Math.max(1, page), livePageCount.value)
+}
+
+function setLogPage(page) {
+  logPage.value = Math.min(Math.max(1, page), logPageCount.value)
 }
 
 function playerPageLabel() {
@@ -600,61 +617,88 @@ onUnmounted(() => {
     <div v-if="loading" class="banner">加载中…</div>
 
     <template v-else>
-      <div class="cards cards-compact">
-        <div class="card">
-          <div class="label">状态</div>
-          <div class="value"><span class="pill" :class="statusTone">{{ statusLabel }}</span></div>
-        </div>
-        <div class="card">
-          <div class="label">最近采集</div>
-          <div class="value mono sm">{{ fmtTime(lastRun.finished_at || lastRun.started_at) }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Bundle</div>
-          <div class="value sm">{{ bundle.event_count ?? 0 }} 场</div>
-          <div class="hint">{{ bundle.date || '—' }}</div>
-        </div>
-        <div class="card">
-          <div class="label">进行中</div>
-          <div class="value sm">{{ livePoll.live_count ?? liveMatches.length }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Redis</div>
-          <div class="value sm">{{ redisUpstreamLabel }}</div>
-        </div>
-        <div class="card">
-          <div class="label">Top100</div>
-          <div class="value sm">{{ summary.total_matches ?? '—' }}</div>
-          <div class="hint">A{{ summary.atp_matches ?? 0 }} · W{{ summary.wta_matches ?? 0 }}</div>
-        </div>
-      </div>
-
-      <div class="metrics panel">
-        <div class="metric">
-          <div class="metric-label">采集 HTTP 请求</div>
-          <div class="metric-value">{{ collectRequests?.total ?? '—' }} 次</div>
-          <div class="metric-hint">{{ collectRequestHint(collectRequests) }}</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">采集耗时</div>
-          <div class="metric-value">{{ formatMs(top100Collect?.last?.elapsed_sec != null ? top100Collect.last.elapsed_sec * 1000 : top100Board?.elapsed_sec * 1000) }}</div>
-          <div class="metric-hint">Top100 最近一轮</div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Polymarket 外链</div>
-          <div class="metric-value">{{ formatMs(polyMatchStats?.timingMs?.total ?? redisRefreshStats?.polyMs) }}</div>
-          <div class="metric-hint">
-            匹配 {{ formatMs(polyMatchStats?.timingMs?.match ?? redisRefreshStats?.polyMatchMs) }}
-            · 刷价 {{ formatMs(polyMatchStats?.timingMs?.prices ?? redisRefreshStats?.polyPriceMs) }}
-            · 链接 {{ polyMatchStats?.matched ?? '—' }} 场
+      <details class="panel panel-fold stats-fold" :open="statsOpen" @toggle="statsOpen = $event.target.open">
+        <summary class="fold-summary stats-summary">
+          <span class="fold-title">运行状态</span>
+          <span class="fold-inline">
+            <span class="pill sm" :class="statusTone">{{ statusLabel }}</span>
+            <span class="fold-meta">
+              {{ fmtTime(lastRun.finished_at || lastRun.started_at) }}
+              · {{ bundle.event_count ?? 0 }} 场
+              · 进行中 {{ livePoll.live_count ?? liveMatches.length }}
+              · Top100 {{ summary.total_matches ?? '—' }}
+            </span>
+          </span>
+          <span class="muted fold-toggle">{{ statsOpen ? '收起' : '展开' }}</span>
+        </summary>
+        <div class="cards cards-compact">
+          <div class="card">
+            <div class="label">状态</div>
+            <div class="value"><span class="pill" :class="statusTone">{{ statusLabel }}</span></div>
+          </div>
+          <div class="card">
+            <div class="label">最近采集</div>
+            <div class="value mono sm">{{ fmtTime(lastRun.finished_at || lastRun.started_at) }}</div>
+          </div>
+          <div class="card">
+            <div class="label">Bundle</div>
+            <div class="value sm">{{ bundle.event_count ?? 0 }} 场</div>
+            <div class="hint">{{ bundle.date || '—' }}</div>
+          </div>
+          <div class="card">
+            <div class="label">进行中</div>
+            <div class="value sm">{{ livePoll.live_count ?? liveMatches.length }}</div>
+          </div>
+          <div class="card">
+            <div class="label">Redis</div>
+            <div class="value sm">{{ redisUpstreamLabel }}</div>
+          </div>
+          <div class="card">
+            <div class="label">Top100</div>
+            <div class="value sm">{{ summary.total_matches ?? '—' }}</div>
+            <div class="hint">A{{ summary.atp_matches ?? 0 }} · W{{ summary.wta_matches ?? 0 }}</div>
           </div>
         </div>
-        <div class="metric">
-          <div class="metric-label">写入 Redis 总耗时</div>
-          <div class="metric-value">{{ formatMs(redisRefreshStats?.totalMs) }}</div>
-          <div class="metric-hint">含 PM 外链 · {{ fmtTime(dataSource?.redis_fetched_at) }}</div>
+      </details>
+
+      <details class="panel panel-fold metrics-fold" :open="metricsOpen" @toggle="metricsOpen = $event.target.open">
+        <summary class="fold-summary stats-summary">
+          <span class="fold-title">采集统计</span>
+          <span class="fold-meta">
+            HTTP {{ collectRequests?.total ?? '—' }} 次
+            · 采集 {{ formatMs(collectElapsedMs) }}
+            · PM {{ formatMs(polyElapsedMs) }}
+            · Redis {{ formatMs(redisRefreshStats?.totalMs) }}
+          </span>
+          <span class="muted fold-toggle">{{ metricsOpen ? '收起' : '展开' }}</span>
+        </summary>
+        <div class="metrics metrics-inner">
+          <div class="metric">
+            <div class="metric-label">采集 HTTP 请求</div>
+            <div class="metric-value">{{ collectRequests?.total ?? '—' }} 次</div>
+            <div class="metric-hint">{{ collectRequestHint(collectRequests) }}</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">采集耗时</div>
+            <div class="metric-value">{{ formatMs(collectElapsedMs) }}</div>
+            <div class="metric-hint">Top100 最近一轮</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Polymarket 外链</div>
+            <div class="metric-value">{{ formatMs(polyElapsedMs) }}</div>
+            <div class="metric-hint">
+              匹配 {{ formatMs(polyMatchStats?.timingMs?.match ?? redisRefreshStats?.polyMatchMs) }}
+              · 刷价 {{ formatMs(polyMatchStats?.timingMs?.prices ?? redisRefreshStats?.polyPriceMs) }}
+              · 链接 {{ polyMatchStats?.matched ?? '—' }} 场
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">写入 Redis 总耗时</div>
+            <div class="metric-value">{{ formatMs(redisRefreshStats?.totalMs) }}</div>
+            <div class="metric-hint">含 PM 外链 · {{ fmtTime(dataSource?.redis_fetched_at) }}</div>
+          </div>
         </div>
-      </div>
+      </details>
 
       <details v-if="cronLines.length || schedule" class="panel panel-fold" :open="cronOpen" @toggle="cronOpen = $event.target.open">
         <summary class="panel-h row fold-summary">
@@ -697,8 +741,8 @@ onUnmounted(() => {
           <div class="pager">
             <span class="pager-info">第 {{ livePage }} / {{ livePageCount }} 页 · {{ livePageLabel() }}</span>
             <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="clampPage(livePage, livePage - 1, livePageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="clampPage(livePage, livePage + 1, livePageCount)">下一页</button>
+              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="setLivePage(livePage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="setLivePage(livePage + 1)">下一页</button>
             </div>
           </div>
           <div class="live-list">
@@ -727,8 +771,8 @@ onUnmounted(() => {
           <div class="pager pager-bottom">
             <span class="pager-info">{{ livePageLabel() }}</span>
             <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="clampPage(livePage, livePage - 1, livePageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="clampPage(livePage, livePage + 1, livePageCount)">下一页</button>
+              <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="setLivePage(livePage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="setLivePage(livePage + 1)">下一页</button>
             </div>
           </div>
         </template>
@@ -753,8 +797,8 @@ onUnmounted(() => {
           <div class="pager">
             <span class="pager-info">第 {{ playerPage }} / {{ playerPageCount }} 页 · {{ playerPageLabel() }} · 每页 {{ PLAYER_PAGE_SIZE }} 人</span>
             <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="clampPage(playerPage, playerPage - 1, playerPageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="clampPage(playerPage, playerPage + 1, playerPageCount)">下一页</button>
+              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
             </div>
           </div>
           <div class="plist">
@@ -796,8 +840,8 @@ onUnmounted(() => {
           <div class="pager pager-bottom">
             <span class="pager-info">{{ playerPageLabel() }}</span>
             <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="clampPage(playerPage, playerPage - 1, playerPageCount)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="clampPage(playerPage, playerPage + 1, playerPageCount)">下一页</button>
+              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
             </div>
           </div>
         </template>
@@ -811,16 +855,16 @@ onUnmounted(() => {
         <div class="pager">
           <span class="pager-info">第 {{ logPage }} / {{ logPageCount }} 页 · {{ logPageLabel() }}</span>
           <div class="pager-actions">
-            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="clampPage(logPage, logPage - 1, logPageCount)">上一页</button>
-            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="clampPage(logPage, logPage + 1, logPageCount)">下一页</button>
+            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="setLogPage(logPage - 1)">上一页</button>
+            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="setLogPage(logPage + 1)">下一页</button>
           </div>
         </div>
         <pre class="log">{{ pagedLogText }}</pre>
         <div class="pager pager-bottom">
           <span class="pager-info">{{ logPageLabel() }}</span>
           <div class="pager-actions">
-            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="clampPage(logPage, logPage - 1, logPageCount)">上一页</button>
-            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="clampPage(logPage, logPage + 1, logPageCount)">下一页</button>
+            <button type="button" class="pager-btn" :disabled="logPage <= 1" @click="setLogPage(logPage - 1)">上一页</button>
+            <button type="button" class="pager-btn" :disabled="logPage >= logPageCount" @click="setLogPage(logPage + 1)">下一页</button>
           </div>
         </div>
       </div>
@@ -829,16 +873,16 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.sofa { display: flex; flex-direction: column; gap: 12px; }
+.sofa { display: flex; flex-direction: column; gap: 8px; }
 .toolbar {
-  display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
+  display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
 }
-.titles .title { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
-.titles .sub { margin-top: 2px; font-size: 0.75rem; color: #94a3b8; }
-.actions-primary { display: flex; gap: 8px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
+.titles .title { font-size: 0.98rem; font-weight: 700; color: #0f172a; line-height: 1.25; }
+.titles .sub { margin-top: 1px; font-size: 0.72rem; color: #94a3b8; }
+.actions-primary { display: flex; gap: 6px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
 .settings-row {
-  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-  padding: 10px 12px; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 8px 10px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
 }
 .source-group {
   display: flex; align-items: center; gap: 4px;
@@ -866,7 +910,7 @@ onUnmounted(() => {
 }
 .interval-select select:disabled { opacity: .55; cursor: not-allowed; }
 .btn {
-  border: 0; border-radius: 10px; padding: 8px 12px; font-size: 0.8rem; font-weight: 600;
+  border: 0; border-radius: 8px; padding: 7px 11px; font-size: 0.78rem; font-weight: 600;
   cursor: pointer; transition: .15s;
 }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -875,48 +919,63 @@ onUnmounted(() => {
 .btn.primary:hover:not(:disabled) { background: #4338ca; }
 
 .banner {
-  border-radius: 12px; padding: 10px 12px; font-size: 0.82rem;
+  border-radius: 10px; padding: 8px 10px; font-size: 0.78rem;
   background: #f1f5f9; color: #475569;
 }
 .banner.err { background: #fef2f2; color: #b91c1c; }
 .banner.ok { background: #ecfdf5; color: #047857; }
 
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .cards-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .card {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;
+  background: #fafbfc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px;
 }
-.cards-compact .card { padding: 10px 12px; }
-.metrics {
-  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+.cards-compact .card { padding: 8px 10px; }
+.metrics-inner {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
 }
 .metric {
-  padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fafbfc;
+  padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fafbfc;
 }
-.metric-label { font-size: 0.72rem; color: #94a3b8; font-weight: 700; }
-.metric-value { margin-top: 4px; font-size: 1rem; font-weight: 800; color: #0f172a; }
-.metric-hint { margin-top: 4px; font-size: 0.7rem; color: #64748b; line-height: 1.35; }
-.card .label { font-size: 0.72rem; color: #94a3b8; }
-.card .value { margin-top: 4px; font-size: 1rem; font-weight: 700; color: #0f172a; }
-.card .value.sm { font-size: 0.92rem; }
-.card .value.mono { font-size: 0.86rem; font-weight: 600; }
-.card .hint { margin-top: 4px; font-size: 0.72rem; color: #64748b; line-height: 1.35; }
+.metric-label { font-size: 0.68rem; color: #94a3b8; font-weight: 700; }
+.metric-value { margin-top: 2px; font-size: 0.92rem; font-weight: 800; color: #0f172a; }
+.metric-hint { margin-top: 2px; font-size: 0.68rem; color: #64748b; line-height: 1.3; }
+.card .label { font-size: 0.68rem; color: #94a3b8; }
+.card .value { margin-top: 2px; font-size: 0.92rem; font-weight: 700; color: #0f172a; }
+.card .value.sm { font-size: 0.86rem; }
+.card .value.mono { font-size: 0.82rem; font-weight: 600; }
+.card .hint { margin-top: 2px; font-size: 0.68rem; color: #64748b; line-height: 1.3; }
 
 .pill {
-  display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 700;
+  display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 0.74rem; font-weight: 700;
 }
+.pill.sm { font-size: 0.68rem; padding: 1px 6px; }
 .pill.run { background: #fff7ed; color: #c2410c; }
 .pill.ok { background: #ecfdf5; color: #047857; }
 .pill.err { background: #fef2f2; color: #b91c1c; }
 .pill.idle { background: #f1f5f9; color: #475569; }
 
 .panel {
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 10px;
 }
-.panel-fold { padding-top: 8px; }
-.fold-summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+.panel-fold { padding-top: 6px; padding-bottom: 6px; }
+.stats-fold[open], .metrics-fold[open] { padding-bottom: 10px; }
+.fold-summary {
+  cursor: pointer; list-style: none; margin-bottom: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+  font-size: 0.78rem; font-weight: 700; color: #334155;
+}
+.stats-summary { padding: 2px 0; }
 .fold-summary::-webkit-details-marker { display: none; }
 .panel-fold[open] .fold-summary { margin-bottom: 8px; }
+.fold-title { flex: 0 0 auto; color: #475569; }
+.fold-inline { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 auto; min-width: 0; }
+.fold-meta {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 0.72rem; font-weight: 600; color: #64748b;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fold-toggle { flex: 0 0 auto; font-size: 0.68rem; font-weight: 600; }
 .panel-h { font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px; }
 .panel-h.row {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px;
@@ -1036,7 +1095,8 @@ onUnmounted(() => {
 
 @media (max-width: 720px) {
   .cards-compact { grid-template-columns: 1fr 1fr; }
-  .metrics { grid-template-columns: 1fr; }
+  .metrics-inner { grid-template-columns: 1fr; }
+  .fold-meta { white-space: normal; }
   .settings-row, .actions-primary { width: 100%; }
 }
 </style>
