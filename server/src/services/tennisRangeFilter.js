@@ -1,6 +1,7 @@
 /** 区间网球：任一方 Top100 + 按强者排名分档的最小现差 */
 
 const TOP_RANK_MAX = 100;
+const NEW_TOP_RANK_MAX = 50;
 
 function currentRankOf(player, rankingsByPlayer = {}) {
   const id = player?.id ?? player?.teamId;
@@ -183,13 +184,13 @@ function buildRangeBundle(sourceBundle, { requirePoly = false } = {}) {
   };
 }
 
-/** 新网球列表：Top100 池全量（前端按 Top10/20/50/100 筛选） */
+/** 新网球列表：任一方现排名 Top50 的赛事 */
 function buildNewBundle(sourceBundle) {
   if (!sourceBundle) return null;
   const rankingsByPlayer = sourceBundle.rankingsByPlayer || {};
   const polyMap = sourceBundle.polymarketByEvent || {};
   const filtered = allEventsFromBundle(sourceBundle).filter((m) =>
-    passesTop100Pool(m, rankingsByPlayer),
+    passesTopPool(m, NEW_TOP_RANK_MAX, rankingsByPlayer),
   );
 
   const liveMatches = filtered.filter((m) => {
@@ -218,10 +219,10 @@ function buildNewBundle(sourceBundle) {
   return {
     ...sourceBundle,
     sport: 'tennis',
-    filter: 'tennis-new',
-    top_rank_max: TOP_RANK_MAX,
+    filter: 'tennis-new-top50',
+    top_rank_max: NEW_TOP_RANK_MAX,
     top100: sourceBundle.top100 || {},
-    poolRules: { top20: 20, top50: 50, top100: 100 },
+    poolRules: { top20: 20, top50: 50 },
     scheduled,
     live: {
       tournaments: [],
@@ -231,13 +232,14 @@ function buildNewBundle(sourceBundle) {
     },
     polymarketByEvent: filteredPoly,
     events: filtered.length,
-    message: `tennis-new · ${filtered.length} events`,
+    message: `tennis-new-top50 · ${filtered.length} events`,
     source: sourceBundle.source || 'sofascore-monitor',
   };
 }
 
 module.exports = {
   TOP_RANK_MAX,
+  NEW_TOP_RANK_MAX,
   currentRankOf,
   requiredMinGap,
   matchMetrics,

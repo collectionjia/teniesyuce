@@ -1,8 +1,9 @@
 /**
- * 为 Sofascore monitor bundle 补齐 polymarketByEvent（MySQL 已有则优先，否则 Gamma 按球员名匹配）。
+ * 各网球列表统一补 Polymarket 外链：MySQL 已有则优先，否则 Gamma 按球员名+日期匹配。
  */
 const pool = require('../db');
-const { parsePrices } = require('./tennisPolymarket');
+const tennisPolymarket = require('./tennisPolymarket');
+const { parsePrices } = tennisPolymarket;
 
 const GAMMA = 'https://gamma-api.polymarket.com';
 const TENNIS_TAG_ID = Number(process.env.POLY_TENNIS_TAG_ID || 864);
@@ -81,54 +82,93 @@ function extractEventSides(ev) {
   return [null, null];
 }
 
+function slimGammaEvent(ev) {
+  const [sideA, sideB] = extractEventSides(ev);
+  const mk = pickMoneylineMarket(ev.markets);
+  const prices = parsePrices(mk);
+  return {
+    slug: ev.slug,
+    title: ev.title || '',
+    url: `https://polymarket.com/event/${ev.slug}`,
+    sideA,
+    sideB,
+    prices,
+    closed: !!ev.closed,
+    startMs: ev.startDate ? Date.parse(ev.startDate) : NaN,
+    endMs: ev.endDate ? Date.parse(ev.endDate) : NaN,
+  };
+}
+
+async function fetchGammaJson(url) {
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json', 'User-Agent': 'yuce-bid/1.0' },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!res.ok) throw new Error(`gamma HTTP ${res.status}`);
+  return res.json();
+}
+
 async function fetchPolymarketTennisEvents() {
   const now = Date.now();
   if (polyCache.items.length && now - polyCache.at < CACHE_MS) {
     return polyCache.items;
   }
-  const urls = [
-    `${GAMMA}/events?tag_id=${TENNIS_TAG_ID}&active=true&closed=false&limit=200`,
-    `${GAMMA}/events?tag_slug=tennis&active=true&closed=false&limit=100`,
-  ];
   const bySlug = new Map();
-  await Promise.all(
-    urls.map(async (url) => {
+  const pageSize = 100;
+  const maxOffset = Number(process.env.POLY_TENNIS_MAX_OFFSET || 500);
+  for (const closed of ['false', 'true']) {
+    for (let offset = 0; offset <= maxOffset; offset += pageSize) {
       try {
-        const res = await fetch(url, {
-          headers: { Accept: 'application/json', 'User-Agent': 'yuce-bid/1.0' },
-          signal: AbortSignal.timeout(15000),
-        });
-        if (!res.ok) return;
-        const list = await res.json();
-        for (const ev of list || []) {
-          if (!ev?.slug) continue;
-          bySlug.set(ev.slug, ev);
+        const list = await fetchGammaJson(
+          `${GAMMA}/events?tag_id=${TENNIS_TAG_ID}&active=true&closed=${closed}&limit=${pageSize}&offset=${offset}`,
+        );
+        const rows = Array.isArray(list) ? list : [];
+        for (const ev of rows) {
+          if (ev?.slug) bySlug.set(ev.slug, ev);
         }
+        if (rows.length < pageSize) break;
       } catch (e) {
-        console.warn('[tennis/poly-match] gamma:', e.message || e);
+        console.warn('[tennis/poly-match] gamma page:', e.message || e);
+        break;
       }
-    }),
-  );
-  const items = [...bySlug.values()].map((ev) => {
-    const [sideA, sideB] = extractEventSides(ev);
-    const mk = pickMoneylineMarket(ev.markets);
-    const prices = parsePrices(mk);
-    return {
-      slug: ev.slug,
-      title: ev.title || '',
-      url: `https://polymarket.com/event/${ev.slug}`,
-      sideA,
-      sideB,
-      prices,
-      startMs: ev.startDate ? Date.parse(ev.startDate) : NaN,
-      endMs: ev.endDate ? Date.parse(ev.endDate) : NaN,
-    };
-  });
+    }
+  }
+  const items = [...bySlug.values()].map(slimGammaEvent);
   polyCache = { at: now, items };
   return items;
 }
 
-function matchSides(home, away, events) {
+function lastToken(name) {
+  const parts = String(name || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .split(/\s+/);
+  return (parts[parts.length - 1] || '').replace(/[^A-Za-z]/g, '');
+}
+
+async function searchGammaPair(home, away) {
+  const q = `${lastToken(home)} ${lastToken(away)}`.trim();
+  if (q.length < 4) return [];
+  try {
+    const body = await fetchGammaJson(`${GAMMA}/public-search?q=${encodeURIComponent(q)}`);
+    return (body?.events || []).map(slimGammaEvent);
+  } catch (e) {
+    console.warn('[tennis/poly-match] gamma search:', e.message || e);
+    return [];
+  }
+}
+
+const MAX_DATE_DRIFT_MS = 4 * 24 * 60 * 60 * 1000;
+
+function matchStartMsOf(m) {
+  const ts = Number(m?.startTimestamp);
+  if (Number.isFinite(ts) && ts > 1e9) return ts * 1000;
+  if (Number.isFinite(ts) && ts > 1e12) return ts;
+  return NaN;
+}
+
+function matchSides(home, away, events, matchStartMs) {
   if (!home || !away || !events.length) return null;
   let best = null;
   let bestScore = -1;
@@ -139,9 +179,14 @@ function matchSides(home, away, events) {
       (namesMatch(home, ev.sideB) && namesMatch(away, ev.sideA));
     if (!same) continue;
     let score = 10;
-    if (Number.isFinite(ev.startMs)) {
-      score += 5;
+    if (Number.isFinite(ev.startMs) && Number.isFinite(matchStartMs)) {
+      const drift = Math.abs(ev.startMs - matchStartMs);
+      if (drift > MAX_DATE_DRIFT_MS) continue;
+      score += Math.max(0, 20 - drift / (6 * 60 * 60 * 1000));
+    } else if (Number.isFinite(ev.startMs)) {
+      score += 2;
     }
+    if (!ev.closed) score += 3;
     if (score > bestScore) {
       bestScore = score;
       best = ev;
@@ -208,6 +253,10 @@ function rowToPoly(row) {
   };
 }
 
+function isPolymarketUrl(url) {
+  return /polymarket\.com\/event\/[^/?#]+/i.test(String(url || ''));
+}
+
 function matchMysqlRow(m, rows) {
   const home = m.homePlayer?.name || m.home;
   const away = m.awayPlayer?.name || m.away;
@@ -231,6 +280,11 @@ async function enrichBundlePolymarket(bundle) {
   if (!matches.length) return { matched: 0, fromMysql: 0, fromGamma: 0 };
 
   const polyMap = { ...(bundle.polymarketByEvent || {}) };
+  for (const [id, row] of Object.entries(polyMap)) {
+    if (row && !isPolymarketUrl(row.url)) {
+      polyMap[id] = { ...row, url: '', slug: '' };
+    }
+  }
   const eventIds = matches.map((m) => Number(m.id)).filter((id) => Number.isFinite(id));
 
   const mysql = await loadMysqlPolymarket(eventIds);
@@ -239,7 +293,7 @@ async function enrichBundlePolymarket(bundle) {
 
   for (const m of matches) {
     const id = String(m.id);
-    if (polyMap[id]?.url) continue;
+    if (isPolymarketUrl(polyMap[id]?.url)) continue;
     if (mysql.map[id]) {
       polyMap[id] = mysql.map[id];
       fromMysql += 1;
@@ -252,13 +306,18 @@ async function enrichBundlePolymarket(bundle) {
     }
   }
 
-  const needGamma = matches.filter((m) => !polyMap[String(m.id)]?.url);
+  const needGamma = matches.filter((m) => !isPolymarketUrl(polyMap[String(m.id)]?.url));
   if (needGamma.length) {
     const events = await fetchPolymarketTennisEvents();
     for (const m of needGamma) {
       const home = m.homePlayer?.name || m.home;
       const away = m.awayPlayer?.name || m.away;
-      const hit = matchSides(home, away, events);
+      const startMs = matchStartMsOf(m);
+      let hit = matchSides(home, away, events, startMs);
+      if (!hit) {
+        const extra = await searchGammaPair(home, away);
+        hit = matchSides(home, away, extra, startMs);
+      }
       if (!hit) continue;
       polyMap[String(m.id)] = {
         title: hit.title,
@@ -282,8 +341,22 @@ async function enrichBundlePolymarket(bundle) {
   return { matched, fromMysql, fromGamma };
 }
 
+/** 所有网球 Redis 包共用：先补外链，再刷盘口价 */
+async function applyPolymarketLinks(bundle) {
+  const match = await enrichBundlePolymarket(bundle);
+  let prices = { updated: 0, failed: 0 };
+  try {
+    prices = await tennisPolymarket.refreshPolymarketPrices(bundle);
+  } catch (e) {
+    console.error('[tennis/poly-match] price refresh:', e.message || e);
+  }
+  return { ...match, prices };
+}
+
 module.exports = {
   enrichBundlePolymarket,
+  applyPolymarketLinks,
   fetchPolymarketTennisEvents,
   namesMatch,
+  isPolymarketUrl,
 };

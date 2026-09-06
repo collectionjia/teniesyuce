@@ -18,6 +18,8 @@ const topPoolMax = ref('100') // 20 | 50 | 100
 const expanded = ref({})
 const schedule = ref(null)
 const scheduleSaving = ref(false)
+const dataSource = ref(null)
+const dataSourceSaving = ref(false)
 
 const INTERVAL_OPTIONS = [
   { hours: 2, label: '2 小时' },
@@ -56,6 +58,18 @@ const collectIntervalHours = computed(() => {
 const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
   return opt?.label || `每 ${collectIntervalHours.value} 小时`
+})
+const tennisDataSource = computed(() => dataSource.value?.source || 'ipwo')
+const tennisDataSourceLabel = computed(() => {
+  if (tennisDataSource.value === 'api') return 'AllSports API'
+  return 'Sofascore · IPWO'
+})
+const redisUpstreamLabel = computed(() => {
+  const up = dataSource.value?.redis_upstream
+  if (!up) return '—'
+  if (String(up).includes('allsports')) return 'AllSports API'
+  if (String(up).includes('sofa') || String(up).includes('ipwo')) return 'Sofascore · IPWO'
+  return up
 })
 const summary = computed(() => ({
   ...(top100Board.value?.summary || {}),
@@ -215,6 +229,10 @@ async function loadSchedule() {
   schedule.value = await api.fetchSofaMonitorSchedule()
 }
 
+async function loadDataSource() {
+  dataSource.value = await api.fetchSofaMonitorDataSource()
+}
+
 async function loadLogs() {
   logs.value = await api.fetchSofaMonitorLogs(150)
 }
@@ -226,7 +244,7 @@ async function refreshAll({ silent = false } = {}) {
     notice.value = ''
   }
   try {
-    await Promise.all([loadStatus(), loadTop100(false), loadLive(), loadLogs(), loadSchedule()])
+    await Promise.all([loadStatus(), loadTop100(false), loadLive(), loadLogs(), loadSchedule(), loadDataSource()])
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
   } finally {
@@ -361,6 +379,27 @@ async function onIntervalChange(event) {
   }
 }
 
+async function onDataSourceChange(next) {
+  if (next === tennisDataSource.value || dataSourceSaving.value) return
+  if (next === 'api' && !dataSource.value?.api_available) {
+    error.value = 'AllSports API 未配置（需 RAPIDAPI_KEY）'
+    return
+  }
+  dataSourceSaving.value = true
+  error.value = ''
+  notice.value = ''
+  try {
+    const data = await api.updateSofaMonitorDataSource(next)
+    dataSource.value = { ...(dataSource.value || {}), ...data }
+    showNotice(data.message || `已切换为 ${data.label || next}，正在写入 Redis`)
+    api.refreshTennisCache().catch(() => {})
+  } catch (e) {
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '切换数据源失败')
+  } finally {
+    dataSourceSaving.value = false
+  }
+}
+
 async function refreshTop100() {
   if (running.value) {
     error.value = 'Top100 采集进行中，请稍后再重拉'
@@ -400,9 +439,34 @@ onUnmounted(() => {
     <div class="toolbar">
       <div class="titles">
         <div class="title">Sofascore 监控</div>
-        <div class="sub">Top100 赛程 · 进行中比分（每分钟） · 自动采集 {{ collectIntervalLabel }} Top100</div>
+        <div class="sub">Top100 赛程 · 进行中比分 · 网球页只读 Redis · 当前写入 {{ tennisDataSourceLabel }}</div>
       </div>
       <div class="actions">
+        <div class="source-group" role="radiogroup" aria-label="网球页 Redis 写入源">
+          <span class="source-label">网球数据源</span>
+          <label class="source-opt" :class="{ on: tennisDataSource === 'ipwo' }">
+            <input
+              type="radio"
+              name="tennis-data-source"
+              value="ipwo"
+              :checked="tennisDataSource === 'ipwo'"
+              :disabled="dataSourceSaving || loading"
+              @change="onDataSourceChange('ipwo')"
+            >
+            IPWO
+          </label>
+          <label class="source-opt" :class="{ on: tennisDataSource === 'api', disabled: !dataSource?.api_available }">
+            <input
+              type="radio"
+              name="tennis-data-source"
+              value="api"
+              :checked="tennisDataSource === 'api'"
+              :disabled="dataSourceSaving || loading || !dataSource?.api_available"
+              @change="onDataSourceChange('api')"
+            >
+            API
+          </label>
+        </div>
         <label class="interval-select">
           <span>更新频度</span>
           <select
@@ -456,6 +520,11 @@ onUnmounted(() => {
             {{ liveRunning ? '拉取中…' : `更新 ${fmtTime(livePoll.finished_at || livePoll.fetched_at)}` }}
             <span v-if="livePoll.updated != null"> · 写入 {{ livePoll.updated }}</span>
           </div>
+        </div>
+        <div class="card">
+          <div class="label">网球 Redis</div>
+          <div class="value">{{ redisUpstreamLabel }}</div>
+          <div class="hint">页面读 Redis · 写入 {{ tennisDataSourceLabel }}<span v-if="dataSource?.redis_fetched_at"> · {{ fmtTime(dataSource.redis_fetched_at) }}</span></div>
         </div>
         <div class="card">
           <div class="label">Top100 赛事</div>
@@ -596,6 +665,21 @@ onUnmounted(() => {
 .titles .title { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
 .titles .sub { margin-top: 2px; font-size: 0.75rem; color: #94a3b8; }
 .actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; flex-wrap: wrap; }
+.source-group {
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px; border-radius: 10px; background: #f1f5f9; border: 1px solid #e2e8f0;
+}
+.source-label {
+  padding: 0 6px; font-size: 0.72rem; font-weight: 700; color: #64748b; white-space: nowrap;
+}
+.source-opt {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 700;
+  color: #64748b; cursor: pointer; user-select: none;
+}
+.source-opt input { accent-color: #4f46e5; }
+.source-opt.on { background: #fff; color: #4f46e5; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); }
+.source-opt.disabled { opacity: .45; cursor: not-allowed; }
 .interval-select {
   display: flex; align-items: center; gap: 6px;
   font-size: 0.75rem; color: #64748b; font-weight: 600;

@@ -9,49 +9,64 @@ $HostName = if ($env:DEV_SSH_HOST) { $env:DEV_SSH_HOST } else { 'ubuntu@95.40.57
 
 if (-not (Test-Path $Key)) { throw "SSH key missing: $Key" }
 
+function Copy-DeployItem {
+  param([string]$RelPath, [switch]$Recurse)
+  $src = Join-Path $Root ($RelPath -replace '/', '\')
+  $dest = Join-Path $DeployDir ($RelPath -replace '/', '\')
+  if (-not (Test-Path $src)) {
+    Write-Host "skip missing $RelPath" -ForegroundColor DarkYellow
+    return
+  }
+  $destDir = Split-Path $dest -Parent
+  if ($destDir) { New-Item -ItemType Directory -Force -Path $destDir | Out-Null }
+  if ($Recurse) { Copy-Item $src $dest -Recurse -Force }
+  else { Copy-Item $src $dest -Force }
+}
+
 $DeployDir = Join-Path $Root 'tmp-deploy'
 $MonitorDir = Join-Path $DeployDir 'sofascore-monitor'
 Remove-Item $DeployDir -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'client/src/components') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'client/src/utils') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'server/src/routes') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'server/src/services') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'server/scripts') | Out-Null
 
-Copy-Item "$Root\client\src\App.vue" "$DeployDir\client\src\"
-Copy-Item "$Root\client\src\api.js" "$DeployDir\client\src\"
-Copy-Item "$Root\client\src\productIcons.js" "$DeployDir\client\src\"
-Copy-Item "$Root\client\src\components\TennisBoard.vue" "$DeployDir\client\src\components\"
-Copy-Item "$Root\client\src\components\TennisLiveMonitor.vue" "$DeployDir\client\src\components\"
-Copy-Item "$Root\client\src\components\LiveTop100Scraper.vue" "$DeployDir\client\src\components\"
-Copy-Item "$Root\client\src\components\SofaMonitor.vue" "$DeployDir\client\src\components\"
-Copy-Item "$Root\client\src\utils\tennisLiveFilter.js" "$DeployDir\client\src\utils\"
-Copy-Item "$Root\client\src\utils\tennisRangeFilter.js" "$DeployDir\client\src\utils\"
-Copy-Item "$Root\client\src\utils\sofaMatchUrl.js" "$DeployDir\client\src\utils\"
+@(
+  'client/src/App.vue',
+  'client/src/api.js',
+  'client/src/productIcons.js',
+  'client/src/components/TennisBoard.vue',
+  'client/src/components/TennisLiveMonitor.vue',
+  'client/src/components/LiveTop100Scraper.vue',
+  'client/src/components/SofaMonitor.vue',
+  'client/src/utils/tennisLiveFilter.js',
+  'client/src/utils/tennisRangeFilter.js',
+  'client/src/utils/sofaMatchUrl.js',
+  'server/src/index.js',
+  'server/src/routes/sofaMonitor.js',
+  'server/src/routes/tennis.js',
+  'server/src/routes/tennisLive.js',
+  'server/src/routes/tennisLiveMonitor.js',
+  'server/src/routes/tennisLiveScraper.js',
+  'server/src/routes/tennisNew.js',
+  'server/src/routes/admin.js',
+  'server/src/services/tennisFromMonitor.js',
+  'server/src/services/tennisDataSource.js',
+  'server/src/services/allsports.js',
+  'server/src/services/tennisLiveFilter.js',
+  'server/src/services/tennisLiveFromMonitor.js',
+  'server/src/services/tennisLiveCache.js',
+  'server/src/services/tennisNewCache.js',
+  'server/src/services/tennisNewFromMonitor.js',
+  'server/src/services/tennisRangeFilter.js',
+  'server/src/services/tennisRangeFromMonitor.js',
+  'server/src/services/tennisTrade.js',
+  'server/src/services/tradeRecords.js',
+  'server/src/services/tennisPolymarketMatch.js',
+  'server/src/services/sofaMonitorTop100.js',
+  'server/scripts/upsert-tennis-live-product.js',
+  'server/scripts/upsert-tennis-new-product.js',
+  'docker-compose.core.yml'
+) | ForEach-Object { Copy-DeployItem $_ }
 
-Copy-Item "$Root\server\src\index.js" "$DeployDir\server\src\"
-Copy-Item "$Root\server\src\routes\sofaMonitor.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\routes\tennisLive.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\routes\tennisLiveMonitor.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\routes\tennisLiveScraper.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\routes\tennisNew.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\routes\admin.js" "$DeployDir\server\src\routes\"
-Copy-Item "$Root\server\src\services\tennisFromMonitor.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisLiveFilter.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisLiveFromMonitor.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisLiveCache.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisNewCache.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisNewFromMonitor.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisRangeFilter.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisRangeFromMonitor.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisTrade.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tradeRecords.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\tennisPolymarketMatch.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\src\services\sofaMonitorTop100.js" "$DeployDir\server\src\services\"
-Copy-Item "$Root\server\scripts\upsert-tennis-live-product.js" "$DeployDir\server\scripts\"
-Copy-Item "$Root\server\scripts\upsert-tennis-new-product.js" "$DeployDir\server\scripts\"
-Copy-Item "$Root\docker-compose.core.yml" "$DeployDir\"
-Copy-Item "$Root\scripts\sofascore-monitor" $MonitorDir -Recurse
+New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'sofascore-monitor') | Out-Null
+Copy-Item (Join-Path $Root 'scripts\sofascore-monitor\*') (Join-Path $DeployDir 'sofascore-monitor') -Recurse -Force
 
 Write-Host '==> Upload deploy bundle' -ForegroundColor Cyan
 scp -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=40 -r `
@@ -93,6 +108,7 @@ echo "=== apply top100 schedule 4h ==="
 curl -s -X POST http://127.0.0.1:9004/schedule -H 'Content-Type: application/json' -H 'Authorization: Bearer sofascore-monitor-2026' -d '{"interval_hours":4}' || true
 
 echo "=== warm caches ==="
+sudo docker compose -f docker-compose.core.yml exec -T server node -e 'require("./src/services/tennisFromMonitor").refreshRedisFromMonitor({includeLive:true}).then(function(b){console.log("redis",b.events,b.upstream||b.source,b.message)}).catch(function(e){console.error(e.message);process.exit(1)})'
 sudo docker compose -f docker-compose.core.yml exec -T server node -e 'require("./src/services/tennisLiveFromMonitor").refreshLiveBundleFromMonitor().then(function(b){console.log("live",b.events,b.message)}).catch(function(e){console.error(e.message);process.exit(1)})'
 sudo docker compose -f docker-compose.core.yml exec -T server node -e 'require("./src/services/tennisNewFromMonitor").refreshNewBundleFromMonitor().then(function(b){console.log("new",b.events,b.message)}).catch(function(e){console.error(e.message);process.exit(1)})'
 

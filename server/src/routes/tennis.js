@@ -30,7 +30,7 @@ router.get("/today", auth(), async (_req, res) => {
         error: "网球数据尚未就绪，请稍后再试",
       });
     }
-    res.json({ ...full, member: true, source: "redis" });
+    res.json({ ...full, member: true, readFrom: 'redis' });
   } catch (err) {
     console.error("[tennis/today]", err);
     res.status(500).json({
@@ -42,6 +42,7 @@ router.get("/today", auth(), async (_req, res) => {
 
 router.post("/cache/refresh", auth(["admin"]), async (_req, res) => {
   try {
+    const tennisDataSource = require("../services/tennisDataSource");
     const bundle = await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
     res.json({
       ok: true,
@@ -49,7 +50,9 @@ router.post("/cache/refresh", auth(["admin"]), async (_req, res) => {
       date: bundle.date,
       fetched_at: bundle.fetched_at,
       live: bundle.live?.eventCount ?? 0,
-      source: "sofascore-monitor→redis",
+      dataSource: bundle.dataSource || (await tennisDataSource.get()),
+      upstream: bundle.upstream || bundle.source,
+      readFrom: "redis",
     });
   } catch (err) {
     console.error("[tennis/cache/refresh]", err);

@@ -8,7 +8,7 @@ const props = defineProps({
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top100 池 */
+  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top50 池 */
   boardMode: { type: String, default: 'classic' },
 })
 
@@ -30,7 +30,8 @@ const tour = ref('all') // all | ATP | WTA
 const gapMin = ref('50') // all | 50 | 70 | 90
 const diffMax = ref('0') // all | 0 | -30 | -50 | -70
 const strongRankMax = ref('20') // all | 10 | 20
-const topPoolMax = ref('100') // 20 | 50 | 100（新网球列表 · Top100 池内筛选）
+const pmFilter = ref('all') // all | yes | no — 是否只看有 Polymarket 外链的场次
+const topPoolMax = ref('50') // 20 | 50（新网球列表 · Top50 池内筛选）
 const filtersOpen = ref(false)
 const detailMatch = ref(null)
 const selectedIds = ref(new Set())
@@ -256,10 +257,20 @@ function matchPassesRank(m) {
 
 const STATUS_TABS = new Set(['all', 'Not started', 'liveish', 'ended'])
 
+function hasPmData(m) {
+  return !!polyUrlOf(m)
+}
+
+function matchPassesPm(m) {
+  if (pmFilter.value === 'yes') return hasPmData(m)
+  if (pmFilter.value === 'no') return !hasPmData(m)
+  return true
+}
+
 function matchPassesFilter(m, statusFilter) {
   const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
   if (!matchPassesTour(m)) return false
-  if (!isRangeMode.value && !polyUrlOf(m)) return false
+  if (!matchPassesPm(m)) return false
   if (isMatchEnded(m) && mode === 'liveish') return false
   if (mode === 'liveish') {
     // 进行中列表：不过排名筛选（live 常无排名）
@@ -460,7 +471,7 @@ async function maybeAutoBatchTrade() {
   await submitBatchTrade({ auto: true })
 }
 
-watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax], () => {
+watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter], () => {
   currentPage.value = 1
   clearSelection()
 })
@@ -488,11 +499,7 @@ function setStatusFilter(mode) {
 }
 
 const stats = computed(() => {
-  const pool = rawMatches.value.filter((m) => {
-    if (!matchPassesTour(m)) return false
-    if (!isRangeMode.value && !polyUrlOf(m)) return false
-    return true
-  })
+  const pool = rawMatches.value.filter((m) => matchPassesTour(m) && matchPassesPm(m))
   const countTab = (tab) => pool.filter((m) => matchPassesFilter(m, tab)).length
   return {
     date: data.value?.date || '—',
@@ -514,6 +521,8 @@ const filterSummary = computed(() => {
   else parts.push('全部状态')
   if (tour.value === 'ATP') parts.push('男子')
   else if (tour.value === 'WTA') parts.push('女子')
+  if (pmFilter.value === 'yes') parts.push('有PM')
+  else if (pmFilter.value === 'no') parts.push('无PM')
   if (props.isMember) {
     if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
     else if (isNewMode.value) parts.push(`Top${topPoolMax.value}`)
@@ -604,7 +613,8 @@ function matchLevelLabel(m) {
   return `${tour} ${short}`
 }
 function polyUrlOf(m) {
-  return polyOf(m?.id)?.url || ''
+  const url = String(polyOf(m?.id)?.url || '')
+  return /polymarket\.com\/event\//i.test(url) ? url : ''
 }
 function openDetail(m) {
   if (!props.isMember) return
@@ -885,7 +895,6 @@ function gapInfo(m) {
       <span class="label">排名池</span>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
       <span class="new-pool-hint">{{ NEW_POOL_RULES_TEXT }}</span>
     </div>
 
@@ -911,6 +920,13 @@ function gapInfo(m) {
           <button type="button" class="chip-btn" :class="{ active: tour === 'all' }" @click="tour = 'all'">全部</button>
           <button type="button" class="chip-btn" :class="{ active: tour === 'ATP' }" @click="tour = 'ATP'">男</button>
           <button type="button" class="chip-btn" :class="{ active: tour === 'WTA' }" @click="tour = 'WTA'">女</button>
+        </div>
+
+        <div class="filter-row">
+          <span class="label">PM</span>
+          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'all' }" @click="pmFilter = 'all'">全部</button>
+          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'yes' }" @click="pmFilter = 'yes'">有外链</button>
+          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'no' }" @click="pmFilter = 'no'">无外链</button>
         </div>
 
         <template v-if="isMember && !isRangeMode && !isNewMode">

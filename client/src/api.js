@@ -346,6 +346,16 @@ export async function updateSofaMonitorSchedule(intervalHours) {
   return data
 }
 
+export async function fetchSofaMonitorDataSource() {
+  const { data } = await api.get('/admin/sofa-monitor/data-source')
+  return data
+}
+
+export async function updateSofaMonitorDataSource(source) {
+  const { data } = await api.post('/admin/sofa-monitor/data-source', { source })
+  return data
+}
+
 export async function refreshTennisCache() {
   const { data } = await api.post('/tennis/cache/refresh')
   return data

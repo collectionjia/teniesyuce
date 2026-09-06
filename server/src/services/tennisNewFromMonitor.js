@@ -2,13 +2,13 @@ const tennisCache = require('./tennisCache');
 const tennisNewCache = require('./tennisNewCache');
 const tennisFromMonitor = require('./tennisFromMonitor');
 const tennisLive = require('./tennisLive');
-const tennisPolymarket = require('./tennisPolymarket');
-const { enrichBundlePolymarket } = require('./tennisPolymarketMatch');
+const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
 const {
   buildNewBundle,
   allEventsFromBundle,
   groupEventsByTournament,
-  passesTop100Pool,
+  passesTopPool,
+  NEW_TOP_RANK_MAX,
 } = require('./tennisRangeFilter');
 const { fetchMonitorTop100Source, mergeEventsIntoBundle } = require('./tennisRangeFromMonitor');
 
@@ -126,15 +126,9 @@ async function refreshNewBundleFromMonitor() {
       tennisFromMonitor.buildRankingsFromEvents(base);
 
       try {
-        await enrichBundlePolymarket(base);
+        await applyPolymarketLinks(base);
       } catch (e) {
         console.error('[tennis/new] poly match:', e.message);
-      }
-
-      try {
-        await tennisPolymarket.refreshPolymarketPrices(base);
-      } catch (e) {
-        console.error('[tennis/new] poly refresh:', e.message);
       }
     }
 
@@ -149,7 +143,7 @@ async function refreshNewBundleFromMonitor() {
     await tennisNewCache.setCachedBundle(newBundle, newBundle.fetched_at);
 
     const poolCount = allEventsFromBundle(newBundle).filter((m) =>
-      passesTop100Pool(m, newBundle.rankingsByPlayer || {}),
+      passesTopPool(m, NEW_TOP_RANK_MAX, newBundle.rankingsByPlayer || {}),
     ).length;
     const polyCount = Object.values(newBundle.polymarketByEvent || {}).filter((p) => p?.url).length;
     console.log(

@@ -2,7 +2,7 @@ const tennisCache = require('./tennisCache');
 const tennisLiveCache = require('./tennisLiveCache');
 const tennisFromMonitor = require('./tennisFromMonitor');
 const tennisLive = require('./tennisLive');
-const tennisPolymarket = require('./tennisPolymarket');
+const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
 const {
   buildLiveBundle,
   allEventsFromBundle,
@@ -177,9 +177,9 @@ async function refreshLiveBundleFromMonitor() {
       }
 
       try {
-        await tennisPolymarket.refreshPolymarketPrices(base);
+        await applyPolymarketLinks(base);
       } catch (e) {
-        console.error('[tennis/live] poly refresh:', e.message);
+        console.error('[tennis/live] poly match:', e.message);
       }
     }
 

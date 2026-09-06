@@ -1,7 +1,8 @@
 const tennisCache = require('./tennisCache');
 const tennisLive = require('./tennisLive');
-const tennisPolymarket = require('./tennisPolymarket');
-const { enrichBundlePolymarket } = require('./tennisPolymarketMatch');
+const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
+const allsports = require('./allsports');
+const tennisDataSource = require('./tennisDataSource');
 
 const MONITOR_BASE = (process.env.SOFA_MONITOR_URL || 'http://172.17.0.1:9004').replace(/\/$/, '');
 const MONITOR_TOKEN = (process.env.SOFA_MONITOR_TOKEN || 'sofascore-monitor-2026').trim();
@@ -75,7 +76,7 @@ function normalizeBundle(raw) {
     date: raw.date,
     serverTime: Math.floor(Date.now() / 1000),
     fetched_at: raw.fetched_at || new Date().toISOString(),
-    source: 'sofascore-monitor',
+    source: raw.source || 'sofascore-monitor',
     filter: raw.filter || raw.dataFilter || 'top20',
     top_rank_max: raw.top_rank_max ?? 20,
     exclude_ended: raw.exclude_ended !== false,
@@ -110,14 +111,36 @@ function normalizeBundle(raw) {
 async function refreshRedisFromMonitor({ includeLive = true } = {}) {
   if (refreshPromise) return refreshPromise;
   refreshPromise = (async () => {
-    const body = await monitorGet('/bundle', 20000);
-    if (!body?.ok && !body?.scheduled) {
-      throw new Error(body?.error || 'monitor bundle unavailable');
+    const pref = await tennisDataSource.get();
+    const useAllsports = pref === 'api';
+    let bundle;
+    if (useAllsports) {
+      if (!allsports.isConfigured()) {
+        throw new Error('已选择 AllSports API，但未配置 RAPIDAPI_KEY');
+      }
+      const raw = await allsports.loadTodayBundle();
+      bundle = normalizeBundle(raw);
+      if (!bundle) throw new Error('invalid allsports bundle');
+    } else {
+      const body = await monitorGet('/bundle', 20000);
+      if (!body?.ok && !body?.scheduled) {
+        throw new Error(body?.error || 'monitor bundle unavailable');
+      }
+      bundle = normalizeBundle(body);
     }
-    let bundle = normalizeBundle(body);
     if (!bundle) throw new Error('invalid monitor bundle');
 
-    if (includeLive) {
+    bundle.dataSource = pref;
+    bundle.upstream = useAllsports ? 'allsportsapi2' : 'sofascore-ipwo';
+    bundle.source = bundle.upstream;
+    if (useAllsports && !(Number(bundle.events) > 0)) {
+      const existing = await tennisCache.getBundle();
+      if (existing && Number(existing.events) > 0) {
+        console.warn('[tennis/allsports-redis] empty refresh, keep previous redis bundle');
+        return existing;
+      }
+    }
+    if (includeLive && !useAllsports) {
       try {
         let liveState = await tennisLive.fetchMonitorLiveOverlayState();
         // 快照不可靠（idle/过期/采集中）时强制拉一次，否则无法把完赛场次从「进行中」收口
@@ -134,20 +157,14 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     }
 
     try {
-      await enrichBundlePolymarket(bundle);
-    } catch (e) {
-      console.error('[tennis/monitor-redis] poly match:', e.message);
-    }
-
-    try {
-      const polyStats = await tennisPolymarket.refreshPolymarketPrices(bundle);
-      if (polyStats.updated || polyStats.failed) {
+      const polyStats = await applyPolymarketLinks(bundle);
+      if (polyStats.fromGamma || polyStats.fromMysql || polyStats.prices?.updated) {
         console.log(
-          `[tennis/monitor-redis] poly prices updated=${polyStats.updated} failed=${polyStats.failed}`,
+          `[tennis/monitor-redis] poly linked=${polyStats.matched} gamma=${polyStats.fromGamma} prices=${polyStats.prices?.updated || 0}`,
         );
       }
     } catch (e) {
-      console.error('[tennis/monitor-redis] poly refresh:', e.message);
+      console.error('[tennis/monitor-redis] poly match:', e.message);
     }
 
     bundle.serverTime = Math.floor(Date.now() / 1000);
@@ -158,7 +175,7 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     await tennisCache.setCachedBundle(bundle, bundle.fetched_at);
     lastRefreshAt = Date.now();
     console.log(
-      `[tennis/monitor-redis] cached date=${bundle.date} events=${bundle.events} live=${bundle.live?.eventCount || 0}`,
+      `[tennis/monitor-redis] cached upstream=${bundle.upstream} date=${bundle.date} events=${bundle.events} live=${bundle.live?.eventCount || 0}`,
     );
     try {
       const tennisRangeFromMonitor = require('./tennisRangeFromMonitor');

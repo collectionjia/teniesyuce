@@ -42,11 +42,11 @@ services:
     build:
       context: ./board
     restart: unless-stopped
+    env_file:
+      - ./server/.env
     environment:
-      ALCHEMY_KEY: ${ALCHEMY_KEY:-}
       FILTER_MARKET_MAKERS: ${FILTER_MARKET_MAKERS:-true}
       STREAK_MIN_ROUNDS: ${STREAK_MIN_ROUNDS:-3}
-      CRAWL_ENABLED: ${CRAWL_ENABLED:-true}
       PYTHONUTF8: "1"
     volumes:
       - board_data:/app/持仓

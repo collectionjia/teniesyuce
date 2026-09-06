@@ -25,10 +25,11 @@ fi
 
 log "同步 ${SOURCE_DIR} → ${RUN_DIR}"
 sudo mkdir -p "$RUN_DIR"
-sudo rsync -a \
+sudo rsync -a --delete \
   --exclude '.git/' \
   --exclude 'node_modules/' \
   --exclude 'server/.env' \
+  --exclude 'scripts/sofascore-monitor/monitor.env' \
   --exclude 'scripts/sofascore-monitor/venv/' \
   --exclude 'scripts/sofascore-monitor/output/' \
   --exclude 'scripts/sofascore-monitor/logs/' \

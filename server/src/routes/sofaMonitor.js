@@ -209,4 +209,56 @@ router.post('/schedule', async (req, res) => {
   }
 });
 
+router.get('/data-source', async (_req, res) => {
+  try {
+    const tennisDataSource = require('../services/tennisDataSource');
+    const allsports = require('../services/allsports');
+    const tennisCache = require('../services/tennisCache');
+    const pref = await tennisDataSource.get();
+    const bundle = await tennisCache.getBundle();
+    res.json({
+      ok: true,
+      source: pref,
+      label: tennisDataSource.label(pref),
+      api_available: allsports.isConfigured(),
+      redis_read: true,
+      redis_upstream: bundle?.upstream || bundle?.source || null,
+      redis_fetched_at: bundle?.fetched_at || null,
+    });
+  } catch (err) {
+    console.error('[sofa-monitor/data-source]', err);
+    res.status(500).json({ ok: false, error: err.message || 'read data source failed' });
+  }
+});
+
+router.post('/data-source', async (req, res) => {
+  try {
+    const tennisDataSource = require('../services/tennisDataSource');
+    const tennisFromMonitor = require('../services/tennisFromMonitor');
+    const allsports = require('../services/allsports');
+    const next = tennisDataSource.normalize(req.body?.source);
+    if (next === 'api' && !allsports.isConfigured()) {
+      return res.status(400).json({
+        ok: false,
+        error: 'AllSports API 未配置（需 RAPIDAPI_KEY），无法切换到 API 源',
+      });
+    }
+    await tennisDataSource.set(next);
+    tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true }).catch((err) => {
+      console.error('[sofa-monitor/data-source] redis refresh:', err.message);
+    });
+    res.json({
+      ok: true,
+      source: next,
+      label: tennisDataSource.label(next),
+      api_available: allsports.isConfigured(),
+      redis_read: true,
+      message: '已切换写入源，正在刷新 Redis（网球页只读 Redis）',
+    });
+  } catch (err) {
+    console.error('[sofa-monitor/data-source]', err);
+    res.status(500).json({ ok: false, error: err.message || 'update data source failed' });
+  }
+});
+
 module.exports = router;

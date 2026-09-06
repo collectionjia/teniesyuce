@@ -20,7 +20,7 @@ const PRODUCT = {
   tag: 'tennis-new',
   gradient: 'linear-gradient(135deg,#2563eb,#06b6d4)',
   url: '#',
-  description: 'Top100 运动员赛事列表，可按 Top20 / Top50 / Top100 排名池筛选（任一方在该档内即显示）。',
+  description: '排名前50运动员赛事列表，可按 Top20 / Top50 排名池筛选（任一方在该档内即显示）。',
   price_month: Number(process.env.TENNIS_NEW_PRICE_MONTH || 2),
   price_week: Number(process.env.TENNIS_NEW_PRICE_WEEK || 1),
   price_day: Number(process.env.TENNIS_NEW_PRICE_DAY || 0.5),
