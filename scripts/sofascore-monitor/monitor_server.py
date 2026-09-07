@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import gc
 import json
 import os
 import subprocess
@@ -30,7 +31,7 @@ HOST = os.environ.get("SOFA_MONITOR_HOST", "0.0.0.0")
 PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
 ALLOWED_COLLECT_INTERVALS = (2, 4, 6, 12)
-LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "120"))
+LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
 
 _lock = threading.Lock()
 _running = False
@@ -104,7 +105,7 @@ def _read_schedule_config() -> dict[str, Any]:
                 return {"interval_hours": hours}
         except Exception:
             pass
-    return {"interval_hours": 4}
+    return {"interval_hours": 6}
 
 
 def _write_schedule_config(interval_hours: int) -> None:
@@ -277,9 +278,23 @@ def _read_logs(lines: int = 120) -> dict[str, Any]:
     return {"ok": True, "lines": text, "file": files[0].name if files else None}
 
 
-def _refresh_server_redis() -> None:
-    """采集 / live 轮询完成后通知 Node server 刷新 Redis。"""
-    scripts = [
+def _write_mysql(snapshot: dict[str, Any], *, live_only: bool = False) -> dict[str, Any]:
+    if os.environ.get("SOFA_WRITE_MYSQL", "1") != "1":
+        return {"skipped": True}
+    try:
+        from db_writer import write_snapshot_to_mysql
+
+        result = write_snapshot_to_mysql(snapshot, live_only=live_only)
+        print(f"[mysql] {result}")
+        return result
+    except Exception as exc:
+        print(f"[mysql] write failed: {exc}")
+        return {"error": str(exc)}
+
+
+def _refresh_server_redis(*, scope: str = "full") -> None:
+    """采集 / live 轮询完成后通知 Node server 刷新 Redis。live 轮询只刷 live 缓存，减轻内存。"""
+    all_scripts = [
         (
             "tennis",
             "require('./src/services/tennisFromMonitor')"
@@ -302,6 +317,7 @@ def _refresh_server_redis() -> None:
             ".catch(e=>{console.error('[monitor→redis-new]',e.message);process.exit(0)})",
         ),
     ]
+    scripts = all_scripts if scope == "full" else [all_scripts[1]]
     for label, node in scripts:
         try:
             r = subprocess.run(
@@ -340,6 +356,7 @@ def _run_collect(trigger: str = "auto") -> None:
                 "finished_at": _now(),
                 "exit_code": 0,
                 "error": None,
+                "db": snapshot.get("db"),
             }
         _refresh_server_redis()
     except Exception as exc:
@@ -359,6 +376,10 @@ def _run_collect(trigger: str = "auto") -> None:
 
 def _run_live_sync(trigger: str = "auto") -> None:
     global _live_running, _last_live
+    with _top100_lock:
+        if _top100_running:
+            print("[live] skip: top100 collect running")
+            return
     with _live_lock:
         if _live_running:
             return
@@ -381,6 +402,7 @@ def _run_live_sync(trigger: str = "auto") -> None:
         live_matches = result.get("live_matches") or []
         if result.get("top100"):
             apply_top100_snapshot(result)
+        db_result = result.get("db") or {}
         with _live_lock:
             _last_live = {
                 "status": "success",
@@ -389,16 +411,17 @@ def _run_live_sync(trigger: str = "auto") -> None:
                 "finished_at": _now(),
                 "live_count": len(live_matches),
                 "total_events": result.get("total_events") or 0,
-                "updated": 0,
-                "ended": 0,
+                "updated": db_result.get("updated") or 0,
+                "ended": db_result.get("ended") or 0,
                 "error": _friendly_error(result["error"]) if result.get("error") else None,
                 "fetched_at": result.get("fetched_at"),
                 "events": live_matches,
                 "date": result.get("date"),
+                "db": db_result,
             }
         if not (_latest_bundle_full() or {}).get("ok"):
             _write_bundle(result)
-        _refresh_server_redis()
+        _refresh_server_redis(scope="live")
     except Exception as exc:
         with _live_lock:
             _last_live.update({"status": "failed", "finished_at": _now(), "error": _friendly_error(exc)})
@@ -406,6 +429,7 @@ def _run_live_sync(trigger: str = "auto") -> None:
     finally:
         with _live_lock:
             _live_running = False
+        gc.collect()
 
 
 def _live_loop() -> None:
@@ -494,6 +518,10 @@ def apply_top100_snapshot(snap: dict[str, Any]) -> None:
 
 def _run_top100_collect(trigger: str = "auto") -> None:
     global _top100_running, _last_top100
+    with _live_lock:
+        if _live_running:
+            print("[top100] skip: live sync running")
+            return
     with _top100_lock:
         if _top100_running:
             return
@@ -524,6 +552,8 @@ def _run_top100_collect(trigger: str = "auto") -> None:
             f"top100 ok events={snap.get('total_events')} live={snap.get('live_count')} "
             f"elapsed={snap.get('elapsed_sec')}s requests={((snap.get('requests') or {}).get('total'))}"
         )
+        db_result = _write_mysql(snap, live_only=False)
+        _append_log(f"mysql {db_result}")
         _refresh_server_redis()
     except Exception as exc:
         err = _friendly_error(exc)
@@ -541,6 +571,7 @@ def _run_top100_collect(trigger: str = "auto") -> None:
     finally:
         with _top100_lock:
             _top100_running = False
+        gc.collect()
 
 
 def _top100_status_payload() -> dict[str, Any]:

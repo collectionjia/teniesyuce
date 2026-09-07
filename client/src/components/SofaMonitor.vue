@@ -65,12 +65,22 @@ const bundle = computed(() => status.value?.latest_bundle || {})
 const cronLines = computed(() => (status.value?.cron || []).filter((l) => l && !String(l).startsWith('#')))
 const collectIntervalHours = computed(() => {
   const hours = Number(schedule.value?.interval_hours ?? status.value?.schedule?.interval_hours)
-  return INTERVAL_OPTIONS.some((o) => o.hours === hours) ? hours : 4
+  return INTERVAL_OPTIONS.some((o) => o.hours === hours) ? hours : 6
 })
 const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
   return opt?.label || `每 ${collectIntervalHours.value} 小时`
 })
+const livePollIntervalSec = computed(() => {
+  const sec = Number(status.value?.live_poll?.interval_sec ?? liveData.value?.interval_sec)
+  return Number.isFinite(sec) && sec > 0 ? sec : 300
+})
+const livePollIntervalLabel = computed(() => {
+  const sec = livePollIntervalSec.value
+  if (sec >= 60 && sec % 60 === 0) return `${sec / 60} 分钟`
+  return `${sec} 秒`
+})
+const LIVE_UI_REFRESH_MS = 60000
 const tennisDataSource = computed(() => dataSource.value?.source || 'ipwo')
 const tennisDataSourceLabel = computed(() => {
   if (tennisDataSource.value === 'api') return 'AllSports API'
@@ -603,7 +613,7 @@ onMounted(() => {
   }, 5000)
   liveTimer = setInterval(() => {
     loadLive().catch(() => {})
-  }, 60000)
+  }, LIVE_UI_REFRESH_MS)
 })
 
 onUnmounted(() => {
@@ -620,7 +630,7 @@ onUnmounted(() => {
     <div class="toolbar">
       <div class="titles">
         <div class="title">Sofascore 监控</div>
-        <div class="sub">Top100 赛程 · 进行中比分 · Redis 写入 {{ tennisDataSourceLabel }}</div>
+        <div class="sub">Top100 {{ collectIntervalLabel }} · 进行中 {{ livePollIntervalLabel }} · Redis {{ tennisDataSourceLabel }}</div>
       </div>
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
@@ -660,7 +670,7 @@ onUnmounted(() => {
         </label>
       </div>
       <label class="interval-select">
-        <span>更新频度</span>
+        <span>Top100 频度</span>
         <select
           :value="collectIntervalHours"
           :disabled="scheduleSaving || loading || running"
@@ -671,6 +681,7 @@ onUnmounted(() => {
           </option>
         </select>
       </label>
+      <span class="live-interval-hint">进行中拉取 {{ livePollIntervalLabel }}</span>
     </div>
 
     <div v-if="notice" class="banner ok">{{ notice }}</div>
@@ -817,7 +828,7 @@ onUnmounted(() => {
           <span class="panel-title">进行中 · {{ livePoll.date || status?.latest_bundle?.date || '—' }}</span>
           <span class="muted panel-meta">
             <template v-if="liveRunning">拉取中…</template>
-            <template v-else>每 60 秒自动刷新 · {{ fmtTime(livePoll.finished_at || livePoll.fetched_at) }}</template>
+            <template v-else>监控每 {{ livePollIntervalLabel }} 拉取 · 页面 60 秒刷新 · {{ fmtTime(livePoll.finished_at || livePoll.fetched_at) }}</template>
           </span>
         </div>
         <div v-if="livePoll.error" class="banner err">{{ formatMonitorError(livePoll.error) }}</div>
@@ -1001,6 +1012,11 @@ onUnmounted(() => {
   color: #334155; background: #fff; cursor: pointer;
 }
 .interval-select select:disabled { opacity: .55; cursor: not-allowed; }
+.live-interval-hint {
+  font-size: 0.82rem;
+  color: #64748b;
+  white-space: nowrap;
+}
 .btn {
   border: 0; border-radius: 8px; padding: 7px 11px; font-size: 0.78rem; font-weight: 600;
   cursor: pointer; transition: .15s;

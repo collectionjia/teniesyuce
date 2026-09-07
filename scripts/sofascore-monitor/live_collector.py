@@ -10,6 +10,29 @@ from top100_collector import collect_top100_snapshot, refresh_top100_live
 from top20_collector import _is_live, collect_top20_snapshot
 
 
+def _mysql_enabled() -> bool:
+    if os.environ.get("SOFA_WRITE_MYSQL", "1") != "1":
+        return False
+    try:
+        from db_writer import mysql_enabled
+
+        return mysql_enabled()
+    except Exception:
+        return False
+
+
+def _write_mysql(snapshot: dict[str, Any], *, live_only: bool) -> dict[str, Any]:
+    if not _mysql_enabled():
+        return {"updated": 0, "ended": 0, "skipped": True}
+    try:
+        from db_writer import write_snapshot_to_mysql
+
+        return write_snapshot_to_mysql(snapshot, live_only=live_only)
+    except Exception as exc:
+        print(f"[mysql] write failed: {exc}")
+        return {"updated": 0, "ended": 0, "skipped": False, "error": str(exc)}
+
+
 def _event_is_live(ev: dict) -> bool:
     return _is_live(
         {
@@ -30,25 +53,29 @@ def _live_matches_from_snapshot(snapshot: dict[str, Any]) -> list[dict]:
 
 def run_top100_live_sync() -> dict[str, Any]:
     snapshot = refresh_top100_live()
-    snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True}
+    snapshot["db"] = _write_mysql(snapshot, live_only=True)
     snapshot["live_matches"] = _live_matches_from_snapshot(snapshot)
     return snapshot
 
 
-def run_live_sync(*, include_scheduled: bool = True, write_mysql: bool = False) -> dict[str, Any]:
+def run_live_sync(*, include_scheduled: bool = True, write_mysql: bool | None = None) -> dict[str, Any]:
+    if write_mysql is None:
+        write_mysql = os.environ.get("SOFA_WRITE_MYSQL", "1") == "1"
     use_top100 = os.environ.get("LIVE_USE_TOP100", "1") == "1"
     if use_top100:
         if include_scheduled:
             snapshot = collect_top100_snapshot(include_scheduled=True)
         else:
             snapshot = run_top100_live_sync()
+            write_mysql = False
     else:
         snapshot = collect_top20_snapshot(include_scheduled=include_scheduled)
-        snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True}
         snapshot["live_matches"] = _live_matches_from_snapshot(snapshot)
-        return snapshot
 
-    snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True}
+    if write_mysql and use_top100 and include_scheduled:
+        snapshot["db"] = _write_mysql(snapshot, live_only=False)
+    elif "db" not in snapshot:
+        snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True}
     if "live_matches" not in snapshot:
         snapshot["live_matches"] = _live_matches_from_snapshot(snapshot)
     return snapshot

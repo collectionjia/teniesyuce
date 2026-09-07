@@ -6,7 +6,9 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 96mb --maxmemory-policy allkeys-lru
+    mem_limit: 128m
+    memswap_limit: 128m
     volumes:
       - redis_data:/data
     ports:
@@ -21,6 +23,8 @@ services:
     build:
       context: ./server
     restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 384m
     env_file:
       - ./server/.env
     environment:
@@ -42,6 +46,8 @@ services:
     build:
       context: ./board
     restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 768m
     env_file:
       - ./server/.env
     environment:
@@ -59,6 +65,8 @@ services:
     build:
       context: ./client
     restart: unless-stopped
+    mem_limit: 64m
+    memswap_limit: 64m
     ports:
       - "${WEB_PORT:-9001}:80"
     depends_on:
