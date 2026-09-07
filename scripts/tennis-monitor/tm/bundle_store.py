@@ -48,8 +48,8 @@ def build_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
         "dataFilter": data_filter,
         "top_rank_max": collect.get("top_rank_max") or (_TOP_N_DEFAULT if collect.get("top100") else None),
         "exclude_ended": True,
-        "source": "sofascore-collect",
-        "upstream": "sofascore-ipwo",
+        "source": "tennis-collect",
+        "upstream": "ipwo",
         "dataSource": "monitor",
         "scheduled": group_scheduled(events),
         "live": {

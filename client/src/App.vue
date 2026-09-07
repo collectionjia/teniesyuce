@@ -496,7 +496,7 @@ const adminManageSections = [
     desc: '数据采集与功能开关配置',
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
-      { view: 'tennis-monitor', label: '网球数据采集', desc: 'Sofascore Top100 与进行中比分', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-monitor', label: '网球数据采集', desc: 'Top100 与进行中比分', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
     ],
   },

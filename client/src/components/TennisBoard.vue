@@ -540,6 +540,21 @@ const filterSummary = computed(() => {
   return parts.join(' · ')
 })
 
+function sanitizeBundleHint(raw) {
+  const msg = String(raw || '').trim()
+  if (!msg) return ''
+  return msg
+    .replace(/sofascore/gi, '')
+    .replace(/from\s+monitor\s*→\s*redis/gi, '采集写入 Redis')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+const bundleHint = computed(() => {
+  const msg = data.value?.message || data.value?.update?.message || ''
+  return sanitizeBundleHint(msg)
+})
+
 function eloOf(id) {
   const map = data.value?.eloByEvent || {}
   return map[id] || map[String(id)] || null
@@ -675,6 +690,13 @@ function fmtOdds(side) {
   const d = side?.decimal
   if (d == null || Number.isNaN(Number(d))) return '—'
   return Number(d).toFixed(2)
+}
+
+function oddsSourceLabel(id) {
+  const raw = oddsOf(id)?.source || oddsOf(id)?.full_time?.source || ''
+  const s = String(raw).trim().toLowerCase()
+  if (!s || s.includes('sofa') || s === 'ipwo' || s.includes('monitor')) return ''
+  return raw
 }
 
 function lastToken(name) {
@@ -977,8 +999,7 @@ function gapInfo(m) {
     <div v-else-if="error && !data" class="empty err">{{ error }}</div>
     <div v-else-if="!matches.length" class="empty">
       当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
-      <div v-if="data?.message" class="hint">{{ data.message }}</div>
-      <div v-else-if="data?.update?.message" class="hint">{{ data.update.message }}</div>
+      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
     </div>
 
     <template v-else>
@@ -1222,7 +1243,7 @@ function gapInfo(m) {
                     <span class="num">{{ fmtOdds(oddsOf(detailMatch.id).full_time.away) }}</span>
                   </div>
                 </div>
-                <span class="s">{{ oddsOf(detailMatch.id).source || oddsOf(detailMatch.id).full_time?.source || '—' }}</span>
+                <span v-if="oddsSourceLabel(detailMatch.id)" class="s">{{ oddsSourceLabel(detailMatch.id) }}</span>
               </div>
 
               <div class="kv" v-if="polyOf(detailMatch.id)?.url">

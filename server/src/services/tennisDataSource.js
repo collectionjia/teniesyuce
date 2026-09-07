@@ -37,7 +37,7 @@ async function set(source) {
 }
 
 function label(source) {
-  return normalize(source) === 'api' ? 'AllSports API' : 'Sofascore · IPWO';
+  return normalize(source) === 'api' ? 'AllSports API' : 'IPWO';
 }
 
 module.exports = {

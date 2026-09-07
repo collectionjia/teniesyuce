@@ -43,7 +43,7 @@ def main() -> int:
         f"完成: {result.get('total_events')} 场 · "
         f"PM {len(result.get('polymarketByEvent') or {})} · "
         f"{redis_part} · "
-        f"Sofa HTTP {req.get('http_total')} 次 "
+        f"HTTP {req.get('http_total')} 次 "
         f"(api={req.get('http_api')} poly={req.get('poly_requests', 0)}req)"
         + (f" · {total_part}" if total_part else "")
     )

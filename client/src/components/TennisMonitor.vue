@@ -105,13 +105,13 @@ const LIVE_UI_REFRESH_MS = 60000
 const tennisDataSource = computed(() => dataSource.value?.source || 'ipwo')
 const tennisDataSourceLabel = computed(() => {
   if (tennisDataSource.value === 'api') return 'AllSports API'
-  return 'Sofascore · IPWO'
+  return 'IPWO'
 })
 const redisUpstreamLabel = computed(() => {
   const up = dataSource.value?.redis_upstream
   if (!up) return '—'
   if (String(up).includes('allsports')) return 'AllSports API'
-  if (String(up).includes('sofa') || String(up).includes('ipwo')) return 'Sofascore · IPWO'
+  if (String(up).includes('ipwo')) return 'IPWO'
   return up
 })
 const collectRequests = computed(() => (
@@ -305,18 +305,18 @@ function formatMonitorError(raw) {
   if (!msg) return ''
   const low = msg.toLowerCase()
   if (low.includes('curl: (28)') || low.includes('connection timed out') || low.includes('timed out after')) {
-    return 'Sofascore 请求超时（代理或网络较慢），请稍后重试'
+    return '请求超时（代理或网络较慢），请稍后重试'
   }
   if (low.includes('curl: (7)') || low.includes('failed to connect')) {
-    return '无法连接 Sofascore/代理，请检查网络或代理配置'
+    return '无法连接数据源/代理，请检查网络或代理配置'
   }
   if (low.includes('403') && (low.includes('forbidden') || low.includes('拒绝'))) {
-    return 'Sofascore 拒绝访问（403），请检查代理 IP'
+    return '数据源拒绝访问（403），请检查代理 IP'
   }
   if (low.includes('monitor unreachable') || low.includes('502')) {
     return '监控服务不可达，请确认采集服务是否运行'
   }
-  return msg
+  return msg.replace(/sofascore/gi, '').replace(/\s{2,}/g, ' ').trim() || msg
 }
 
 function fmtTime(v) {
@@ -978,7 +978,7 @@ onUnmounted(() => {
 
         <div v-if="top100Board?.error" class="banner err">{{ formatMonitorError(top100Board.error) }}</div>
         <div v-else-if="top100Board?.loading && !players.length" class="empty">
-          正在拉取 Sofascore Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
+          正在拉取 Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
         </div>
         <div v-else-if="!players.length" class="empty">
           <template v-if="rawPoolPlayers.length && (onlyWithMatches || tierFilterActive())">

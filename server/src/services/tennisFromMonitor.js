@@ -77,11 +77,11 @@ function normalizeBundle(raw) {
     date: raw.date,
     serverTime: Math.floor(Date.now() / 1000),
     fetched_at: raw.fetched_at || new Date().toISOString(),
-    source: raw.source || 'sofascore-monitor',
+    source: raw.source || 'tennis-monitor',
     filter: raw.filter || raw.dataFilter || 'top20',
     top_rank_max: raw.top_rank_max ?? 20,
     exclude_ended: raw.exclude_ended !== false,
-    update: raw.update || { message: 'from Sofascore monitor → Redis' },
+    update: raw.update || { message: '采集写入 Redis' },
     scheduled: {
       ...scheduled,
       tournaments,
@@ -136,7 +136,7 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     if (!bundle) throw new Error('invalid monitor bundle');
 
     bundle.dataSource = pref;
-    bundle.upstream = useAllsports ? 'allsportsapi2' : 'sofascore-ipwo';
+    bundle.upstream = useAllsports ? 'allsportsapi2' : 'ipwo';
     bundle.source = bundle.upstream;
     if (useAllsports && !(Number(bundle.events) > 0)) {
       const existing = await tennisCache.getBundle();

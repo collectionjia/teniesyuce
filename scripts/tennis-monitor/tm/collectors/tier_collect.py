@@ -21,7 +21,7 @@ _STEP_LABELS = (
     "代理预热",
     "Top100与赛事",
     "Polymarket",
-    "Sofascore排名赔率",
+    "排名与赔率",
     "结果输出",
     "写入Redis",
 )
@@ -50,11 +50,11 @@ def log_collect_header(*, match_date: str | None = None, top100: bool = True) ->
     p = proxy_status_public()
     if p.get("enabled"):
         print(
-            f"[1/{_STEPS}] IPWO 代理 → https://www.sofascore.com/tennis "
+            f"[1/{_STEPS}] IPWO 代理已就绪 "
             f"({p.get('mode')} {p.get('host')} zone={p.get('zone') or '-'})"
         )
     else:
-        print(f"[1/{_STEPS}] 未配置 IPWO 代理，直连 Sofascore（建议在 monitor.env 配置 IPWO）")
+        print(f"[1/{_STEPS}] 未配置 IPWO 代理，直连（建议在 monitor.env 配置 IPWO）")
     if top100:
         print(f"[2/{_STEPS}] 球员 Top100 + 赛事：ATP/WTA 各前 {_TOP_N} 名 · GS/500/1000")
     else:
@@ -150,7 +150,7 @@ def log_tier_match(ev: dict) -> None:
     odds_part = ""
     odds_label = slim.get("oddsLabel")
     if odds_label:
-        odds_part = f" | Sofa {odds_label}"
+        odds_part = f" | 赔 {odds_label}"
     poly_part = ""
     poly = slim.get("polymarket") or {}
     poly_label = slim.get("polymarketLabel")
@@ -239,7 +239,7 @@ def log_tier_matches(
             f"赛程页={request_stats.get('scheduled_pages')} "
             f"签表={request_stats.get('tier_detail')}({request_stats.get('tier_detail_tournaments')}站×2) "
             f"poly={request_stats.get('polymarket', 0)}({request_stats.get('poly_requests', 0)}req) "
-            f"sofa赔率={request_stats.get('odds', 0)}"
+            f"赔率={request_stats.get('odds', 0)}"
         )
 
 
@@ -304,7 +304,7 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
                     enrich_board = fetch_rank_board(client, _TOP_N)
                     extra_rankings = 2
                 print(
-                    f"[4/{_STEPS}] Sofascore 球员排名与赔率：{len(slim_events)} 场"
+                    f"[4/{_STEPS}] 球员排名与赔率：{len(slim_events)} 场"
                 )
                 t0 = time.perf_counter()
                 rankings_by_player = enrich_rankings_from_events(slim_events, enrich_board)
@@ -321,7 +321,7 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
                 log_step_done(4, _STEP_LABELS[3], timing["step4"])
                 print(
                     f"      排名 {len(rankings_by_player)} 人 · "
-                    f"Sofa {len(odds_by_event)}/{len(slim_events)} · "
+                    f"赔率 {len(odds_by_event)}/{len(slim_events)} · "
                     f"PM {len(polymarket_by_event)}/{len(slim_events)}"
                 )
             else:

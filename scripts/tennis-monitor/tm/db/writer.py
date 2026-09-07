@@ -275,7 +275,7 @@ def upsert_odds(conn, odds_by_event: dict[str, Any]) -> int:
                 "market_name": "full_time",
                 "is_live": 0,
                 "suspended": 0,
-                "source": odds.get("source") or ft.get("source") or "sofascore",
+                "source": odds.get("source") or ft.get("source") or "ipwo",
                 "bookmaker": odds.get("bookmaker"),
                 "sport_key": odds.get("sport_key"),
                 "odds_event_id": str(odds.get("eventId") or key),
