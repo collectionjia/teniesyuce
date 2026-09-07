@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import copy
 import json
 import os
 import subprocess
@@ -378,6 +379,8 @@ def _run_live_sync(trigger: str = "auto") -> None:
     try:
         result = run_live_sync(include_scheduled=False)
         live_matches = result.get("live_matches") or []
+        if result.get("top100"):
+            apply_top100_snapshot(result)
         with _live_lock:
             _last_live = {
                 "status": "success",
@@ -455,7 +458,7 @@ def _top100_summary_from_board(top100: dict[str, Any], snap: dict[str, Any] | No
         "wta_players": len(wta),
         "atp_matches": atp_matches,
         "wta_matches": wta_matches,
-        "total_matches": snap.get("total_events") if snap else base.get("total_matches") or (atp_matches + wta_matches),
+        "total_matches": atp_matches + wta_matches,
         "live_matches": snap.get("live_count") if snap else base.get("live_matches") or 0,
     }
     return out
@@ -477,6 +480,18 @@ def _top100_api_from_snap(snap: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def apply_top100_snapshot(snap: dict[str, Any]) -> None:
+    """采集或 live 刷新后，同步 Top100 内存缓存（供 GET /top100）。"""
+    top100 = snap.get("top100")
+    if not top100 or not (top100.get("atp") or top100.get("wta")):
+        return
+    restore_top100_board(top100)
+    payload = _top100_api_from_snap(snap)
+    payload["atp"] = copy.deepcopy(payload.get("atp") or [])
+    payload["wta"] = copy.deepcopy(payload.get("wta") or [])
+    _top100_cache.update(payload)
+
+
 def _run_top100_collect(trigger: str = "auto") -> None:
     global _top100_running, _last_top100
     with _top100_lock:
@@ -491,9 +506,7 @@ def _run_top100_collect(trigger: str = "auto") -> None:
             include_scheduled=True,
             force_schedule=trigger in ("manual-http", "http-refresh"),
         )
-        restore_top100_board(snap.get("top100"))
-        payload = _top100_api_from_snap(snap)
-        _top100_cache.update(payload)
+        apply_top100_snapshot(snap)
         with _top100_lock:
             _last_top100 = {
                 "status": "success",

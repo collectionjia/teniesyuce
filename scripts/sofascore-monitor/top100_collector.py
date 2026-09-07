@@ -1,6 +1,7 @@
 """ATP/WTA Top100：排名/赛程各查一次；进行中仅轮询比分+赔率。"""
 from __future__ import annotations
 
+import copy
 import os
 import time
 from datetime import datetime, timezone
@@ -63,6 +64,20 @@ def fetch_top100_board(client: SofascoreClient) -> dict[str, Any]:
             )
         board[tour] = players
     return board
+
+
+def _rebuild_board_indexes(board: dict[str, Any]) -> None:
+    ids: set[int] = set()
+    keys: set[str] = set()
+    for tour in ("atp", "wta"):
+        for p in board.get(tour) or []:
+            pid = p.get("id")
+            if pid is not None:
+                ids.add(int(pid))
+            for key in _name_keys(p.get("name")):
+                keys.add(key)
+    board["player_ids"] = ids
+    board["name_keys"] = keys
 
 
 def event_in_top100(ev: dict, board: dict[str, Any]) -> bool:
@@ -157,6 +172,8 @@ def _snapshot_from_events(
         "top100": {
             "atp": board["atp"],
             "wta": board["wta"],
+            "player_ids": board.get("player_ids"),
+            "name_keys": board.get("name_keys"),
             "summary": {
                 "total_matches": len(slim_events),
                 "live_matches": live_count,
@@ -250,7 +267,7 @@ def refresh_top100_live() -> dict[str, Any]:
 
     started = time.time()
     error: str | None = None
-    board = _last_board
+    board = copy.deepcopy(_last_board)
     by_id = {int(e["id"]): dict(e) for e in (_last_snapshot.get("events") or []) if e.get("id") is not None}
     odds_by_event = dict(_last_snapshot.get("oddsByEvent") or {})
 
@@ -300,13 +317,18 @@ def refresh_top100_live() -> dict[str, Any]:
     snap["collect_mode"] = "live"
     snap["requests"] = client_stats
     _last_snapshot = snap
+    restore_top100_board(snap.get("top100"))
     return snap
 
 
 def restore_top100_board(data: dict[str, Any] | None) -> None:
     global _last_board
-    if data and (data.get("atp") or data.get("wta")):
-        _last_board = data
+    if not data or not (data.get("atp") or data.get("wta")):
+        return
+    board = dict(data)
+    if not board.get("player_ids") or not board.get("name_keys"):
+        _rebuild_board_indexes(board)
+    _last_board = board
 
 
 def get_cached_top100_board() -> dict[str, Any] | None:

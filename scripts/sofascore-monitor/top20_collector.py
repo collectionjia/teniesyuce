@@ -196,11 +196,16 @@ def _attach_matches(board: dict[str, Any], events: list[dict]) -> None:
             event_rank=away_p.get("rank"),
         )
         eid = ev.get("id")
-        for name, opp, player_rank, opp_rank in (
-            (home, away, home_rank, away_rank),
-            (away, home, away_rank, home_rank),
+        for name, opp, player_rank, opp_rank, side_p in (
+            (home, away, home_rank, away_rank, home_p),
+            (away, home, away_rank, home_rank, away_p),
         ):
-            player = by_name.get(norm_name(name))
+            player = None
+            pid = side_p.get("id") if isinstance(side_p, dict) else None
+            if pid is not None:
+                player = by_id.get(int(pid))
+            if not player and isinstance(name, str):
+                player = by_name.get(norm_name(name))
             if not player:
                 continue
             matches = player.setdefault("matches", [])

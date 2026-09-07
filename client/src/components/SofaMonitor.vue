@@ -15,7 +15,7 @@ const liveData = ref(null)
 const logs = ref(null)
 const tab = ref('atp') // atp | wta | live | logs
 const topPoolMax = ref('100') // 20 | 50 | 100
-const tierFilter = ref({ gs: true, t1000: true, t500: true })
+const tierFilter = ref({ gs: false, t1000: false, t500: false })
 const onlyWithMatches = ref(false)
 const expanded = ref({})
 const schedule = ref(null)
@@ -175,13 +175,15 @@ const players = computed(() => {
   return rankPoolPlayers(list).filter((p) => {
     const matches = playerMatchesFiltered(p)
     if (onlyWithMatches.value && !matches.length) return false
-    if (tierFilterActive() && !matches.length) return false
     return true
   }).map((p) => {
     const matches = playerMatchesFiltered(p)
     return { ...p, matches, matchCount: matches.length }
   })
 })
+const rawPoolPlayers = computed(() => rankPoolPlayers(
+  tab.value === 'wta' ? top100Board.value?.wta : top100Board.value?.atp,
+))
 const poolSummary = computed(() => {
   const max = Number(topPoolMax.value) || 100
   let matches = 0
@@ -383,7 +385,7 @@ async function waitCollectDone() {
         showNotice(`Top100 采集完成：${lastRun.value?.total_events ?? bundle.value?.event_count ?? '—'} 场比赛`)
         api.refreshTennisCache().catch(() => {})
         api.refreshTennisNewCache().catch(() => {})
-        await loadTop100(false)
+        await loadTop100(true)
         await loadDataSource()
       }
       return
@@ -875,8 +877,11 @@ onUnmounted(() => {
           正在拉取 Sofascore Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
         </div>
         <div v-else-if="!players.length" class="empty">
-          暂无符合条件的球员
-          <template v-if="onlyWithMatches || tierFilterActive()">（可取消「仅有赛事」或调整 500/1000/大满贯 筛选）</template>
+          <template v-if="rawPoolPlayers.length && (onlyWithMatches || tierFilterActive())">
+            暂无符合筛选的球员（池内 {{ rawPoolPlayers.length }} 人）
+            <div class="hint">可取消「仅有赛事」或调整 500/1000/大满贯 筛选</div>
+          </template>
+          <template v-else>暂无 Top{{ topPoolMax }} 球员数据</template>
         </div>
 
         <template v-else>
