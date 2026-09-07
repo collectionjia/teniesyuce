@@ -34,6 +34,7 @@ const LIVE_PAGE_SIZE = 12
 const LOG_PAGE_SIZE = 60
 
 const INTERVAL_OPTIONS = [
+  { hours: 0, label: '关闭定时' },
   { hours: 2, label: '2 小时' },
   { hours: 4, label: '4 小时' },
   { hours: 6, label: '6 小时' },
@@ -75,7 +76,7 @@ const collectIntervalHours = computed(() => {
 })
 const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
-  return opt?.label || `每 ${collectIntervalHours.value} 小时`
+  return opt?.label || (collectIntervalHours.value <= 0 ? '关闭定时' : `每 ${collectIntervalHours.value} 小时`)
 })
 const livePollIntervalSec = computed(() => {
   const sec = Number(

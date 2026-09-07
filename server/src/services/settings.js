@@ -5,8 +5,22 @@ const DEFAULT_PAYMENT_PLAN_KEY = 'default_payment_plan';
 const REDEEM_PURCHASE_URL_KEY = 'redeem_purchase_url';
 const DEFAULT_REDEEM_PURCHASE_URL = 'https://pay.ldxp.cn/shop/8GD17A0H';
 const BTC_CRAWL_ENABLED_KEY = 'btc_crawl_enabled';
+const BTC_CRAWL_FORCE_OFF_KEY = 'btc_crawl_force_off';
 
 let tableReady = false;
+
+function envCrawlEnabled() {
+  const v = String(process.env.CRAWL_ENABLED || '').trim().toLowerCase();
+  return v === '1' || v === 'true';
+}
+
+async function upsertSetting(key, value) {
+  await pool.query(
+    `INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)`,
+    [key, value]
+  );
+}
 
 async function ensureTable() {
   if (tableReady) return;
@@ -27,7 +41,8 @@ async function ensureTable() {
   const defaults = [
     [DEFAULT_PAYMENT_PLAN_KEY, 'month'],
     [REDEEM_PURCHASE_URL_KEY, DEFAULT_REDEEM_PURCHASE_URL],
-    [BTC_CRAWL_ENABLED_KEY, '0'],
+    [BTC_CRAWL_ENABLED_KEY, envCrawlEnabled() ? '1' : '0'],
+    [BTC_CRAWL_FORCE_OFF_KEY, '0'],
   ];
   for (const [key, value] of defaults) {
     const [[row]] = await pool.query(
@@ -110,22 +125,27 @@ async function setRedeemPurchaseUrl(url) {
 
 async function getBtcCrawlEnabled() {
   await ensureTable();
+  const [[forceOffRow]] = await pool.query(
+    'SELECT setting_value FROM app_settings WHERE setting_key=?',
+    [BTC_CRAWL_FORCE_OFF_KEY]
+  );
+  if (String(forceOffRow?.setting_value || '').trim() === '1') return false;
+
   const [[row]] = await pool.query(
     'SELECT setting_value FROM app_settings WHERE setting_key=?',
     [BTC_CRAWL_ENABLED_KEY]
   );
   const v = String(row?.setting_value || '').trim().toLowerCase();
-  return v === '1' || v === 'true';
+  if (v === '1' || v === 'true') return true;
+  if (v === '0' || v === 'false') return envCrawlEnabled();
+  return envCrawlEnabled();
 }
 
 async function setBtcCrawlEnabled(enabled) {
   await ensureTable();
   const value = enabled ? '1' : '0';
-  await pool.query(
-    `INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)
-     ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)`,
-    [BTC_CRAWL_ENABLED_KEY, value]
-  );
+  await upsertSetting(BTC_CRAWL_ENABLED_KEY, value);
+  await upsertSetting(BTC_CRAWL_FORCE_OFF_KEY, enabled ? '0' : '1');
   return !!enabled;
 }
 

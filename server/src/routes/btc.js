@@ -52,6 +52,7 @@ async function fetchBoardState() {
 function slimLeaderboard(lb) {
   if (!lb || typeof lb !== 'object') return null;
   return {
+    round_ts: lb.round_ts ?? 0,
     up_count: lb.up_count ?? 0,
     dn_count: lb.dn_count ?? 0,
     up_total: lb.up_total ?? 0,

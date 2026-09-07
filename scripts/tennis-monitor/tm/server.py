@@ -30,7 +30,7 @@ SCHEDULE_FILE = APP_DIR / "config" / "schedule.json"
 HOST = os.environ.get("SOFA_MONITOR_HOST", "0.0.0.0")
 PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
-ALLOWED_COLLECT_INTERVALS = (2, 4, 6, 12)
+ALLOWED_COLLECT_INTERVALS = (0, 2, 4, 6, 12)
 ALLOWED_LIVE_POLL_INTERVALS = (60, 120, 300)
 LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
 YUCE_SERVER_CONTAINER = (os.environ.get("YUCE_SERVER_CONTAINER") or "yuce-server-1").strip()
@@ -107,7 +107,8 @@ def _read_schedule_config() -> dict[str, Any]:
     if SCHEDULE_FILE.exists():
         try:
             data = json.loads(SCHEDULE_FILE.read_text(encoding="utf-8"))
-            hours = int(data.get("interval_hours") or defaults["interval_hours"])
+            hours_raw = data.get("interval_hours")
+            hours = int(hours_raw if hours_raw is not None else defaults["interval_hours"])
             if hours not in ALLOWED_COLLECT_INTERVALS:
                 hours = defaults["interval_hours"]
             enabled = data.get("collect_enabled")
@@ -171,7 +172,7 @@ def _apply_collect_schedule(interval_hours: int, *, enabled: bool = True) -> lis
         if "run_collect" in line or "run_top100_collect" in line or "monitor_server" in line:
             continue
         kept.append(line)
-    if not enabled:
+    if not enabled or interval_hours <= 0:
         payload = "\n".join(kept).rstrip("\n") + ("\n" if kept else "")
         subprocess.run(["crontab", "-"], input=payload, text=True, check=False)
         return []
@@ -200,8 +201,12 @@ def _schedule_payload() -> dict[str, Any]:
         "collect_target": "top100",
         "allowed_intervals": list(ALLOWED_COLLECT_INTERVALS),
         "allowed_live_poll_intervals": list(ALLOWED_LIVE_POLL_INTERVALS),
-        "cron_line": f"{_cron_expr_for_interval(hours)} top100-collect" if cfg.get("collect_enabled", True) else "",
-        "label": f"每 {hours} 小时 Top100",
+        "cron_line": (
+            f"{_cron_expr_for_interval(hours)} top100-collect"
+            if cfg.get("collect_enabled", True) and hours > 0
+            else ""
+        ),
+        "label": "关闭定时" if hours <= 0 else f"每 {hours} 小时 Top100",
         "live_poll_label": f"每 {live_sec // 60} 分钟" if live_sec % 60 == 0 else f"每 {live_sec} 秒",
     }
 
@@ -221,7 +226,8 @@ def _update_schedule(body: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"live_poll_interval_sec must be one of {ALLOWED_LIVE_POLL_INTERVALS}")
         cfg["live_poll_interval_sec"] = live_sec
     _write_schedule_config(cfg)
-    _apply_collect_schedule(int(cfg["interval_hours"]), enabled=bool(cfg.get("collect_enabled", True)))
+    cron_on = bool(cfg.get("collect_enabled", True)) and int(cfg["interval_hours"]) > 0
+    _apply_collect_schedule(int(cfg["interval_hours"]), enabled=cron_on)
     return _schedule_payload()
 
 
