@@ -1,4 +1,4 @@
-# 核心服务：board + server + web（不含 basketball / dota2）
+# 核心服务：board + server + web
 # MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
 # 用法: docker compose -f docker-compose.core.yml up -d --build
 

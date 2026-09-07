@@ -1,4 +1,4 @@
-# 仅部署自动投注相关前端（不部署篮球/DOTA2）
+# 仅部署自动投注相关前端
 # 用法：powershell -ExecutionPolicy Bypass -File .\scripts\deploy-auto-bet.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -25,9 +25,9 @@ sudo cp /tmp/TennisBoard.vue /opt/yuce/bbbbb/client/src/components/TennisBoard.v
 sudo python3 /tmp/tmp_patch_auto_bet_labels.py
 sudo touch /opt/yuce/bbbbb/client/src/btcVirtualBet.js
 cd /opt/yuce/bbbbb
-sudo docker compose -f docker-compose.external.yml build web
-sudo docker compose -f docker-compose.external.yml up -d --force-recreate web
-sudo docker compose -f docker-compose.external.yml ps web
+sudo docker compose -f docker-compose.core.yml build web
+sudo docker compose -f docker-compose.core.yml up -d --force-recreate web
+sudo docker compose -f docker-compose.core.yml ps web
 sleep 2
 sudo docker exec bbbbb-web-1 sh -c "grep -Rao 自动投注 /usr/share/nginx/html/assets/*.js | wc -l"
 '@

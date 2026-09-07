@@ -1,0 +1,1737 @@
+{
+  "updatedAt": "2026-09-05T09:17:49.894841+00:00",
+  "tag": "nba",
+  "seriesId": "10345",
+  "events": [
+    {
+      "id": "391576",
+      "slug": "nba-orl-det-2026-04-19",
+      "title": "Magic vs. Pistons",
+      "url": "https://polymarket.com/event/nba-orl-det-2026-04-19",
+      "startDate": "2026-04-18T09:01:38.429203Z",
+      "endDate": "2026-04-19T22:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Magic",
+        "Pistons"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 11409656.104845991,
+      "question": "Magic vs. Pistons"
+    },
+    {
+      "id": "382093",
+      "slug": "nba-hou-lal-2026-04-21",
+      "title": "Rockets vs. Lakers",
+      "url": "https://polymarket.com/event/nba-hou-lal-2026-04-21",
+      "startDate": "2026-04-15T22:46:58.910574Z",
+      "endDate": "2026-04-22T02:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Rockets",
+        "Lakers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 10140971.462228952,
+      "question": "Rockets vs. Lakers"
+    },
+    {
+      "id": "391578",
+      "slug": "nba-orl-det-2026-04-22",
+      "title": "Magic vs. Pistons",
+      "url": "https://polymarket.com/event/nba-orl-det-2026-04-22",
+      "startDate": "2026-04-18T09:01:38.490479Z",
+      "endDate": "2026-04-22T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Magic",
+        "Pistons"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9244691.364813065,
+      "question": "Magic vs. Pistons"
+    },
+    {
+      "id": "388787",
+      "slug": "nba-nyk-atl-2026-04-23",
+      "title": "Knicks vs. Hawks",
+      "url": "https://polymarket.com/event/nba-nyk-atl-2026-04-23",
+      "startDate": "2026-04-17T14:09:18.511011Z",
+      "endDate": "2026-04-23T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Hawks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 8884143.141083159,
+      "question": "Knicks vs. Hawks"
+    },
+    {
+      "id": "388789",
+      "slug": "nba-cle-tor-2026-04-23",
+      "title": "Cavaliers vs. Raptors",
+      "url": "https://polymarket.com/event/nba-cle-tor-2026-04-23",
+      "startDate": "2026-04-17T14:09:28.201672Z",
+      "endDate": "2026-04-24T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Raptors"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 4138578.731054998,
+      "question": "Cavaliers vs. Raptors"
+    },
+    {
+      "id": "388790",
+      "slug": "nba-den-min-2026-04-23",
+      "title": "Nuggets vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-den-min-2026-04-23",
+      "startDate": "2026-04-17T14:09:28.199972Z",
+      "endDate": "2026-04-24T01:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Nuggets",
+        "Timberwolves"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7828978.712598973,
+      "question": "Nuggets vs. Timberwolves"
+    },
+    {
+      "id": "391582",
+      "slug": "nba-bos-phi-2026-04-24",
+      "title": "Celtics vs. 76ers",
+      "url": "https://polymarket.com/event/nba-bos-phi-2026-04-24",
+      "startDate": "2026-04-18T09:01:38.542509Z",
+      "endDate": "2026-04-24T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Celtics",
+        "76ers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 7810087.502532988,
+      "question": "Celtics vs. 76ers"
+    },
+    {
+      "id": "391580",
+      "slug": "nba-lal-hou-2026-04-24",
+      "title": "Lakers vs. Rockets",
+      "url": "https://polymarket.com/event/nba-lal-hou-2026-04-24",
+      "startDate": "2026-04-18T09:01:38.518746Z",
+      "endDate": "2026-04-25T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Lakers",
+        "Rockets"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 14517040.503068175,
+      "question": "Lakers vs. Rockets"
+    },
+    {
+      "id": "391581",
+      "slug": "nba-sas-por-2026-04-24",
+      "title": "Spurs vs. Trail Blazers",
+      "url": "https://polymarket.com/event/nba-sas-por-2026-04-24",
+      "startDate": "2026-04-18T09:01:38.523926Z",
+      "endDate": "2026-04-25T02:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Trail Blazers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 11322120.231249064,
+      "question": "Spurs vs. Trail Blazers"
+    },
+    {
+      "id": "395795",
+      "slug": "nba-det-orl-2026-04-25",
+      "title": "Pistons vs. Magic",
+      "url": "https://polymarket.com/event/nba-det-orl-2026-04-25",
+      "startDate": "2026-04-19T14:08:14.49282Z",
+      "endDate": "2026-04-25T17:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Magic"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 6566630.84959901,
+      "question": "Pistons vs. Magic"
+    },
+    {
+      "id": "395792",
+      "slug": "nba-nyk-atl-2026-04-25",
+      "title": "Knicks vs. Hawks",
+      "url": "https://polymarket.com/event/nba-nyk-atl-2026-04-25",
+      "startDate": "2026-04-19T14:08:14.364389Z",
+      "endDate": "2026-04-25T22:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Hawks"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 5468824.155958005,
+      "question": "Knicks vs. Hawks"
+    },
+    {
+      "id": "395794",
+      "slug": "nba-den-min-2026-04-25",
+      "title": "Nuggets vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-den-min-2026-04-25",
+      "startDate": "2026-04-19T14:08:14.402233Z",
+      "endDate": "2026-04-26T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Nuggets",
+        "Timberwolves"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9048991.565484032,
+      "question": "Nuggets vs. Timberwolves"
+    },
+    {
+      "id": "399497",
+      "slug": "nba-cle-tor-2026-04-26",
+      "title": "Cavaliers vs. Raptors",
+      "url": "https://polymarket.com/event/nba-cle-tor-2026-04-26",
+      "startDate": "2026-04-20T14:05:37.707229Z",
+      "endDate": "2026-04-26T17:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Raptors"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 6213822.00866,
+      "question": "Cavaliers vs. Raptors"
+    },
+    {
+      "id": "399498",
+      "slug": "nba-sas-por-2026-04-26",
+      "title": "Spurs vs. Trail Blazers",
+      "url": "https://polymarket.com/event/nba-sas-por-2026-04-26",
+      "startDate": "2026-04-20T14:09:14.700916Z",
+      "endDate": "2026-04-26T19:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Trail Blazers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 9934582.189102082,
+      "question": "Spurs vs. Trail Blazers"
+    },
+    {
+      "id": "399501",
+      "slug": "nba-bos-phi-2026-04-26",
+      "title": "Celtics vs. 76ers",
+      "url": "https://polymarket.com/event/nba-bos-phi-2026-04-26",
+      "startDate": "2026-04-20T14:05:37.802584Z",
+      "endDate": "2026-04-26T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Celtics",
+        "76ers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 9317657.541716939,
+      "question": "Celtics vs. 76ers"
+    },
+    {
+      "id": "399500",
+      "slug": "nba-lal-hou-2026-04-26",
+      "title": "Lakers vs. Rockets",
+      "url": "https://polymarket.com/event/nba-lal-hou-2026-04-26",
+      "startDate": "2026-04-20T14:09:29.17263Z",
+      "endDate": "2026-04-27T01:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Lakers",
+        "Rockets"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 14822211.847836623,
+      "question": "Lakers vs. Rockets"
+    },
+    {
+      "id": "403099",
+      "slug": "nba-det-orl-2026-04-27",
+      "title": "Pistons vs. Magic",
+      "url": "https://polymarket.com/event/nba-det-orl-2026-04-27",
+      "startDate": "2026-04-21T14:05:55.042875Z",
+      "endDate": "2026-04-28T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Magic"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9567446.749173034,
+      "question": "Pistons vs. Magic"
+    },
+    {
+      "id": "403097",
+      "slug": "nba-min-den-2026-04-27",
+      "title": "Timberwolves vs. Nuggets",
+      "url": "https://polymarket.com/event/nba-min-den-2026-04-27",
+      "startDate": "2026-04-21T14:05:54.992804Z",
+      "endDate": "2026-04-28T02:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Nuggets"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9977967.720216967,
+      "question": "Timberwolves vs. Nuggets"
+    },
+    {
+      "id": "405167",
+      "slug": "nba-phi-bos-2026-04-28",
+      "title": "76ers vs. Celtics",
+      "url": "https://polymarket.com/event/nba-phi-bos-2026-04-28",
+      "startDate": "2026-04-22T04:08:04.071916Z",
+      "endDate": "2026-04-28T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "76ers",
+        "Celtics"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 5867841.799399991,
+      "question": "76ers vs. Celtics"
+    },
+    {
+      "id": "405164",
+      "slug": "nba-atl-nyk-2026-04-28",
+      "title": "Hawks vs. Knicks",
+      "url": "https://polymarket.com/event/nba-atl-nyk-2026-04-28",
+      "startDate": "2026-04-22T04:08:03.617272Z",
+      "endDate": "2026-04-28T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Hawks",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 4818963.972985994,
+      "question": "Hawks vs. Knicks"
+    },
+    {
+      "id": "405160",
+      "slug": "nba-por-sas-2026-04-28",
+      "title": "Trail Blazers vs. Spurs",
+      "url": "https://polymarket.com/event/nba-por-sas-2026-04-28",
+      "startDate": "2026-04-22T04:08:03.461313Z",
+      "endDate": "2026-04-28T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Trail Blazers",
+        "Spurs"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 4613746.354443996,
+      "question": "Trail Blazers vs. Spurs"
+    },
+    {
+      "id": "408550",
+      "slug": "nba-orl-det-2026-04-29",
+      "title": "Magic vs. Pistons",
+      "url": "https://polymarket.com/event/nba-orl-det-2026-04-29",
+      "startDate": "2026-04-23T04:26:51.583116Z",
+      "endDate": "2026-04-29T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Magic",
+        "Pistons"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7259200.579879975,
+      "question": "Magic vs. Pistons"
+    },
+    {
+      "id": "408544",
+      "slug": "nba-tor-cle-2026-04-29",
+      "title": "Raptors vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-tor-cle-2026-04-29",
+      "startDate": "2026-04-23T04:26:51.32498Z",
+      "endDate": "2026-04-29T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Raptors",
+        "Cavaliers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 5733639.088343985,
+      "question": "Raptors vs. Cavaliers"
+    },
+    {
+      "id": "408548",
+      "slug": "nba-hou-lal-2026-04-29",
+      "title": "Rockets vs. Lakers",
+      "url": "https://polymarket.com/event/nba-hou-lal-2026-04-29",
+      "startDate": "2026-04-23T04:26:51.545482Z",
+      "endDate": "2026-04-29T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Rockets",
+        "Lakers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 8348844.653987996,
+      "question": "Rockets vs. Lakers"
+    },
+    {
+      "id": "411950",
+      "slug": "nba-bos-phi-2026-04-30",
+      "title": "Celtics vs. 76ers",
+      "url": "https://polymarket.com/event/nba-bos-phi-2026-04-30",
+      "startDate": "2026-04-24T04:06:49.313332Z",
+      "endDate": "2026-04-30T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Celtics",
+        "76ers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 5426270.593358994,
+      "question": "Celtics vs. 76ers"
+    },
+    {
+      "id": "411944",
+      "slug": "nba-nyk-atl-2026-04-30",
+      "title": "Knicks vs. Hawks",
+      "url": "https://polymarket.com/event/nba-nyk-atl-2026-04-30",
+      "startDate": "2026-04-24T04:06:49.146691Z",
+      "endDate": "2026-04-30T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Hawks"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 5746897.359374986,
+      "question": "Knicks vs. Hawks"
+    },
+    {
+      "id": "411947",
+      "slug": "nba-den-min-2026-04-30",
+      "title": "Nuggets vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-den-min-2026-04-30",
+      "startDate": "2026-04-24T04:06:49.145254Z",
+      "endDate": "2026-04-30T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Nuggets",
+        "Timberwolves"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 10933613.826708075,
+      "question": "Nuggets vs. Timberwolves"
+    },
+    {
+      "id": "411942",
+      "slug": "nba-sas-por-2026-04-30",
+      "title": "Spurs vs. Trail Blazers",
+      "url": "https://polymarket.com/event/nba-sas-por-2026-04-30",
+      "startDate": "2026-04-24T04:06:47.465891Z",
+      "endDate": "2026-04-30T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Trail Blazers"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 44765.40082700002,
+      "question": "Spurs vs. Trail Blazers"
+    },
+    {
+      "id": "415395",
+      "slug": "nba-cle-tor-2026-05-01",
+      "title": "Cavaliers vs. Raptors",
+      "url": "https://polymarket.com/event/nba-cle-tor-2026-05-01",
+      "startDate": "2026-04-25T04:07:28.300064Z",
+      "endDate": "2026-05-01T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Raptors"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 5831055.464042034,
+      "question": "Cavaliers vs. Raptors"
+    },
+    {
+      "id": "415399",
+      "slug": "nba-lal-hou-2026-05-01",
+      "title": "Lakers vs. Rockets",
+      "url": "https://polymarket.com/event/nba-lal-hou-2026-05-01",
+      "startDate": "2026-04-25T04:07:28.764982Z",
+      "endDate": "2026-05-01T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Lakers",
+        "Rockets"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 7693696.69078502,
+      "question": "Lakers vs. Rockets"
+    },
+    {
+      "id": "415401",
+      "slug": "nba-det-orl-2026-05-01",
+      "title": "Pistons vs. Magic",
+      "url": "https://polymarket.com/event/nba-det-orl-2026-05-01",
+      "startDate": "2026-04-25T04:07:28.959676Z",
+      "endDate": "2026-05-01T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Magic"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 7985826.435701007,
+      "question": "Pistons vs. Magic"
+    },
+    {
+      "id": "418799",
+      "slug": "nba-phi-bos-2026-05-02",
+      "title": "76ers vs. Celtics",
+      "url": "https://polymarket.com/event/nba-phi-bos-2026-05-02",
+      "startDate": "2026-04-26T04:05:56.998066Z",
+      "endDate": "2026-05-02T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "76ers",
+        "Celtics"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 14058332.174917107,
+      "question": "76ers vs. Celtics"
+    },
+    {
+      "id": "418785",
+      "slug": "nba-atl-nyk-2026-05-02",
+      "title": "Hawks vs. Knicks",
+      "url": "https://polymarket.com/event/nba-atl-nyk-2026-05-02",
+      "startDate": "2026-04-26T04:05:49.066025Z",
+      "endDate": "2026-05-02T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Hawks",
+        "Knicks"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 195592.02732999995,
+      "question": "Hawks vs. Knicks"
+    },
+    {
+      "id": "418790",
+      "slug": "nba-min-den-2026-05-02",
+      "title": "Timberwolves vs. Nuggets",
+      "url": "https://polymarket.com/event/nba-min-den-2026-05-02",
+      "startDate": "2026-04-26T04:05:49.071004Z",
+      "endDate": "2026-05-02T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Nuggets"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 95169.35243600003,
+      "question": "Timberwolves vs. Nuggets"
+    },
+    {
+      "id": "418781",
+      "slug": "nba-por-sas-2026-05-02",
+      "title": "Trail Blazers vs. Spurs",
+      "url": "https://polymarket.com/event/nba-por-sas-2026-05-02",
+      "startDate": "2026-04-26T04:09:14.676298Z",
+      "endDate": "2026-05-02T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Trail Blazers",
+        "Spurs"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 278.94731299999995,
+      "question": "Trail Blazers vs. Spurs"
+    },
+    {
+      "id": "422417",
+      "slug": "nba-orl-det-2026-05-03",
+      "title": "Magic vs. Pistons",
+      "url": "https://polymarket.com/event/nba-orl-det-2026-05-03",
+      "startDate": "2026-04-27T04:07:17.628034Z",
+      "endDate": "2026-05-03T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Magic",
+        "Pistons"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 6753200.415548992,
+      "question": "Magic vs. Pistons"
+    },
+    {
+      "id": "422402",
+      "slug": "nba-tor-cle-2026-05-03",
+      "title": "Raptors vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-tor-cle-2026-05-03",
+      "startDate": "2026-04-27T04:07:17.591702Z",
+      "endDate": "2026-05-03T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Raptors",
+        "Cavaliers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 10501213.117359962,
+      "question": "Raptors vs. Cavaliers"
+    },
+    {
+      "id": "422412",
+      "slug": "nba-hou-lal-2026-05-03",
+      "title": "Rockets vs. Lakers",
+      "url": "https://polymarket.com/event/nba-hou-lal-2026-05-03",
+      "startDate": "2026-04-27T04:07:17.626398Z",
+      "endDate": "2026-05-03T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Rockets",
+        "Lakers"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 6730.595598000001,
+      "question": "Rockets vs. Lakers"
+    },
+    {
+      "id": "437429",
+      "slug": "nba-min-sas-2026-05-04",
+      "title": "Timberwolves vs. Spurs",
+      "url": "https://polymarket.com/event/nba-min-sas-2026-05-04",
+      "startDate": "2026-05-01T10:07:15.700683Z",
+      "endDate": "2026-05-04T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Spurs"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 10001634.55237417,
+      "question": "Timberwolves vs. Spurs"
+    },
+    {
+      "id": "443239",
+      "slug": "nba-phi-nyk-2026-05-04",
+      "title": "76ers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-phi-nyk-2026-05-04",
+      "startDate": "2026-05-03T04:28:27.847923Z",
+      "endDate": "2026-05-05T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "76ers",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7874312.493435988,
+      "question": "76ers vs. Knicks"
+    },
+    {
+      "id": "446686",
+      "slug": "nba-cle-det-2026-05-05",
+      "title": "Cavaliers vs. Pistons",
+      "url": "https://polymarket.com/event/nba-cle-det-2026-05-05",
+      "startDate": "2026-05-04T04:08:23.455758Z",
+      "endDate": "2026-05-05T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Pistons"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 5885924.936833985,
+      "question": "Cavaliers vs. Pistons"
+    },
+    {
+      "id": "437431",
+      "slug": "nba-min-sas-2026-05-06",
+      "title": "Timberwolves vs. Spurs",
+      "url": "https://polymarket.com/event/nba-min-sas-2026-05-06",
+      "startDate": "2026-05-01T10:07:14.453639Z",
+      "endDate": "2026-05-06T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Spurs"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7271919.513002014,
+      "question": "Timberwolves vs. Spurs"
+    },
+    {
+      "id": "443244",
+      "slug": "nba-phi-nyk-2026-05-06",
+      "title": "76ers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-phi-nyk-2026-05-06",
+      "startDate": "2026-05-03T04:12:48.432881Z",
+      "endDate": "2026-05-06T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "76ers",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9030774.88139199,
+      "question": "76ers vs. Knicks"
+    },
+    {
+      "id": "446689",
+      "slug": "nba-cle-det-2026-05-07",
+      "title": "Cavaliers vs. Pistons",
+      "url": "https://polymarket.com/event/nba-cle-det-2026-05-07",
+      "startDate": "2026-05-04T04:04:46.508087Z",
+      "endDate": "2026-05-07T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Pistons"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7757004.599695999,
+      "question": "Cavaliers vs. Pistons"
+    },
+    {
+      "id": "439913",
+      "slug": "nba-sas-min-2026-05-08",
+      "title": "Spurs vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-sas-min-2026-05-08",
+      "startDate": "2026-05-02T04:06:04.69605Z",
+      "endDate": "2026-05-08T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Timberwolves"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 8954543.313520066,
+      "question": "Spurs vs. Timberwolves"
+    },
+    {
+      "id": "443247",
+      "slug": "nba-nyk-phi-2026-05-08",
+      "title": "Knicks vs. 76ers",
+      "url": "https://polymarket.com/event/nba-nyk-phi-2026-05-08",
+      "startDate": "2026-05-03T04:06:20.977891Z",
+      "endDate": "2026-05-08T23:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "76ers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 10284607.131743997,
+      "question": "Knicks vs. 76ers"
+    },
+    {
+      "id": "446691",
+      "slug": "nba-det-cle-2026-05-09",
+      "title": "Pistons vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-det-cle-2026-05-09",
+      "startDate": "2026-05-04T04:08:23.459797Z",
+      "endDate": "2026-05-09T19:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Cavaliers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 7614369.959138974,
+      "question": "Pistons vs. Cavaliers"
+    },
+    {
+      "id": "446696",
+      "slug": "nba-nyk-phi-2026-05-10",
+      "title": "Knicks vs. 76ers",
+      "url": "https://polymarket.com/event/nba-nyk-phi-2026-05-10",
+      "startDate": "2026-05-04T04:08:22.026098Z",
+      "endDate": "2026-05-10T19:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "76ers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 5018852.179798989,
+      "question": "Knicks vs. 76ers"
+    },
+    {
+      "id": "446693",
+      "slug": "nba-sas-min-2026-05-10",
+      "title": "Spurs vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-sas-min-2026-05-10",
+      "startDate": "2026-05-04T04:08:22.027489Z",
+      "endDate": "2026-05-10T23:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Timberwolves"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 11916261.83344405,
+      "question": "Spurs vs. Timberwolves"
+    },
+    {
+      "id": "450152",
+      "slug": "nba-det-cle-2026-05-11",
+      "title": "Pistons vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-det-cle-2026-05-11",
+      "startDate": "2026-05-05T04:06:39.352429Z",
+      "endDate": "2026-05-12T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Cavaliers"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 9038114.219216,
+      "question": "Pistons vs. Cavaliers"
+    },
+    {
+      "id": "453776",
+      "slug": "nba-phi-nyk-2026-05-12",
+      "title": "76ers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-phi-nyk-2026-05-12",
+      "startDate": "2026-05-06T04:08:26.423541Z",
+      "endDate": "2026-05-12T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "76ers",
+        "Knicks"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 3536.478929,
+      "question": "76ers vs. Knicks"
+    },
+    {
+      "id": "453771",
+      "slug": "nba-min-sas-2026-05-12",
+      "title": "Timberwolves vs. Spurs",
+      "url": "https://polymarket.com/event/nba-min-sas-2026-05-12",
+      "startDate": "2026-05-06T04:08:26.420324Z",
+      "endDate": "2026-05-12T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Spurs"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 11111730.75076196,
+      "question": "Timberwolves vs. Spurs"
+    },
+    {
+      "id": "457191",
+      "slug": "nba-cle-det-2026-05-13",
+      "title": "Cavaliers vs. Pistons",
+      "url": "https://polymarket.com/event/nba-cle-det-2026-05-13",
+      "startDate": "2026-05-07T04:08:18.371278Z",
+      "endDate": "2026-05-13T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Pistons"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 10289346.946679091,
+      "question": "Cavaliers vs. Pistons"
+    },
+    {
+      "id": "460619",
+      "slug": "nba-nyk-phi-2026-05-14",
+      "title": "Knicks vs. 76ers",
+      "url": "https://polymarket.com/event/nba-nyk-phi-2026-05-14",
+      "startDate": "2026-05-08T04:07:25.535301Z",
+      "endDate": "2026-05-14T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "76ers"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 1691.0044629999993,
+      "question": "Knicks vs. 76ers"
+    },
+    {
+      "id": "465162",
+      "slug": "nba-det-cle-2026-05-15",
+      "title": "Pistons vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-det-cle-2026-05-15",
+      "startDate": "2026-05-09T09:01:17.183382Z",
+      "endDate": "2026-05-15T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Pistons",
+        "Cavaliers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 9462702.038998015,
+      "question": "Pistons vs. Cavaliers"
+    },
+    {
+      "id": "465143",
+      "slug": "nba-sas-min-2026-05-15",
+      "title": "Spurs vs. Timberwolves",
+      "url": "https://polymarket.com/event/nba-sas-min-2026-05-15",
+      "startDate": "2026-05-09T11:56:59.37238Z",
+      "endDate": "2026-05-15T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Timberwolves"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 8275518.848156024,
+      "question": "Spurs vs. Timberwolves"
+    },
+    {
+      "id": "472500",
+      "slug": "nba-cle-det-2026-05-17",
+      "title": "Cavaliers vs. Pistons",
+      "url": "https://polymarket.com/event/nba-cle-det-2026-05-17",
+      "startDate": "2026-05-11T04:20:57.788691Z",
+      "endDate": "2026-05-17T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Pistons"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 13149960.474622985,
+      "question": "Cavaliers vs. Pistons"
+    },
+    {
+      "id": "472492",
+      "slug": "nba-min-sas-2026-05-17",
+      "title": "Timberwolves vs. Spurs",
+      "url": "https://polymarket.com/event/nba-min-sas-2026-05-17",
+      "startDate": "2026-05-11T04:17:35.767232Z",
+      "endDate": "2026-05-17T04:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Timberwolves",
+        "Spurs"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 28944.488691999934,
+      "question": "Timberwolves vs. Spurs"
+    },
+    {
+      "id": "496953",
+      "slug": "nba-cle-nyk-2026-05-19",
+      "title": "Cavaliers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-cle-nyk-2026-05-19",
+      "startDate": "2026-05-18T04:12:31.36145Z",
+      "endDate": "2026-05-20T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 17770475.62457906,
+      "question": "Cavaliers vs. Knicks"
+    },
+    {
+      "id": "496954",
+      "slug": "nba-cle-nyk-2026-05-21",
+      "title": "Cavaliers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-cle-nyk-2026-05-21",
+      "startDate": "2026-05-18T04:15:16.552385Z",
+      "endDate": "2026-05-22T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 13961734.592950538,
+      "question": "Cavaliers vs. Knicks"
+    },
+    {
+      "id": "496955",
+      "slug": "nba-nyk-cle-2026-05-23",
+      "title": "Knicks vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-nyk-cle-2026-05-23",
+      "startDate": "2026-05-18T04:15:16.544637Z",
+      "endDate": "2026-05-24T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Cavaliers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 13555102.81610997,
+      "question": "Knicks vs. Cavaliers"
+    },
+    {
+      "id": "500618",
+      "slug": "nba-nyk-cle-2026-05-25",
+      "title": "Knicks vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-nyk-cle-2026-05-25",
+      "startDate": "2026-05-19T04:06:41.93346Z",
+      "endDate": "2026-05-26T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Cavaliers"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 14350449.573760888,
+      "question": "Knicks vs. Cavaliers"
+    },
+    {
+      "id": "508368",
+      "slug": "nba-cle-nyk-2026-05-27",
+      "title": "Cavaliers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-cle-nyk-2026-05-27",
+      "startDate": "2026-05-21T04:14:49.547016Z",
+      "endDate": "2026-05-28T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Knicks"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 54440.32863599996,
+      "question": "Cavaliers vs. Knicks"
+    },
+    {
+      "id": "515569",
+      "slug": "nba-nyk-cle-2026-05-29",
+      "title": "Knicks vs. Cavaliers",
+      "url": "https://polymarket.com/event/nba-nyk-cle-2026-05-29",
+      "startDate": "2026-05-23T04:47:02.215731Z",
+      "endDate": "2026-05-30T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Cavaliers"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 2962.041312,
+      "question": "Knicks vs. Cavaliers"
+    },
+    {
+      "id": "522243",
+      "slug": "nba-cle-nyk-2026-05-31",
+      "title": "Cavaliers vs. Knicks",
+      "url": "https://polymarket.com/event/nba-cle-nyk-2026-05-31",
+      "startDate": "2026-05-25T04:25:18.695669Z",
+      "endDate": "2026-06-01T00:00:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Cavaliers",
+        "Knicks"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 665.776127,
+      "question": "Cavaliers vs. Knicks"
+    },
+    {
+      "id": "543442",
+      "slug": "nba-nyk-sas-2026-06-03",
+      "title": "Knicks vs. Spurs",
+      "url": "https://polymarket.com/event/nba-nyk-sas-2026-06-03",
+      "startDate": "2026-05-31T04:18:50.531911Z",
+      "endDate": "2026-06-04T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Spurs"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 23676592.250597116,
+      "question": "Knicks vs. Spurs"
+    },
+    {
+      "id": "543443",
+      "slug": "nba-nyk-sas-2026-06-05",
+      "title": "Knicks vs. Spurs",
+      "url": "https://polymarket.com/event/nba-nyk-sas-2026-06-05",
+      "startDate": "2026-05-31T04:18:50.183319Z",
+      "endDate": "2026-06-06T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Spurs"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 24613265.913782585,
+      "question": "Knicks vs. Spurs"
+    },
+    {
+      "id": "550197",
+      "slug": "nba-sas-nyk-2026-06-08",
+      "title": "Spurs vs. Knicks",
+      "url": "https://polymarket.com/event/nba-sas-nyk-2026-06-08",
+      "startDate": "2026-06-02T04:16:32.873125Z",
+      "endDate": "2026-06-09T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Knicks"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 30455432.936832245,
+      "question": "Spurs vs. Knicks"
+    },
+    {
+      "id": "557378",
+      "slug": "nba-sas-nyk-2026-06-10",
+      "title": "Spurs vs. Knicks",
+      "url": "https://polymarket.com/event/nba-sas-nyk-2026-06-10",
+      "startDate": "2026-06-04T04:17:01.40423Z",
+      "endDate": "2026-06-11T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Knicks"
+      ],
+      "prices": [
+        0.0,
+        1.0
+      ],
+      "cents": [
+        0,
+        100
+      ],
+      "volume": 35373612.601852216,
+      "question": "Spurs vs. Knicks"
+    },
+    {
+      "id": "567958",
+      "slug": "nba-nyk-sas-2026-06-13",
+      "title": "Knicks vs. Spurs",
+      "url": "https://polymarket.com/event/nba-nyk-sas-2026-06-13",
+      "startDate": "2026-06-07T04:24:07.518396Z",
+      "endDate": "2026-06-14T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Spurs"
+      ],
+      "prices": [
+        1.0,
+        0.0
+      ],
+      "cents": [
+        100,
+        0
+      ],
+      "volume": 23787414.493110273,
+      "question": "Knicks vs. Spurs"
+    },
+    {
+      "id": "578660",
+      "slug": "nba-sas-nyk-2026-06-16",
+      "title": "Spurs vs. Knicks",
+      "url": "https://polymarket.com/event/nba-sas-nyk-2026-06-16",
+      "startDate": "2026-06-10T04:22:17.36465Z",
+      "endDate": "2026-06-17T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Spurs",
+        "Knicks"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 118626.73307599987,
+      "question": "Spurs vs. Knicks"
+    },
+    {
+      "id": "589441",
+      "slug": "nba-nyk-sas-2026-06-19",
+      "title": "Knicks vs. Spurs",
+      "url": "https://polymarket.com/event/nba-nyk-sas-2026-06-19",
+      "startDate": "2026-06-13T04:18:16.750335Z",
+      "endDate": "2026-06-20T00:30:00Z",
+      "closed": true,
+      "active": true,
+      "outcomes": [
+        "Knicks",
+        "Spurs"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "cents": [
+        50,
+        50
+      ],
+      "volume": 11089.803261,
+      "question": "Knicks vs. Spurs"
+    }
+  ],
+  "count": 72,
+  "error": null
+}

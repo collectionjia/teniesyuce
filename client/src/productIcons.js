@@ -30,11 +30,9 @@ export const PRODUCT_ICON_OPTIONS = [
 
 const NAME_RULES = [
   [/足球|soccer|football/i, 'football'],
-  [/\bnba\b|篮球|basketball/i, 'basketball'],
   [/区间网球|tennis-range/i, 'tennis'],
   [/盘中|tennis-live/i, 'tennis'],
   [/网球|tennis/i, 'tennis'],
-  [/dota\s*2|dota2/i, 'radar'],
   [/股票|证券|stock/i, 'stock'],
   [/比特|加密|crypto|btc|eth/i, 'crypto'],
   [/彩票|lottery/i, 'lottery'],
@@ -51,8 +49,6 @@ export function getProductIconKey(product) {
   const tag = String(product?.tag || '').trim().toLowerCase()
   if (tag === 'tennis-range') return 'tennis'
   if (tag === 'tennis-live') return 'tennis'
-  if (tag === 'nba' || tag === 'basketball') return 'basketball'
-  if (tag === 'dota2' || tag === 'dota') return tag === 'dota2' ? 'radar' : 'radar'
   if (ICONS[tag]) return tag
   const name = String(product?.name || '')
   for (const [pattern, key] of NAME_RULES) {

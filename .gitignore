@@ -56,7 +56,5 @@ scripts/node_modules/
 board/持仓/
 **/持仓/
 
-basketball/data/cache.json
-dota2/data/cache.json
 client/src/api.js.remote
 

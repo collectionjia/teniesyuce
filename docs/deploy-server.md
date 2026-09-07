@@ -47,7 +47,6 @@ bash scripts/deploy-server.sh
 ```bash
 bash scripts/deploy-server.sh                 # 核心服务
 bash scripts/deploy-server.sh --web-only --no-cache
-bash scripts/deploy-server.sh --all           # 含 NBA/DOTA2
 bash scripts/deploy-server.sh --status
 bash scripts/deploy-server.sh --logs server
 ```
@@ -56,8 +55,8 @@ bash scripts/deploy-server.sh --logs server
 
 | 文件 | 说明 |
 |------|------|
-| `docker-compose.core.yml` | 推荐：redis + board + server + web |
-| `docker-compose.external.yml` | 全量（含 basketball / dota2） |
+| `docker-compose.core.yml` | redis + board + server + web |
+| `docker-compose.test.yml` | 本地测试 MySQL + Redis |
 
 ## 6. 验收
 

@@ -4,9 +4,6 @@ import * as api from './api'
 import ProductIcon from './components/ProductIcon.vue'
 import TennisBoard from './components/TennisBoard.vue'
 import BtcBoard from './components/BtcBoard.vue'
-import DotaBoard from './components/DotaBoard.vue'
-import BasketballBoard from './components/BasketballBoard.vue'
-import Dota2Board from './components/Dota2Board.vue'
 import BtcBoardAdmin from './components/BtcBoardAdmin.vue'
 import SofaMonitor from './components/SofaMonitor.vue'
 import WalletSettings from './components/WalletSettings.vue'
@@ -2088,39 +2085,13 @@ function isBtcBoardProduct(product) {
   return /btc.*持仓|持仓看板|btc.*board/i.test(String(product?.name || ''))
 }
 
-/** DOTA2 Polymarket 盘口（与 Elo 的 tag=dota 区分） */
-function isDota2Product(product) {
-  const tag = String(product?.tag || '').toLowerCase()
-  if (tag === 'dota2') return true
-  const name = String(product?.name || '').trim()
-  return /^dota\s*2$/i.test(name) || /^dota2$/i.test(name)
-}
-
-/** NBA Polymarket */
-function isNbaProduct(product) {
-  const tag = String(product?.tag || '').toLowerCase()
-  if (tag === 'nba' || tag === 'basketball') return true
-  return /\bnba\b|篮球/i.test(String(product?.name || ''))
-}
-
-/** DOTA Elo 看板：Vue 直出，不用 iframe */
-function isDotaProduct(product) {
-  if (isDota2Product(product)) return false
-  const tag = String(product?.tag || '').toLowerCase()
-  if (tag === 'dota') return true
-  return /dota/i.test(String(product?.name || ''))
-}
-
 function isNativeBoardProduct(product) {
   return (
     isTennisProduct(product) ||
     isTennisRangeProduct(product) ||
     isTennisLiveProduct(product) ||
     isTennisNewProduct(product) ||
-    isBtcBoardProduct(product) ||
-    isDotaProduct(product) ||
-    isDota2Product(product) ||
-    isNbaProduct(product)
+    isBtcBoardProduct(product)
   )
 }
 
@@ -2567,18 +2538,6 @@ function productEmbedUrl(product) {
                     :show-sim-betting="canShowBtcSimBetting"
                     @wallet-refresh="loadWalletHeader"
                   />
-                </div>
-                <!-- DOTA Elo 看板：与网球相同浅色 Vue 直出 -->
-                <div v-else-if="isDotaProduct(openedProduct)" class="p-0">
-                  <DotaBoard :is-member="isActive(openedProduct.id)" />
-                </div>
-                <!-- NBA Polymarket 盘口 -->
-                <div v-else-if="isNbaProduct(openedProduct)" class="p-0">
-                  <BasketballBoard :is-member="isActive(openedProduct.id)" />
-                </div>
-                <!-- DOTA2 Polymarket 盘口（与 Elo 的 DOTA 区分） -->
-                <div v-else-if="isDota2Product(openedProduct)" class="p-0">
-                  <Dota2Board :is-member="isActive(openedProduct.id)" />
                 </div>
                 <div
                   v-else
