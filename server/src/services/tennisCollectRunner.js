@@ -10,6 +10,7 @@ function resolveMonitorDir() {
     return path.resolve(process.env.TENNIS_MONITOR_DIR);
   }
   const candidates = [
+    '/tennis-monitor',
     path.join(__dirname, '../../../scripts/tennis-monitor'),
     '/opt/yuce/scripts/tennis-monitor',
   ];

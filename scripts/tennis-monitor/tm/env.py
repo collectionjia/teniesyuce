@@ -16,4 +16,7 @@ def load_monitor_env(path: str | Path | None = None) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, val = line.split("=", 1)
-        os.environ[key.strip()] = val.strip().strip("\r")
+        key = key.strip()
+        if key in os.environ:
+            continue
+        os.environ[key] = val.strip().strip("\r")

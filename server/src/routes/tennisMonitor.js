@@ -173,8 +173,12 @@ router.post('/collect', async (req, res) => {
   try {
     const tennisCollectRunner = require('../services/tennisCollectRunner');
     if (!tennisCollectRunner.isCollectAvailable()) {
-      const result = await monitorFetch('/collect', { method: 'POST', timeoutMs: 15000 });
-      return sendProxy(res, result);
+      return res.status(503).json({
+        ok: false,
+        error:
+          '未找到 collect.py。Docker 部署请确认已挂载 scripts/tennis-monitor 并 rebuild server；'
+          + `路径: ${tennisCollectRunner.getCollectScript()}`,
+      });
     }
     const matchDate = req.body?.date || req.body?.match_date || null;
     const top100 = req.body?.top100 !== false && req.body?.all !== true;
