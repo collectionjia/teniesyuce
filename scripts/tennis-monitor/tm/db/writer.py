@@ -7,8 +7,27 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-APP_DIR = Path(__file__).resolve().parent
-ROOT_DIR = APP_DIR.parent.parent
+from tm.env import MONITOR_ROOT
+
+APP_DIR = MONITOR_ROOT
+ROOT_DIR = MONITOR_ROOT.parent.parent
+
+
+def mysql_write_enabled() -> bool:
+    """采集是否写入 MySQL，默认关闭（SOFA_WRITE_MYSQL=0）。"""
+    return os.environ.get("SOFA_WRITE_MYSQL", "0").strip() == "1"
+
+
+def collect_mysql_policy_message() -> str:
+    if mysql_write_enabled():
+        return "MySQL 写入已开启（SOFA_WRITE_MYSQL=1）"
+    return "MySQL 写入已关闭（SOFA_WRITE_MYSQL=0），采集仅更新 bundle/Redis，不入库"
+
+
+def log_collect_mysql_policy(label: str) -> str:
+    line = f"[collect/{label}] {collect_mysql_policy_message()}"
+    print(line)
+    return line
 
 
 def _load_db_env() -> None:
@@ -434,6 +453,8 @@ def update_live_events(conn, events: list[dict]) -> dict[str, int]:
 
 
 def write_snapshot_to_mysql(snapshot: dict[str, Any], *, live_only: bool = False) -> dict[str, Any]:
+    if not mysql_write_enabled():
+        return {"skipped": True, "reason": "SOFA_WRITE_MYSQL disabled"}
     if not mysql_enabled():
         return {"skipped": True, "reason": "DB not configured"}
 

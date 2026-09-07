@@ -49,8 +49,13 @@ function sendProxy(res, result) {
   res.status(result.status).json(result.body);
 }
 
-/** 等 9004 采集结束后再把 bundle 刷进 Redis */
+/** 采集结束后：默认 collect.py 已直写 Redis，不再经 9004 同步 */
 function scheduleRedisRefreshAfterCollect() {
+  const tennisRedis = require('../services/tennisRedis');
+  if (!tennisRedis.monitorSyncEnabled()) {
+    console.log('[tennis-monitor] collect 完成，数据由 collect.py 写入 Redis，跳过 monitor 同步');
+    return;
+  }
   const tennisFromMonitor = require('../services/tennisFromMonitor');
   const deadline = Date.now() + 120000;
 
@@ -84,10 +89,31 @@ router.use(auth(['admin']));
 
 router.get('/status', async (_req, res) => {
   try {
-    sendProxy(res, await monitorFetch('/status'));
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    const tennisCache = require('../services/tennisCache');
+    let body = { ok: true };
+    try {
+      const proxied = await monitorFetch('/status', { timeoutMs: 8000 });
+      if (proxied.body && typeof proxied.body === 'object') body = proxied.body;
+    } catch (err) {
+      body.monitor_error = friendlyMonitorError(err);
+    }
+    body.top100_collect = tennisCollectRunner.statusPayload();
+    body.running = !!(body.top100_collect?.running || body.running);
+    const bundle = await tennisCache.getBundle();
+    if (bundle) {
+      body.latest_bundle = {
+        ok: true,
+        date: bundle.date,
+        event_count: bundle.events,
+        bundle_file: bundle.bundle_file || null,
+        fetched_at: bundle.fetched_at,
+      };
+    }
+    res.json(body);
   } catch (err) {
     console.error('[tennis-monitor/status]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    res.status(500).json({ ok: false, error: err.message || 'status failed' });
   }
 });
 
@@ -122,25 +148,47 @@ router.get('/top20', async (req, res) => {
 
 router.get('/logs', async (req, res) => {
   try {
-    sendProxy(
-      res,
-      await monitorFetch('/logs', {
-        query: { lines: req.query.lines || '120' },
-      }),
-    );
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    const lines = Math.min(500, Math.max(20, Number(req.query.lines || 120) || 120));
+    let monitorLines = '';
+    try {
+      const proxied = await monitorFetch('/logs', { query: { lines: String(lines) }, timeoutMs: 8000 });
+      monitorLines = proxied.body?.lines || '';
+    } catch {
+      /* collect.py logs only */
+    }
+    const collectLines = tennisCollectRunner.recentLogs(lines);
+    const merged = [collectLines, monitorLines].filter(Boolean).join('\n');
+    const parts = merged.split(/\r?\n/).slice(-lines);
+    res.json({ ok: true, lines: parts.join('\n'), file: 'collect.py' });
   } catch (err) {
     console.error('[tennis-monitor/logs]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    res.status(500).json({ ok: false, error: err.message || 'logs failed' });
   }
 });
 
-router.post('/collect', async (_req, res) => {
+router.post('/collect', async (req, res) => {
   try {
-    sendProxy(res, await monitorFetch('/collect', { method: 'POST' }));
-    scheduleRedisRefreshAfterCollect();
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    const matchDate = req.body?.date || req.body?.match_date || null;
+    const top100 = req.body?.top100 !== false && req.body?.all !== true;
+    const started = tennisCollectRunner.startCollect({ matchDate, top100 });
+    if (!started.ok) {
+      return res.status(started.status || 409).json({
+        ok: false,
+        error: started.error || 'collect failed',
+        last: started.last,
+      });
+    }
+    res.status(202).json({
+      ok: true,
+      message: 'collect.py started',
+      last: started.last,
+      script: 'scripts/tennis-monitor/collect.py',
+    });
   } catch (err) {
     console.error('[tennis-monitor/collect]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    res.status(500).json({ ok: false, error: err.message || 'collect failed' });
   }
 });
 
@@ -249,16 +297,21 @@ router.post('/data-source', async (req, res) => {
       });
     }
     await tennisDataSource.set(next);
-    tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true }).catch((err) => {
-      console.error('[tennis-monitor/data-source] redis refresh:', err.message);
-    });
+    const tennisRedis = require('../services/tennisRedis');
+    if (tennisRedis.monitorSyncEnabled()) {
+      tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true }).catch((err) => {
+        console.error('[tennis-monitor/data-source] redis refresh:', err.message);
+      });
+    }
     res.json({
       ok: true,
       source: next,
       label: tennisDataSource.label(next),
       api_available: allsports.isConfigured(),
       redis_read: true,
-      message: '已切换写入源，正在刷新 Redis（网球页只读 Redis）',
+      message: tennisRedis.monitorSyncEnabled()
+        ? '已切换写入源，正在从 monitor 刷新 Redis'
+        : '已切换写入源；网球列表从 Redis 读取（由 collect.py 写入）',
     });
   } catch (err) {
     console.error('[tennis-monitor/data-source]', err);

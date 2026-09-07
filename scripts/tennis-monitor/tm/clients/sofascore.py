@@ -4,7 +4,7 @@ import os
 import time
 from typing import Any
 
-from ipwo_proxy import sofa_proxy_map
+from tm.clients.proxy import sofa_proxy_map
 
 API_BASE = (os.environ.get("SOFA_API_BASE") or "https://www.sofascore.com/api/v1").rstrip("/")
 _IMPERSONATE = os.environ.get("SOFA_CURL_IMPERSONATE", "chrome131")

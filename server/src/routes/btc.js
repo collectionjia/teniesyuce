@@ -4,12 +4,44 @@ const pool = require('../db');
 const btcWallet = require('../services/btcWallet');
 const polymarketTrade = require('../services/polymarketTrade');
 const tradeRecords = require('../services/tradeRecords');
+const settings = require('../services/settings');
 
 const router = Router();
 
 const BOARD_BASE = (process.env.BOARD_INTERNAL_URL || 'http://btc-board:8890').replace(/\/$/, '');
 
+function idleBoardState(crawlEnabled = false) {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    ok: true,
+    crawl_enabled: crawlEnabled,
+    server_time: now,
+    active_market: '5m',
+    market_label: '',
+    round_ts: 0,
+    round_end: 0,
+    strike: null,
+    crypto_current: null,
+    up_price: null,
+    down_price: null,
+    up_ask: null,
+    down_ask: null,
+    board_prices: {},
+    board_rounds: {},
+    leaderboard: null,
+    leaderboard_15m: null,
+    leaderboard_1h: null,
+    message: crawlEnabled ? '' : 'BTC 数据采集已关闭',
+  };
+}
+
 async function fetchBoardState() {
+  const crawlEnabled = await settings.getBtcCrawlEnabled();
+  if (!crawlEnabled) {
+    const err = new Error('BTC 数据采集已关闭');
+    err.code = 'CRAWL_DISABLED';
+    throw err;
+  }
   const res = await fetch(`${BOARD_BASE}/api/state`, {
     headers: { Accept: 'application/json' },
   });
@@ -110,15 +142,38 @@ async function requireWallet(req, res, next) {
   }
 }
 
+router.get('/crawl', auth(), async (_req, res) => {
+  try {
+    const enabled = await settings.getBtcCrawlEnabled();
+    res.json({ success: true, enabled });
+  } catch (err) {
+    console.error('[btc/crawl GET]', err);
+    res.status(500).json({ success: false, error: err.message || '读取失败' });
+  }
+});
+
 router.get('/state', auth(), async (req, res) => {
   try {
+    const crawlEnabled = await settings.getBtcCrawlEnabled();
+    if (!crawlEnabled) {
+      const member = await userHasBtcAccess(req.user);
+      const idle = idleBoardState(false);
+      if (!member) return res.json(slimPreview(idle));
+      return res.json({ ...idle, member: true });
+    }
     const full = await fetchBoardState();
     const member = await userHasBtcAccess(req.user);
     if (!member) {
       return res.json(slimPreview(full));
     }
-    res.json({ ...full, ok: true, member: true });
+    res.json({ ...full, ok: true, member: true, crawl_enabled: true });
   } catch (err) {
+    if (err.code === 'CRAWL_DISABLED') {
+      const member = await userHasBtcAccess(req.user);
+      const idle = idleBoardState(false);
+      if (!member) return res.json(slimPreview(idle));
+      return res.json({ ...idle, member: true });
+    }
     console.error('[btc/state]', err);
     res.status(502).json({
       ok: false,
@@ -222,6 +277,9 @@ router.post('/wallet/test', auth(), requireWallet, async (req, res) => {
 
 router.post('/trade', auth(), requireBtcSim, async (req, res) => {
   try {
+    if (!(await settings.getBtcCrawlEnabled())) {
+      return res.status(409).json({ error: 'BTC 数据采集已关闭，暂无法下单' });
+    }
     const { market = '5m', side, amountUsd } = req.body || {};
     if (!['5m', '15m', '1h'].includes(market)) {
       return res.status(400).json({ error: '市场无效' });
@@ -297,6 +355,18 @@ router.post('/trade', auth(), requireBtcSim, async (req, res) => {
 
 router.get('/positions', auth(), requireBtcSim, async (req, res) => {
   try {
+    if (!(await settings.getBtcCrawlEnabled())) {
+      const market = String(req.query.market || '5m');
+      return res.json({
+        market,
+        roundTs: 0,
+        roundEnd: 0,
+        up: 0,
+        down: 0,
+        upTokenId: '',
+        downTokenId: '',
+      });
+    }
     const market = String(req.query.market || '5m');
     if (!['5m', '15m', '1h'].includes(market)) {
       return res.status(400).json({ error: '市场无效' });
@@ -350,6 +420,9 @@ router.get('/positions', auth(), requireBtcSim, async (req, res) => {
 
 router.post('/trade/sell', auth(), requireBtcSim, async (req, res) => {
   try {
+    if (!(await settings.getBtcCrawlEnabled())) {
+      return res.status(409).json({ error: 'BTC 数据采集已关闭，暂无法平仓' });
+    }
     const { market = '5m', side, shares } = req.body || {};
     if (!['5m', '15m', '1h'].includes(market)) {
       return res.status(400).json({ error: '市场无效' });

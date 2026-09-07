@@ -1,13 +1,14 @@
-#!/usr/bin/env python3
-"""Load monitor.env into os.environ (strips CRLF)."""
+"""Monitor paths and env loading."""
 from __future__ import annotations
 
 import os
 from pathlib import Path
 
+MONITOR_ROOT = Path(__file__).resolve().parent.parent
+
 
 def load_monitor_env(path: str | Path | None = None) -> None:
-    p = Path(path or Path(__file__).resolve().parent / "monitor.env")
+    p = Path(path or MONITOR_ROOT / "monitor.env")
     if not p.exists():
         return
     for raw in p.read_text(encoding="utf-8").splitlines():

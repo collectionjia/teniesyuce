@@ -1,11 +1,12 @@
 """Collect tennis events: list scheduled tournaments, then fetch 500/1000/GS draws only."""
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from enrich import _event_tour, _is_ended, tour_level_label
+from tm.enrich import _event_tour, _is_ended, tour_level_label
 
 BJ = timezone(timedelta(hours=8))
 
@@ -216,4 +217,8 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
         f"[events] {d}: listed={len(listed)} pages={pages} tier={len(tier_tournaments)} "
         f"kept={len(kept)} live={live_tier} live_skip={live_skipped} wta={wta}"
     )
+    if os.environ.get("SOFA_LOG_MATCHES", "1") == "1" and kept:
+        from tm.collectors.tier_collect import log_tier_matches
+
+        log_tier_matches(kept)
     return kept

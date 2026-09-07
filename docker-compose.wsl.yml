@@ -1,0 +1,18 @@
+# WSL / 本地 Docker 覆盖：远程 Redis + 全套 compose，修正容器内连库地址
+# 用法: bash scripts/dev-wsl.sh
+
+services:
+  redis:
+    profiles: ["local-redis"]
+
+  server:
+    depends_on:
+      btc-board:
+        condition: service_started
+    environment:
+      REDIS_URL: redis://46.250.163.215:9015
+      APP_FRONTEND_URL: http://localhost:9001
+      APP_PUBLIC_URL: http://localhost:9001
+      MUSKPAY_WEBSITE: http://localhost:9001
+      BOARD_PRODUCT_URL: http://localhost:8890/
+      SOFA_MONITOR_URL: http://host.docker.internal:9004

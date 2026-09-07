@@ -373,6 +373,11 @@ export async function refreshTennisCache() {
 }
 
 // --- BTC 实盘 / 钱包（读 btc-board + Polymarket 下单）---
+export async function fetchBtcCrawlStatus() {
+  const { data } = await api.get('/btc/crawl')
+  return data
+}
+
 export async function fetchBtcState() {
   const { data } = await api.get('/btc/state', {
     params: { _: Date.now() },

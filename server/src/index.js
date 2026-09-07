@@ -1,6 +1,6 @@
 /**
- * YUCE 后端入口：Express API + 启动时预热网球 Redis 缓存。
- * 数据流：tennis-monitor(9004) → server 刷 Redis → 前端只读 API。
+ * YUCE 后端入口：Express API。
+ * 网球列表：collect.py → Redis → GET /api/tennis/today（默认不连 9004 monitor）。
  */
 const path = require('path');
 const express = require('express');
@@ -65,9 +65,12 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
-  // 启动 5s 后从 tennis-monitor 拉 bundle 写入 Redis，并开后台定时刷新
   setTimeout(async () => {
     try {
+      const tennisRedis = require('./services/tennisRedis');
+      await tennisRedis.warmOnStartup();
+      if (!tennisRedis.monitorSyncEnabled()) return;
+
       const tennisFromMonitor = require('./services/tennisFromMonitor');
       await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
       tennisFromMonitor.startBackgroundRefresh();
@@ -78,20 +81,10 @@ app.listen(PORT, () => {
         console.log('[tennis/live-cache] warmed from Sofascore monitor → Redis');
       } catch (err) {
         console.error('[tennis/live-cache] warm failed:', err.message);
-        try {
-          require('./services/tennisLiveFromMonitor').startBackgroundRefresh();
-        } catch (_) {
-          /* ignore */
-        }
       }
-      console.log('[tennis/cache] warmed from Sofascore monitor → Redis');
+      console.log('[tennis/cache] monitor→redis sync enabled (TENNIS_SYNC_FROM_MONITOR=1)');
     } catch (err) {
-      console.error('[tennis/cache] warm failed:', err.message);
-      try {
-        require('./services/tennisFromMonitor').startBackgroundRefresh();
-      } catch (_) {
-        /* ignore */
-      }
+      console.error('[tennis/cache] startup failed:', err.message);
     }
-  }, 5000);
+  }, 2000);
 });

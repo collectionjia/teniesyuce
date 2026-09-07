@@ -1,4 +1,5 @@
 import { reactive, ref } from 'vue'
+import * as api from './api'
 import {
   loadLiveTradeState,
   markLivePlaced,
@@ -522,6 +523,8 @@ export function startBackgroundRunner(fetchState, intervalMs = 10000) {
   runnerTimer = setInterval(async () => {
     if (!simSettings.enabled && !simSettings.liveAuto) return
     try {
+      const crawl = await api.fetchBtcCrawlStatus()
+      if (!crawl?.enabled) return
       const data = await fetchState()
       if (data) syncSimBets(data)
     } catch { /* ignore background errors */ }

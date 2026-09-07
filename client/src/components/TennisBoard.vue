@@ -93,7 +93,6 @@ const serverTimeBase = ref(null)
 const loadedAtMs = ref(null)
 const clockTick = ref(0)
 let tickTimer = null
-let refreshTimer = null
 
 /** 基于 API 返回的服务器时间推算当前秒级时间戳 */
 const nowSec = computed(() => {
@@ -509,6 +508,7 @@ const stats = computed(() => {
   return {
     date: data.value?.date || '—',
     tournaments: data.value?.scheduled?.tournamentCount ?? 0,
+    collected: data.value?.events ?? data.value?.scheduled?.eventCount ?? 0,
     total: pool.length,
     all: countTab('all'),
     shown: matches.value.length,
@@ -792,10 +792,10 @@ function playerLiveScoreText(m, side) {
   return String(raw)
 }
 
-/** 从 Redis 加载；silent 时不打断列表（用于后台轮询完赛/比分） */
-async function loadOnce({ silent = false } = {}) {
+/** 打开页面时从 Redis 加载一次 */
+async function loadOnce() {
   error.value = ''
-  if (!silent) loading.value = true
+  loading.value = true
   try {
     const token = localStorage.getItem('token') || ''
     const res = await fetch(`${apiPath.value}/today`, {
@@ -815,9 +815,9 @@ async function loadOnce({ silent = false } = {}) {
     }
     await maybeAutoBatchTrade()
   } catch (e) {
-    if (!silent) error.value = e?.message || '加载失败'
+    error.value = e?.message || '加载失败'
   } finally {
-    if (!silent) loading.value = false
+    loading.value = false
   }
 }
 
@@ -826,12 +826,9 @@ onMounted(() => {
   if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
   loadOnce()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
-  const refreshMs = isLiveMode.value ? 120000 : 60000
-  refreshTimer = setInterval(() => { loadOnce({ silent: true }) }, refreshMs)
 })
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
-  if (refreshTimer) clearInterval(refreshTimer)
 })
 
 function gapInfo(m) {
@@ -882,6 +879,7 @@ function gapInfo(m) {
       <span class="meta-chip">{{ loading ? '…' : `${stats.shown}/${stats.all}` }}</span>
       <div class="stats">
         <div class="stat"><b>{{ stats.tournaments }}</b><span>赛</span></div>
+        <div class="stat"><b>{{ stats.collected }}</b><span>总</span></div>
         <button type="button" class="stat stat-btn" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">
           <b>{{ stats.all }}</b><span>全</span>
         </button>
@@ -1303,8 +1301,8 @@ function gapInfo(m) {
 }
 .btn:disabled { opacity: 0.5; cursor: wait; }
 .stats {
-  display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px;
-  margin: 0 0 0 auto; min-width: 148px; flex: 1; max-width: 220px;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
+  margin: 0 0 0 auto; min-width: 168px; flex: 1; max-width: 260px;
 }
 .stat {
   background: var(--card);

@@ -7,18 +7,11 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from bundle import slim_event
-from bundle_enrich import enrich_odds_for_events, enrich_rankings_from_events
-from enrich import _event_tour, _is_ended, _player_side
-from events_collector import collect_tennis_events, today_bj
-from sofascore_client import SofascoreClient, _event_score
-from top20_collector import (
-    RANK_PATHS,
-    _attach_matches,
-    _is_live,
-    _name_keys,
-    _refresh_match_ranks,
-)
+from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, slim_event
+from tm.enrich import _event_tour, _is_ended, _player_side
+from tm.collectors.events import collect_tennis_events, today_bj
+from tm.clients.sofascore import SofascoreClient, _event_score
+from tm.collectors.rankings import attach_matches, event_matches_board, fetch_rank_board, is_live, name_keys, refresh_match_ranks
 
 TOP_N = 100
 
@@ -29,41 +22,7 @@ _scheduled_cache: dict[str, Any] = {"date": None, "events": []}
 
 
 def fetch_top100_board(client: SofascoreClient) -> dict[str, Any]:
-    board: dict[str, Any] = {
-        "atp": [],
-        "wta": [],
-        "name_keys": set(),
-        "player_ids": set(),
-    }
-    for tour, path in RANK_PATHS:
-        data = client._api_get(path, referer="https://www.sofascore.com/tennis")
-        rows = data.get("rankings") or data.get("list") or []
-        players: list[dict[str, Any]] = []
-        for row in rows[:TOP_N]:
-            team = row.get("team") or row.get("player") or {}
-            pid = team.get("id") or row.get("id")
-            name = team.get("name") or row.get("name")
-            if pid is not None:
-                board["player_ids"].add(int(pid))
-            for key in _name_keys(name):
-                board["name_keys"].add(key)
-            players.append(
-                {
-                    "id": pid,
-                    "rank": row.get("ranking") or row.get("rank"),
-                    "previousRank": row.get("previousRanking") or row.get("previousRank"),
-                    "bestRank": row.get("bestRanking") or row.get("bestRank"),
-                    "name": name,
-                    "country": (team.get("country") or {}).get("name")
-                    if isinstance(team.get("country"), dict)
-                    else team.get("country"),
-                    "points": row.get("points") or row.get("rowPoints"),
-                    "matches": [],
-                    "matchCount": 0,
-                }
-            )
-        board[tour] = players
-    return board
+    return fetch_rank_board(client, TOP_N)
 
 
 def _rebuild_board_indexes(board: dict[str, Any]) -> None:
@@ -74,13 +33,13 @@ def _rebuild_board_indexes(board: dict[str, Any]) -> None:
             pid = p.get("id")
             if pid is not None:
                 ids.add(int(pid))
-            for key in _name_keys(p.get("name")):
+            for key in name_keys(p.get("name")):
                 keys.add(key)
     board["player_ids"] = ids
     board["name_keys"] = keys
 
 
-def event_in_top100(ev: dict, board: dict[str, Any]) -> bool:
+def _event_matches_board(ev: dict, board: dict[str, Any]) -> bool:
     ids: set[int] = board.get("player_ids") or set()
     keys: set[str] = board.get("name_keys") or set()
     for side in ("home", "away"):
@@ -88,7 +47,7 @@ def event_in_top100(ev: dict, board: dict[str, Any]) -> bool:
         pid = p.get("id")
         if pid is not None and int(pid) in ids:
             return True
-        for key in _name_keys(p.get("name")):
+        for key in name_keys(p.get("name")):
             if key in keys:
                 return True
     return False
@@ -119,7 +78,7 @@ def _raw_to_slim_map(raw_events: list[dict], board: dict[str, Any]) -> dict[int,
     for ev in raw_events:
         if _is_ended(ev):
             continue
-        if not event_in_top100(ev, board):
+        if not event_matches_board(ev, board):
             continue
         eid = ev.get("id")
         if eid is None:
@@ -131,7 +90,7 @@ def _raw_to_slim_map(raw_events: list[dict], board: dict[str, Any]) -> dict[int,
     return by_id
 
 
-def _slim_is_live(ev: dict) -> bool:
+def _slimis_live(ev: dict) -> bool:
     st = str(ev.get("status") or "").lower()
     stype = str(ev.get("statusType") or "").lower()
     if stype in {"inprogress", "live", "interrupted"}:
@@ -152,10 +111,10 @@ def _snapshot_from_events(
         by_id.values(),
         key=lambda e: (e.get("startTimestamp") or 0, e.get("id") or 0),
     )
-    live_count = sum(1 for ev in by_id.values() if _slim_is_live(ev))
+    live_count = sum(1 for ev in by_id.values() if _slimis_live(ev))
     rankings = enrich_rankings_from_events(slim_events, board)
-    _attach_matches(board, slim_events)
-    _refresh_match_ranks(board, rankings)
+    attach_matches(board, slim_events)
+    refresh_match_ranks(board, rankings)
     elapsed = round(time.time() - started, 2)
     return {
         "ok": True,
@@ -244,7 +203,7 @@ def collect_top100_snapshot(*, include_scheduled: bool = True, force_schedule: b
             error=error,
             odds_by_event=odds_by_event,
         )
-        from events_collector import get_collect_stats
+        from tm.collectors.events import get_collect_stats
 
         client_stats = client.get_request_stats()
         collect_stats = get_collect_stats()
@@ -285,7 +244,7 @@ def refresh_top100_live() -> dict[str, Any]:
         for ev in live_raw:
             if _is_ended(ev):
                 continue
-            if not event_in_top100(ev, board):
+            if not event_matches_board(ev, board):
                 continue
             live_top100.append(ev)
             eid = int(ev["id"])

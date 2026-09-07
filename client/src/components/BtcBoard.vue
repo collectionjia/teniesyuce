@@ -56,6 +56,7 @@ const loading = ref(true)
 const error = ref('')
 const data = ref(null)
 const lastUpdated = ref(0)
+const crawlEnabled = ref(true)
 const market = ref('5m') // 5m | 15m | 1h
 const tick = ref(Date.now())
 let pollTimer = null
@@ -606,9 +607,39 @@ function fmtNum(v) {
   return Math.round(n).toLocaleString('en-US')
 }
 
+async function refreshCrawlStatus() {
+  if (props.admin) {
+    crawlEnabled.value = true
+    return true
+  }
+  const status = await api.fetchBtcCrawlStatus()
+  crawlEnabled.value = !!status?.enabled
+  return crawlEnabled.value
+}
+
+function idleBoardPayload() {
+  return {
+    ok: true,
+    crawl_enabled: false,
+    message: 'BTC 数据采集已关闭',
+    active_market: '5m',
+    round_ts: 0,
+    round_end: 0,
+    server_time: Math.floor(Date.now() / 1000),
+    leaderboard: null,
+    leaderboard_15m: null,
+    leaderboard_1h: null,
+  }
+}
+
 async function load() {
   error.value = ''
   try {
+    if (!props.admin && !(await refreshCrawlStatus())) {
+      data.value = idleBoardPayload()
+      lastUpdated.value = Date.now()
+      return
+    }
     const payload = props.admin
       ? await api.fetchAdminBtcState()
       : await api.fetchBtcState()
@@ -874,7 +905,17 @@ onMounted(() => {
     loadWalletStatus()
   }
   load()
-  pollTimer = setInterval(load, 2000)
+  pollTimer = setInterval(async () => {
+    if (!props.admin && !(await refreshCrawlStatus())) {
+      if (!data.value || data.value.crawl_enabled !== false) {
+        data.value = idleBoardPayload()
+        lastUpdated.value = Date.now()
+        loading.value = false
+      }
+      return
+    }
+    load()
+  }, 2000)
   tickTimer = setInterval(() => {
     tick.value = Date.now()
     for (const tf of TREND_MARKETS) sampleTrendForMarket(tf, false)

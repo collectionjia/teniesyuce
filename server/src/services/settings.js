@@ -4,6 +4,7 @@ const PAYMENT_PLANS = ['month', 'week', 'day'];
 const DEFAULT_PAYMENT_PLAN_KEY = 'default_payment_plan';
 const REDEEM_PURCHASE_URL_KEY = 'redeem_purchase_url';
 const DEFAULT_REDEEM_PURCHASE_URL = 'https://pay.ldxp.cn/shop/8GD17A0H';
+const BTC_CRAWL_ENABLED_KEY = 'btc_crawl_enabled';
 
 let tableReady = false;
 
@@ -26,6 +27,7 @@ async function ensureTable() {
   const defaults = [
     [DEFAULT_PAYMENT_PLAN_KEY, 'month'],
     [REDEEM_PURCHASE_URL_KEY, DEFAULT_REDEEM_PURCHASE_URL],
+    [BTC_CRAWL_ENABLED_KEY, '0'],
   ];
   for (const [key, value] of defaults) {
     const [[row]] = await pool.query(
@@ -106,6 +108,27 @@ async function setRedeemPurchaseUrl(url) {
   return value;
 }
 
+async function getBtcCrawlEnabled() {
+  await ensureTable();
+  const [[row]] = await pool.query(
+    'SELECT setting_value FROM app_settings WHERE setting_key=?',
+    [BTC_CRAWL_ENABLED_KEY]
+  );
+  const v = String(row?.setting_value || '').trim().toLowerCase();
+  return v === '1' || v === 'true';
+}
+
+async function setBtcCrawlEnabled(enabled) {
+  await ensureTable();
+  const value = enabled ? '1' : '0';
+  await pool.query(
+    `INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)`,
+    [BTC_CRAWL_ENABLED_KEY, value]
+  );
+  return !!enabled;
+}
+
 async function getPaymentSettings() {
   const [defaultPlan, redeemPurchaseUrl] = await Promise.all([
     getDefaultPaymentPlan(),
@@ -128,5 +151,7 @@ module.exports = {
   setDefaultPaymentPlan,
   getRedeemPurchaseUrl,
   setRedeemPurchaseUrl,
+  getBtcCrawlEnabled,
+  setBtcCrawlEnabled,
   getPaymentSettings,
 };

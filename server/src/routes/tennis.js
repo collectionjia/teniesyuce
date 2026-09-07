@@ -1,6 +1,6 @@
 const { Router } = require("express");
 const { auth } = require("../middleware/auth");
-const tennisCache = require("../services/tennisCache");
+const tennisRedis = require("../services/tennisRedis");
 const tennisFromMonitor = require("../services/tennisFromMonitor");
 const btcWallet = require("../services/btcWallet");
 const tennisTrade = require("../services/tennisTrade");
@@ -23,14 +23,14 @@ async function requireWallet(req, res, next) {
  */
 router.get("/today", auth(), async (_req, res) => {
   try {
-    const full = await tennisCache.getBundle();
+    const full = await tennisRedis.getTodayBundle();
     if (!full) {
       return res.status(503).json({
         ok: false,
-        error: "网球数据尚未就绪，请稍后再试",
+        error: "网球数据尚未就绪，请先运行 collect.py 写入 Redis",
       });
     }
-    res.json({ ...full, member: true, readFrom: 'redis' });
+    res.json({ ...full, member: true });
   } catch (err) {
     console.error("[tennis/today]", err);
     res.status(500).json({
@@ -42,17 +42,36 @@ router.get("/today", auth(), async (_req, res) => {
 
 router.post("/cache/refresh", auth(["admin"]), async (_req, res) => {
   try {
-    const tennisDataSource = require("../services/tennisDataSource");
-    const bundle = await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
+    if (tennisRedis.monitorSyncEnabled()) {
+      const tennisDataSource = require("../services/tennisDataSource");
+      const bundle = await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
+      return res.json({
+        ok: true,
+        events: bundle.events,
+        date: bundle.date,
+        fetched_at: bundle.fetched_at,
+        live: bundle.live?.eventCount ?? 0,
+        dataSource: bundle.dataSource || (await tennisDataSource.get()),
+        upstream: bundle.upstream || bundle.source,
+        readFrom: "redis",
+        sync: "monitor",
+      });
+    }
+    const full = await tennisRedis.getTodayBundle();
+    if (!full) {
+      return res.status(503).json({
+        ok: false,
+        error: "Redis 无网球数据，请先运行 collect.py",
+      });
+    }
     res.json({
       ok: true,
-      events: bundle.events,
-      date: bundle.date,
-      fetched_at: bundle.fetched_at,
-      live: bundle.live?.eventCount ?? 0,
-      dataSource: bundle.dataSource || (await tennisDataSource.get()),
-      upstream: bundle.upstream || bundle.source,
+      events: full.events,
+      date: full.date,
+      fetched_at: full.fetched_at,
+      live: full.live?.eventCount ?? 0,
       readFrom: "redis",
+      sync: "none",
     });
   } catch (err) {
     console.error("[tennis/cache/refresh]", err);

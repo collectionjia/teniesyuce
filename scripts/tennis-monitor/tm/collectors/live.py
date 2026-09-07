@@ -5,28 +5,21 @@ import json
 import os
 from typing import Any
 
-from enrich import _is_ended
-from top100_collector import collect_top100_snapshot, refresh_top100_live
-from top20_collector import _is_live, collect_top20_snapshot
-
-
-def _mysql_enabled() -> bool:
-    if os.environ.get("SOFA_WRITE_MYSQL", "1") != "1":
-        return False
-    try:
-        from db_writer import mysql_enabled
-
-        return mysql_enabled()
-    except Exception:
-        return False
+from tm.enrich import _is_ended
+from tm.collectors.top100 import collect_top100_snapshot, refresh_top100_live
+from tm.collectors.rankings import is_live
+from tm.collectors.top20 import collect_top20_snapshot
+from tm.db.writer import log_collect_mysql_policy, mysql_write_enabled
 
 
 def _write_mysql(snapshot: dict[str, Any], *, live_only: bool) -> dict[str, Any]:
-    if not _mysql_enabled():
-        return {"updated": 0, "ended": 0, "skipped": True}
+    if not mysql_write_enabled():
+        return {"updated": 0, "ended": 0, "skipped": True, "reason": "SOFA_WRITE_MYSQL disabled"}
     try:
-        from db_writer import write_snapshot_to_mysql
+        from tm.db.writer import mysql_enabled, write_snapshot_to_mysql
 
+        if not mysql_enabled():
+            return {"updated": 0, "ended": 0, "skipped": True, "reason": "DB not configured"}
         return write_snapshot_to_mysql(snapshot, live_only=live_only)
     except Exception as exc:
         print(f"[mysql] write failed: {exc}")
@@ -34,7 +27,7 @@ def _write_mysql(snapshot: dict[str, Any], *, live_only: bool) -> dict[str, Any]
 
 
 def _event_is_live(ev: dict) -> bool:
-    return _is_live(
+    return is_live(
         {
             "status": {"description": ev.get("status"), "type": ev.get("statusType")},
             "statusType": ev.get("statusType"),
@@ -60,7 +53,9 @@ def run_top100_live_sync() -> dict[str, Any]:
 
 def run_live_sync(*, include_scheduled: bool = True, write_mysql: bool | None = None) -> dict[str, Any]:
     if write_mysql is None:
-        write_mysql = os.environ.get("SOFA_WRITE_MYSQL", "1") == "1"
+        write_mysql = mysql_write_enabled()
+    if include_scheduled:
+        log_collect_mysql_policy("live/full")
     use_top100 = os.environ.get("LIVE_USE_TOP100", "1") == "1"
     if use_top100:
         if include_scheduled:
@@ -75,7 +70,7 @@ def run_live_sync(*, include_scheduled: bool = True, write_mysql: bool | None = 
     if write_mysql and use_top100 and include_scheduled:
         snapshot["db"] = _write_mysql(snapshot, live_only=False)
     elif "db" not in snapshot:
-        snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True}
+        snapshot["db"] = {"updated": 0, "ended": 0, "skipped": True, "reason": "SOFA_WRITE_MYSQL disabled"}
     if "live_matches" not in snapshot:
         snapshot["live_matches"] = _live_matches_from_snapshot(snapshot)
     return snapshot
