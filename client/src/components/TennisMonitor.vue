@@ -40,6 +40,12 @@ const INTERVAL_OPTIONS = [
   { hours: 12, label: '12 小时' },
 ]
 
+const LIVE_POLL_OPTIONS = [
+  { sec: 60, label: '1 分钟' },
+  { sec: 120, label: '2 分钟' },
+  { sec: 300, label: '5 分钟' },
+]
+
 let pollTimer = null
 let top100Timer = null
 let liveTimer = null
@@ -72,8 +78,17 @@ const collectIntervalLabel = computed(() => {
   return opt?.label || `每 ${collectIntervalHours.value} 小时`
 })
 const livePollIntervalSec = computed(() => {
-  const sec = Number(status.value?.live_poll?.interval_sec ?? liveData.value?.interval_sec)
-  return Number.isFinite(sec) && sec > 0 ? sec : 300
+  const sec = Number(
+    schedule.value?.live_poll_interval_sec
+    ?? status.value?.schedule?.live_poll_interval_sec
+    ?? status.value?.live_poll?.interval_sec
+    ?? liveData.value?.interval_sec,
+  )
+  return LIVE_POLL_OPTIONS.some((o) => o.sec === sec) ? sec : 300
+})
+const collectEnabled = computed(() => {
+  const v = schedule.value?.collect_enabled ?? status.value?.schedule?.collect_enabled
+  return v !== false
 })
 const livePollIntervalLabel = computed(() => {
   const sec = livePollIntervalSec.value
@@ -430,6 +445,10 @@ async function waitLiveCollectDone() {
 
 async function triggerCollect() {
   if (collecting.value || running.value) return
+  if (!collectEnabled.value) {
+    error.value = '采集已关闭，请先打开采集开关'
+    return
+  }
   collecting.value = true
   error.value = ''
   notice.value = ''
@@ -447,6 +466,10 @@ async function triggerCollect() {
 
 async function triggerLiveCollect() {
   if (liveCollecting.value || liveRunning.value) return
+  if (!collectEnabled.value) {
+    error.value = '采集已关闭，请先打开采集开关'
+    return
+  }
   liveCollecting.value = true
   error.value = ''
   notice.value = ''
@@ -495,12 +518,49 @@ async function onIntervalChange(event) {
   scheduleSaving.value = true
   error.value = ''
   try {
-    const data = await api.updateTennisMonitorSchedule(hours)
+    const data = await api.updateTennisMonitorSchedule({ interval_hours: hours })
     schedule.value = data
     await loadStatus()
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新频度失败')
     event.target.value = String(collectIntervalHours.value)
+  } finally {
+    scheduleSaving.value = false
+  }
+}
+
+async function onLivePollIntervalChange(event) {
+  const sec = Number(event.target.value)
+  if (!LIVE_POLL_OPTIONS.some((o) => o.sec === sec) || sec === livePollIntervalSec.value) return
+  scheduleSaving.value = true
+  error.value = ''
+  try {
+    const data = await api.updateTennisMonitorSchedule({ live_poll_interval_sec: sec })
+    schedule.value = data
+    await Promise.all([loadStatus(), loadLive()])
+    showNotice(`进行中拉取已设为 ${LIVE_POLL_OPTIONS.find((o) => o.sec === sec)?.label || sec + ' 秒'}`)
+  } catch (e) {
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新进行中频度失败')
+    event.target.value = String(livePollIntervalSec.value)
+  } finally {
+    scheduleSaving.value = false
+  }
+}
+
+async function onCollectEnabledChange(event) {
+  const want = !!event.target.checked
+  if (want === collectEnabled.value || scheduleSaving.value) return
+  scheduleSaving.value = true
+  error.value = ''
+  notice.value = ''
+  try {
+    const data = await api.updateTennisMonitorSchedule({ collect_enabled: want })
+    schedule.value = data
+    await loadStatus()
+    showNotice(want ? '已开启采集（定时 / 手动 / 进行中拉取）' : '已关闭采集')
+  } catch (e) {
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新采集开关失败')
+    event.target.checked = collectEnabled.value
   } finally {
     scheduleSaving.value = false
   }
@@ -630,20 +690,35 @@ onUnmounted(() => {
     <div class="toolbar">
       <div class="titles">
         <div class="title">网球数据采集</div>
-        <div class="sub">Top100 {{ collectIntervalLabel }} · 进行中 {{ livePollIntervalLabel }} · Redis {{ tennisDataSourceLabel }}</div>
+        <div class="sub">
+          {{ collectEnabled ? '采集已开启' : '采集已关闭' }}
+          · Top100 {{ collectIntervalLabel }}
+          · 进行中 {{ livePollIntervalLabel }}
+          · Redis {{ tennisDataSourceLabel }}
+        </div>
       </div>
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
-        <button type="button" class="btn ghost" :disabled="liveCollecting || liveRunning" @click="triggerLiveCollect">
+        <button type="button" class="btn ghost" :disabled="liveCollecting || liveRunning || !collectEnabled" @click="triggerLiveCollect">
           {{ liveRunning ? '拉取中…' : liveCollecting ? '触发中…' : '拉取进行中' }}
         </button>
-        <button type="button" class="btn primary" :disabled="collecting || running" @click="triggerCollect">
+        <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect">
           {{ running ? 'Top100 采集中…' : collecting ? '触发中…' : '立即采集 Top100' }}
         </button>
       </div>
     </div>
 
     <div v-if="!loading" class="settings-row">
+      <label class="collect-toggle">
+        <span>采集开关</span>
+        <input
+          type="checkbox"
+          :checked="collectEnabled"
+          :disabled="scheduleSaving || loading"
+          @change="onCollectEnabledChange"
+        >
+        <span class="toggle-state" :class="{ off: !collectEnabled }">{{ collectEnabled ? '已开启' : '已关闭' }}</span>
+      </label>
       <div class="source-group" role="radiogroup" aria-label="网球页 Redis 写入源">
         <span class="source-label">网球数据源</span>
         <label class="source-opt" :class="{ on: tennisDataSource === 'ipwo' }">
@@ -681,7 +756,18 @@ onUnmounted(() => {
           </option>
         </select>
       </label>
-      <span class="live-interval-hint">进行中拉取 {{ livePollIntervalLabel }}</span>
+      <label class="interval-select">
+        <span>进行中拉取</span>
+        <select
+          :value="livePollIntervalSec"
+          :disabled="scheduleSaving || loading || !collectEnabled"
+          @change="onLivePollIntervalChange"
+        >
+          <option v-for="opt in LIVE_POLL_OPTIONS" :key="opt.sec" :value="opt.sec">
+            {{ opt.label }}
+          </option>
+        </select>
+      </label>
     </div>
 
     <div v-if="notice" class="banner ok">{{ notice }}</div>
@@ -1012,6 +1098,15 @@ onUnmounted(() => {
   color: #334155; background: #fff; cursor: pointer;
 }
 .interval-select select:disabled { opacity: .55; cursor: not-allowed; }
+.collect-toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border-radius: 10px;
+  border: 1px solid var(--line, #e2e8f0); background: #fff;
+  font-size: 0.82rem; color: #475569;
+}
+.collect-toggle input { width: 16px; height: 16px; accent-color: #4f46e5; }
+.toggle-state { font-weight: 600; color: #059669; }
+.toggle-state.off { color: #94a3b8; }
 .live-interval-hint {
   font-size: 0.82rem;
   color: #64748b;

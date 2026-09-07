@@ -21,6 +21,17 @@ function resolveMonitorDir() {
 }
 
 const MONITOR_DIR = resolveMonitorDir();
+const SCHEDULE_FILE = path.join(MONITOR_DIR, 'config', 'schedule.json');
+
+function isCollectEnabled() {
+  try {
+    if (!fs.existsSync(SCHEDULE_FILE)) return true;
+    const data = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
+    return data.collect_enabled !== false;
+  } catch {
+    return true;
+  }
+}
 const COLLECT_SCRIPT = path.join(MONITOR_DIR, 'collect.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
@@ -35,9 +46,12 @@ function nowIso() {
 }
 
 function pythonBin() {
+  if (process.env.TENNIS_PYTHON) return process.env.TENNIS_PYTHON;
+  // 宿主机 venv 挂进 Docker 后解释器路径失效，容器内用镜像自带的 python3
+  const inDockerCollect = process.env.TENNIS_MONITOR_DIR === '/tennis-monitor';
+  const venvPy = path.join(MONITOR_DIR, 'venv', 'bin', 'python');
   const candidates = [
-    path.join(MONITOR_DIR, 'venv', 'bin', 'python'),
-    path.join(MONITOR_DIR, 'venv', 'Scripts', 'python.exe'),
+    ...(inDockerCollect ? [] : [venvPy, path.join(MONITOR_DIR, 'venv', 'Scripts', 'python.exe')]),
     process.env.PYTHON,
     'python3',
     'python',
@@ -105,6 +119,9 @@ function elapsedSecFromTiming(timing) {
 function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
+  }
+  if (!isCollectEnabled()) {
+    return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last };
   }
   if (!fs.existsSync(COLLECT_SCRIPT)) {
     return { ok: false, status: 500, error: `collect.py not found: ${COLLECT_SCRIPT}` };
@@ -249,6 +266,7 @@ module.exports = {
   recentLogs,
   isRunning: () => running,
   getLast: () => ({ ...last }),
+  isCollectEnabled,
   isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

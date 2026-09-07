@@ -1,4 +1,6 @@
 {
   "interval_hours": 6,
+  "collect_enabled": true,
+  "live_poll_interval_sec": 300,
   "collect_target": "top100"
 }

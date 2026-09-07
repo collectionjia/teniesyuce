@@ -241,7 +241,6 @@ router.get('/schedule', async (_req, res) => {
 
 router.post('/schedule', async (req, res) => {
   try {
-    const intervalHours = Number(req.body?.interval_hours);
     const url = new URL('/schedule', `${MONITOR_BASE}/`);
     const proxyRes = await fetch(url, {
       method: 'POST',
@@ -250,7 +249,7 @@ router.post('/schedule', async (req, res) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${MONITOR_TOKEN}`,
       },
-      body: JSON.stringify({ interval_hours: intervalHours }),
+      body: JSON.stringify(req.body || {}),
       signal: AbortSignal.timeout(MONITOR_FETCH_TIMEOUT_MS),
     });
     const text = await proxyRes.text();

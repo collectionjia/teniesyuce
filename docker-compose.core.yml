@@ -35,6 +35,7 @@ services:
       PORT: 3001
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       TENNIS_MONITOR_DIR: /tennis-monitor
+      TENNIS_PYTHON: python3
       PYTHONUNBUFFERED: "1"
       BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://btc-board:8890/}
       SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
