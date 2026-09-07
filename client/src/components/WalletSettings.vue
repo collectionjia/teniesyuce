@@ -14,6 +14,7 @@ const error = ref('')
 const notice = ref('')
 const status = reactive({
   configured: false,
+  decryptFailed: false,
   proxyAddress: '',
   signatureType: 1,
   maskedKey: '',
@@ -25,6 +26,12 @@ const draft = reactive({
   signatureType: 1,
 })
 const testResult = ref(null)
+
+const canTestConnect = computed(() => {
+  if (draft.privateKey.trim() && draft.proxyAddress.trim()) return true
+  if (status.configured && !status.decryptFailed) return true
+  return false
+})
 
 const shortProxy = computed(() => {
   const a = status.proxyAddress || ''
@@ -41,6 +48,7 @@ async function loadStatus() {
     const data = await api.fetchBtcWallet()
     Object.assign(status, {
       configured: !!data.configured,
+      decryptFailed: !!data.decryptFailed,
       proxyAddress: data.proxyAddress || '',
       signatureType: Number(data.signatureType || 1),
       maskedKey: data.maskedKey || '',
@@ -77,6 +85,10 @@ async function save() {
     error.value = '请填写私钥和账户地址'
     return
   }
+  if (status.decryptFailed && !draft.privateKey.trim()) {
+    error.value = '请重新输入私钥并保存'
+    return
+  }
   saving.value = true
   error.value = ''
   notice.value = ''
@@ -89,6 +101,7 @@ async function save() {
     })
     Object.assign(status, {
       configured: !!data.configured,
+      decryptFailed: !!data.decryptFailed,
       proxyAddress: data.proxyAddress || '',
       signatureType: Number(data.signatureType || 1),
       maskedKey: data.maskedKey || '',
@@ -123,6 +136,7 @@ async function clear() {
     const data = await api.clearBtcWallet()
     Object.assign(status, {
       configured: false,
+      decryptFailed: false,
       proxyAddress: '',
       signatureType: 1,
       maskedKey: '',
@@ -170,7 +184,11 @@ async function testConnect() {
       status.signatureType = Number(data.signatureType)
     }
   } catch (e) {
+    const code = e.response?.data?.code
     error.value = e.response?.data?.error || e.message || '连接测试失败'
+    if (code === 'WALLET_DECRYPT_FAILED') {
+      status.decryptFailed = true
+    }
     testResult.value = { ok: false }
   } finally {
     testing.value = false
@@ -191,11 +209,16 @@ async function testConnect() {
 
       <div v-if="loading" class="wm-loading">加载中…</div>
       <template v-else>
-        <div class="wm-status" :class="{ ok: status.configured }">
+        <div class="wm-status" :class="{ ok: status.configured && !status.decryptFailed, warn: status.decryptFailed }">
           <span class="dot" />
-          <span v-if="status.configured">已配置 · {{ shortProxy }} · {{ status.maskedKey || '私钥已加密' }}</span>
+          <span v-if="status.decryptFailed">私钥需重新保存 · {{ shortProxy }}</span>
+          <span v-else-if="status.configured">已配置 · {{ shortProxy }} · {{ status.maskedKey || '私钥已加密' }}</span>
           <span v-else>尚未配置账户</span>
         </div>
+
+        <p v-if="status.decryptFailed" class="wm-warn">
+          服务端加密密钥已变更，无法读取已保存私钥。请重新输入私钥并点击「加密保存」，或填写私钥后直接「测试连接」。
+        </p>
 
         <p class="wm-tip">
           私钥以密文保存在服务端，页面永不回显明文。保存后可用「测试连接」验证连通性。
@@ -251,7 +274,7 @@ async function testConnect() {
           <button
             type="button"
             class="wm-btn test"
-            :disabled="testing || (!status.configured && !(draft.privateKey && draft.proxyAddress))"
+            :disabled="testing || !canTestConnect"
             @click="testConnect"
           >
             {{ testing ? '测试中…' : '测试连接' }}
@@ -322,6 +345,7 @@ async function testConnect() {
   margin-bottom: 10px;
 }
 .wm-status.ok { background: #ecfdf5; color: #047857; }
+.wm-status.warn { background: #fffbeb; color: #b45309; }
 .wm-status .dot {
   width: 8px;
   height: 8px;
@@ -330,6 +354,17 @@ async function testConnect() {
   flex-shrink: 0;
 }
 .wm-status.ok .dot { background: #10b981; }
+.wm-status.warn .dot { background: #f59e0b; }
+.wm-warn {
+  font-size: 0.72rem;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
 .wm-tip {
   font-size: 0.72rem;
   color: #64748b;

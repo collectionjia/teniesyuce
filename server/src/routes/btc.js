@@ -268,9 +268,12 @@ router.post('/wallet/test', auth(), requireWallet, async (req, res) => {
     res.json(result);
   } catch (e) {
     console.error('[btc/wallet/test]', e);
-    res.status(400).json({
+    const msg = e.message || '钱包连接测试失败';
+    const decryptFailed = /无法解密|密文无效|unable to authenticate/i.test(msg);
+    res.status(decryptFailed ? 409 : 400).json({
       ok: false,
-      error: e.message || '钱包连接测试失败',
+      code: decryptFailed ? 'WALLET_DECRYPT_FAILED' : undefined,
+      error: msg,
     });
   }
 });

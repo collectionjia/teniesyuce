@@ -676,7 +676,7 @@ def _top100_api_payload(*, refresh: bool = False) -> dict[str, Any]:
         with _top100_lock:
             running = _top100_running
         if not running:
-            threading.Thread(target=_run_top100_collect, args=("http-refresh",), daemon=True).start()
+            threading.Thread(target=run_top100_collect, args=("http-refresh",), daemon=True).start()
             _top100_cache.update({"loading": True, "error": None})
     if _top100_cache.get("loading") or _top100_cache.get("atp") or _top100_cache.get("wta"):
         return dict(_top100_cache)
@@ -851,7 +851,7 @@ class Handler(BaseHTTPRequestHandler):
                 if _top100_running:
                     self._json(409, {"error": "top100 collect already running", "last": dict(_last_top100)})
                     return
-            threading.Thread(target=_run_top100_collect, args=("manual-http",), daemon=True).start()
+            threading.Thread(target=run_top100_collect, args=("manual-http",), daemon=True).start()
             time.sleep(0.2)
             self._json(202, {"ok": True, "message": "top100 collect started", "last": dict(_last_top100)})
             return
@@ -874,7 +874,7 @@ class Handler(BaseHTTPRequestHandler):
             if _top100_running:
                 self._json(409, {"error": "top100 collect already running", "last": dict(_last_top100)})
                 return
-        threading.Thread(target=_run_top100_collect, args=("manual-http",), daemon=True).start()
+        threading.Thread(target=run_top100_collect, args=("manual-http",), daemon=True).start()
         time.sleep(0.2)
         self._json(202, {"ok": True, "message": "top100 collect started", "last": dict(_last_top100)})
 

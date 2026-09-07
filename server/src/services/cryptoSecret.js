@@ -23,7 +23,15 @@ function decryptText(payload) {
   const data = buf.subarray(28);
   const decipher = crypto.createDecipheriv('aes-256-gcm', getSecretKey(), iv);
   decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  try {
+    return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+  } catch (e) {
+    const msg = String(e?.message || e);
+    if (/unable to authenticate|Unsupported state/i.test(msg)) {
+      throw new Error('已保存私钥无法解密，请重新输入私钥并点击「加密保存」');
+    }
+    throw e;
+  }
 }
 
 function maskPrivateKey(pk) {

@@ -55,18 +55,21 @@ async function getWalletStatus(userId) {
      FROM users WHERE id=?`,
     [userId]
   );
-  if (!row) return { configured: false };
+  if (!row) return { configured: false, decryptFailed: false };
   const configured = !!row.pm_private_key_enc && !!row.pm_proxy_address;
   let maskedKey = '';
+  let decryptFailed = false;
   if (row.pm_private_key_enc) {
     try {
       maskedKey = maskPrivateKey(decryptText(row.pm_private_key_enc));
     } catch {
-      maskedKey = '****';
+      maskedKey = '';
+      decryptFailed = configured;
     }
   }
   return {
     configured,
+    decryptFailed,
     proxyAddress: row.pm_proxy_address || '',
     signatureType: Number(row.pm_signature_type || 1),
     maskedKey,
@@ -114,7 +117,7 @@ async function clearWallet(userId) {
      WHERE id=?`,
     [userId]
   );
-  return { configured: false, proxyAddress: '', signatureType: 1, maskedKey: '' };
+  return { configured: false, decryptFailed: false, proxyAddress: '', signatureType: 1, maskedKey: '' };
 }
 
 async function loadWalletSecrets(userId) {
