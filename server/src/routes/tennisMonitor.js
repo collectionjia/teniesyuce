@@ -98,7 +98,9 @@ router.get('/status', async (_req, res) => {
     } catch (err) {
       body.monitor_error = friendlyMonitorError(err);
     }
-    body.top100_collect = tennisCollectRunner.statusPayload();
+    body.top100_collect = tennisCollectRunner.isCollectAvailable()
+      ? tennisCollectRunner.statusPayload()
+      : (body.top100_collect || { status: 'remote', script: `${MONITOR_BASE}/collect` });
     body.running = !!(body.top100_collect?.running || body.running);
     const bundle = await tennisCache.getBundle();
     if (bundle) {
@@ -170,6 +172,10 @@ router.get('/logs', async (req, res) => {
 router.post('/collect', async (req, res) => {
   try {
     const tennisCollectRunner = require('../services/tennisCollectRunner');
+    if (!tennisCollectRunner.isCollectAvailable()) {
+      const result = await monitorFetch('/collect', { method: 'POST', timeoutMs: 15000 });
+      return sendProxy(res, result);
+    }
     const matchDate = req.body?.date || req.body?.match_date || null;
     const top100 = req.body?.top100 !== false && req.body?.all !== true;
     const started = tennisCollectRunner.startCollect({ matchDate, top100 });

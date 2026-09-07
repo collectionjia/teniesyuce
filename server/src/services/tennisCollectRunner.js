@@ -5,9 +5,21 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const MONITOR_DIR = path.resolve(
-  process.env.TENNIS_MONITOR_DIR || path.join(__dirname, '../../../scripts/tennis-monitor'),
-);
+function resolveMonitorDir() {
+  if (process.env.TENNIS_MONITOR_DIR) {
+    return path.resolve(process.env.TENNIS_MONITOR_DIR);
+  }
+  const candidates = [
+    path.join(__dirname, '../../../scripts/tennis-monitor'),
+    '/opt/yuce/scripts/tennis-monitor',
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, 'collect.py'))) return path.resolve(dir);
+  }
+  return path.resolve(candidates[0]);
+}
+
+const MONITOR_DIR = resolveMonitorDir();
 const COLLECT_SCRIPT = path.join(MONITOR_DIR, 'collect.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
@@ -236,4 +248,6 @@ module.exports = {
   recentLogs,
   isRunning: () => running,
   getLast: () => ({ ...last }),
+  isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
+  getCollectScript: () => COLLECT_SCRIPT,
 };
