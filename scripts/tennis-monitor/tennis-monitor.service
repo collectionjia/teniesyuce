@@ -1,0 +1,18 @@
+[Unit]
+Description=网球数据采集 monitor (9004)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/yuce/scripts/tennis-monitor
+EnvironmentFile=-/opt/yuce/scripts/tennis-monitor/monitor.env
+ExecStart=/opt/yuce/scripts/tennis-monitor/venv/bin/python /opt/yuce/scripts/tennis-monitor/monitor_server.py
+Restart=always
+RestartSec=3
+# t3.small 仅 2GB：限制 monitor 进程，避免与 Docker 争抢导致整机 OOM
+MemoryMax=384M
+MemoryHigh=320M
+
+[Install]
+WantedBy=multi-user.target
