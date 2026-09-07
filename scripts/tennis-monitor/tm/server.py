@@ -31,7 +31,7 @@ HOST = os.environ.get("SOFA_MONITOR_HOST", "0.0.0.0")
 PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
 ALLOWED_COLLECT_INTERVALS = (0, 2, 4, 6, 12)
-ALLOWED_LIVE_POLL_INTERVALS = (60, 120, 300)
+ALLOWED_LIVE_POLL_INTERVALS = (0, 60, 120, 300)
 LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
 YUCE_SERVER_CONTAINER = (os.environ.get("YUCE_SERVER_CONTAINER") or "yuce-server-1").strip()
 
@@ -113,7 +113,8 @@ def _read_schedule_config() -> dict[str, Any]:
                 hours = defaults["interval_hours"]
             enabled = data.get("collect_enabled")
             collect_enabled = defaults["collect_enabled"] if enabled is None else bool(enabled)
-            live_sec = int(data.get("live_poll_interval_sec") or defaults["live_poll_interval_sec"])
+            live_sec_raw = data.get("live_poll_interval_sec")
+            live_sec = int(live_sec_raw if live_sec_raw is not None else defaults["live_poll_interval_sec"])
             if live_sec not in ALLOWED_LIVE_POLL_INTERVALS:
                 live_sec = defaults["live_poll_interval_sec"]
             return {
@@ -136,7 +137,7 @@ def _collect_enabled() -> bool:
 
 
 def _live_interval_sec() -> int:
-    return int(_read_schedule_config().get("live_poll_interval_sec") or 300)
+    return int(_read_schedule_config().get("live_poll_interval_sec", 300))
 
 
 def _collect_disabled_message() -> str:
@@ -207,7 +208,11 @@ def _schedule_payload() -> dict[str, Any]:
             else ""
         ),
         "label": "关闭定时" if hours <= 0 else f"每 {hours} 小时 Top100",
-        "live_poll_label": f"每 {live_sec // 60} 分钟" if live_sec % 60 == 0 else f"每 {live_sec} 秒",
+        "live_poll_label": (
+            "关闭"
+            if live_sec <= 0
+            else (f"每 {live_sec // 60} 分钟" if live_sec % 60 == 0 else f"每 {live_sec} 秒")
+        ),
     }
 
 
@@ -509,11 +514,13 @@ def _live_loop() -> None:
     time.sleep(5)
     while True:
         try:
-            if _collect_enabled():
+            sec = _live_interval_sec()
+            if _collect_enabled() and sec > 0:
                 _run_live_sync("auto")
         except Exception as exc:
             print(f"[live-loop] {exc}")
-        time.sleep(max(30, _live_interval_sec()))
+        sec = _live_interval_sec()
+        time.sleep(max(30, sec) if sec > 0 else 60)
 
 
 def _start_live_loop() -> None:

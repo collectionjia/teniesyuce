@@ -42,6 +42,7 @@ const INTERVAL_OPTIONS = [
 ]
 
 const LIVE_POLL_OPTIONS = [
+  { sec: 0, label: '关闭' },
   { sec: 60, label: '1 分钟' },
   { sec: 120, label: '2 分钟' },
   { sec: 300, label: '5 分钟' },
@@ -93,9 +94,13 @@ const collectEnabled = computed(() => {
 })
 const livePollIntervalLabel = computed(() => {
   const sec = livePollIntervalSec.value
+  if (sec <= 0) return '关闭'
+  const opt = LIVE_POLL_OPTIONS.find((o) => o.sec === sec)
+  if (opt) return opt.label
   if (sec >= 60 && sec % 60 === 0) return `${sec / 60} 分钟`
   return `${sec} 秒`
 })
+const livePollAutoEnabled = computed(() => livePollIntervalSec.value > 0)
 const LIVE_UI_REFRESH_MS = 60000
 const tennisDataSource = computed(() => dataSource.value?.source || 'ipwo')
 const tennisDataSourceLabel = computed(() => {
@@ -915,6 +920,7 @@ onUnmounted(() => {
           <span class="panel-title">进行中 · {{ livePoll.date || status?.latest_bundle?.date || '—' }}</span>
           <span class="muted panel-meta">
             <template v-if="liveRunning">拉取中…</template>
+            <template v-else-if="!livePollAutoEnabled">自动拉取已关闭 · 可手动「拉取进行中」 · {{ fmtTime(livePoll.finished_at || livePoll.fetched_at) }}</template>
             <template v-else>监控每 {{ livePollIntervalLabel }} 拉取 · 页面 60 秒刷新 · {{ fmtTime(livePoll.finished_at || livePoll.fetched_at) }}</template>
           </span>
         </div>
