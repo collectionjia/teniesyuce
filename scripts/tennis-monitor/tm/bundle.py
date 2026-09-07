@@ -153,7 +153,9 @@ def _parse_fractional(raw: Any) -> float | None:
 
 
 def _pick_decimal(choice: dict) -> float | None:
-    for key in ("decimalValue", "fractionalValue", "initialFractionalValue"):
+    if not isinstance(choice, dict):
+        return None
+    for key in ("decimalValue", "decimal", "initialDecimalValue", "fractionalValue", "initialFractionalValue"):
         val = _parse_fractional(choice.get(key))
         if val is not None:
             return val
@@ -165,57 +167,29 @@ def _pick_decimal(choice: dict) -> float | None:
     return None
 
 
-def _moneyline_market(markets: list[dict]) -> dict | None:
-    for mkt in markets or []:
-        name = str(mkt.get("marketName") or mkt.get("name") or "").lower()
-        if "full time" in name and "home/away" in name:
-            return mkt
-    for mkt in markets or []:
-        choices = mkt.get("choices") or []
-        if len(choices) >= 2 and all(str(c.get("name", "")).isdigit() or c.get("name") in ("1", "2") for c in choices[:2]):
-            return mkt
-    return (markets or [None])[0]
+def _choices_to_home_away(choices: list[dict]) -> tuple[float | None, float | None]:
+    home_dec: float | None = None
+    away_dec: float | None = None
+    for ch in choices or []:
+        if not isinstance(ch, dict):
+            continue
+        dec = _pick_decimal(ch)
+        if dec is None:
+            continue
+        name = str(ch.get("name") or ch.get("choice") or "").strip().lower()
+        typ = str(ch.get("type") or ch.get("team") or "").strip().lower()
+        if typ in ("home", "1") or name in ("1", "home"):
+            home_dec = dec
+        elif typ in ("away", "2") or name in ("2", "away"):
+            away_dec = dec
+    if home_dec is not None or away_dec is not None:
+        return home_dec, away_dec
+    if len(choices) >= 2:
+        return _pick_decimal(choices[0]), _pick_decimal(choices[1])
+    return None, None
 
 
-def fetch_event_odds(client: SofascoreClient, event_id: int) -> dict[str, Any] | None:
-    try:
-        win = client._api_get(
-            f"event/{event_id}/provider/1/winning-odds",
-            referer="https://www.sofascore.com/tennis",
-        )
-        home_dec = _pick_decimal(win.get("home") or {})
-        away_dec = _pick_decimal(win.get("away") or {})
-        if home_dec is not None or away_dec is not None:
-            return {
-                "eventId": event_id,
-                "source": "sofascore",
-                "full_time": {
-                    "home": {"decimal": home_dec, "change": 0},
-                    "away": {"decimal": away_dec, "change": 0},
-                    "source": "sofascore",
-                },
-            }
-    except Exception:
-        pass
-
-    try:
-        data = client._api_get(
-            f"event/{event_id}/odds/1/all",
-            referer="https://www.sofascore.com/tennis",
-        )
-    except Exception:
-        return None
-    markets = data.get("markets") or []
-    mkt = _moneyline_market(markets)
-    if not mkt:
-        return None
-    choices = mkt.get("choices") or []
-    if len(choices) < 2:
-        return None
-    home_dec = _pick_decimal(choices[0])
-    away_dec = _pick_decimal(choices[1])
-    if home_dec is None and away_dec is None:
-        return None
+def _odds_payload(event_id: int, home_dec: float | None, away_dec: float | None) -> dict[str, Any]:
     return {
         "eventId": event_id,
         "source": "sofascore",
@@ -225,6 +199,72 @@ def fetch_event_odds(client: SofascoreClient, event_id: int) -> dict[str, Any] |
             "source": "sofascore",
         },
     }
+
+
+def _fetch_winning_odds_pair(client: SofascoreClient, event_id: int) -> tuple[float | None, float | None]:
+    win = client._api_get(
+        f"event/{event_id}/provider/1/winning-odds",
+        referer="https://www.sofascore.com/tennis",
+    )
+    home_dec = _pick_decimal(win.get("home") or {})
+    away_dec = _pick_decimal(win.get("away") or {})
+    if home_dec is None and away_dec is None:
+        home_dec = _pick_decimal(win.get("homeTeam") or {})
+        away_dec = _pick_decimal(win.get("awayTeam") or {})
+    return home_dec, away_dec
+
+
+def _moneyline_market(markets: list[dict]) -> dict | None:
+    for mkt in markets or []:
+        name = str(mkt.get("marketName") or mkt.get("name") or "").lower()
+        if "full time" in name and "home/away" in name:
+            return mkt
+    for mkt in markets or []:
+        name = str(mkt.get("marketName") or mkt.get("name") or "").lower()
+        if name in ("full time", "full-time", "winner", "home/away", "match winner"):
+            return mkt
+    for mkt in markets or []:
+        choices = mkt.get("choices") or []
+        if len(choices) >= 2 and all(str(c.get("name", "")).isdigit() or c.get("name") in ("1", "2") for c in choices[:2]):
+            return mkt
+    return (markets or [None])[0]
+
+
+def _fetch_all_odds_pair(client: SofascoreClient, event_id: int) -> tuple[float | None, float | None]:
+    data = client._api_get(
+        f"event/{event_id}/odds/1/all",
+        referer="https://www.sofascore.com/tennis",
+    )
+    mkt = _moneyline_market(data.get("markets") or [])
+    if not mkt:
+        return None, None
+    return _choices_to_home_away(mkt.get("choices") or [])
+
+
+def fetch_event_odds(client: SofascoreClient, event_id: int) -> dict[str, Any] | None:
+    home_dec: float | None = None
+    away_dec: float | None = None
+
+    try:
+        h, a = _fetch_winning_odds_pair(client, event_id)
+        home_dec, away_dec = h, a
+    except Exception:
+        pass
+
+    # winning-odds 常只返回一侧（大热门/封盘）；用 all 盘口补全缺失侧
+    if home_dec is None or away_dec is None:
+        try:
+            h2, a2 = _fetch_all_odds_pair(client, event_id)
+            if home_dec is None:
+                home_dec = h2
+            if away_dec is None:
+                away_dec = a2
+        except Exception:
+            pass
+
+    if home_dec is None and away_dec is None:
+        return None
+    return _odds_payload(event_id, home_dec, away_dec)
 
 
 def fetch_player_birth_year(client: SofascoreClient, player_id: int) -> int | None:
@@ -240,6 +280,15 @@ def fetch_player_birth_year(client: SofascoreClient, player_id: int) -> int | No
         except Exception:
             continue
     return None
+
+
+def _odds_incomplete(odds: dict[str, Any] | None) -> bool:
+    if not odds:
+        return True
+    ft = odds.get("full_time") or {}
+    home = (ft.get("home") or {}).get("decimal")
+    away = (ft.get("away") or {}).get("decimal")
+    return home is None or away is None
 
 
 def enrich_odds_for_events(client: SofascoreClient, events: list[dict]) -> dict[str, Any]:

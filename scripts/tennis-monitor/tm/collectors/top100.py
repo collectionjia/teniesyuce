@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, slim_event
+from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, slim_event, _odds_incomplete
 from tm.enrich import _event_tour, _is_ended, _player_side
 from tm.collectors.events import collect_tennis_events, today_bj
 from tm.clients.sofascore import SofascoreClient, _event_score
@@ -183,7 +183,7 @@ def collect_top100_snapshot(*, include_scheduled: bool = True, force_schedule: b
             if eid is None:
                 continue
             key = str(eid)
-            if key not in prev_odds:
+            if key not in prev_odds or _odds_incomplete(prev_odds.get(key)):
                 need_odds.append(slim)
 
         odds_by_event = dict(prev_odds)
