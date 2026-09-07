@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 python3 <<'PY'
 from pathlib import Path
 p = Path("docker-compose.core.yml")
@@ -10,10 +10,10 @@ text = text.replace("127.0.0.1:16379:6379", "127.0.0.1:9014:6379")
 p.write_text(text, encoding="utf-8")
 print("patched redis port -> 127.0.0.1:9014")
 PY
-sudo docker rm -f bbbbb-redis-1 bbbbb-server-1 bbbbb-web-1 2>/dev/null || true
+sudo docker rm -f yuce-redis-1 yuce-server-1 yuce-web-1 2>/dev/null || true
 sudo docker compose -f docker-compose.core.yml up -d
-# 产品注册请手动执行 upsert-tennis-*-product.js
-sudo systemctl restart sofascore-monitor
+# 产品注册请手动执�?upsert-tennis-*-product.js
+sudo systemctl restart tennis-monitor
 sleep 4
 curl -sf -X POST http://127.0.0.1:9004/schedule \
   -H 'Content-Type: application/json' \

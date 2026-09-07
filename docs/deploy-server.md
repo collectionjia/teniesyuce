@@ -4,7 +4,7 @@
 
 | 位置 | 路径 |
 |------|------|
-| 线上推荐 | `/opt/yuce/bbbbb` |
+| 线上推荐 | `/opt/yuce` |
 | GitHub | https://github.com/collectionjia/yuce （私有） |
 
 ## 2. 前置条件
@@ -14,16 +14,16 @@
 - 私有仓库需先在服务器配置 Git 访问：
   ```bash
   # HTTPS + Personal Access Token
-  git clone https://<TOKEN>@github.com/collectionjia/yuce.git /opt/yuce/bbbbb
+  git clone https://<TOKEN>@github.com/collectionjia/yuce.git /opt/yuce
 
   # 或 SSH（把公钥加到 GitHub）
-  git clone git@github.com:collectionjia/yuce.git /opt/yuce/bbbbb
+  git clone git@github.com:collectionjia/yuce.git /opt/yuce
   ```
 
 ## 3. 一键部署（Lightsail 网页终端）
 
 ```bash
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 chmod +x scripts/deploy-server.sh
 bash scripts/deploy-server.sh
 ```
@@ -31,9 +31,9 @@ bash scripts/deploy-server.sh
 **首次全新机器：**
 
 ```bash
-export INSTALL_DIR=/opt/yuce/bbbbb
+export INSTALL_DIR=/opt/yuce
 export REPO_URL='https://<TOKEN>@github.com/collectionjia/yuce.git'
-sudo mkdir -p /opt/yuce
+sudo mkdir -p /opt
 sudo git clone "$REPO_URL" "$INSTALL_DIR"
 sudo chown -R $USER:$USER "$INSTALL_DIR"
 cd "$INSTALL_DIR"
@@ -55,10 +55,43 @@ bash scripts/deploy-server.sh --logs server
 
 | 文件 | 说明 |
 |------|------|
-| `docker-compose.core.yml` | redis + board + server + web |
-| `docker-compose.test.yml` | 本地测试 MySQL + Redis |
+| `docker-compose.core.yml` | redis + btc-board + server + web |
 
-## 6. 验收
+## 6. 核心目录
+
+| 目录 | 作用 |
+|------|------|
+| `btc-board/` | BTC 链上持仓看板（Python，Docker 8890） |
+| `scripts/tennis-monitor/` | 网球数据采集（Sofascore，宿主机 9004，systemd `tennis-monitor`） |
+| `client/` | Vue 前端 |
+| `server/` | Node API |
+
+**从旧目录名迁移（线上一次性）：**
+
+```bash
+# 旧安装目录 /opt/yuce/bbbbb → /opt/yuce
+if [ -d /opt/yuce/bbbbb ]; then
+  sudo rsync -a /opt/yuce/bbbbb/ /opt/yuce/
+  sudo rm -rf /opt/yuce/bbbbb
+fi
+
+# 若仍有旧 systemd 服务
+sudo systemctl stop sofascore-monitor 2>/dev/null || true
+sudo systemctl disable sofascore-monitor 2>/dev/null || true
+
+# 迁移 monitor 配置与 venv（若路径仍是 scripts/sofascore-monitor）
+sudo mv scripts/sofascore-monitor/monitor.env scripts/tennis-monitor/ 2>/dev/null || true
+sudo mv scripts/sofascore-monitor/venv scripts/tennis-monitor/ 2>/dev/null || true
+
+sudo cp scripts/tennis-monitor/tennis-monitor.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now tennis-monitor
+
+# 重建 Docker（board 服务已改名为 btc-board）
+docker compose -f docker-compose.core.yml up -d --build
+```
+
+## 7. 验收
 
 ```bash
 curl -s http://127.0.0.1:9001/api/health

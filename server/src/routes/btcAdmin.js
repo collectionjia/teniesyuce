@@ -2,7 +2,7 @@ const express = require("express");
 const { auth } = require("../middleware/auth");
 
 const router = express.Router();
-const BOARD_BASE = (process.env.BOARD_INTERNAL_URL || "http://board:8890").replace(/\/$/, "");
+const BOARD_BASE = (process.env.BOARD_INTERNAL_URL || "http://btc-board:8890").replace(/\/$/, "");
 
 async function boardFetch(pathname, { method = "GET", body } = {}) {
   const url = `${BOARD_BASE}${pathname}`;

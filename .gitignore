@@ -7,7 +7,7 @@
 server/.env
 server/.env.*
 !server/.env.example
-scripts/sofascore-monitor/monitor.env
+scripts/tennis-monitor/monitor.env
 
 # dependencies & build
 node_modules/
@@ -53,7 +53,7 @@ scripts/node_modules/
 *.pdf
 
 # docker local volumes / data
-board/持仓/
+btc-board/持仓/
 **/持仓/
 
 client/src/api.js.remote

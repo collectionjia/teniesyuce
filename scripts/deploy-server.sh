@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 sudo mkdir -p /tmp/yuce-deploy/client/src/components /tmp/yuce-deploy/client/src/utils \
   /tmp/yuce-deploy/server/src/routes /tmp/yuce-deploy/server/src/services /tmp/yuce-deploy/server/scripts \
   client/src/components client/src/utils server/src/routes server/src/services server/scripts
@@ -17,7 +17,7 @@ sudo cp /tmp/yuce-deploy/client/src/utils/sofaMatchUrl.js client/src/utils/
 
 # server
 sudo cp /tmp/yuce-deploy/server/src/index.js server/src/
-sudo cp /tmp/yuce-deploy/server/src/routes/sofaMonitor.js server/src/routes/
+sudo cp /tmp/yuce-deploy/server/src/routes/tennisMonitor.js server/src/routes/
 sudo cp /tmp/yuce-deploy/server/src/routes/tennisLive.js server/src/routes/
 sudo cp /tmp/yuce-deploy/server/src/routes/tennisLiveMonitor.js server/src/routes/
 sudo cp /tmp/yuce-deploy/server/src/routes/tennisLiveScraper.js server/src/routes/
@@ -32,7 +32,7 @@ sudo cp /tmp/yuce-deploy/server/src/services/tennisPolymarketMatch.js server/src
 sudo cp /tmp/yuce-deploy/server/src/services/sofaMonitorTop100.js server/src/services/
 sudo cp /tmp/yuce-deploy/server/scripts/upsert-tennis-live-product.js server/scripts/
 
-sudo rsync -a /tmp/sofascore-monitor-new/ scripts/sofascore-monitor/
+sudo rsync -a /tmp/tennis-monitor-new/ scripts/tennis-monitor/
 if [ -f /tmp/yuce-deploy/docker-compose.core.yml ]; then
   sudo cp /tmp/yuce-deploy/docker-compose.core.yml ./
 fi
@@ -44,9 +44,9 @@ echo "=== up web server ==="
 sudo docker compose -f docker-compose.core.yml up -d web server
 
 echo "=== restart monitor ==="
-sudo systemctl restart sofascore-monitor
+sudo systemctl restart tennis-monitor
 sleep 4
-systemctl is-active sofascore-monitor
+systemctl is-active tennis-monitor
 
 echo "=== warm live cache ==="
 sudo docker compose -f docker-compose.core.yml exec -T server node -e 'require("./src/services/tennisLiveFromMonitor").refreshLiveBundleFromMonitor().then(function(b){console.log("live",b.events,b.message)}).catch(function(e){console.error(e.message);process.exit(1)})'

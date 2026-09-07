@@ -312,18 +312,18 @@ function fmtTime(v) {
 }
 
 async function loadStatus() {
-  status.value = await api.fetchSofaMonitorStatus()
+  status.value = await api.fetchTennisMonitorStatus()
 }
 
 async function loadTop100(force = false) {
-  const data = await api.fetchSofaMonitorTop100(force)
+  const data = await api.fetchTennisMonitorTop100(force)
   top100Board.value = data
   if (data?.loading) {
     startTop100LoadingClock()
     if (!top100Timer) {
       top100Timer = setInterval(async () => {
         try {
-          const next = await api.fetchSofaMonitorTop100(false)
+          const next = await api.fetchTennisMonitorTop100(false)
           top100Board.value = next
           if (!next?.loading) {
             clearInterval(top100Timer)
@@ -348,19 +348,19 @@ async function loadTop100(force = false) {
 }
 
 async function loadLive() {
-  liveData.value = await api.fetchSofaMonitorLive()
+  liveData.value = await api.fetchTennisMonitorLive()
 }
 
 async function loadSchedule() {
-  schedule.value = await api.fetchSofaMonitorSchedule()
+  schedule.value = await api.fetchTennisMonitorSchedule()
 }
 
 async function loadDataSource() {
-  dataSource.value = await api.fetchSofaMonitorDataSource()
+  dataSource.value = await api.fetchTennisMonitorDataSource()
 }
 
 async function loadLogs() {
-  logs.value = await api.fetchSofaMonitorLogs(150)
+  logs.value = await api.fetchTennisMonitorLogs(150)
 }
 
 async function refreshAll({ silent = false } = {}) {
@@ -434,7 +434,7 @@ async function triggerCollect() {
   error.value = ''
   notice.value = ''
   try {
-    await api.triggerSofaMonitorCollect()
+    await api.triggerTennisMonitorCollect()
     await loadStatus()
     await loadLogs()
     if (running.value) await waitCollectDone()
@@ -451,7 +451,7 @@ async function triggerLiveCollect() {
   error.value = ''
   notice.value = ''
   try {
-    await api.triggerSofaMonitorLiveCollect()
+    await api.triggerTennisMonitorLiveCollect()
     await loadLive()
     await loadStatus()
     await loadLogs()
@@ -495,7 +495,7 @@ async function onIntervalChange(event) {
   scheduleSaving.value = true
   error.value = ''
   try {
-    const data = await api.updateSofaMonitorSchedule(hours)
+    const data = await api.updateTennisMonitorSchedule(hours)
     schedule.value = data
     await loadStatus()
   } catch (e) {
@@ -516,7 +516,7 @@ async function onDataSourceChange(next) {
   error.value = ''
   notice.value = ''
   try {
-    const data = await api.updateSofaMonitorDataSource(next)
+    const data = await api.updateTennisMonitorDataSource(next)
     dataSource.value = { ...(dataSource.value || {}), ...data }
     showNotice(data.message || `已切换为 ${data.label || next}，正在写入 Redis`)
     api.refreshTennisCache().catch(() => {})
@@ -626,10 +626,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="sofa">
+  <div class="tennis-monitor">
     <div class="toolbar">
       <div class="titles">
-        <div class="title">Sofascore 监控</div>
+        <div class="title">网球数据采集</div>
         <div class="sub">Top100 {{ collectIntervalLabel }} · 进行中 {{ livePollIntervalLabel }} · Redis {{ tennisDataSourceLabel }}</div>
       </div>
       <div class="actions-primary">
@@ -976,7 +976,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.sofa { display: flex; flex-direction: column; gap: 8px; }
+.tennis-monitor { display: flex; flex-direction: column; gap: 8px; }
 .toolbar {
   display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap;
 }

@@ -7,7 +7,7 @@ const tradeRecords = require('../services/tradeRecords');
 
 const router = Router();
 
-const BOARD_BASE = (process.env.BOARD_INTERNAL_URL || 'http://board:8890').replace(/\/$/, '');
+const BOARD_BASE = (process.env.BOARD_INTERNAL_URL || 'http://btc-board:8890').replace(/\/$/, '');
 
 async function fetchBoardState() {
   const res = await fetch(`${BOARD_BASE}/api/state`, {

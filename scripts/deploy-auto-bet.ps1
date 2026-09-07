@@ -1,4 +1,4 @@
-# 仅部署自动投注相关前端
+# 仅部署自动投注相关前�?
 # 用法：powershell -ExecutionPolicy Bypass -File .\scripts\deploy-auto-bet.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -19,17 +19,17 @@ scp -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=40 `
 Write-Host '==> Install + rebuild web only' -ForegroundColor Cyan
 ssh -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=40 $HostName @'
 set -e
-sudo cp /tmp/btcVirtualBet.js /opt/yuce/bbbbb/client/src/btcVirtualBet.js
-sudo cp /tmp/BtcBoard.vue /opt/yuce/bbbbb/client/src/components/BtcBoard.vue
-sudo cp /tmp/TennisBoard.vue /opt/yuce/bbbbb/client/src/components/TennisBoard.vue
+sudo cp /tmp/btcVirtualBet.js /opt/yuce/client/src/btcVirtualBet.js
+sudo cp /tmp/BtcBoard.vue /opt/yuce/client/src/components/BtcBoard.vue
+sudo cp /tmp/TennisBoard.vue /opt/yuce/client/src/components/TennisBoard.vue
 sudo python3 /tmp/tmp_patch_auto_bet_labels.py
-sudo touch /opt/yuce/bbbbb/client/src/btcVirtualBet.js
-cd /opt/yuce/bbbbb
+sudo touch /opt/yuce/client/src/btcVirtualBet.js
+cd /opt/yuce
 sudo docker compose -f docker-compose.core.yml build web
 sudo docker compose -f docker-compose.core.yml up -d --force-recreate web
 sudo docker compose -f docker-compose.core.yml ps web
 sleep 2
-sudo docker exec bbbbb-web-1 sh -c "grep -Rao 自动投注 /usr/share/nginx/html/assets/*.js | wc -l"
+sudo docker exec yuce-web-1 sh -c "grep -Rao 自动投注 /usr/share/nginx/html/assets/*.js | wc -l"
 '@
 
 Write-Host 'Done. Site: https://www.yuce.bid/' -ForegroundColor Green

@@ -32,6 +32,7 @@ PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
 ALLOWED_COLLECT_INTERVALS = (2, 4, 6, 12)
 LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
+YUCE_SERVER_CONTAINER = (os.environ.get("YUCE_SERVER_CONTAINER") or "yuce-server-1").strip()
 
 _lock = threading.Lock()
 _running = False
@@ -321,7 +322,7 @@ def _refresh_server_redis(*, scope: str = "full") -> None:
     for label, node in scripts:
         try:
             r = subprocess.run(
-                ["docker", "exec", "bbbbb-server-1", "node", "-e", node],
+                ["docker", "exec", YUCE_SERVER_CONTAINER, "node", "-e", node],
                 capture_output=True,
                 text=True,
                 timeout=120,

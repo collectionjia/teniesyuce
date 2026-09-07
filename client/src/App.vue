@@ -5,7 +5,7 @@ import ProductIcon from './components/ProductIcon.vue'
 import TennisBoard from './components/TennisBoard.vue'
 import BtcBoard from './components/BtcBoard.vue'
 import BtcBoardAdmin from './components/BtcBoardAdmin.vue'
-import SofaMonitor from './components/SofaMonitor.vue'
+import TennisMonitor from './components/TennisMonitor.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
 import { startBackgroundRunner, stopBackgroundRunner, loadSimState, setLiveTradeHandler, setLiveSellHandler } from './btcVirtualBet'
@@ -433,7 +433,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'sofa-monitor': 'Sofascore 监控', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-monitor': '网球数据采集', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -475,7 +475,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'sofa-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 const adminManageSections = [
   {
     key: 'manage',
@@ -496,7 +496,7 @@ const adminManageSections = [
     desc: '数据采集与功能开关配置',
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
-      { view: 'sofa-monitor', label: 'Sofascore 监控', desc: '网球数据采集与 Top20', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-monitor', label: '网球数据采集', desc: 'Sofascore Top100 与进行中比分', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
     ],
   },
@@ -3079,11 +3079,11 @@ function productEmbedUrl(product) {
               <BtcBoardAdmin />
             </section>
 
-            <section v-else-if="role==='admin' && view==='sofa-monitor'" class="space-y-3 fade-up">
+            <section v-else-if="role==='admin' && view==='tennis-monitor'" class="space-y-3 fade-up">
               <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
-              <SofaMonitor />
+              <TennisMonitor />
             </section>
 
             <section v-else-if="role==='admin' && view==='redeem-codes'" class="space-y-3 fade-up">

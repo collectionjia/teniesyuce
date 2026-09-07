@@ -4,7 +4,7 @@ set -euo pipefail
 DOMAIN=yuce.bid
 WWW=www.yuce.bid
 EMAIL="${CERTBOT_EMAIL:-admin@yuce.bid}"
-REPO=/opt/yuce/bbbbb
+REPO=/opt/yuce
 NGINX_AVAILABLE=/etc/nginx/sites-available/yuce.bid
 NGINX_ENABLED=/etc/nginx/sites-enabled/yuce.bid
 

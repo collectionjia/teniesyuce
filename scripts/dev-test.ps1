@@ -1,10 +1,10 @@
-# 本地测试环境启动：
-# 1) 远端 tennisv2_test（自动建库/表/种子）
-# 2) Lightsail 独立 redis-test（127.0.0.1:6380）
-# 3) SSH 隧道 Redis → 127.0.0.1:16379（可选 Sofa 9004）
+# 本地测试环境启动�?
+# 1) 远端 tennisv2_test（自动建�?�?种子�?
+# 2) Lightsail 独立 redis-test�?27.0.0.1:6380�?
+# 3) SSH 隧道 Redis �?127.0.0.1:16379（可�?Sofa 9004�?
 # 4) server(.env.test) + client(vite)
 #
-# 用法（仓库根目录）:
+# 用法（仓库根目录�?
 #   powershell -ExecutionPolicy Bypass -File .\scripts\dev-test.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -25,13 +25,13 @@ if (-not (Test-Path $EnvTest)) { throw "Missing $EnvTest" }
 Write-Host '==> Ensure test Redis on Lightsail (127.0.0.1:6380)' -ForegroundColor Cyan
 ssh -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=20 $HostName @'
 set -e
-if ! sudo docker ps -a --format "{{.Names}}" | grep -qx bbbbb-redis-test; then
-  sudo docker run -d --name bbbbb-redis-test --restart unless-stopped \
+if ! sudo docker ps -a --format "{{.Names}}" | grep -qx yuce-redis-test; then
+  sudo docker run -d --name yuce-redis-test --restart unless-stopped \
     -p 127.0.0.1:6380:6379 redis:7-alpine redis-server --appendonly yes
 else
-  sudo docker start bbbbb-redis-test >/dev/null || true
+  sudo docker start yuce-redis-test >/dev/null || true
 fi
-sudo docker exec bbbbb-redis-test redis-cli ping
+sudo docker exec yuce-redis-test redis-cli ping
 '@
 
 Write-Host '==> Setup tennisv2_test schema/seed' -ForegroundColor Cyan
@@ -85,7 +85,7 @@ Write-Host 'Test env ready:' -ForegroundColor Green
 Write-Host '  Frontend  http://localhost:5279'
 Write-Host '  API       http://localhost:3001/api/health'
 Write-Host '  MySQL     tennisv2_test @ 8.216.45.102:3334'
-Write-Host '  Redis     127.0.0.1:16379 -> Lightsail bbbbb-redis-test'
+Write-Host '  Redis     127.0.0.1:16379 -> Lightsail yuce-redis-test'
 Write-Host '  Admin     admin@test.local / test123456'
 Write-Host ''
 Write-Host 'Close this window or press Ctrl+C to stop.' -ForegroundColor Yellow

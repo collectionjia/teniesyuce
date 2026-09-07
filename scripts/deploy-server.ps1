@@ -1,4 +1,4 @@
-# 部署 web + server + sofascore-monitor 到生产
+# 部署 web + server + tennis-monitor 到生�?
 # 用法: powershell -ExecutionPolicy Bypass -File .\scripts\deploy-server.ps1
 
 $ErrorActionPreference = 'Stop'
@@ -24,7 +24,7 @@ function Copy-DeployItem {
 }
 
 $DeployDir = Join-Path $Root 'tmp-deploy'
-$MonitorDir = Join-Path $DeployDir 'sofascore-monitor'
+$MonitorDir = Join-Path $DeployDir 'tennis-monitor'
 Remove-Item $DeployDir -Recurse -Force -ErrorAction SilentlyContinue
 
 @(
@@ -34,12 +34,12 @@ Remove-Item $DeployDir -Recurse -Force -ErrorAction SilentlyContinue
   'client/src/components/TennisBoard.vue',
   'client/src/components/TennisLiveMonitor.vue',
   'client/src/components/LiveTop100Scraper.vue',
-  'client/src/components/SofaMonitor.vue',
+  'client/src/components/TennisMonitor.vue',
   'client/src/utils/tennisLiveFilter.js',
   'client/src/utils/tennisRangeFilter.js',
   'client/src/utils/sofaMatchUrl.js',
   'server/src/index.js',
-  'server/src/routes/sofaMonitor.js',
+  'server/src/routes/tennisMonitor.js',
   'server/src/routes/tennis.js',
   'server/src/routes/tennisLive.js',
   'server/src/routes/tennisLiveMonitor.js',
@@ -65,21 +65,21 @@ Remove-Item $DeployDir -Recurse -Force -ErrorAction SilentlyContinue
   'docker-compose.core.yml'
 ) | ForEach-Object { Copy-DeployItem $_ }
 
-New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'sofascore-monitor') | Out-Null
-Copy-Item (Join-Path $Root 'scripts\sofascore-monitor\*') (Join-Path $DeployDir 'sofascore-monitor') -Recurse -Force
+New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'tennis-monitor') | Out-Null
+Copy-Item (Join-Path $Root 'scripts\tennis-monitor\*') (Join-Path $DeployDir 'tennis-monitor') -Recurse -Force
 
 Write-Host '==> Upload deploy bundle' -ForegroundColor Cyan
 scp -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=40 -r `
   "$DeployDir\client" `
   "$DeployDir\server" `
   "$DeployDir\docker-compose.core.yml" `
-  "$DeployDir\sofascore-monitor" `
+  "$DeployDir\tennis-monitor" `
   "${HostName}:/tmp/"
 
 Write-Host '==> Run deploy on server' -ForegroundColor Cyan
 ssh -i $Key -o StrictHostKeyChecking=no -o ConnectTimeout=40 $HostName "bash -s" @'
 set -e
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 sudo mkdir -p client/src/components client/src/utils server/src/routes server/src/services server/scripts
 
 sudo cp -r /tmp/client/src/* client/src/
@@ -87,21 +87,21 @@ sudo cp -r /tmp/server/src/* server/src/
 sudo cp /tmp/server/scripts/upsert-tennis-live-product.js server/scripts/
 sudo cp /tmp/server/scripts/upsert-tennis-new-product.js server/scripts/
 sudo cp /tmp/docker-compose.core.yml ./
-sudo rsync -a /tmp/sofascore-monitor/ scripts/sofascore-monitor/
-sudo mkdir -p scripts/sofascore-monitor/config
-sudo cp /tmp/sofascore-monitor/config/schedule.json scripts/sofascore-monitor/config/ 2>/dev/null || true
+sudo rsync -a /tmp/tennis-monitor/ scripts/tennis-monitor/
+sudo mkdir -p scripts/tennis-monitor/config
+sudo cp /tmp/tennis-monitor/config/schedule.json scripts/tennis-monitor/config/ 2>/dev/null || true
 
 echo "=== build web server ==="
 sudo docker compose -f docker-compose.core.yml build web server
 sudo docker compose -f docker-compose.core.yml up -d web server
 
-# 产品注册脚本仅首次或手动维护时运行，发版默认不执行（避免重复 INSERT）
+# 产品注册脚本仅首次或手动维护时运行，发版默认不执行（避免重复 INSERT�?
 # 需要时: docker compose exec server node scripts/upsert-tennis-live-product.js
 
 echo "=== restart monitor ==="
-sudo systemctl restart sofascore-monitor
+sudo systemctl restart tennis-monitor
 sleep 4
-systemctl is-active sofascore-monitor
+systemctl is-active tennis-monitor
 
 echo "=== apply top100 schedule 4h ==="
 curl -s -X POST http://127.0.0.1:9004/schedule -H 'Content-Type: application/json' -H 'Authorization: Bearer sofascore-monitor-2026' -d '{"interval_hours":4}' || true

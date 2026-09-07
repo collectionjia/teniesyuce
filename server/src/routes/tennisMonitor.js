@@ -62,16 +62,16 @@ function scheduleRedisRefreshAfterCollect() {
         return;
       }
       await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
-      console.log('[sofa-monitor] redis refreshed after collect');
+      console.log('[tennis-monitor] redis refreshed after collect');
       try {
         const tennisLiveFromMonitor = require('../services/tennisLiveFromMonitor');
         await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
-        console.log('[sofa-monitor] redis-live refreshed after collect');
+        console.log('[tennis-monitor] redis-live refreshed after collect');
       } catch (err) {
-        console.error('[sofa-monitor] redis-live refresh:', err.message);
+        console.error('[tennis-monitor] redis-live refresh:', err.message);
       }
     } catch (err) {
-      console.error('[sofa-monitor] redis refresh:', err.message);
+      console.error('[tennis-monitor] redis refresh:', err.message);
       if (Date.now() < deadline) setTimeout(poll, 5000);
       else tennisFromMonitor.kickRefreshBackground();
     }
@@ -86,7 +86,7 @@ router.get('/status', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/status'));
   } catch (err) {
-    console.error('[sofa-monitor/status]', err);
+    console.error('[tennis-monitor/status]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -101,7 +101,7 @@ router.get('/top100', async (req, res) => {
       }),
     );
   } catch (err) {
-    console.error('[sofa-monitor/top100]', err);
+    console.error('[tennis-monitor/top100]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -115,7 +115,7 @@ router.get('/top20', async (req, res) => {
       }),
     );
   } catch (err) {
-    console.error('[sofa-monitor/top20]', err);
+    console.error('[tennis-monitor/top20]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -129,7 +129,7 @@ router.get('/logs', async (req, res) => {
       }),
     );
   } catch (err) {
-    console.error('[sofa-monitor/logs]', err);
+    console.error('[tennis-monitor/logs]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -139,7 +139,7 @@ router.post('/collect', async (_req, res) => {
     sendProxy(res, await monitorFetch('/collect', { method: 'POST' }));
     scheduleRedisRefreshAfterCollect();
   } catch (err) {
-    console.error('[sofa-monitor/collect]', err);
+    console.error('[tennis-monitor/collect]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -148,7 +148,7 @@ router.get('/live', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/live'));
   } catch (err) {
-    console.error('[sofa-monitor/live]', err);
+    console.error('[tennis-monitor/live]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -157,7 +157,7 @@ router.get('/bundle', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/bundle', { timeoutMs: 30000 }));
   } catch (err) {
-    console.error('[sofa-monitor/bundle]', err);
+    console.error('[tennis-monitor/bundle]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -167,7 +167,7 @@ router.post('/live/collect', async (_req, res) => {
     sendProxy(res, await monitorFetch('/live/collect', { method: 'POST' }));
     scheduleRedisRefreshAfterCollect();
   } catch (err) {
-    console.error('[sofa-monitor/live/collect]', err);
+    console.error('[tennis-monitor/live/collect]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -176,7 +176,7 @@ router.get('/schedule', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/schedule'));
   } catch (err) {
-    console.error('[sofa-monitor/schedule]', err);
+    console.error('[tennis-monitor/schedule]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -204,7 +204,7 @@ router.post('/schedule', async (req, res) => {
     }
     res.status(proxyRes.status).json(body);
   } catch (err) {
-    console.error('[sofa-monitor/schedule]', err);
+    console.error('[tennis-monitor/schedule]', err);
     res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
   }
 });
@@ -231,7 +231,7 @@ router.get('/data-source', async (_req, res) => {
       redis_refresh: bundle?.redisRefresh || lastRedis?.redisRefresh || null,
     });
   } catch (err) {
-    console.error('[sofa-monitor/data-source]', err);
+    console.error('[tennis-monitor/data-source]', err);
     res.status(500).json({ ok: false, error: err.message || 'read data source failed' });
   }
 });
@@ -250,7 +250,7 @@ router.post('/data-source', async (req, res) => {
     }
     await tennisDataSource.set(next);
     tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true }).catch((err) => {
-      console.error('[sofa-monitor/data-source] redis refresh:', err.message);
+      console.error('[tennis-monitor/data-source] redis refresh:', err.message);
     });
     res.json({
       ok: true,
@@ -261,7 +261,7 @@ router.post('/data-source', async (req, res) => {
       message: '已切换写入源，正在刷新 Redis（网球页只读 Redis）',
     });
   } catch (err) {
-    console.error('[sofa-monitor/data-source]', err);
+    console.error('[tennis-monitor/data-source]', err);
     res.status(500).json({ ok: false, error: err.message || 'update data source failed' });
   }
 });

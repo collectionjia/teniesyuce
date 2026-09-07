@@ -1,6 +1,8 @@
-# 核心服务：board + server + web
+# 核心服务：btc-board + server + web
 # MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
 # 用法: docker compose -f docker-compose.core.yml up -d --build
+
+name: yuce
 
 services:
   redis:
@@ -30,21 +32,21 @@ services:
     environment:
       PORT: 3001
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://board:8890/}
+      BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://btc-board:8890/}
       SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       redis:
         condition: service_healthy
-      board:
+      btc-board:
         condition: service_started
     expose:
       - "3001"
 
-  board:
+  btc-board:
     build:
-      context: ./board
+      context: ./btc-board
     restart: unless-stopped
     mem_limit: 512m
     memswap_limit: 768m

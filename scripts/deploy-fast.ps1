@@ -1,8 +1,8 @@
-# 快速部署（按改动范围选 target，避免每次全量 docker build）
+# 快速部署（按改动范围�?target，避免每次全�?docker build�?
 # 用法:
-#   .\scripts\deploy-fast.ps1 -Target web       # 只改前端 Vue/api（约 3~6 分钟）
+#   .\scripts\deploy-fast.ps1 -Target web       # 只改前端 Vue/api（约 3~6 分钟�?
 #   .\scripts\deploy-fast.ps1 -Target server    # 只改 server JS（约 30 秒，热更新容器）
-#   .\scripts\deploy-fast.ps1 -Target monitor   # 只改 sofascore-monitor Python（约 10 秒）
+#   .\scripts\deploy-fast.ps1 -Target monitor   # 只改 tennis-monitor Python（约 10 秒）
 #   .\scripts\deploy-fast.ps1 -Target all       # 等同 deploy-server.ps1 全量
 #   .\scripts\deploy-fast.ps1 -Target server -SkipWarm
 
@@ -36,13 +36,13 @@ New-Item -ItemType Directory -Force -Path $DeployDir | Out-Null
 
 $clientFiles = @(
   'client/src/App.vue', 'client/src/api.js', 'client/src/productIcons.js',
-  'client/src/components/TennisBoard.vue', 'client/src/components/SofaMonitor.vue',
+  'client/src/components/TennisBoard.vue', 'client/src/components/TennisMonitor.vue',
   'client/src/utils/tennisLiveFilter.js', 'client/src/utils/tennisRangeFilter.js',
   'client/src/utils/sofaMatchUrl.js'
 )
 $serverFiles = @(
   'server/src/index.js',
-  'server/src/routes/sofaMonitor.js', 'server/src/routes/tennis.js',
+  'server/src/routes/tennisMonitor.js', 'server/src/routes/tennis.js',
   'server/src/routes/tennisLive.js', 'server/src/routes/tennisNew.js', 'server/src/routes/admin.js',
   'server/src/services/tennisFromMonitor.js', 'server/src/services/tennisDataSource.js',
   'server/src/services/allsports.js', 'server/src/services/tennisLiveFilter.js',
@@ -65,9 +65,9 @@ if ($Target -in @('server', 'all')) {
   $uploadPaths += 'server'
 }
 if ($Target -in @('monitor', 'all')) {
-  New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'sofascore-monitor') | Out-Null
-  Copy-Item (Join-Path $Root 'scripts\sofascore-monitor\*') (Join-Path $DeployDir 'sofascore-monitor') -Recurse -Force
-  $uploadPaths += 'sofascore-monitor'
+  New-Item -ItemType Directory -Force -Path (Join-Path $DeployDir 'tennis-monitor') | Out-Null
+  Copy-Item (Join-Path $Root 'scripts\tennis-monitor\*') (Join-Path $DeployDir 'tennis-monitor') -Recurse -Force
+  $uploadPaths += 'tennis-monitor'
 }
 
 Write-Host "==> fast deploy target=$Target host=$HostName" -ForegroundColor Cyan
@@ -84,7 +84,7 @@ sudo docker compose -f docker-compose.core.yml exec -T server node -e 'require("
 $remote = switch ($Target) {
   'web' { @'
 set -e
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 sudo cp -r /tmp/client/src/* client/src/
 echo "=== build web only ==="
 sudo docker compose -f docker-compose.core.yml build web
@@ -93,7 +93,7 @@ sudo docker compose -f docker-compose.core.yml ps web
 '@ }
   'server' { @'
 set -e
-cd /opt/yuce/bbbbb
+cd /opt/yuce
 sudo mkdir -p server/src/routes server/src/services server/scripts
 sudo cp -r /tmp/server/src/routes/* server/src/routes/ 2>/dev/null || true
 sudo cp -r /tmp/server/src/services/* server/src/services/ 2>/dev/null || true
@@ -113,12 +113,12 @@ sudo docker compose -f docker-compose.core.yml ps server
 '@ + "`n$warmBlock" }
   'monitor' { @'
 set -e
-cd /opt/yuce/bbbbb
-sudo rsync -a /tmp/sofascore-monitor/ scripts/sofascore-monitor/
+cd /opt/yuce
+sudo rsync -a /tmp/tennis-monitor/ scripts/tennis-monitor/
 echo "=== restart monitor ==="
-sudo systemctl restart sofascore-monitor
+sudo systemctl restart tennis-monitor
 sleep 2
-systemctl is-active sofascore-monitor
+systemctl is-active tennis-monitor
 curl -sf http://127.0.0.1:9004/health && echo
 '@ }
   'all' {

@@ -297,62 +297,62 @@ export function logoutLocal() {
   localStorage.removeItem('token')
 }
 
-export async function fetchSofaMonitorStatus() {
-  const { data } = await api.get('/admin/sofa-monitor/status')
+export async function fetchTennisMonitorStatus() {
+  const { data } = await api.get('/admin/tennis-monitor/status')
   return data
 }
 
-export async function fetchSofaMonitorTop100(refresh = false) {
-  const { data } = await api.get('/admin/sofa-monitor/top100', {
+export async function fetchTennisMonitorTop100(refresh = false) {
+  const { data } = await api.get('/admin/tennis-monitor/top100', {
     params: refresh ? { refresh: 1 } : {},
   })
   return data
 }
 
-export async function fetchSofaMonitorTop20(refresh = false) {
-  const { data } = await api.get('/admin/sofa-monitor/top20', {
+export async function fetchTennisMonitorTop20(refresh = false) {
+  const { data } = await api.get('/admin/tennis-monitor/top20', {
     params: refresh ? { refresh: 1 } : {},
   })
   return data
 }
 
-export async function fetchSofaMonitorLogs(lines = 120) {
-  const { data } = await api.get('/admin/sofa-monitor/logs', { params: { lines } })
+export async function fetchTennisMonitorLogs(lines = 120) {
+  const { data } = await api.get('/admin/tennis-monitor/logs', { params: { lines } })
   return data
 }
 
-export async function triggerSofaMonitorCollect() {
-  const { data } = await api.post('/admin/sofa-monitor/collect')
+export async function triggerTennisMonitorCollect() {
+  const { data } = await api.post('/admin/tennis-monitor/collect')
   return data
 }
 
-export async function fetchSofaMonitorLive() {
-  const { data } = await api.get('/admin/sofa-monitor/live')
+export async function fetchTennisMonitorLive() {
+  const { data } = await api.get('/admin/tennis-monitor/live')
   return data
 }
 
-export async function triggerSofaMonitorLiveCollect() {
-  const { data } = await api.post('/admin/sofa-monitor/live/collect')
+export async function triggerTennisMonitorLiveCollect() {
+  const { data } = await api.post('/admin/tennis-monitor/live/collect')
   return data
 }
 
-export async function fetchSofaMonitorSchedule() {
-  const { data } = await api.get('/admin/sofa-monitor/schedule')
+export async function fetchTennisMonitorSchedule() {
+  const { data } = await api.get('/admin/tennis-monitor/schedule')
   return data
 }
 
-export async function updateSofaMonitorSchedule(intervalHours) {
-  const { data } = await api.post('/admin/sofa-monitor/schedule', { interval_hours: intervalHours })
+export async function updateTennisMonitorSchedule(intervalHours) {
+  const { data } = await api.post('/admin/tennis-monitor/schedule', { interval_hours: intervalHours })
   return data
 }
 
-export async function fetchSofaMonitorDataSource() {
-  const { data } = await api.get('/admin/sofa-monitor/data-source')
+export async function fetchTennisMonitorDataSource() {
+  const { data } = await api.get('/admin/tennis-monitor/data-source')
   return data
 }
 
-export async function updateSofaMonitorDataSource(source) {
-  const { data } = await api.post('/admin/sofa-monitor/data-source', { source })
+export async function updateTennisMonitorDataSource(source) {
+  const { data } = await api.post('/admin/tennis-monitor/data-source', { source })
   return data
 }
 
