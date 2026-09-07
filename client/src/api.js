@@ -1,13 +1,19 @@
+/**
+ * 前端 API 封装：统一走 /api，JWT 从 localStorage 注入 Authorization。
+ * 按业务域分组：认证、订阅支付、代理/管理、网球、BTC。
+ */
 import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api' })
 
+// 登录后 token 自动附带
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
+// --- 认证 ---
 export async function login(account, password) {
   const { data } = await api.post('/auth/login', { account, password })
   localStorage.setItem('token', data.token)
@@ -30,6 +36,7 @@ export async function changePassword(newPassword) {
   return data
 }
 
+// --- 产品 / 订阅 ---
 export async function fetchProducts() {
   const { data } = await api.get('/products')
   return data.products
@@ -45,6 +52,7 @@ export async function subscribe(productId, plan) {
   return data
 }
 
+// --- 支付 ---
 export async function createPayment(productId, plan, vendor = 'alipay') {
   const { data } = await api.post('/payments/create', { productId, plan, vendor })
   return data
@@ -81,6 +89,7 @@ export async function updateAdminPaymentSettings(payload) {
   return data
 }
 
+// --- 代理 ---
 export async function fetchAgentOverview() {
   const { data } = await api.get('/agent/overview')
   return data
@@ -106,6 +115,7 @@ export async function fetchWithdrawals() {
   return data.withdrawLog
 }
 
+// --- 管理后台 ---
 export async function fetchAdminStats() {
   const { data } = await api.get('/admin/stats')
   return data
@@ -297,6 +307,7 @@ export function logoutLocal() {
   localStorage.removeItem('token')
 }
 
+// --- 网球数据采集（管理员，代理 9004 monitor）---
 export async function fetchTennisMonitorStatus() {
   const { data } = await api.get('/admin/tennis-monitor/status')
   return data
@@ -361,6 +372,7 @@ export async function refreshTennisCache() {
   return data
 }
 
+// --- BTC 实盘 / 钱包（读 btc-board + Polymarket 下单）---
 export async function fetchBtcState() {
   const { data } = await api.get('/btc/state', {
     params: { _: Date.now() },
@@ -415,6 +427,7 @@ export async function fetchTradeRecords({ product = 'all', limit = 30, offset = 
   return data
 }
 
+// --- 网球批量下单 / 缓存刷新 ---
 export async function placeTennisBatchTrade(payload) {
   const { data } = await api.post('/tennis/trade/batch', payload)
   return data
@@ -450,6 +463,7 @@ export async function refreshTennisLiveCache() {
   return data
 }
 
+// --- BTC 看板管理（链上 crawl 开关）---
 export async function fetchAdminBtcCrawl() {
   const { data } = await api.get('/admin/btc-board/crawl')
   return data

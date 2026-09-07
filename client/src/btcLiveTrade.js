@@ -1,3 +1,9 @@
+/**
+ * BTC 实盘自动投注的前端状态（localStorage 持久化）。
+ * - livePlacedKeys：本回合是否已下单，防重复
+ * - liveEntries：本回合买入成本，用于卖出盈亏
+ * - liveOrders：最近下单记录（仅 UI 展示）
+ */
 import { reactive, ref } from 'vue'
 
 const LIVE_STORAGE_KEY = 'yuce.btc.liveTrade.v1'

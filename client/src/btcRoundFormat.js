@@ -1,5 +1,10 @@
+/**
+ * BTC 回合时间格式化（Polymarket 按美东 ET 切回合）。
+ * board 返回 round_ts / round_end；缺 round_end 时用 durations 推算。
+ */
 const ET = 'America/New_York'
 
+/** 回合结束 unix 秒；优先 roundEndSec，否则 roundTs + 周期时长 */
 export function getRoundEndSec(roundTs, roundEndSec, tf, durations) {
   const end = Number(roundEndSec || 0)
   if (end > 0) return end

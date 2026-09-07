@@ -1,11 +1,12 @@
 # 核心服务：btc-board + server + web
 # MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
+# tennis-monitor 不在 compose 内，宿主机 systemd 跑 9004
 # 用法: docker compose -f docker-compose.core.yml up -d --build
 
 name: yuce
 
 services:
-  redis:
+  redis:  # 网球 bundle / live 缓存
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 96mb --maxmemory-policy allkeys-lru
@@ -21,7 +22,7 @@ services:
       timeout: 3s
       retries: 5
 
-  server:
+  server:  # Node API，读 Redis + 代理 monitor/btc-board
     build:
       context: ./server
     restart: unless-stopped
@@ -44,7 +45,7 @@ services:
     expose:
       - "3001"
 
-  btc-board:
+  btc-board:  # Python 链上 UP/DOWN 排行榜 + 8890
     build:
       context: ./btc-board
     restart: unless-stopped
@@ -63,7 +64,7 @@ services:
     ports:
       - "${BOARD_PORT:-8890}:8890"
 
-  web:
+  web:  # Vue 静态站 + 反代 /api → server
     build:
       context: ./client
     restart: unless-stopped

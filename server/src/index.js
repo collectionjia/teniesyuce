@@ -1,3 +1,7 @@
+/**
+ * YUCE 后端入口：Express API + 启动时预热网球 Redis 缓存。
+ * 数据流：tennis-monitor(9004) → server 刷 Redis → 前端只读 API。
+ */
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -33,16 +37,19 @@ app.use(express.urlencoded({ extended: false }));
 
 app.get('/api/health', (_, res) => res.json({ ok: true }));
 
+// 用户 / 订阅 / 支付
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/admin', adminRoutes);
+// 管理员：网球采集监控、BTC 看板配置
 app.use('/api/admin/tennis-monitor', tennisMonitorRoutes);
 app.use('/api/admin/btc-board', btcAdminRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/embed', embedRoutes);
+// 网球产品（列表 / 区间 / 盘中 / 新列表）
 app.use('/api/tennis', tennisRoutes);
 app.use('/api/btc', btcRoutes);
 app.use('/api/trades', tradesRoutes);
@@ -58,6 +65,7 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`API server running on http://localhost:${PORT}`);
+  // 启动 5s 后从 tennis-monitor 拉 bundle 写入 Redis，并开后台定时刷新
   setTimeout(async () => {
     try {
       const tennisFromMonitor = require('./services/tennisFromMonitor');
