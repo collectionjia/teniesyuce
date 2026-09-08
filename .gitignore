@@ -56,5 +56,6 @@ scripts/node_modules/
 btc-board/持仓/
 **/持仓/
 
-client/src/api.js.remote
+# tennis-monitor generated output (collect.py / collect_live.py)
+scripts/tennis-monitor/output/
 

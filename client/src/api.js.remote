@@ -1,0 +1,200 @@
+import axios from 'axios'
+
+const api = axios.create({ baseURL: '/api' })
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+export async function login(account, password) {
+  const { data } = await api.post('/auth/login', { account, password })
+  localStorage.setItem('token', data.token)
+  return data
+}
+
+export async function register(payload) {
+  const { data } = await api.post('/auth/register', payload)
+  localStorage.setItem('token', data.token)
+  return data
+}
+
+export async function fetchMe() {
+  const { data } = await api.get('/auth/me')
+  return data.user
+}
+
+export async function fetchProducts() {
+  const { data } = await api.get('/products')
+  return data.products
+}
+
+export async function fetchSubscriptions() {
+  const { data } = await api.get('/subscriptions/mine')
+  return data.subscriptions
+}
+
+export async function subscribe(productId, plan) {
+  const { data } = await api.post('/subscriptions/subscribe', { productId, plan })
+  return data
+}
+
+export async function createPayment(productId, plan, vendor = 'alipay') {
+  const { data } = await api.post('/payments/create', { productId, plan, vendor })
+  return data
+}
+
+export async function createBalancePayment(amount, vendor = 'alipay') {
+  const { data } = await api.post('/payments/balance/create', { amount, vendor })
+  return data
+}
+
+export async function fetchPublicPaymentStatus(reference) {
+  const { data } = await api.get(`/payments/public-status/${reference}`)
+  return data
+}
+
+export async function fetchPaymentStatus(reference) {
+  const { data } = await api.get(`/payments/status/${reference}`)
+  return data
+}
+
+export async function fetchPaymentSettings() {
+  const { data } = await api.get('/settings/payment')
+  return data
+}
+
+export async function fetchAdminPaymentSettings() {
+  const { data } = await api.get('/admin/settings/payment')
+  return data
+}
+
+export async function updateAdminPaymentSettings(defaultPlan) {
+  const { data } = await api.put('/admin/settings/payment', { defaultPlan })
+  return data
+}
+
+export async function fetchAgentOverview() {
+  const { data } = await api.get('/agent/overview')
+  return data
+}
+
+export async function fetchAgentOrders(status = 'all') {
+  const { data } = await api.get('/agent/orders', { params: status === 'all' ? {} : { status } })
+  return data.orders
+}
+
+export async function fetchAgentClients() {
+  const { data } = await api.get('/agent/clients')
+  return data.clients
+}
+
+export async function withdraw() {
+  const { data } = await api.post('/agent/withdraw')
+  return data
+}
+
+export async function fetchWithdrawals() {
+  const { data } = await api.get('/agent/withdrawals')
+  return data.withdrawLog
+}
+
+export async function fetchAdminStats() {
+  const { data } = await api.get('/admin/stats')
+  return data
+}
+
+export async function fetchAdminWithdrawals(status = 'pending') {
+  const { data } = await api.get('/admin/withdrawals', { params: status === 'all' ? {} : { status } })
+  return data.withdrawals
+}
+
+export async function payAdminWithdrawal(id) {
+  const { data } = await api.post(`/admin/withdrawals/${id}/pay`)
+  return data
+}
+
+// 产品 CRUD
+export async function fetchAdminProducts() {
+  const { data } = await api.get('/admin/products')
+  return data.products
+}
+export async function createProduct(payload) {
+  const { data } = await api.post('/admin/products', payload)
+  return data
+}
+export async function updateProduct(id, payload) {
+  const { data } = await api.put(`/admin/products/${id}`, payload)
+  return data
+}
+export async function deleteProduct(id) {
+  const { data } = await api.delete(`/admin/products/${id}`)
+  return data
+}
+
+// 代理 CRUD
+export async function fetchAdminAgents() {
+  const { data } = await api.get('/admin/agents')
+  return data.agentList
+}
+export async function createAgent(payload) {
+  const { data } = await api.post('/admin/agents', payload)
+  return data
+}
+export async function updateAgent(id, payload) {
+  const { data } = await api.put(`/admin/agents/${id}`, payload)
+  return data
+}
+export async function deleteAgent(id) {
+  const { data } = await api.delete(`/admin/agents/${id}`)
+  return data
+}
+
+// 订单 CRUD
+export async function fetchAdminPaymentOrders(status = 'all') {
+  const { data } = await api.get('/admin/payment-orders', { params: status === 'all' ? {} : { status } })
+  return data.orders
+}
+
+// 订单 CRUD（历史兼容）
+export async function fetchAdminOrders() {
+  const { data } = await api.get('/admin/orders')
+  return data.orders
+}
+export async function createOrder(payload) {
+  const { data } = await api.post('/admin/orders', payload)
+  return data
+}
+export async function updateOrder(id, payload) {
+  const { data } = await api.put(`/admin/orders/${id}`, payload)
+  return data
+}
+export async function deleteOrder(id) {
+  const { data } = await api.delete(`/admin/orders/${id}`)
+  return data
+}
+
+// 用户 CRUD
+export async function fetchAdminUsers() {
+  const { data } = await api.get('/admin/users')
+  return data.users
+}
+export async function createUser(payload) {
+  const { data } = await api.post('/admin/users', payload)
+  return data
+}
+export async function updateUser(id, payload) {
+  const { data } = await api.put(`/admin/users/${id}`, payload)
+  return data
+}
+export async function deleteUser(id) {
+  const { data } = await api.delete(`/admin/users/${id}`)
+  return data
+}
+
+export function logoutLocal() {
+  localStorage.removeItem('token')
+}
+
+export default api
