@@ -29,5 +29,5 @@ set -a
 source "$ENV_FILE"
 set +a
 
-echo "==> env=$ENV_NAME project=${COMPOSE_PROJECT_NAME:-?} web=${WEB_PORT:-?} board=${BOARD_PORT:-?} redis=${REDIS_HOST_PORT:-?}"
+echo "==> env=$ENV_NAME project=${COMPOSE_PROJECT_NAME:-?} web=${WEB_PORT:-?} board=${BOARD_PORT:-?} profiles=${COMPOSE_PROFILES:-none} env_file=${SERVER_ENV_FILE:-./server/.env}"
 exec docker compose --env-file "$ENV_FILE" -f docker-compose.core.yml "$@"

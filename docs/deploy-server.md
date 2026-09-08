@@ -56,8 +56,8 @@ bash scripts/deploy-server.sh --logs server
 | 文件 | 说明 |
 |------|------|
 | `docker-compose.core.yml` | redis + btc-board + server + web |
-| `deploy/test.env` | 测试：项目名 `yuce-test`，默认 web `9018` |
-| `deploy/prod.env` | 生产：项目名 `yuce-prod`，默认 web `80` |
+| `deploy/test.env` | 测试：`yuce-test`，web `9018`，**不启 redis**，用 `server/.env.test` |
+| `deploy/prod.env` | 生产：`yuce-prod`，web `80`，`COMPOSE_PROFILES=with-redis` |
 
 ```bash
 # 改端口：编辑对应 env 里的 WEB_PORT / BOARD_PORT / REDIS_HOST_PORT

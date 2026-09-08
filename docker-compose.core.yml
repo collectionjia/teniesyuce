@@ -1,18 +1,17 @@
 # 核心服务：btc-board + server + web
-# MySQL 用 server/.env 远程库；Redis 映射见 deploy/*.env
+# MySQL / Redis URL 用 server/.env（或测试的 server/.env.test）
 # 立即采集：server 容器内跑 collect.py（挂载 scripts/tennis-monitor）；9004 可选（live/定时）
 #
-# 测试 / 生产（端口与项目名不同，可同机并存）:
+# 测试（不启 compose redis，用 .env 里的外部 REDIS_URL）:
 #   bash scripts/docker-deploy.sh test up -d --build
+# 生产（默认启 with-redis）:
 #   bash scripts/docker-deploy.sh prod up -d --build
-# 或:
-#   docker compose --env-file deploy/test.env -f docker-compose.core.yml up -d --build
-#   docker compose --env-file deploy/prod.env -f docker-compose.core.yml up -d --build
 
 name: ${COMPOSE_PROJECT_NAME:-yuce}
 
 services:
-  redis:  # 网球 bundle / live 缓存
+  redis:  # 仅生产等需要时启用（COMPOSE_PROFILES=with-redis）；测试用外部 Redis
+    profiles: ["with-redis"]
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 96mb --maxmemory-policy allkeys-lru
@@ -36,11 +35,11 @@ services:
     mem_limit: 384m
     memswap_limit: 512m
     env_file:
-      - ./server/.env
+      - ${SERVER_ENV_FILE:-./server/.env}
     environment:
       PORT: 3001
       APP_ENV: ${APP_ENV:-production}
-      # REDIS_URL 使用 server/.env，勿覆盖为容器内 redis（否则 collect_live 写入的 inplay 数据读不到）
+      # REDIS_URL 来自 env_file（测试用外部 Redis；勿强行改成容器内 redis）
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3
       PYTHONUNBUFFERED: "1"
@@ -51,8 +50,6 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      redis:
-        condition: service_healthy
       btc-board:
         condition: service_started
     expose:
@@ -65,7 +62,7 @@ services:
     mem_limit: 512m
     memswap_limit: 768m
     env_file:
-      - ./server/.env
+      - ${SERVER_ENV_FILE:-./server/.env}
     environment:
       FILTER_MARKET_MAKERS: ${FILTER_MARKET_MAKERS:-true}
       STREAK_MIN_ROUNDS: ${STREAK_MIN_ROUNDS:-3}
