@@ -454,6 +454,11 @@ export async function placeTennisLiveBatchTrade(payload) {
   return data
 }
 
+export async function placeTennisInplayBatchTrade(payload) {
+  const { data } = await api.post('/tennis-inplay/trade/batch', payload)
+  return data
+}
+
 export async function placeTennisNewBatchTrade(payload) {
   const { data } = await api.post('/tennis-new/trade/batch', payload)
   return data

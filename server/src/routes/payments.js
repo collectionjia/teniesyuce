@@ -3,6 +3,7 @@ const pool = require('../db');
 const { auth } = require('../middleware/auth');
 const { fulfillSubscription } = require('../services/subscription');
 const pricing = require('../services/pricing');
+const productService = require('../services/product');
 const muskpay = require('../services/muskpay');
 
 const router = express.Router();
@@ -165,8 +166,12 @@ router.post('/create', auth(['user', 'agent', 'admin']), async (req, res) => {
   }
 
   try {
+    await productService.ensureProductColumns();
     const [[product]] = await pool.query('SELECT * FROM products WHERE id=? AND online=1', [productId]);
     if (!product) return res.status(404).json({ error: '产品不存在或已下架' });
+    if (product.admin_only && req.user.role !== 'admin') {
+      return res.status(404).json({ error: '产品不存在或已下架' });
+    }
 
     const payVendor = ['alipay', 'wechatpay', 'unionpay'].includes(vendor)
       ? vendor

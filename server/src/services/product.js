@@ -12,6 +12,13 @@ async function ensureProductColumns() {
   } catch (e) {
     if (e.code !== 'ER_DUP_FIELDNAME') throw e;
   }
+  try {
+    await pool.query(
+      'ALTER TABLE products ADD COLUMN admin_only TINYINT(1) NOT NULL DEFAULT 0'
+    );
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME') throw e;
+  }
   columnsReady = true;
 }
 
@@ -32,6 +39,7 @@ function mapProductRow(p) {
     priceDay: Number(p.price_day),
     defaultPlan: normalizePlan(p.default_plan),
     online: !!p.online,
+    adminOnly: !!p.admin_only,
   };
 }
 

@@ -222,3 +222,89 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
 
         log_tier_matches(kept)
     return kept
+
+
+def collect_live_tennis_events(client) -> list[dict]:
+    """仅拉取进行中 tier 赛事（GS/500/1000），供 collect_live.py 使用。"""
+    global _last_collect_stats
+    d = today_bj()
+    kept: list[dict] = []
+    live_tier = 0
+    live_skipped = 0
+    for ev in client.get_live_tennis_events().get("events") or []:
+        if _is_ended(ev):
+            continue
+        if not _is_live(ev):
+            continue
+        if is_tier_event(ev):
+            live_tier += 1
+            kept.append(ev)
+        else:
+            live_skipped += 1
+    wta = sum(1 for ev in kept if _event_tour(ev) == "WTA")
+    _last_collect_stats = {
+        "date": d,
+        "pages": 0,
+        "listed": 0,
+        "tier": 0,
+        "tier_detail_fetched": 0,
+        "tier_detail_errors": 0,
+        "live_tier": live_tier,
+        "live_skipped": live_skipped,
+        "raw_events": live_tier + live_skipped,
+        "kept_events": len(kept),
+        "wta_kept": wta,
+        "tournaments": [],
+        "requests": {
+            "live": 1,
+            "scheduled_pages": 0,
+            "tier_detail": 0,
+            "estimated": 2 + 1,
+        },
+    }
+    print(
+        f"[events/live] {d}: live_tier={live_tier} live_skip={live_skipped} "
+        f"kept={len(kept)} wta={wta}"
+    )
+    return kept
+
+
+def collect_live_events_simple(client, *, limit: int = 20) -> list[dict]:
+    """仅拉取进行中赛事，不做 tier/Top100 过滤，取前 limit 场。"""
+    global _last_collect_stats
+    d = today_bj()
+    live_all: list[dict] = []
+    for ev in client.get_live_tennis_events().get("events") or []:
+        if _is_ended(ev):
+            continue
+        if not _is_live(ev):
+            continue
+        live_all.append(ev)
+    live_all.sort(key=lambda e: (e.get("startTimestamp") or 0, e.get("id") or 0))
+    kept = live_all[:limit]
+    wta = sum(1 for ev in kept if _event_tour(ev) == "WTA")
+    _last_collect_stats = {
+        "date": d,
+        "pages": 0,
+        "listed": 0,
+        "tier": 0,
+        "tier_detail_fetched": 0,
+        "tier_detail_errors": 0,
+        "live_tier": len(live_all),
+        "live_skipped": 0,
+        "raw_events": len(live_all),
+        "kept_events": len(kept),
+        "wta_kept": wta,
+        "tournaments": [],
+        "simple_limit": limit,
+        "requests": {
+            "live": 1,
+            "scheduled_pages": 0,
+            "tier_detail": 0,
+            "estimated": 2 + 1,
+        },
+    }
+    print(
+        f"[events/live/simple] {d}: live={len(live_all)} kept={len(kept)}/{limit} wta={wta}"
+    )
+    return kept

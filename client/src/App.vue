@@ -169,9 +169,11 @@ const filteredProducts = computed(() => {
   return filterBySearch(list, listSearch.products, ['name', 'desc', 'tag', 'url'])
 })
 
-const filteredShopProducts = computed(() =>
-  filterBySearch(products.value, listSearch.shop, ['name', 'desc', 'tag'])
-)
+const filteredShopProducts = computed(() => {
+  let list = products.value
+  if (role.value !== 'admin') list = list.filter((p) => !p.adminOnly)
+  return filterBySearch(list, listSearch.shop, ['name', 'desc', 'tag'])
+})
 const filteredMineSubs = computed(() =>
   filterBySearch(mySubs.value, listSearch.mine, ['name', 'desc', 'tag'])
 )
@@ -348,6 +350,7 @@ function tradeProductLabel(p) {
   if (p === 'btc') return 'BTC'
   if (p === 'tennis-range') return '区间网球'
   if (p === 'tennis-live') return '盘中网球'
+  if (p === 'tennis-inplay') return '盘中采集'
   if (p === 'tennis-new') return '新网球列表'
   if (p === 'tennis') return '网球'
   return p
@@ -919,7 +922,7 @@ function fmtMoney(n) {
 }
 
 function emptyForm(type) {
-  if (type === 'product') return { name: '', tag: 'chart', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)', url: '', desc: '', priceMonth: 39, priceWeek: 12, priceDay: 3, defaultPlan: paymentSettings.defaultPlan || 'month', online: true }
+  if (type === 'product') return { name: '', tag: 'chart', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)', url: '', desc: '', priceMonth: 39, priceWeek: 12, priceDay: 3, defaultPlan: paymentSettings.defaultPlan || 'month', online: true, adminOnly: false }
   if (type === 'agent') return { account: '', password: '', name: '', rate: 25, agentStatus: 'approved' }
   if (type === 'order') return { userId: '', productId: '', plan: 'month', amount: '' }
   if (type === 'user') return { account: '', password: '', name: '', role: 'user', balance: 0, tennisFilterEnabled: false, btcSimEnabled: false }
@@ -976,6 +979,7 @@ async function saveAdminModal() {
         priceMonth: Number(form.priceMonth), priceWeek: Number(form.priceWeek), priceDay: Number(form.priceDay),
         defaultPlan: form.defaultPlan,
         online: !!form.online,
+        adminOnly: !!form.adminOnly,
       }
       if (mode === 'create') await api.createProduct(payload)
       else await api.updateProduct(id, payload)
@@ -2030,10 +2034,11 @@ function canAccessProduct(pid) {
   return isActive(pid)
 }
 
-/** 网球看板：管理员可预览全量；订阅用户看全量 */
+/** 网球看板：管理员 / 已开通筛选+批量 / 有效订阅 */
 function tennisBoardMember(product) {
   if (!product?.id) return false
   if (role.value === 'admin') return true
+  if (currentUser.tennisFilterEnabled) return true
   return isActive(product.id)
 }
 
@@ -2043,6 +2048,7 @@ function isTennisBoardHeaderProduct(product) {
     || isTennisRangeProduct(product)
     || isTennisLiveProduct(product)
     || isTennisNewProduct(product)
+    || isTennisInplayProduct(product)
   )
 }
 
@@ -2053,10 +2059,19 @@ function isDirectProduct(product) {
 }
 
 /** Sofascore Courtline 网球：详情页用 Vue 直出，不用 iframe */
+function isTennisInplayProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-inplay') return true
+  return /盘中采集/.test(String(product?.name || ''))
+}
+
 function isTennisLiveProduct(product) {
+  if (isTennisInplayProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-live') return true
-  return /盘中/.test(String(product?.name || ''))
+  const name = String(product?.name || '')
+  if (/盘中采集/.test(name)) return false
+  return /盘中/.test(name)
 }
 
 function isTennisNewProduct(product) {
@@ -2072,7 +2087,7 @@ function isTennisRangeProduct(product) {
 }
 
 function isTennisProduct(product) {
-  if (isTennisRangeProduct(product) || isTennisLiveProduct(product) || isTennisNewProduct(product)) return false
+  if (isTennisRangeProduct(product) || isTennisLiveProduct(product) || isTennisNewProduct(product) || isTennisInplayProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis') return true
   return /网球|tennis/i.test(String(product?.name || ''))
@@ -2091,6 +2106,7 @@ function isNativeBoardProduct(product) {
     isTennisRangeProduct(product) ||
     isTennisLiveProduct(product) ||
     isTennisNewProduct(product) ||
+    isTennisInplayProduct(product) ||
     isBtcBoardProduct(product)
   )
 }
@@ -2494,13 +2510,21 @@ function productEmbedUrl(product) {
               </div>
               <div
                 :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct))
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
                 <!-- 网球：登录用户统一看全量数据 -->
-                <div v-if="isTennisLiveProduct(openedProduct)" class="p-0">
+                <div v-if="isTennisInplayProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="inplay"
+                    :show-filters="false"
+                    :is-member="tennisBoardMember(openedProduct)"
+                    :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisLiveProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     board-mode="live"
                     :show-filters="canShowTennisFilters"
@@ -3381,6 +3405,7 @@ function productEmbedUrl(product) {
                       <div class="font-medium truncate">{{ p.name }}</div>
                       <div class="text-xs text-slate-400">月{{ p.priceMonth }} / 周{{ p.priceWeek }} / 天{{ p.priceDay }}</div>
                       <div class="text-[11px] text-primary-600 mt-0.5">支付默认：按{{ planText(p.defaultPlan || 'month') }}</div>
+                      <div v-if="p.adminOnly" class="text-[11px] text-amber-600 mt-0.5">仅管理员可见</div>
                     </div>
                   </div>
                   <span :class="p.online ? 'bg-success/10 text-success' : 'bg-slate-100 text-slate-400'" class="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium">{{ p.online ? '已上架' : '已下架' }}</span>
@@ -3870,6 +3895,9 @@ function productEmbedUrl(product) {
                 <p class="text-[11px] text-slate-400">勾选「默认」的周期，用户支付时将自动选中</p>
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                   <input type="checkbox" v-model="adminModal.form.online" class="accent-primary-600"/> 上架销售
+                </label>
+                <label class="flex items-center gap-2 text-sm text-slate-600">
+                  <input type="checkbox" v-model="adminModal.form.adminOnly" class="accent-primary-600"/> 仅管理员可见
                 </label>
               </div>
 

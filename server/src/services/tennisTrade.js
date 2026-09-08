@@ -1,6 +1,7 @@
 const tennisCache = require('./tennisCache');
 const tennisRangeCache = require('./tennisRangeCache');
 const tennisLiveCache = require('./tennisLiveCache');
+const tennisInplayCache = require('./tennisInplayCache');
 const tennisNewCache = require('./tennisNewCache');
 const btcWallet = require('./btcWallet');
 const polymarketTrade = require('./polymarketTrade');
@@ -61,6 +62,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
     bundle = await tennisRangeCache.getBundle();
   } else if (tradeProduct === 'tennis-live') {
     bundle = await tennisLiveCache.getBundle();
+  } else if (tradeProduct === 'tennis-inplay') {
+    bundle = await tennisInplayCache.getBundle();
   } else if (tradeProduct === 'tennis-new') {
     bundle = await tennisNewCache.getBundle();
   } else {

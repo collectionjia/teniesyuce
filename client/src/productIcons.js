@@ -47,6 +47,7 @@ export function getProductIconKey(product) {
   const tag = String(product?.tag || '').trim().toLowerCase()
   if (tag === 'tennis-range') return 'tennis'
   if (tag === 'tennis-live') return 'tennis'
+  if (tag === 'tennis-inplay') return 'tennis'
   if (ICONS[tag]) return tag
   const name = String(product?.name || '')
   for (const [pattern, key] of NAME_RULES) {

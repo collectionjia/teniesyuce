@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """简化采集：IPWO → Top100/tier → Polymarket → Sofascore → 输出 → Redis
 
+写入（独立，不写入 collect_live）:
+  Redis  tennis:bundle:full          （collect 全量赛程）
+  文件   output/daily_bundle_*.json
+  标识   dataSource=collect · collectScript=collect
+
 用法:
   python collect.py              # 今天，Top100 过滤（默认）
   python collect.py 2026-09-07   # 指定日期

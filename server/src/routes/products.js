@@ -26,7 +26,8 @@ router.get('/', auth(), async (req, res) => {
     const user = await loadUserPricingContext(req.user.id);
     const sql = 'SELECT * FROM products WHERE online=1 ORDER BY id';
     const [rows] = await pool.query(sql);
-    res.json({ products: rows.map((p) => mapProductForUser(p, user)) });
+    const visible = rows.filter((p) => !p.admin_only || user?.role === 'admin');
+    res.json({ products: visible.map((p) => mapProductForUser(p, user)) });
   } catch (e) {
     res.status(500).json({ error: '获取产品失败' });
   }
@@ -40,6 +41,9 @@ router.get('/:id', auth(), async (req, res) => {
     if (!p) return res.status(404).json({ error: '产品不存在' });
     if (!p.online) {
       return res.status(404).json({ error: '产品已下架' });
+    }
+    if (p.admin_only && user?.role !== 'admin') {
+      return res.status(404).json({ error: '产品不存在' });
     }
     res.json({ product: mapProductForUser(p, user) });
   } catch (e) {

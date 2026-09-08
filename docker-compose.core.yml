@@ -33,7 +33,7 @@ services:
       - ./server/.env
     environment:
       PORT: 3001
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # REDIS_URL 使用 server/.env，勿覆盖为容器内 redis（否则 collect_live 写入的 inplay 数据读不到）
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3
       PYTHONUNBUFFERED: "1"

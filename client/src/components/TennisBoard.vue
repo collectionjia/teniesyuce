@@ -2,26 +2,32 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
 import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT } from '../utils/tennisRangeFilter'
+
+const INPLAY_AUTO_RULES_TEXT = '500/1000 · 强者现≤25 · 现差≤30 · 强者首盘领先 · PM<87¢'
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top50 池 */
+  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top50 池；inplay=盘中采集（管理员） */
   boardMode: { type: String, default: 'classic' },
 })
 
 const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
 const isNewMode = computed(() => props.boardMode === 'new')
-const isClassicMode = computed(() => !isRangeMode.value && !isLiveMode.value && !isNewMode.value)
-/** 网球 / 网球自投：列表不展示已结束场次 */
-const hideEndedEvents = computed(() => isClassicMode.value)
+const isInplayMode = computed(() => props.boardMode === 'inplay')
+const isClassicMode = computed(() => !isRangeMode.value && !isLiveMode.value && !isNewMode.value && !isInplayMode.value)
+/** 经典网球：现差/排差/强现 筛选（订阅、管理员、或已开通筛选权限） */
+const classicRankFiltersOn = computed(() => isClassicMode.value && (props.isMember || props.showFilters))
+/** 网球 / 网球自投：列表不展示已结束场次；盘中采集仅进行中 */
+const hideEndedEvents = computed(() => isClassicMode.value || isInplayMode.value)
 const apiPath = computed(() => {
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
   if (isNewMode.value) return '/api/tennis-new'
+  if (isInplayMode.value) return '/api/tennis-inplay'
   return '/api/tennis'
 })
 const PAGE_SIZE = 5
@@ -46,12 +52,14 @@ const AUTO_BET_KEY = computed(() => {
   if (isRangeMode.value) return 'yuce.tennisRange.autoBet.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoBet.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoBet.v1'
+  if (isInplayMode.value) return 'yuce.tennisInplay.autoBet.v1'
   return 'yuce.tennis.autoBet.v1'
 })
 const AUTO_PLACED_KEY = computed(() => {
   if (isRangeMode.value) return 'yuce.tennisRange.autoPlaced.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoPlaced.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoPlaced.v1'
+  if (isInplayMode.value) return 'yuce.tennisInplay.autoPlaced.v1'
   return 'yuce.tennis.autoPlaced.v1'
 })
 const autoBetEnabled = ref(false)
@@ -80,7 +88,11 @@ async function toggleAutoBet(ev) {
     ev.target.checked = false
     return
   }
-  if (want && !window.confirm('确认开启网球自动投注？\n将对可同步场次按当前金额自动批量确认，风险自负。')) {
+  if (want && !window.confirm(
+    isInplayMode.value
+      ? `确认开启盘中自动投注？\n规则：${INPLAY_AUTO_RULES_TEXT}\n将对符合条件场次按当前金额自动下单，风险自负。`
+      : '确认开启网球自动投注？\n将对可同步场次按当前金额自动批量确认，风险自负。'
+  )) {
     ev.target.checked = false
     return
   }
@@ -234,10 +246,13 @@ function matchPassesTour(m) {
   return t === tour.value
 }
 
-/** 排名/现差筛选（仅用于未开始、全部；未订阅不按排名筛） */
+/** 排名/现差筛选（仅用于未开始、全部；无权限时不按排名筛） */
 function matchPassesRank(m) {
   if (!matchPassesTour(m)) return false
-  if (!props.isMember) return true
+  const rankFiltersOn = isRangeMode.value || isNewMode.value
+    ? props.isMember
+    : classicRankFiltersOn.value
+  if (!rankFiltersOn) return true
   if (isRangeMode.value) {
     return passesRangeTennis(m, data.value?.rankingsByPlayer || {})
   }
@@ -270,14 +285,20 @@ function matchPassesPm(m) {
 }
 
 function matchPassesFilter(m, statusFilter) {
+  if (isInplayMode.value) {
+    if (!matchPassesTour(m)) return false
+    if (!matchPassesPm(m)) return false
+    if (!isMatchLive(m)) return false
+    return true
+  }
   if (hideEndedEvents.value && isMatchEnded(m)) return false
   const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
   if (!matchPassesTour(m)) return false
   if (!matchPassesPm(m)) return false
   if (isMatchEnded(m) && mode === 'liveish') return false
   if (mode === 'liveish') {
-    // 进行中列表：不过排名筛选（live 常无排名）
-    return isMatchLive(m)
+    if (!isMatchLive(m)) return false
+    return matchPassesRank(m)
   }
   if (mode === 'ended') {
     // 已结束：不过排名筛选
@@ -287,13 +308,16 @@ function matchPassesFilter(m, statusFilter) {
     if (!isMatchNotStarted(m)) return false
     return matchPassesRank(m)
   }
-  // 全部：进行中/已结束不过排名，其余走排名筛选
-  if (isMatchLive(m) || isMatchEnded(m)) return true
+  // 全部：已结束不过排名；进行中与未开始均走排名筛选
+  if (isMatchEnded(m)) return true
   return matchPassesRank(m)
 }
 
 function allMatches(bundle) {
   if (!bundle) return []
+  if (isInplayMode.value) {
+    return (bundle.live?.matches || []).map((e) => ({ ...e }))
+  }
   const tournaments = bundle.scheduled?.tournaments || []
   const fromSched = tournaments.flatMap((t) =>
     (t.events || []).map((e) => ({
@@ -336,10 +360,70 @@ const paginatedMatches = computed(() => {
   return matches.value.slice(start, start + PAGE_SIZE)
 })
 
+function isInplayTier500Or1000(m) {
+  const raw = String(m?.level || '').toLowerCase()
+  const label = matchLevelLabel(m).toLowerCase()
+  const pts = Number(m?.tennisPoints ?? m?.tournament?.tennisPoints)
+  if (pts === 500 || pts === 1000) return true
+  if (/\bgs\b/.test(label) || raw.includes('grand_slam') || raw.includes('grand slam')) return false
+  if (/\b500\b/.test(label) || /\b1000\b/.test(label)) return true
+  if (/\b500\b/.test(raw) || /\b1000\b/.test(raw) || raw.includes('masters')) return true
+  return false
+}
+
+function polySidePrice(m, side) {
+  const poly = polyOf(m?.id)
+  if (!poly) return null
+  let p = side === 'home' ? poly.home_price : poly.away_price
+  if (p == null && Array.isArray(poly.moneyline?.prices)) {
+    p = poly.moneyline.prices[side === 'home' ? 0 : 1]
+  }
+  if (p == null) return null
+  const n = Number(p)
+  if (!Number.isFinite(n)) return null
+  return n <= 1 ? n : n / 100
+}
+
+function strongPolyPriceCents(m) {
+  const side = pickSide(m)
+  if (!side) return null
+  const p = polySidePrice(m, side)
+  if (p == null) return null
+  return p * 100
+}
+
+function strongWonFirstSet(m) {
+  const side = pickSide(m)
+  if (!side) return false
+  const pairs = liveSetPairs(m)
+  if (!pairs.length) return false
+  const first = pairs[0]
+  if (first.home === first.away) return false
+  return side === 'home' ? first.home > first.away : first.away > first.home
+}
+
+function passesInplayAutoBet(m) {
+  if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
+  if (!isInplayTier500Or1000(m)) return false
+  const side = pickSide(m)
+  if (!side) return false
+  const homeR = listRankOf(m, 'home')
+  const awayR = listRankOf(m, 'away')
+  if (homeR == null || awayR == null) return false
+  const strongR = listRankOf(m, side)
+  if (strongR == null || strongR > 25) return false
+  if (Math.abs(homeR - awayR) > 30) return false
+  if (!strongWonFirstSet(m)) return false
+  const cents = strongPolyPriceCents(m)
+  if (cents == null || cents >= 87) return false
+  return !!polyUrlOf(m)
+}
+
 function canSelectMatch(m) {
   if (!props.isMember || !props.canBatchTrade) return false
   if (!m?.id || isMatchEnded(m)) return false
   if (!polyUrlOf(m)) return false
+  if (isInplayMode.value) return passesInplayAutoBet(m)
   return pickSide(m) != null
 }
 
@@ -420,9 +504,11 @@ async function submitBatchTrade({ auto = false } = {}) {
       ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
       : isLiveMode.value
         ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
-        : isNewMode.value
-          ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
-          : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
+        : isInplayMode.value
+          ? await api.placeTennisInplayBatchTrade({ orders, amountUsd: amount })
+          : isNewMode.value
+            ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
+            : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
     const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
     if (resp.success > 0) {
       const okLines = lines.filter((_, i) => resp.results[i]?.ok)
@@ -505,10 +591,17 @@ function setStatusFilter(mode) {
 const stats = computed(() => {
   const pool = rawMatches.value.filter((m) => matchPassesTour(m) && matchPassesPm(m))
   const countTab = (tab) => pool.filter((m) => matchPassesFilter(m, tab)).length
+  const collected = isInplayMode.value
+    ? (data.value?.live?.eventCount ?? data.value?.events ?? pool.length)
+    : classicRankFiltersOn.value
+      ? countTab(filter.value)
+      : (data.value?.events ?? data.value?.scheduled?.eventCount ?? 0)
   return {
     date: data.value?.date || '—',
-    tournaments: data.value?.scheduled?.tournamentCount ?? 0,
-    collected: data.value?.events ?? data.value?.scheduled?.eventCount ?? 0,
+    tournaments: isInplayMode.value
+      ? (data.value?.live?.tournamentCount ?? 0)
+      : (data.value?.scheduled?.tournamentCount ?? 0),
+    collected,
     total: pool.length,
     all: countTab('all'),
     shown: matches.value.length,
@@ -528,14 +621,13 @@ const filterSummary = computed(() => {
   else if (tour.value === 'WTA') parts.push('女子')
   if (pmFilter.value === 'yes') parts.push('有PM')
   else if (pmFilter.value === 'no') parts.push('无PM')
-  if (props.isMember) {
+  if (classicRankFiltersOn.value) {
+    if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
+    if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
+    if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
+  } else if (props.isMember) {
     if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
     else if (isNewMode.value) parts.push(`Top${topPoolMax.value}`)
-    else {
-      if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
-      if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
-      if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
-    }
   }
   return parts.join(' · ')
 })
@@ -795,6 +887,52 @@ function parsePeriodScoreSides(m) {
   return { home: home.join(' '), away: away.join(' ') }
 }
 
+function liveSetPairs(m) {
+  const combined = m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')
+  if (combined) {
+    const parts = String(combined).replace(/,\s*/g, ' ').trim().split(/\s+/).filter(Boolean)
+    const pairs = []
+    for (const part of parts) {
+      const hit = part.match(/^(\d+)-(\d+)$/)
+      if (!hit) continue
+      pairs.push({ home: Number(hit[1]), away: Number(hit[2]) })
+    }
+    if (pairs.length > 1 && pairs[pairs.length - 1].home === 0 && pairs[pairs.length - 1].away === 0) {
+      pairs.pop()
+    }
+    if (pairs.length) return pairs
+  }
+  const hs = m.home_score ?? m.homeScore
+  const as = m.away_score ?? m.awayScore
+  if (!hs || typeof hs !== 'object' || !as || typeof as !== 'object') return []
+  const pairs = []
+  for (const key of ['period1', 'period2', 'period3', 'period4', 'period5']) {
+    if (hs[key] != null && as[key] != null) {
+      pairs.push({ home: Number(hs[key]), away: Number(as[key]) })
+    }
+  }
+  return pairs
+}
+
+function liveSetCells(m, side) {
+  return liveSetPairs(m).map((p) => {
+    const mine = side === 'home' ? p.home : p.away
+    const opp = side === 'home' ? p.away : p.home
+    let cls = 'score-even'
+    if (mine > opp) cls = 'score-big'
+    else if (mine < opp) cls = 'score-small'
+    return { text: String(mine), cls }
+  })
+}
+
+function livePointText(m, side) {
+  const raw = side === 'home' ? (m.home_score ?? m.homeScore) : (m.away_score ?? m.awayScore)
+  if (raw && typeof raw === 'object' && raw.point != null && raw.point !== '' && raw.point !== '0') {
+    return String(raw.point)
+  }
+  return ''
+}
+
 function playerLiveScoreText(m, side) {
   if (!isMatchLive(m)) return ''
   const combined = m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')
@@ -824,10 +962,17 @@ async function loadOnce() {
       cache: 'no-store',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`
+      try {
+        const errBody = await res.json()
+        if (errBody?.error) msg = errBody.error
+      } catch { /* ignore */ }
+      throw new Error(msg)
+    }
     const payload = await res.json()
     const bundle =
-      payload?.scheduled || payload?.rankingsByPlayer
+      payload?.live != null || payload?.scheduled != null || payload?.rankingsByPlayer != null
         ? payload
         : payload?.data || payload
     data.value = bundle
@@ -845,7 +990,8 @@ async function loadOnce() {
 
 onMounted(() => {
   loadTennisAutoState()
-  if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
+  if (isInplayMode.value) filter.value = 'all'
+  else if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
   loadOnce()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
 })
@@ -896,6 +1042,12 @@ function gapInfo(m) {
 
 <template>
   <div class="wrap">
+    <div v-if="isInplayMode" class="inplay-source-bar">
+      数据来源：<code>collect_live.py</code> · Redis <code>tennis:bundle:inplay</code>
+      <span v-if="canBatchTrade" class="inplay-auto-rules"> · 自动投注：{{ INPLAY_AUTO_RULES_TEXT }}</span>
+      <span v-if="bundleHint"> · {{ bundleHint }}</span>
+    </div>
+
     <div class="topbar">
       <span class="meta-chip">{{ stats.date }}</span>
       <span class="meta-chip">{{ loading ? '…' : `${stats.shown}/${stats.all}` }}</span>
@@ -905,10 +1057,10 @@ function gapInfo(m) {
         <button type="button" class="stat stat-btn" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">
           <b>{{ stats.all }}</b><span>全</span>
         </button>
-        <button type="button" class="stat stat-btn" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">
+        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">
           <b>{{ stats.open }}</b><span>未开</span>
         </button>
-        <button type="button" class="stat stat-btn" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">
+        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">
           <b>{{ stats.live }}</b><span>进行</span>
         </button>
         <button
@@ -961,7 +1113,7 @@ function gapInfo(m) {
           <button type="button" class="chip-btn" :class="{ active: pmFilter === 'no' }" @click="pmFilter = 'no'">无外链</button>
         </div>
 
-        <template v-if="isMember && !isRangeMode && !isNewMode">
+        <template v-if="classicRankFiltersOn">
           <div class="filter-row">
             <span class="label">现差</span>
             <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
@@ -998,8 +1150,14 @@ function gapInfo(m) {
     <div v-if="loading && !data" class="empty">加载赛程中…</div>
     <div v-else-if="error && !data" class="empty err">{{ error }}</div>
     <div v-else-if="!matches.length" class="empty">
-      当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
-      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
+      <template v-if="isInplayMode">
+        暂无数据
+        <div class="hint">请先运行 <code>collect_live.py</code> 写入 Redis</div>
+      </template>
+      <template v-else>
+        当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
+        <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
+      </template>
     </div>
 
     <template v-else>
@@ -1070,23 +1228,54 @@ function gapInfo(m) {
           </div>
         </div>
         <div class="row-main">
-          <div class="matchup is-stacked" :class="{ 'is-live': isMatchLive(m) }">
-            <div class="player-row" :class="{ 'live-line': isMatchLive(m) }">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': isMatchLive(m) }">
+          <div v-if="isMatchLive(m)" class="matchup is-live-board">
+            <span class="vs-pillar">VS</span>
+            <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
+              <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
+              <span class="player-name">{{ matchHomeName(m) }}</span>
+              <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+            </span>
+            <div class="live-score-block">
+              <div class="live-set-scores" aria-label="主队盘分">
+                <span
+                  v-for="(cell, idx) in liveSetCells(m, 'home')"
+                  :key="'h' + idx"
+                  class="set-cell"
+                  :class="cell.cls"
+                >{{ cell.text }}</span>
+                <span v-if="livePointText(m, 'home')" class="live-point">{{ livePointText(m, 'home') }}</span>
+              </div>
+              <div class="live-set-scores" aria-label="客队盘分">
+                <span
+                  v-for="(cell, idx) in liveSetCells(m, 'away')"
+                  :key="'a' + idx"
+                  class="set-cell"
+                  :class="cell.cls"
+                >{{ cell.text }}</span>
+                <span v-if="livePointText(m, 'away')" class="live-point">{{ livePointText(m, 'away') }}</span>
+              </div>
+            </div>
+            <span class="name live-player-bottom" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': true }">
+              <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
+              <span class="player-name">{{ matchAwayName(m) }}</span>
+              <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+            </span>
+          </div>
+          <div v-else class="matchup is-stacked">
+            <div class="player-row">
+              <span class="name" :class="{ pick: isMember && pickSide(m) === 'home' }">
                 <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
               </span>
-              <span v-if="isMatchLive(m) && playerLiveScoreText(m, 'home')" class="player-score">{{ playerLiveScoreText(m, 'home') }}</span>
             </div>
             <span class="vs-text vs-mid">VS</span>
-            <div class="player-row" :class="{ 'live-line': isMatchLive(m) }">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': isMatchLive(m) }">
+            <div class="player-row">
+              <span class="name" :class="{ pick: isMember && pickSide(m) === 'away' }">
                 <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
               </span>
-              <span v-if="isMatchLive(m) && playerLiveScoreText(m, 'away')" class="player-score">{{ playerLiveScoreText(m, 'away') }}</span>
             </div>
           </div>
           <div v-if="isMember" class="row-actions">
@@ -1424,6 +1613,22 @@ function gapInfo(m) {
   color: #475569;
   font-weight: 600;
 }
+.inplay-source-bar {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.inplay-source-bar code {
+  font-size: 0.7rem;
+  background: #fef3c7;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
 .new-pool-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1717,6 +1922,105 @@ function gapInfo(m) {
   gap: 4px 6px;
   min-width: 0;
   flex: 1;
+}
+.matchup.is-live-board {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 6px;
+  row-gap: 1px;
+  align-items: center;
+  justify-content: start;
+  flex: 1;
+  min-width: 0;
+}
+.vs-pillar {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+}
+.matchup.is-live-board .live-player-top {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+.matchup.is-live-board .live-score-block {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  align-self: center;
+  justify-self: start;
+}
+.matchup.is-live-board .live-player-bottom {
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: start;
+}
+.live-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.live-line-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.live-set-scores {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  padding: 0 2px;
+}
+.live-set-scores .set-cell {
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  min-width: 0.9rem;
+  text-align: center;
+}
+.live-set-scores .score-big {
+  color: #2563eb;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.live-set-scores .score-small {
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.live-set-scores .score-even {
+  color: #334155;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+.live-set-scores .live-point {
+  margin-left: 2px;
+  padding-left: 5px;
+  border-left: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.matchup.is-live-board .name {
+  min-width: 0;
+  text-align: left;
+  justify-content: flex-start;
+  padding: 0;
+  margin: 0;
+}
+.matchup.is-live-board .live-player-top,
+.matchup.is-live-board .live-player-bottom {
+  width: auto;
+  max-width: 100%;
 }
 .matchup.is-stacked {
   flex-direction: column;
