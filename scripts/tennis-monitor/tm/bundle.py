@@ -8,6 +8,7 @@ from tm.enrich import (
     _event_gender,
     _event_tour,
     _player_side,
+    _birth_year_from_team,
     ground_label,
     round_label,
     tour_level_label,
@@ -378,38 +379,28 @@ def fetch_event_odds(client: SofascoreClient, event_id: int) -> dict[str, Any] |
     return _odds_payload(event_id, home_dec, away_dec)
 
 
+AGE_REF_YEAR = 2026  # 年龄 = 2026 − 出生年
+
+
+def age_from_birth_year(year: int | None) -> int | None:
+    if year is None:
+        return None
+    try:
+        age = AGE_REF_YEAR - int(year)
+    except (TypeError, ValueError):
+        return None
+    return age if 10 <= age <= 80 else None
+
+
 def fetch_player_birth_year(client: SofascoreClient, player_id: int) -> int | None:
+    """年龄为空时去球员详情页拉出生年月日，返回出生年。"""
     for path in (f"team/{player_id}", f"player/{player_id}"):
         try:
             data = client._api_get(path, referer="https://www.sofascore.com/tennis")
             team = data.get("team") or data.get("player") or data
-            if not isinstance(team, dict):
-                continue
-            # 直接出生年
-            for key in ("birthYear", "yearOfBirth"):
-                y = _num(team.get(key))
-                if y is not None and 1950 <= y <= 2020:
-                    return int(y)
-            info = team.get("playerTeamInfo") if isinstance(team.get("playerTeamInfo"), dict) else {}
-            y = _num(info.get("birthYear"))
-            if y is not None and 1950 <= y <= 2020:
-                return int(y)
-            ts = team.get("dateOfBirthTimestamp") or team.get("birthDateTimestamp") or info.get("dateOfBirthTimestamp")
-            if ts:
-                from datetime import datetime, timezone
-
-                return datetime.fromtimestamp(int(ts), timezone.utc).year
-            # "1997-05-01" / "01.05.1997"
-            raw = team.get("dateOfBirth") or team.get("birthDate") or info.get("dateOfBirth")
-            if raw:
-                s = str(raw).strip()
-                for part in (s[:4], s[-4:]):
-                    try:
-                        yi = int(part)
-                        if 1950 <= yi <= 2020:
-                            return yi
-                    except ValueError:
-                        pass
+            year = _birth_year_from_team(team if isinstance(team, dict) else {})
+            if year is not None:
+                return year
         except Exception:
             continue
     return None
@@ -422,15 +413,22 @@ def fill_missing_birth_years(
     birth_by_player: dict[str, int] | None = None,
     max_players: int | None = None,
 ) -> dict[str, int]:
-    """对场次球员补拉出生年，写入 birthYearByPlayer 并挂到 homePlayer/awayPlayer。"""
+    """年龄/出生年缺失时补拉 team|player/{id} 出生年月日，年龄=2026−出生年。"""
     import os
 
     out: dict[str, int] = dict(birth_by_player or {})
     cap = max_players
     if cap is None:
-        cap = int(os.environ.get("SOFA_BIRTH_YEAR_ENRICH_MAX", "40"))
+        cap = int(os.environ.get("SOFA_BIRTH_YEAR_ENRICH_MAX", "80"))
     need: list[int] = []
     seen: set[int] = set()
+
+    def _apply_side(side: dict, year: int) -> None:
+        side["birthYear"] = year
+        age = age_from_birth_year(year)
+        if age is not None:
+            side["age"] = age
+
     for ev in events:
         for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
             pid = side.get("id")
@@ -440,19 +438,31 @@ def fill_missing_birth_years(
             if ipid in seen:
                 continue
             key = str(ipid)
-            if side.get("birthYear") is not None:
+            # 已有出生年 → 直接算年龄
+            by = side.get("birthYear")
+            if by is None and out.get(key) is not None:
+                by = out[key]
+            if by is not None:
                 try:
-                    out[key] = int(side["birthYear"])
+                    year = int(by)
+                    out[key] = year
+                    _apply_side(side, year)
+                    seen.add(ipid)
+                    continue
                 except (TypeError, ValueError):
                     pass
-                seen.add(ipid)
-                continue
-            if out.get(key) is not None:
-                side["birthYear"] = out[key]
-                seen.add(ipid)
-                continue
+            # 已有有效年龄则跳过远端拉取
+            age_raw = side.get("age")
+            if age_raw is not None and age_raw != "":
+                try:
+                    if 10 <= int(float(age_raw)) <= 80:
+                        seen.add(ipid)
+                        continue
+                except (TypeError, ValueError):
+                    pass
             seen.add(ipid)
             need.append(ipid)
+
     filled = 0
     for pid in need[: max(0, cap)]:
         year = fetch_player_birth_year(client, pid)
@@ -465,10 +475,10 @@ def fill_missing_birth_years(
         for ev in events:
             for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
                 if side.get("id") == pid:
-                    side["birthYear"] = year
+                    _apply_side(side, year)
         time.sleep(0.25)
     if filled:
-        print(f"      出生年补全 {filled} 人（team/...）")
+        print(f"      出生年月日补全 {filled} 人 → 年龄=2026−出生年（team|player/...）")
     return out
 
 

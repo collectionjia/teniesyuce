@@ -207,7 +207,7 @@ function currentRankOf(player) {
 
 function playerNameWithAge(player, eloSide) {
   const name = player?.name || '—'
-  const year = new Date().getFullYear()
+  const year = 2026 // 年龄 = 2026 − 出生年
   const subs = player?.subTeams
   if (Array.isArray(subs) && subs.length) {
     const ages = subs.map((s) => {

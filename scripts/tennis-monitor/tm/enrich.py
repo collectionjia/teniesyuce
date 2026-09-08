@@ -3,6 +3,45 @@ from __future__ import annotations
 from typing import Any
 
 
+def _birth_year_from_team(team: dict) -> int | None:
+    """从 Sofascore team/player 对象解析出生年（含 dateOfBirthTimestamp / 年月日字符串）。"""
+    if not isinstance(team, dict):
+        return None
+    info = team.get("playerTeamInfo") if isinstance(team.get("playerTeamInfo"), dict) else {}
+    for src in (team, info):
+        for key in ("birthYear", "yearOfBirth"):
+            raw = src.get(key)
+            if raw is None or raw == "":
+                continue
+            try:
+                y = int(raw)
+                if 1940 <= y <= 2018:
+                    return y
+            except (TypeError, ValueError):
+                pass
+        ts = src.get("dateOfBirthTimestamp") or src.get("birthDateTimestamp")
+        if ts:
+            try:
+                from datetime import datetime, timezone
+
+                y = datetime.fromtimestamp(int(ts), timezone.utc).year
+                if 1940 <= y <= 2018:
+                    return y
+            except (TypeError, ValueError, OSError, OverflowError):
+                pass
+        raw = src.get("dateOfBirth") or src.get("birthDate") or src.get("dateOfBirthDate")
+        if raw:
+            s = str(raw).strip()
+            for part in (s[:4], s[-4:]):
+                try:
+                    yi = int(part)
+                    if 1940 <= yi <= 2018:
+                        return yi
+                except ValueError:
+                    pass
+    return None
+
+
 def _player_side(ev: dict, side: str) -> dict:
     team = ev.get(f"{side}Team") or ev.get(side) or {}
     if isinstance(team, str):
@@ -12,7 +51,8 @@ def _player_side(ev: dict, side: str) -> dict:
         pass
     elif isinstance(gender, str):
         gender = "F" if gender.upper().startswith("F") else "M" if gender else None
-    return {
+    birth_year = _birth_year_from_team(team)
+    out = {
         "id": team.get("id"),
         "name": team.get("name") or team.get("shortName"),
         "shortName": team.get("shortName"),
@@ -22,6 +62,15 @@ def _player_side(ev: dict, side: str) -> dict:
         if isinstance(team.get("country"), dict)
         else team.get("country"),
     }
+    if birth_year is not None:
+        out["birthYear"] = birth_year
+        out["age"] = 2026 - birth_year
+    elif team.get("age") is not None and team.get("age") != "":
+        try:
+            out["age"] = int(float(team["age"]))
+        except (TypeError, ValueError):
+            pass
+    return out
 
 
 def _event_tour(ev: dict) -> str:
