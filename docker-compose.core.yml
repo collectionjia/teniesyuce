@@ -1,9 +1,15 @@
 # 核心服务：btc-board + server + web
-# MySQL 用 server/.env 远程库；Redis 映射 127.0.0.1:9014（9003 留给 btc5m-web）
+# MySQL 用 server/.env 远程库；Redis 映射见 deploy/*.env
 # 立即采集：server 容器内跑 collect.py（挂载 scripts/tennis-monitor）；9004 可选（live/定时）
-# 用法: docker compose -f docker-compose.core.yml up -d --build
+#
+# 测试 / 生产（端口与项目名不同，可同机并存）:
+#   bash scripts/docker-deploy.sh test up -d --build
+#   bash scripts/docker-deploy.sh prod up -d --build
+# 或:
+#   docker compose --env-file deploy/test.env -f docker-compose.core.yml up -d --build
+#   docker compose --env-file deploy/prod.env -f docker-compose.core.yml up -d --build
 
-name: yuce
+name: ${COMPOSE_PROJECT_NAME:-yuce}
 
 services:
   redis:  # 网球 bundle / live 缓存
@@ -15,7 +21,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "127.0.0.1:9014:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-9014}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -33,6 +39,7 @@ services:
       - ./server/.env
     environment:
       PORT: 3001
+      APP_ENV: ${APP_ENV:-production}
       # REDIS_URL 使用 server/.env，勿覆盖为容器内 redis（否则 collect_live 写入的 inplay 数据读不到）
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3
@@ -63,6 +70,7 @@ services:
       FILTER_MARKET_MAKERS: ${FILTER_MARKET_MAKERS:-true}
       STREAK_MIN_ROUNDS: ${STREAK_MIN_ROUNDS:-3}
       PYTHONUTF8: "1"
+      APP_ENV: ${APP_ENV:-production}
     volumes:
       - board_data:/app/持仓
     expose:

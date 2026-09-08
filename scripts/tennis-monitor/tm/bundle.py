@@ -147,7 +147,11 @@ def _rank_rows_from_payload(data: dict[str, Any] | None) -> list[dict[str, Any]]
 
 
 def parse_player_rank_detail(data: dict[str, Any] | None) -> dict[str, Any]:
-    """解析 team/{id}/rankings：取出官方现排 / 上周 / 历史最高。"""
+    """解析 team/{id}/rankings：取出官方现排 / 上周 / 历史最高。
+
+    历史最高只取官方榜（rankingClass=team / type 5|6）的 bestRanking，
+    勿用 livetennis / utr 行的 bestRanking（那不是 WTA/ATP 生涯最高）。
+    """
     out: dict[str, Any] = {"current": None, "previous": None, "best": None, "live": None, "utr": None}
     for row in _rank_rows_from_payload(data):
         cls = str(row.get("rankingClass") or "").lower()
@@ -155,21 +159,22 @@ def parse_player_rank_detail(data: dict[str, Any] | None) -> dict[str, Any]:
         ranking = _num(row.get("ranking") if row.get("ranking") is not None else row.get("rank"))
         previous = _num(row.get("previousRanking") if row.get("previousRanking") is not None else row.get("previousRank"))
         best = _num(row.get("bestRanking") if row.get("bestRanking") is not None else row.get("bestRank"))
-        # 历史最高：任意行只要带 bestRanking 就取（数字越小越好）
-        if best is not None and (out["best"] is None or best < out["best"]):
-            out["best"] = int(best) if best == int(best) else best
         if cls == "utr" or typ in (34, 35):
             if ranking is not None:
                 out["utr"] = ranking
             continue
-        if cls in {"livetennis", "live"}:
+        if cls in {"livetennis", "live"} or typ in (7, 8):
             if ranking is not None:
                 out["live"] = ranking
             continue
-        if ranking is not None and out["current"] is None:
-            out["current"] = int(ranking) if ranking == int(ranking) else ranking
-        if previous is not None and out["previous"] is None:
-            out["previous"] = int(previous) if previous == int(previous) else previous
+        # 官方 ATP/WTA（team）
+        if cls in {"team", ""} or typ in (5, 6) or out["current"] is None:
+            if ranking is not None and out["current"] is None:
+                out["current"] = int(ranking) if ranking == int(ranking) else ranking
+            if previous is not None and out["previous"] is None:
+                out["previous"] = int(previous) if previous == int(previous) else previous
+            if best is not None and (out["best"] is None or best < out["best"]):
+                out["best"] = int(best) if best == int(best) else best
     return out
 
 
@@ -192,7 +197,7 @@ def fill_missing_historical_ranks(
     *,
     max_players: int | None = None,
 ) -> int:
-    """对缺历史最高的球员补拉 team/{id}/rankings（榜单接口通常不含 bestRanking）。"""
+    """补拉/刷新 team/{id}/rankings；官方 bestRanking 覆盖本地 best（避免 utr 污染或旧值残留）。"""
     import os
 
     cap = max_players
@@ -208,11 +213,10 @@ def fill_missing_historical_ranks(
             ipid = int(pid)
             if ipid in seen:
                 continue
-            row = rankings.get(str(ipid)) or {}
-            if row.get("best") is not None:
-                continue
             seen.add(ipid)
             need.append(ipid)
+    # 缺 best 的优先补全
+    need.sort(key=lambda pid: 0 if (rankings.get(str(pid)) or {}).get("best") is None else 1)
     filled = 0
     for pid in need[: max(0, cap)]:
         detail = fetch_player_rank_detail(client, pid)
@@ -220,12 +224,15 @@ def fill_missing_historical_ranks(
             continue
         key = str(pid)
         row = dict(rankings.get(key) or {})
-        for field in ("best", "previous", "current", "live", "utr"):
+        for field in ("previous", "current", "live", "utr"):
             if row.get(field) is None and detail.get(field) is not None:
                 row[field] = detail[field]
-        rankings[key] = row
+        # 官方 bestRanking 始终覆盖（勿保留 utr/旧错误值）
         if detail.get("best") is not None:
-            filled += 1
+            if row.get("best") != detail["best"]:
+                filled += 1
+            row["best"] = detail["best"]
+        rankings[key] = row
         time.sleep(0.25)
     return filled
 

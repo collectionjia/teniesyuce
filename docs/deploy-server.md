@@ -51,11 +51,25 @@ bash scripts/deploy-server.sh --status
 bash scripts/deploy-server.sh --logs server
 ```
 
-## 5. Compose 文件
+## 5. Compose 文件 / 测试与生产
 
 | 文件 | 说明 |
 |------|------|
 | `docker-compose.core.yml` | redis + btc-board + server + web |
+| `deploy/test.env` | 测试：项目名 `yuce-test`，默认 web `9001` |
+| `deploy/prod.env` | 生产：项目名 `yuce-prod`，默认 web `80` |
+
+```bash
+# 改端口：编辑对应 env 里的 WEB_PORT / BOARD_PORT / REDIS_HOST_PORT
+bash scripts/docker-deploy.sh test up -d --build
+bash scripts/docker-deploy.sh prod up -d --build
+
+bash scripts/docker-deploy.sh test ps
+curl -s http://127.0.0.1:9001/api/health   # 测试默认
+curl -s http://127.0.0.1/api/health        # 生产默认 80
+```
+
+同机可同时跑测试+生产（项目名与端口不同）。`server/.env` 仍是 DB/Redis/密钥等业务配置。
 
 ## 6. 核心目录
 
