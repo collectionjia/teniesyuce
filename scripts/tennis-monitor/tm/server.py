@@ -336,11 +336,11 @@ def _read_logs(lines: int = 120) -> dict[str, Any]:
 
 
 def _write_mysql(snapshot: dict[str, Any], *, live_only: bool = False) -> dict[str, Any]:
+    from tm.db.writer import mysql_write_enabled, write_snapshot_to_mysql
+
     if not mysql_write_enabled():
         return {"skipped": True, "reason": "SOFA_WRITE_MYSQL disabled"}
     try:
-        from tm.db.writer import write_snapshot_to_mysql
-
         result = write_snapshot_to_mysql(snapshot, live_only=live_only)
         print(f"[mysql] {result}")
         return result
