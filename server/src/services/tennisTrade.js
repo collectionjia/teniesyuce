@@ -191,8 +191,99 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
   };
 }
 
+async function resolveBundle(product) {
+  const tradeProduct = String(product || 'tennis').toLowerCase();
+  if (tradeProduct === 'tennis-range') return tennisRangeCache.getBundle();
+  if (tradeProduct === 'tennis-live') return tennisLiveCache.getBundle();
+  if (tradeProduct === 'tennis-inplay') return tennisInplayCache.getBundle();
+  if (tradeProduct === 'tennis-new') return tennisNewCache.getBundle();
+  return tennisCache.getBundle();
+}
+
+/** 平仓（市价卖出全部持仓） */
+async function placeSellOrder(userId, {
+  eventId,
+  side,
+  shares = 'all',
+  product = 'tennis-inplay',
+} = {}) {
+  const tradeProduct = String(product || 'tennis-inplay').toLowerCase();
+  const sideKey = String(side || '').toLowerCase();
+  if (!eventId) throw new Error('缺少 eventId');
+  if (!['home', 'away'].includes(sideKey)) throw new Error('投注方向无效');
+
+  const secrets = await btcWallet.loadWalletSecrets(userId);
+  const bundle = await resolveBundle(tradeProduct);
+  if (!bundle) throw new Error('网球数据尚未就绪');
+
+  const match = findMatch(bundle, eventId);
+  if (!match) throw new Error('未找到该场次');
+
+  const poly = bundle.polymarketByEvent?.[String(eventId)] || bundle.polymarketByEvent?.[eventId];
+  if (!poly?.url) throw new Error('暂无 Polymarket 市场');
+
+  const homeName = match.homePlayer?.name || match.home || '';
+  const awayName = match.awayPlayer?.name || match.away || '';
+  const { tokenId } = await polymarketTrade.getEventSideTokenId(
+    poly.url,
+    sideKey,
+    homeName,
+    awayName
+  );
+
+  const sellShares = (shares === 'all' || shares == null || shares === '')
+    ? undefined
+    : Number(shares);
+
+  const result = await polymarketTrade.placeMarketSell({
+    privateKey: secrets.privateKey,
+    proxyAddress: secrets.proxyAddress,
+    signatureType: secrets.signatureType,
+    tokenId,
+    shares: sellShares,
+  });
+
+  const orderId = result?.orderID || result?.id || result?.orderId || '';
+  const price = tradeRecords.priceFromFill(result, { action: 'sell' });
+  const soldShares = tradeRecords.sharesFromFill(result, { action: 'sell', price });
+  const label = `${homeName || '?'} vs ${awayName || '?'}`;
+  try {
+    await tradeRecords.addTradeRecord(userId, {
+      product: tradeProduct,
+      action: 'sell',
+      market: String(eventId),
+      side: sideKey,
+      amountUsd: price > 0 && soldShares > 0
+        ? Math.round(price * soldShares * 100) / 100
+        : null,
+      shares: soldShares,
+      price,
+      label,
+      orderId,
+      ok: true,
+    });
+  } catch (err) {
+    console.error('[tennis/sell] record', eventId, err.message || err);
+  }
+
+  return {
+    ok: true,
+    eventId: String(eventId),
+    side: sideKey,
+    orderId,
+    soldShares,
+    price,
+    homeName,
+    awayName,
+    status: result?.status || '',
+    takingAmount: result?.takingAmount || '',
+    makingAmount: result?.makingAmount || '',
+  };
+}
+
 module.exports = {
   placeBatchOrders,
+  placeSellOrder,
   pickSide,
   findMatch,
 };

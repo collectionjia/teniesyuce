@@ -71,6 +71,20 @@ curl -s http://127.0.0.1/api/health        # 生产默认 80
 
 同机可同时跑测试+生产（项目名与端口不同）。`server/.env` 仍是 DB/Redis/密钥等业务配置。
 
+**测试/生产采集代理（monitor.env）：**
+
+| 文件 | 何时加载 |
+|------|----------|
+| `monitor.env.test` | `APP_ENV=test` 或 `SOFA_MONITOR_ENV_FILE=monitor.env.test` |
+| `monitor.env.prod` | `APP_ENV=production` |
+| `monitor.env` | 回退（兼容旧部署） |
+
+```bash
+cp scripts/tennis-monitor/env.monitor.test.example scripts/tennis-monitor/monitor.env.test
+cp scripts/tennis-monitor/env.monitor.prod.example scripts/tennis-monitor/monitor.env.prod
+# 填入各自 IPWO 账号；勿提交 Git
+```
+
 ## 6. 核心目录
 
 | 目录 | 作用 |

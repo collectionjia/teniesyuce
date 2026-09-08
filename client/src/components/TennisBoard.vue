@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
-import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT } from '../utils/tennisRangeFilter'
+import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT, passesInplayRankFilter, matchInplayRankMetrics, inplayTierLabel, INPLAY_RANK_RULES_TEXT } from '../utils/tennisRangeFilter'
 
-const INPLAY_AUTO_RULES_TEXT = '500/1000 · 强者现≤25 · 现差≤30 · 强者首盘领先 · PM<87¢'
+const INPLAY_AUTO_RULES_TEXT = '买入：500/1000·现≤25·现差>30·首盘领先·PM<87¢｜止损：BO3第三盘落后>2局；BO5(1:2第四盘/2:2第五盘)落后>2局'
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
@@ -62,23 +62,35 @@ const AUTO_PLACED_KEY = computed(() => {
   if (isInplayMode.value) return 'yuce.tennisInplay.autoPlaced.v1'
   return 'yuce.tennis.autoPlaced.v1'
 })
+const AUTO_SOLD_KEY = computed(() => 'yuce.tennisInplay.autoSold.v1')
 const autoBetEnabled = ref(false)
 const autoPlacedIds = ref(new Set())
+const autoSoldIds = ref(new Set())
+const stopLossBusy = ref(false)
+let inplayPollTimer = null
 
 function loadTennisAutoState() {
   try {
     autoBetEnabled.value = localStorage.getItem(AUTO_BET_KEY.value) === '1'
     const raw = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')
     autoPlacedIds.value = new Set(Array.isArray(raw) ? raw.map(String) : [])
+    if (isInplayMode.value) {
+      const sold = JSON.parse(localStorage.getItem(AUTO_SOLD_KEY.value) || '[]')
+      autoSoldIds.value = new Set(Array.isArray(sold) ? sold.map(String) : [])
+    }
   } catch {
     autoBetEnabled.value = false
     autoPlacedIds.value = new Set()
+    autoSoldIds.value = new Set()
   }
 }
 
 function saveTennisAutoState() {
   localStorage.setItem(AUTO_BET_KEY.value, autoBetEnabled.value ? '1' : '0')
   localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify([...autoPlacedIds.value].slice(-200)))
+  if (isInplayMode.value) {
+    localStorage.setItem(AUTO_SOLD_KEY.value, JSON.stringify([...autoSoldIds.value].slice(-200)))
+  }
 }
 
 async function toggleAutoBet(ev) {
@@ -90,7 +102,7 @@ async function toggleAutoBet(ev) {
   }
   if (want && !window.confirm(
     isInplayMode.value
-      ? `确认开启盘中自动投注？\n规则：${INPLAY_AUTO_RULES_TEXT}\n将对符合条件场次按当前金额自动下单，风险自负。`
+      ? `确认开启盘中自动投注？\n规则：${INPLAY_AUTO_RULES_TEXT}\n买入后按止损条件自动平仓，风险自负。`
       : '确认开启网球自动投注？\n将对可同步场次按当前金额自动批量确认，风险自负。'
   )) {
     ev.target.checked = false
@@ -99,7 +111,11 @@ async function toggleAutoBet(ev) {
   autoBetEnabled.value = want
   saveTennisAutoState()
   batchNotice.value = want ? '已开启自动投注' : '已关闭自动投注'
-  if (want) await maybeAutoBatchTrade()
+  syncInplayPoll()
+  if (want) {
+    await maybeAutoBatchTrade()
+    if (isInplayMode.value) await maybeAutoStopLoss()
+  }
 }
 const serverTimeBase = ref(null)
 const loadedAtMs = ref(null)
@@ -303,7 +319,7 @@ function matchPassesFilter(m, statusFilter) {
     if (!matchPassesTour(m)) return false
     if (!matchPassesPm(m)) return false
     if (!isMatchLive(m)) return false
-    return true
+    return passesInplayRankFilter(m, data.value?.rankingsByPlayer || {})
   }
   if (hideEndedEvents.value && isMatchEnded(m)) return false
   const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
@@ -416,6 +432,73 @@ function strongWonFirstSet(m) {
   return side === 'home' ? first.home > first.away : first.away > first.home
 }
 
+function isTennisSetComplete(a, b) {
+  const x = Number(a)
+  const y = Number(b)
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false
+  const hi = Math.max(x, y)
+  const lo = Math.min(x, y)
+  if (hi >= 7) return true
+  if (hi >= 6 && hi - lo >= 2) return true
+  return false
+}
+
+/** ATP 大满贯男单等 BO5；已打到第 4/5 盘也视为 BO5 */
+function isBo5Match(m) {
+  const pairs = liveSetPairs(m)
+  if (pairs.length >= 4) return true
+  const label = matchLevelLabel(m).toLowerCase()
+  const raw = String(m?.level || '').toLowerCase()
+  const isGs = /\bgs\b/.test(label) || raw.includes('grand_slam') || raw.includes('grand slam')
+  if (!isGs) return false
+  const tour = String(m.tour || '').toUpperCase()
+  const gender = String(m.gender || m.homePlayer?.gender || m.awayPlayer?.gender || '').toUpperCase()
+  if (tour === 'WTA' || gender === 'F' || gender === 'W') return false
+  return true
+}
+
+function analyzeStrongSets(m, strongSide) {
+  const pairs = liveSetPairs(m)
+  let strongSets = 0
+  let weakSets = 0
+  let current = null
+  for (let i = 0; i < pairs.length; i++) {
+    const p = pairs[i]
+    const s = strongSide === 'home' ? p.home : p.away
+    const w = strongSide === 'home' ? p.away : p.home
+    if (isTennisSetComplete(s, w)) {
+      if (s > w) strongSets += 1
+      else weakSets += 1
+    } else {
+      current = { strong: s, weak: w, setIndex: i + 1 }
+    }
+  }
+  return { strongSets, weakSets, current, pairs }
+}
+
+function gamesTrailStopLoss(strongG, weakG) {
+  return strongG < weakG && (weakG - strongG) > 2
+}
+
+/**
+ * 盘中止损：
+ * - BO3：第三盘，强者局分落后且弱−强 > 2
+ * - BO5：盘分 1:2 的第四盘，或 2:2 的第五盘，同样局分落后 > 2（见图）
+ */
+function shouldInplayStopLoss(m) {
+  if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
+  const side = pickSide(m)
+  if (!side) return false
+  const { strongSets, weakSets, current } = analyzeStrongSets(m, side)
+  if (!current || !gamesTrailStopLoss(current.strong, current.weak)) return false
+  if (isBo5Match(m)) {
+    if (strongSets === 1 && weakSets === 2 && current.setIndex === 4) return true
+    if (strongSets === 2 && weakSets === 2 && current.setIndex === 5) return true
+    return false
+  }
+  return strongSets === 1 && weakSets === 1 && current.setIndex === 3
+}
+
 function passesInplayAutoBet(m) {
   if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
   if (!isInplayTier500Or1000(m)) return false
@@ -426,7 +509,8 @@ function passesInplayAutoBet(m) {
   if (homeR == null || awayR == null) return false
   const strongR = listRankOf(m, side)
   if (strongR == null || strongR > 25) return false
-  if (Math.abs(homeR - awayR) > 30) return false
+  // 现排差 = |双人现排名之差|，须严格大于 30
+  if (Math.abs(homeR - awayR) <= 30) return false
   if (!strongWonFirstSet(m)) return false
   const cents = strongPolyPriceCents(m)
   if (cents == null || cents >= 87) return false
@@ -572,6 +656,57 @@ async function maybeAutoBatchTrade() {
   for (const m of candidates) next.add(String(m.id))
   selectedIds.value = next
   await submitBatchTrade({ auto: true })
+}
+
+async function maybeAutoStopLoss() {
+  if (!isInplayMode.value || !autoBetEnabled.value || !props.canBatchTrade) return
+  if (batchSubmitting.value || stopLossBusy.value) return
+  const targets = rawMatches.value.filter((m) => {
+    const id = String(m.id)
+    if (!autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
+    return shouldInplayStopLoss(m)
+  })
+  if (!targets.length) return
+  stopLossBusy.value = true
+  const sold = new Set(autoSoldIds.value)
+  const lines = []
+  try {
+    for (const m of targets) {
+      const id = String(m.id)
+      const side = pickSide(m)
+      if (!side) continue
+      try {
+        const resp = await api.placeTennisInplaySell({ eventId: id, side, shares: 'all' })
+        sold.add(id)
+        const label = `${matchHomeName(m)} vs ${matchAwayName(m)}`
+        lines.push(`${label}：止损已平仓${resp?.soldShares ? ` (${resp.soldShares})` : ''}`)
+      } catch (e) {
+        const label = `${matchHomeName(m)} vs ${matchAwayName(m)}`
+        lines.push(`${label}：止损失败 ${e.response?.data?.error || e.message || ''}`)
+        batchError.value = lines.join('\n')
+      }
+    }
+    if (sold.size !== autoSoldIds.value.size) {
+      autoSoldIds.value = sold
+      saveTennisAutoState()
+    }
+    if (lines.some((l) => l.includes('已平仓'))) {
+      batchNotice.value = ['自动止损', ...lines.filter((l) => l.includes('已平仓')).slice(0, 5)].join('\n')
+    }
+  } finally {
+    stopLossBusy.value = false
+  }
+}
+
+function syncInplayPoll() {
+  if (inplayPollTimer) {
+    clearInterval(inplayPollTimer)
+    inplayPollTimer = null
+  }
+  if (!isInplayMode.value || !autoBetEnabled.value) return
+  inplayPollTimer = setInterval(() => {
+    loadOnce({ quiet: true })
+  }, 60000)
 }
 
 watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter], () => {
@@ -968,10 +1103,12 @@ function playerLiveScoreText(m, side) {
   return String(raw)
 }
 
-/** 打开页面时从 Redis 加载一次 */
-async function loadOnce() {
-  error.value = ''
-  loading.value = true
+/** 打开页面时从 Redis 加载；quiet 时用于盘中自动轮询 */
+async function loadOnce({ quiet = false } = {}) {
+  if (!quiet) {
+    error.value = ''
+    loading.value = true
+  }
   try {
     const token = localStorage.getItem('token') || ''
     const res = await fetch(`${apiPath.value}/today`, {
@@ -996,11 +1133,12 @@ async function loadOnce() {
       serverTimeBase.value = Number(bundle.serverTime)
       loadedAtMs.value = Date.now()
     }
+    await maybeAutoStopLoss()
     await maybeAutoBatchTrade()
   } catch (e) {
-    error.value = e?.message || '加载失败'
+    if (!quiet) error.value = e?.message || '加载失败'
   } finally {
-    loading.value = false
+    if (!quiet) loading.value = false
   }
 }
 
@@ -1009,13 +1147,31 @@ onMounted(() => {
   if (isInplayMode.value) filter.value = 'all'
   else if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
   loadOnce()
+  syncInplayPoll()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
 })
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
+  if (inplayPollTimer) {
+    clearInterval(inplayPollTimer)
+    inplayPollTimer = null
+  }
 })
 
 function gapInfo(m) {
+  if (isInplayMode.value) {
+    const metrics = matchInplayRankMetrics(m, data.value?.rankingsByPlayer || {})
+    if (!metrics.ready) return { ready: false }
+    return {
+      ready: true,
+      gap: metrics.gap,
+      homeR: metrics.homeR,
+      awayR: metrics.awayR,
+      strongNow: metrics.strongRank,
+      minGap: metrics.minGap,
+      tier: inplayTierLabel(metrics.strongRank),
+    }
+  }
   if (isRangeMode.value || isNewMode.value) {
     const metrics = matchRangeMetrics(m, data.value?.rankingsByPlayer || {})
     if (!metrics.ready) return { ready: false }
@@ -1069,6 +1225,7 @@ function gapInfo(m) {
   <div class="wrap">
     <div v-if="isInplayMode" class="inplay-source-bar">
       数据来源：<code>collect_live.py</code> · Redis <code>tennis:bundle:inplay</code>
+      <span class="inplay-auto-rules"> · 列表：{{ INPLAY_RANK_RULES_TEXT }}</span>
       <span v-if="canBatchTrade" class="inplay-auto-rules"> · 自动投注：{{ INPLAY_AUTO_RULES_TEXT }}</span>
       <span v-if="bundleHint"> · {{ bundleHint }}</span>
     </div>
@@ -1250,6 +1407,11 @@ function gapInfo(m) {
             <span v-if="isMember && oddsOf(m.id)?.full_time" class="badge odds">报</span>
             <span v-if="isMember && polyOf(m.id)?.url" class="badge poly">外</span>
             <span v-if="isMember && isNewMode && gapInfo(m).ready" class="badge live-tier">{{ gapInfo(m).tier }}</span>
+            <span
+              v-if="isInplayMode && gapInfo(m).ready"
+              class="badge live-tier"
+              :title="`现差 ${gapInfo(m).gap} · 需≥${gapInfo(m).minGap}`"
+            >{{ gapInfo(m).tier }} · 差{{ gapInfo(m).gap }}</span>
           </div>
         </div>
         <div class="row-main">
@@ -1351,6 +1513,10 @@ function gapInfo(m) {
                 <span class="badge level">{{ matchLevelLabel(detailMatch) }}</span>
                 <span v-if="oddsOf(detailMatch.id)?.full_time" class="badge odds">报</span>
                 <span v-if="polyOf(detailMatch.id)?.url" class="badge poly">外</span>
+                <span
+                  v-if="isInplayMode && gapInfo(detailMatch).ready"
+                  class="badge live-tier"
+                >{{ gapInfo(detailMatch).tier }} · 差{{ gapInfo(detailMatch).gap }}</span>
                 <span v-if="pickSide(detailMatch)" class="badge pick">优{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
               </div>
             </div>
@@ -1390,8 +1556,8 @@ function gapInfo(m) {
 
             <div class="kv-grid">
               <template v-if="gapInfo(detailMatch).ready">
-                <div class="kv" v-if="isRangeMode || isNewMode">
-                  <span class="k">{{ isNewMode ? '档位' : '区间' }}</span>
+                <div class="kv" v-if="isRangeMode || isNewMode || isInplayMode">
+                  <span class="k">{{ isInplayMode ? '盘中档' : (isNewMode ? '档位' : '区间') }}</span>
                   <span class="v">{{ gapInfo(detailMatch).tier }}</span>
                   <span class="s">现差 {{ gapInfo(detailMatch).gap }} · 需≥{{ gapInfo(detailMatch).minGap }}</span>
                 </div>

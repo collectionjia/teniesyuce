@@ -39,6 +39,7 @@ services:
     environment:
       PORT: 3001
       APP_ENV: ${APP_ENV:-production}
+      SOFA_MONITOR_ENV_FILE: ${SOFA_MONITOR_ENV_FILE:-}
       # REDIS_URL 来自 env_file（测试用外部 Redis；勿强行改成容器内 redis）
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3

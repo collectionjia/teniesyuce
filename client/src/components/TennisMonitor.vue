@@ -13,7 +13,7 @@ const status = ref(null)
 const top100Board = ref(null)
 const liveData = ref(null)
 const logs = ref(null)
-const tab = ref('atp') // atp | wta | live | logs
+const tab = ref('atp') // atp | wta | live | inplay | logs
 const topPoolMax = ref('100') // 20 | 50 | 100
 const tierFilter = ref({ gs: false, t1000: false, t500: false })
 const onlyWithMatches = ref(false)
@@ -24,6 +24,9 @@ const dataSource = ref(null)
 const dataSourceSaving = ref(false)
 const playerPage = ref(1)
 const livePage = ref(1)
+const inplayPage = ref(1)
+const inplayBundle = ref(null)
+const inplayLoading = ref(false)
 const logPage = ref(1)
 const cronOpen = ref(false)
 const statsOpen = ref(false)
@@ -231,6 +234,24 @@ const pagedLiveMatches = computed(() => {
   const start = (livePage.value - 1) * LIVE_PAGE_SIZE
   return liveMatches.value.slice(start, start + LIVE_PAGE_SIZE)
 })
+
+const inplayMatches = computed(() => {
+  const list = inplayBundle.value?.live?.matches || []
+  return Array.isArray(list) ? list : []
+})
+const inplayPageCount = computed(() => Math.max(1, Math.ceil(inplayMatches.value.length / LIVE_PAGE_SIZE)))
+const pagedInplayMatches = computed(() => {
+  const start = (inplayPage.value - 1) * LIVE_PAGE_SIZE
+  return inplayMatches.value.slice(start, start + LIVE_PAGE_SIZE)
+})
+const inplayMeta = computed(() => ({
+  date: inplayBundle.value?.date || '—',
+  fetchedAt: inplayBundle.value?.fetched_at || null,
+  count: inplayMatches.value.length,
+  source: inplayBundle.value?.dataSource || inplayBundle.value?.collectScript || 'collect_live',
+  empty: !!inplayBundle.value?.empty,
+  message: inplayBundle.value?.message || inplayBundle.value?.update?.message || '',
+}))
 const logLines = computed(() => {
   const raw = logs.value?.lines || logs.value?.content || status.value?.latest_log_tail || ''
   return String(raw).split('\n')
@@ -380,6 +401,15 @@ async function loadLive() {
   liveData.value = await api.fetchTennisMonitorLive()
 }
 
+async function loadInplay() {
+  inplayLoading.value = true
+  try {
+    inplayBundle.value = await api.fetchTennisInplayToday()
+  } finally {
+    inplayLoading.value = false
+  }
+}
+
 async function loadSchedule() {
   schedule.value = await api.fetchTennisMonitorSchedule()
 }
@@ -400,7 +430,24 @@ async function refreshAll({ silent = false } = {}) {
     notice.value = ''
   }
   try {
-    await Promise.all([loadStatus(), loadTop100(false), loadLive(), loadLogs(), loadSchedule(), loadDataSource()])
+    const results = await Promise.allSettled([
+      loadStatus(),
+      loadTop100(false),
+      loadLive(),
+      loadInplay(),
+      loadLogs(),
+      loadSchedule(),
+      loadDataSource(),
+    ])
+    const failed = results.find((r) => r.status === 'rejected')
+    if (failed && !silent) {
+      const reason = failed.reason
+      const msg = reason?.response?.data?.error || reason?.message || ''
+      // 无 9004 时部分接口已本地兜底；勿把可选 monitor 错误当成整页失败
+      if (msg && !/9004|监控服务|monitor/i.test(msg)) {
+        error.value = formatMonitorError(msg)
+      }
+    }
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
   } finally {
@@ -454,14 +501,18 @@ async function waitLiveCollectDone() {
         error.value = formatMonitorError(err)
       } else {
         error.value = ''
-        showNotice(`进行中比分已更新：${livePoll.value?.live_count ?? liveMatches.value.length} 场`)
+        try {
+          await loadInplay()
+        } catch { /* ignore */ }
+        const n = inplayMeta.value.count
+        showNotice(`盘中采集完成：${n} 场（Redis tennis:bundle:inplay）`)
         api.refreshTennisCache().catch(() => {})
       }
       return
     }
   }
   notice.value = ''
-  error.value = '拉取进行中比分超时，请稍后再试'
+  error.value = '盘中采集超时，请稍后再试'
 }
 
 async function triggerCollect() {
@@ -500,6 +551,7 @@ async function triggerLiveCollect() {
     await loadStatus()
     await loadLogs()
     if (liveRunning.value) await waitLiveCollectDone()
+    else await loadInplay()
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '触发失败')
   } finally {
@@ -630,6 +682,10 @@ function setLivePage(page) {
   livePage.value = Math.min(Math.max(1, page), livePageCount.value)
 }
 
+function setInplayPage(page) {
+  inplayPage.value = Math.min(Math.max(1, page), inplayPageCount.value)
+}
+
 function setLogPage(page) {
   logPage.value = Math.min(Math.max(1, page), logPageCount.value)
 }
@@ -657,6 +713,13 @@ function livePageLabel() {
   return `${start}-${end} / ${liveMatches.value.length}`
 }
 
+function inplayPageLabel() {
+  if (!inplayMatches.value.length) return '0 条'
+  const start = (inplayPage.value - 1) * LIVE_PAGE_SIZE + 1
+  const end = Math.min(inplayPage.value * LIVE_PAGE_SIZE, inplayMatches.value.length)
+  return `${start}-${end} / ${inplayMatches.value.length}`
+}
+
 function logPageLabel() {
   if (!logLines.value.length) return '0 行'
   const start = (logPage.value - 1) * LOG_PAGE_SIZE + 1
@@ -670,7 +733,11 @@ watch([tab, topPoolMax, tierFilter, onlyWithMatches], () => {
 })
 watch(tab, () => {
   livePage.value = 1
+  inplayPage.value = 1
   logPage.value = 1
+  if (tab.value === 'inplay' && !inplayBundle.value) {
+    loadInplay().catch(() => {})
+  }
 })
 watch(players, (list) => {
   if (playerPage.value > Math.max(1, Math.ceil(list.length / PLAYER_PAGE_SIZE))) {
@@ -680,6 +747,11 @@ watch(players, (list) => {
 watch(liveMatches, (list) => {
   if (livePage.value > Math.max(1, Math.ceil(list.length / LIVE_PAGE_SIZE))) {
     livePage.value = 1
+  }
+})
+watch(inplayMatches, (list) => {
+  if (inplayPage.value > Math.max(1, Math.ceil(list.length / LIVE_PAGE_SIZE))) {
+    inplayPage.value = 1
   }
 })
 watch(logLines, () => {
@@ -714,14 +786,14 @@ onUnmounted(() => {
         <div class="sub">
           {{ collectEnabled ? '采集已开启' : '采集已关闭' }}
           · Top100 {{ collectIntervalLabel }}
-          · 进行中 {{ livePollIntervalLabel }}
+          · 盘中 {{ livePollIntervalLabel }}
           · Redis {{ tennisDataSourceLabel }}
         </div>
       </div>
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
         <button type="button" class="btn ghost" :disabled="liveCollecting || liveRunning || !collectEnabled" @click="triggerLiveCollect">
-          {{ liveRunning ? '拉取中…' : liveCollecting ? '触发中…' : '拉取进行中' }}
+          {{ liveRunning ? '盘中采集中…' : liveCollecting ? '触发中…' : '采集盘中' }}
         </button>
         <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect">
           {{ running ? 'Top100 采集中…' : collecting ? '触发中…' : '立即采集 Top100' }}
@@ -778,7 +850,7 @@ onUnmounted(() => {
         </select>
       </label>
       <label class="interval-select">
-        <span>进行中拉取</span>
+        <span>盘中采集</span>
         <select
           :value="livePollIntervalSec"
           :disabled="scheduleSaving || loading || !collectEnabled"
@@ -894,6 +966,7 @@ onUnmounted(() => {
         <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
         <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
         <button type="button" :class="{ on: tab === 'live' }" @click="tab = 'live'">进行中</button>
+        <button type="button" :class="{ on: tab === 'inplay' }" @click="tab = 'inplay'">盘中采集</button>
         <button type="button" :class="{ on: tab === 'logs' }" @click="tab = 'logs'">日志</button>
         <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
       </div>
@@ -982,7 +1055,77 @@ onUnmounted(() => {
         </template>
       </div>
 
-      <div v-else-if="tab !== 'logs'" class="panel">
+      <div v-else-if="tab === 'inplay'" class="panel">
+        <div class="panel-h row">
+          <span class="panel-title">盘中采集 · {{ inplayMeta.date }}</span>
+          <span class="muted panel-meta">
+            <template v-if="liveRunning || liveCollecting">采集中…</template>
+            <template v-else-if="inplayLoading">读取 Redis…</template>
+            <template v-else>
+              {{ inplayMeta.source }} · tennis:bundle:inplay · {{ fmtTime(inplayMeta.fetchedAt) }}
+            </template>
+          </span>
+        </div>
+        <div class="pool-bar pool-bar-tail" style="margin-bottom: 8px">
+          <button
+            type="button"
+            class="chip-btn"
+            :disabled="liveCollecting || liveRunning || !collectEnabled"
+            @click="triggerLiveCollect"
+          >
+            {{ liveRunning ? '采集中…' : liveCollecting ? '触发中…' : '立即采集盘中' }}
+          </button>
+          <button type="button" class="chip-btn" :disabled="inplayLoading" @click="loadInplay">刷新列表</button>
+          <span class="pool-meta">{{ inplayMeta.count }} 场 · 进行中 · Top100 · GS/500/1000 · 写入盘中产品页</span>
+        </div>
+        <div v-if="livePoll.error" class="banner err">{{ formatMonitorError(livePoll.error) }}</div>
+        <div v-else-if="inplayLoading && !inplayMatches.length" class="empty">读取盘中包…</div>
+        <div v-else-if="!inplayMatches.length" class="empty">
+          {{ inplayMeta.message || '暂无盘中数据' }}
+          <div class="hint">请点击「立即采集盘中」运行 collect_live.py</div>
+        </div>
+        <template v-else>
+          <div class="pager">
+            <span class="pager-info">第 {{ inplayPage }} / {{ inplayPageCount }} 页 · {{ inplayPageLabel() }}</span>
+            <div class="pager-actions">
+              <button type="button" class="pager-btn" :disabled="inplayPage <= 1" @click="setInplayPage(inplayPage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="inplayPage >= inplayPageCount" @click="setInplayPage(inplayPage + 1)">下一页</button>
+            </div>
+          </div>
+          <div class="live-list">
+            <div v-for="m in pagedInplayMatches" :key="'inplay-' + m.id" class="live-row">
+              <div class="live-top">
+                <span class="st live">{{ m.status || '进行中' }}</span>
+              </div>
+              <div class="live-players">
+                <div class="live-player-line">
+                  <span class="live-name">{{ m.homePlayer?.name || m.home || '—' }}</span>
+                  <span v-if="playerLiveScoreText(m, 'home')" class="live-player-score">{{ playerLiveScoreText(m, 'home') }}</span>
+                </div>
+                <span class="live-vs">VS</span>
+                <div class="live-player-line">
+                  <span class="live-name">{{ m.awayPlayer?.name || m.away || '—' }}</span>
+                  <span v-if="playerLiveScoreText(m, 'away')" class="live-player-score">{{ playerLiveScoreText(m, 'away') }}</span>
+                </div>
+              </div>
+              <div class="live-bot">
+                <span>{{ (m.tournamentShort || m.tournament || '—').replace(/,.*/, '') }}</span>
+                <span v-if="m.roundLabel || m.round"> · {{ m.roundLabel || m.round }}</span>
+                <span> · {{ m.tour || '' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="pager pager-bottom">
+            <span class="pager-info">{{ inplayPageLabel() }}</span>
+            <div class="pager-actions">
+              <button type="button" class="pager-btn" :disabled="inplayPage <= 1" @click="setInplayPage(inplayPage - 1)">上一页</button>
+              <button type="button" class="pager-btn" :disabled="inplayPage >= inplayPageCount" @click="setInplayPage(inplayPage + 1)">下一页</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <div v-else-if="tab === 'atp' || tab === 'wta'" class="panel">
         <div class="panel-h row">
           <span class="panel-title">{{ tab.toUpperCase() }} Top{{ topPoolMax }} · {{ top100Board?.date || '—' }}</span>
           <span class="muted panel-meta">

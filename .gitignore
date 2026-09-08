@@ -8,6 +8,9 @@ server/.env
 server/.env.*
 !server/.env.example
 scripts/tennis-monitor/monitor.env
+scripts/tennis-monitor/monitor.env.*
+!scripts/tennis-monitor/env.monitor.*.example
+!scripts/tennis-monitor/env.monitor.example
 
 # dependencies & build
 node_modules/

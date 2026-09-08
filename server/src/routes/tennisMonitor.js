@@ -94,17 +94,20 @@ router.get('/status', async (_req, res) => {
   try {
     const tennisCollectRunner = require('../services/tennisCollectRunner');
     const tennisCache = require('../services/tennisCache');
-    let body = { ok: true };
+    let body = { ok: true, monitor_optional: true };
     try {
-      const proxied = await monitorFetch('/status', { timeoutMs: 8000 });
-      if (proxied.body && typeof proxied.body === 'object') body = proxied.body;
+      const proxied = await monitorFetch('/status', { timeoutMs: 3000 });
+      if (proxied.body && typeof proxied.body === 'object') body = { ...proxied.body, ok: true };
     } catch (err) {
       body.monitor_error = friendlyMonitorError(err);
+      body.monitor_skipped = true;
     }
+    body.schedule = tennisCollectRunner.schedulePayload();
+    body.live_poll = tennisCollectRunner.livePayload();
     body.top100_collect = tennisCollectRunner.isCollectAvailable()
       ? tennisCollectRunner.statusPayload()
       : (body.top100_collect || { status: 'remote', script: `${MONITOR_BASE}/collect` });
-    body.running = !!(body.top100_collect?.running || body.running);
+    body.running = !!(body.top100_collect?.running || tennisCollectRunner.isRunning());
     const bundle = await tennisCache.getBundle();
     if (bundle) {
       body.latest_bundle = {
@@ -132,8 +135,37 @@ router.get('/top100', async (req, res) => {
       }),
     );
   } catch (err) {
-    console.error('[tennis-monitor/top100]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    console.error('[tennis-monitor/top100]', err.message || err);
+    // Docker 无 9004：用 Redis bundle 里的榜单占位，避免管理页整页失败
+    try {
+      const tennisCache = require('../services/tennisCache');
+      const bundle = await tennisCache.getBundle();
+      const board = bundle?.top100 || bundle?.rankingsBoard || null;
+      return res.json({
+        ok: true,
+        loading: false,
+        source: 'redis-fallback',
+        monitor_skipped: true,
+        atp: board?.atp || [],
+        wta: board?.wta || [],
+        summary: board?.summary || {
+          total_matches: bundle?.events || 0,
+          note: '未连接 9004，展示 Redis 缓存；请用「立即采集」',
+        },
+        error: null,
+      });
+    } catch {
+      res.status(200).json({
+        ok: true,
+        loading: false,
+        source: 'none',
+        monitor_skipped: true,
+        atp: [],
+        wta: [],
+        summary: {},
+        error: null,
+      });
+    }
   }
 });
 
@@ -214,10 +246,10 @@ router.post('/collect', async (req, res) => {
 
 router.get('/live', async (_req, res) => {
   try {
-    sendProxy(res, await monitorFetch('/live'));
+    sendProxy(res, await monitorFetch('/live', { timeoutMs: 3000 }));
   } catch (err) {
-    console.error('[tennis-monitor/live]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    res.json(tennisCollectRunner.livePayload());
   }
 });
 
@@ -225,13 +257,35 @@ router.get('/bundle', async (_req, res) => {
   try {
     sendProxy(res, await monitorFetch('/bundle', { timeoutMs: 30000 }));
   } catch (err) {
-    console.error('[tennis-monitor/bundle]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    console.error('[tennis-monitor/bundle]', err.message || err);
+    try {
+      const tennisCache = require('../services/tennisCache');
+      const bundle = await tennisCache.getBundle();
+      if (bundle) return res.json({ ok: true, ...bundle, source: 'redis-fallback' });
+    } catch { /* ignore */ }
+    res.status(200).json({ ok: false, error: '暂无 bundle（可先立即采集）', source: 'none' });
   }
 });
 
 router.post('/live/collect', async (_req, res) => {
   try {
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    if (tennisCollectRunner.isLiveCollectAvailable()) {
+      const started = tennisCollectRunner.startLiveCollect();
+      if (!started.ok) {
+        return res.status(started.status || 409).json({
+          ok: false,
+          error: started.error || 'live collect failed',
+          last: started.last,
+        });
+      }
+      scheduleRedisRefreshAfterCollect();
+      return res.status(202).json({
+        ok: true,
+        message: 'collect_live.py started',
+        last: started.last,
+      });
+    }
     sendProxy(res, await monitorFetch('/live/collect', { method: 'POST' }));
     scheduleRedisRefreshAfterCollect();
   } catch (err) {
@@ -242,37 +296,22 @@ router.post('/live/collect', async (_req, res) => {
 
 router.get('/schedule', async (_req, res) => {
   try {
-    sendProxy(res, await monitorFetch('/schedule'));
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    res.json(tennisCollectRunner.schedulePayload());
   } catch (err) {
     console.error('[tennis-monitor/schedule]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    res.status(500).json({ ok: false, error: err.message || 'schedule failed' });
   }
 });
 
 router.post('/schedule', async (req, res) => {
   try {
-    const url = new URL('/schedule', `${MONITOR_BASE}/`);
-    const proxyRes = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${MONITOR_TOKEN}`,
-      },
-      body: JSON.stringify(req.body || {}),
-      signal: AbortSignal.timeout(MONITOR_FETCH_TIMEOUT_MS),
-    });
-    const text = await proxyRes.text();
-    let body;
-    try {
-      body = JSON.parse(text);
-    } catch {
-      body = { ok: false, error: text || `HTTP ${proxyRes.status}` };
-    }
-    res.status(proxyRes.status).json(body);
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    const body = tennisCollectRunner.updateSchedule(req.body || {});
+    res.json(body);
   } catch (err) {
     console.error('[tennis-monitor/schedule]', err);
-    res.status(502).json({ ok: false, error: friendlyMonitorError(err) });
+    res.status(err.status || 500).json({ ok: false, error: err.message || 'update schedule failed' });
   }
 });
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""进行中采集：IPWO → live → Polymarket → 排名/赔率 → Redis
+"""进行中采集：IPWO → live Top100/tier → Polymarket → 排名/赔率 → Redis
 
 写入（独立，不合并 collect 全量包）:
   Redis  tennis:bundle:inplay       （collect_live 专用）
@@ -7,10 +7,10 @@
   标识   dataSource=collect_live · collectScript=collect_live
 
 用法:
-  python collect_live.py                      # 默认：进行中前 20 场（无 tier/Top100）
-  python collect_live.py --limit=10          # 指定场数
-  python collect_live.py --filter=true        # tier + Top100 过滤
-  python collect_live.py --filter=true --all  # tier，不过滤 Top100
+  python collect_live.py                       # 默认：进行中 · GS/500/1000 · Top100
+  python collect_live.py --filter=true --all   # tier，不过滤 Top100
+  python collect_live.py --filter=false        # 仅进行中前 N 场（无 tier/Top100）
+  python collect_live.py --filter=false --limit=10
 """
 from __future__ import annotations
 
@@ -38,13 +38,13 @@ def _parse_bool(value: str) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="网球进行中采集")
+    parser = argparse.ArgumentParser(description="网球进行中采集（默认 Top100 + 进行中 tier）")
     parser.add_argument(
         "--filter",
         type=_parse_bool,
-        default=False,
+        default=True,
         metavar="BOOL",
-        help="false=仅进行中前N场；true=tier+Top100（可加 --all 跳过 Top100）",
+        help="true=进行中·tier·Top100（默认）；false=仅进行中前N场；--all 可跳过 Top100",
     )
     parser.add_argument(
         "--limit",

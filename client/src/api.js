@@ -347,6 +347,15 @@ export async function triggerTennisMonitorLiveCollect() {
   return data
 }
 
+/** 盘中采集包（collect_live → tennis:bundle:inplay） */
+export async function fetchTennisInplayToday() {
+  const { data } = await api.get('/tennis-inplay/today', {
+    params: { _: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  })
+  return data
+}
+
 export async function fetchTennisMonitorSchedule() {
   const { data } = await api.get('/admin/tennis-monitor/schedule')
   return data
@@ -456,6 +465,11 @@ export async function placeTennisLiveBatchTrade(payload) {
 
 export async function placeTennisInplayBatchTrade(payload) {
   const { data } = await api.post('/tennis-inplay/trade/batch', payload)
+  return data
+}
+
+export async function placeTennisInplaySell(payload) {
+  const { data } = await api.post('/tennis-inplay/trade/sell', payload)
   return data
 }
 

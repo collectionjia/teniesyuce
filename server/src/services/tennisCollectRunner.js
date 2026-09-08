@@ -22,24 +22,106 @@ function resolveMonitorDir() {
 
 const MONITOR_DIR = resolveMonitorDir();
 const SCHEDULE_FILE = path.join(MONITOR_DIR, 'config', 'schedule.json');
-
-function isCollectEnabled() {
-  try {
-    if (!fs.existsSync(SCHEDULE_FILE)) return true;
-    const data = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
-    return data.collect_enabled !== false;
-  } catch {
-    return true;
-  }
-}
 const COLLECT_SCRIPT = path.join(MONITOR_DIR, 'collect.py');
+const COLLECT_LIVE_SCRIPT = path.join(MONITOR_DIR, 'collect_live.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
+
+const ALLOWED_COLLECT_INTERVALS = [0, 2, 4, 6, 12];
+const ALLOWED_LIVE_POLL_INTERVALS = [0, 60, 120, 300];
 
 let running = false;
 let child = null;
 let last = { status: 'idle' };
 let logBuffer = [];
+
+let liveRunning = false;
+let liveChild = null;
+let liveLast = { status: 'idle', events: [] };
+
+function isCollectEnabled() {
+  try {
+    return readScheduleConfig().collect_enabled !== false;
+  } catch {
+    return true;
+  }
+}
+
+function readScheduleConfig() {
+  const defaults = {
+    interval_hours: 6,
+    collect_enabled: true,
+    live_poll_interval_sec: 300,
+  };
+  try {
+    if (!fs.existsSync(SCHEDULE_FILE)) return { ...defaults };
+    const data = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
+    let hours = Number(data.interval_hours ?? defaults.interval_hours);
+    if (!ALLOWED_COLLECT_INTERVALS.includes(hours)) hours = defaults.interval_hours;
+    let liveSec = Number(data.live_poll_interval_sec ?? defaults.live_poll_interval_sec);
+    if (!ALLOWED_LIVE_POLL_INTERVALS.includes(liveSec)) liveSec = defaults.live_poll_interval_sec;
+    const enabled = data.collect_enabled;
+    return {
+      interval_hours: hours,
+      collect_enabled: enabled === undefined ? defaults.collect_enabled : !!enabled,
+      live_poll_interval_sec: liveSec,
+      collect_target: data.collect_target || 'top100',
+    };
+  } catch {
+    return { ...defaults };
+  }
+}
+
+function writeScheduleConfig(cfg) {
+  fs.mkdirSync(path.dirname(SCHEDULE_FILE), { recursive: true });
+  fs.writeFileSync(SCHEDULE_FILE, `${JSON.stringify(cfg, null, 2)}\n`, 'utf8');
+}
+
+function schedulePayload() {
+  const cfg = readScheduleConfig();
+  const hours = cfg.interval_hours;
+  const liveSec = cfg.live_poll_interval_sec;
+  const labels = { 0: '关闭', 60: '1 分钟', 120: '2 分钟', 300: '5 分钟' };
+  return {
+    ok: true,
+    interval_hours: hours,
+    collect_enabled: cfg.collect_enabled !== false,
+    live_poll_interval_sec: liveSec,
+    allowed_intervals: ALLOWED_COLLECT_INTERVALS,
+    allowed_live_poll_intervals: ALLOWED_LIVE_POLL_INTERVALS,
+    cron: cfg.collect_enabled && hours > 0 ? `0 */${hours} * * *` : null,
+    note: 'Docker 无 9004 时由 server 读写 config/schedule.json（定时需另配 cron/宿主机）',
+    live_poll_label: labels[liveSec] || `${liveSec} 秒`,
+    source: 'local',
+  };
+}
+
+function updateSchedule(body = {}) {
+  const cfg = readScheduleConfig();
+  if (body.interval_hours != null) {
+    const hours = Number(body.interval_hours);
+    if (!ALLOWED_COLLECT_INTERVALS.includes(hours)) {
+      const err = new Error(`interval_hours must be one of ${ALLOWED_COLLECT_INTERVALS.join(',')}`);
+      err.status = 400;
+      throw err;
+    }
+    cfg.interval_hours = hours;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'collect_enabled')) {
+    cfg.collect_enabled = !!body.collect_enabled;
+  }
+  if (body.live_poll_interval_sec != null) {
+    const liveSec = Number(body.live_poll_interval_sec);
+    if (!ALLOWED_LIVE_POLL_INTERVALS.includes(liveSec)) {
+      const err = new Error(`live_poll_interval_sec must be one of ${ALLOWED_LIVE_POLL_INTERVALS.join(',')}`);
+      err.status = 400;
+      throw err;
+    }
+    cfg.live_poll_interval_sec = liveSec;
+  }
+  writeScheduleConfig(cfg);
+  return schedulePayload();
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -248,6 +330,92 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
   return { ok: true, message: 'collect.py started', last: { ...last } };
 }
 
+function startLiveCollect() {
+  if (liveRunning) {
+    return { ok: false, status: 409, error: 'live collect already running', last: { ...liveLast } };
+  }
+  if (!isCollectEnabled()) {
+    return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last: { ...liveLast } };
+  }
+  if (!fs.existsSync(COLLECT_LIVE_SCRIPT)) {
+    return { ok: false, status: 500, error: `collect_live.py not found: ${COLLECT_LIVE_SCRIPT}` };
+  }
+
+  liveRunning = true;
+  const startedAt = nowIso();
+  liveLast = {
+    status: 'running',
+    trigger: 'admin-collect_live.py',
+    started_at: startedAt,
+    finished_at: null,
+    error: null,
+    events: [],
+    live_count: null,
+  };
+  pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=admin ===`);
+
+  const bin = pythonBin();
+  const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
+  console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')}`);
+  liveChild = spawn(bin, liveArgs, {
+    cwd: MONITOR_DIR,
+    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  liveChild.stdout.on('data', (d) => pushLog(d));
+  liveChild.stderr.on('data', (d) => pushLog(d));
+
+  liveChild.on('error', (err) => {
+    liveRunning = false;
+    liveChild = null;
+    liveLast = {
+      ...liveLast,
+      status: 'failed',
+      finished_at: nowIso(),
+      error: err.message || 'spawn failed',
+    };
+    appendLogFile(logBuffer);
+    console.error('[tennis/collect-live] spawn error:', err.message);
+  });
+
+  liveChild.on('close', (code) => {
+    liveRunning = false;
+    liveChild = null;
+    const finishedAt = nowIso();
+    const text = logBuffer.join('\n');
+    const emptyRun = /完成:\s*无进行中比赛|无符合条件的比赛/.test(text);
+    liveLast = {
+      status: code === 0 ? 'success' : 'failed',
+      trigger: 'admin-collect_live.py',
+      started_at: liveLast.started_at,
+      finished_at: finishedAt,
+      exit_code: code,
+      error: code === 0 ? null : (friendlyCollectError(code, text) || `collect_live.py 退出码 ${code}`),
+      events: [],
+      live_count: emptyRun ? 0 : null,
+      fetched_at: finishedAt,
+    };
+    appendLogFile(logBuffer);
+    try {
+      const tennisRedis = require('./tennisRedis');
+      tennisRedis.invalidateMemCache();
+    } catch { /* ignore */ }
+  });
+
+  return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
+}
+
+function livePayload() {
+  return {
+    ok: true,
+    running: liveRunning,
+    interval_sec: readScheduleConfig().live_poll_interval_sec,
+    last: { ...liveLast },
+    source: 'local',
+  };
+}
+
 function statusPayload() {
   const meta = readLatestBundleMeta();
   return {
@@ -281,11 +449,18 @@ function recentLogs(maxLines = 120) {
 
 module.exports = {
   startCollect,
+  startLiveCollect,
   statusPayload,
+  livePayload,
+  schedulePayload,
+  updateSchedule,
+  readScheduleConfig,
   recentLogs,
   isRunning: () => running,
+  isLiveRunning: () => liveRunning,
   getLast: () => ({ ...last }),
   isCollectEnabled,
   isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
+  isLiveCollectAvailable: () => fs.existsSync(COLLECT_LIVE_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

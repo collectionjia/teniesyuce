@@ -67,7 +67,11 @@ async function addTradeRecord(userId, row = {}) {
   await ensureTradeRecordsTable();
   const product = String(row.product || '').toLowerCase();
   const action = String(row.action || '').toLowerCase();
-  if (!userId || !['btc', 'tennis', 'tennis-range', 'tennis-live', 'tennis-new'].includes(product) || !['buy', 'sell'].includes(action)) {
+  if (
+    !userId
+    || !['btc', 'tennis', 'tennis-range', 'tennis-live', 'tennis-inplay', 'tennis-new'].includes(product)
+    || !['buy', 'sell'].includes(action)
+  ) {
     return null;
   }
   const [ret] = await pool.query(

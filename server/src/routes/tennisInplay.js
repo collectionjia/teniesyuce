@@ -113,4 +113,20 @@ router.post('/trade/batch', auth(['admin']), requireWallet, async (req, res) => 
   }
 });
 
+router.post('/trade/sell', auth(['admin']), requireWallet, async (req, res) => {
+  try {
+    const { eventId, side, shares } = req.body || {};
+    const result = await tennisTrade.placeSellOrder(req.user.id, {
+      eventId,
+      side,
+      shares,
+      product: 'tennis-inplay',
+    });
+    res.json(result);
+  } catch (e) {
+    console.error('[tennis-inplay/trade/sell]', e);
+    res.status(400).json({ ok: false, error: e.message || '止损平仓失败' });
+  }
+});
+
 module.exports = router;

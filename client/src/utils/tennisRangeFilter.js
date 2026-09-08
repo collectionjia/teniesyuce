@@ -73,3 +73,54 @@ export function tierLabel(strongRank) {
 
 export const RANGE_RULES_TEXT = '任一方 Top100 · Top10差≥10 / Top20差≥20 / Top50差≥50 / Top100差≥100'
 export const NEW_POOL_RULES_TEXT = '排名前50运动员赛事 · 任一方现排名在 Top N 内 · 可选 Top20 / Top50'
+
+/** 盘中列表：按强者现排名分档要求现排差 */
+export function requiredMinGapInplay(strongRank) {
+  const r = Number(strongRank)
+  if (!Number.isFinite(r) || r <= 0) return Infinity
+  if (r <= 10) return 20
+  if (r <= 20) return 30
+  if (r <= 50) return 50
+  if (r <= 100) return 150
+  return Infinity
+}
+
+export function matchInplayRankMetrics(m, rankingsByPlayer = {}) {
+  const home = m?.homePlayer || { name: m?.home, ranking: null }
+  const away = m?.awayPlayer || { name: m?.away, ranking: null }
+  const homeR = currentRankOf(home, rankingsByPlayer)
+  const awayR = currentRankOf(away, rankingsByPlayer)
+  if (homeR == null || awayR == null) {
+    return { gap: -1, strongRank: null, homeR, awayR, ready: false, minGap: Infinity }
+  }
+  const gap = Math.abs(homeR - awayR)
+  const strongRank = Math.min(homeR, awayR)
+  return {
+    gap,
+    strongRank,
+    homeR,
+    awayR,
+    ready: true,
+    minGap: requiredMinGapInplay(strongRank),
+  }
+}
+
+export function passesInplayRankFilter(m, rankingsByPlayer = {}) {
+  const metrics = matchInplayRankMetrics(m, rankingsByPlayer)
+  if (!metrics.ready) return false
+  if (metrics.strongRank == null || metrics.strongRank > 100) return false
+  return metrics.gap >= metrics.minGap
+}
+
+export function inplayTierLabel(strongRank) {
+  const r = Number(strongRank)
+  if (!Number.isFinite(r)) return '—'
+  if (r <= 10) return 'Top10·差≥20'
+  if (r <= 20) return 'Top20·差≥30'
+  if (r <= 50) return 'Top50·差≥50'
+  if (r <= 100) return 'Top100·差≥150'
+  return '—'
+}
+
+export const INPLAY_RANK_RULES_TEXT =
+  '强者现排 Top10差≥20 / Top20差≥30 / Top50差≥50 / Top100差≥150'

@@ -31,21 +31,29 @@ def log_collect_mysql_policy(label: str) -> str:
 
 
 def _load_db_env() -> None:
+    from tm.env import resolve_monitor_env_path
+
     candidates = [
+        resolve_monitor_env_path(),
         APP_DIR / "monitor.env",
         ROOT_DIR / "server" / ".env",
     ]
+    seen: set[str] = set()
     for path in candidates:
+        key = str(path.resolve()) if path.exists() else str(path)
+        if key in seen:
+            continue
+        seen.add(key)
         if not path.exists():
             continue
         for raw in path.read_text(encoding="utf-8").splitlines():
             line = raw.strip()
             if not line or line.startswith("#") or "=" not in line:
                 continue
-            key, val = line.split("=", 1)
-            key = key.strip()
-            if key.startswith("DB_") and key not in os.environ:
-                os.environ[key] = val.strip().strip("\r").strip('"').strip("'")
+            k, val = line.split("=", 1)
+            k = k.strip()
+            if k.startswith("DB_") and k not in os.environ:
+                os.environ[k] = val.strip().strip("\r").strip('"').strip("'")
 
 
 def mysql_enabled() -> bool:

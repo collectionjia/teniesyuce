@@ -30,7 +30,15 @@ def main() -> int:
         result = run_tier_collect(match_date=match_date, top100=top100)
     except Exception as exc:
         msg = str(exc)
-        if "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
+        low = msg.lower()
+        if "challenge" in low and "403" in low:
+            print(
+                "采集失败: Sofascore 返回 403 challenge（机房 IP 被拦）。"
+                "请在 scripts/tennis-monitor/monitor.env.test（测试）或 monitor.env.prod（生产）"
+                "配置可用的 IPWO 住宅代理后重试（勿提交 Git）。"
+            )
+            print(f"详情: {msg}")
+        elif "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
             print(f"采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度，或临时清空 IPWO 配置改直连。")
             print(f"详情: {msg}")
         else:
