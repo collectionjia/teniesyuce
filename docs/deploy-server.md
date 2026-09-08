@@ -56,7 +56,7 @@ bash scripts/deploy-server.sh --logs server
 | 文件 | 说明 |
 |------|------|
 | `docker-compose.core.yml` | redis + btc-board + server + web |
-| `deploy/test.env` | 测试：项目名 `yuce-test`，默认 web `9001` |
+| `deploy/test.env` | 测试：项目名 `yuce-test`，默认 web `9018` |
 | `deploy/prod.env` | 生产：项目名 `yuce-prod`，默认 web `80` |
 
 ```bash
@@ -65,7 +65,7 @@ bash scripts/docker-deploy.sh test up -d --build
 bash scripts/docker-deploy.sh prod up -d --build
 
 bash scripts/docker-deploy.sh test ps
-curl -s http://127.0.0.1:9001/api/health   # 测试默认
+curl -s http://127.0.0.1:9018/api/health   # 测试默认
 curl -s http://127.0.0.1/api/health        # 生产默认 80
 ```
 
@@ -108,6 +108,6 @@ docker compose -f docker-compose.core.yml up -d --build
 ## 7. 验收
 
 ```bash
-curl -s http://127.0.0.1:9001/api/health
+curl -s http://127.0.0.1:9018/api/health
 docker compose -f docker-compose.core.yml ps
 ```
