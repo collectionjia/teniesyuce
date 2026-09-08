@@ -111,6 +111,18 @@ function parseTotalEvents(text) {
   return m ? Number(m[1]) : null;
 }
 
+function friendlyCollectError(code, text) {
+  const t = String(text || '');
+  if (/CONNECT tunnel failed|curl:\s*\(7\)/i.test(t) || /代理被拒绝/i.test(t)) {
+    return 'IPWO 代理被拒绝 (403)，请检查 monitor.env 代理账号/额度，或临时改直连';
+  }
+  const failLine = [...t.split(/\r?\n/)].reverse().find((l) => /采集失败:/.test(l));
+  if (failLine) return failLine.replace(/^采集失败:\s*/, '').slice(0, 200);
+  const errLine = [...t.split(/\r?\n/)].reverse().find((l) => /Error:|Traceback|HTTP \d{3}/.test(l));
+  if (errLine) return errLine.slice(0, 200);
+  return `collect.py 退出码 ${code}`;
+}
+
 function elapsedSecFromTiming(timing) {
   const total = timing?.total;
   return typeof total === 'number' && Number.isFinite(total) ? Math.round(total * 10) / 10 : null;
@@ -147,11 +159,11 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
   if (!top100) args.push('--all');
 
   const bin = pythonBin();
-  console.log(`[tennis/collect] spawn ${bin} ${args.join(' ')}`);
+  console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')}`);
 
-  child = spawn(bin, args, {
+  child = spawn(bin, ['-u', ...args], {
     cwd: MONITOR_DIR,
-    env: { ...process.env },
+    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
@@ -180,11 +192,12 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
     const text = logBuffer.join('\n');
     const meta = readLatestBundleMeta();
     const parsedEvents = parseTotalEvents(text);
-    const totalEvents = parsedEvents ?? meta?.events ?? 0;
+    const emptyRun = /完成:\s*无(进行中)?比赛/.test(text);
+    const totalEvents = parsedEvents ?? (emptyRun ? 0 : (meta?.events ?? null));
     const requests = meta?.requests || null;
     const elapsed = elapsedSecFromTiming(meta?.timing);
 
-    if (code === 0 && totalEvents > 0) {
+    if (code === 0 && (totalEvents == null || totalEvents > 0)) {
       last = {
         status: 'success',
         trigger: 'admin-collect.py',
@@ -192,24 +205,26 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
         finished_at: finishedAt,
         exit_code: code,
         error: null,
-        total_events: totalEvents,
+        total_events: totalEvents ?? meta?.events ?? 0,
         requests,
         elapsed_sec: elapsed,
         bundle_file: meta?.bundle_file || null,
       };
-      console.log(`[tennis/collect] done events=${totalEvents} elapsed=${elapsed ?? '-'}s`);
-    } else if (code === 0) {
+      console.log(`[tennis/collect] done events=${last.total_events} elapsed=${elapsed ?? '-'}s`);
+    } else if (code === 0 || emptyRun) {
       last = {
-        status: 'failed',
+        status: 'success',
         trigger: 'admin-collect.py',
         started_at: last.started_at,
         finished_at: finishedAt,
-        exit_code: code,
-        error: '无符合条件的比赛',
+        exit_code: code ?? 0,
+        error: null,
         total_events: 0,
         requests,
         elapsed_sec: elapsed,
+        message: '无符合条件的比赛',
       };
+      console.log('[tennis/collect] done events=0 (empty)');
     } else {
       last = {
         status: 'failed',
@@ -217,13 +232,17 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
         started_at: last.started_at,
         finished_at: finishedAt,
         exit_code: code,
-        error: `collect.py 退出码 ${code}`,
-        total_events: totalEvents || null,
+        error: friendlyCollectError(code, text),
+        total_events: totalEvents,
         requests,
         elapsed_sec: elapsed,
       };
     }
     appendLogFile(logBuffer);
+    try {
+      const tennisRedis = require('./tennisRedis');
+      tennisRedis.invalidateMemCache();
+    } catch { /* ignore */ }
   });
 
   return { ok: true, message: 'collect.py started', last: { ...last } };

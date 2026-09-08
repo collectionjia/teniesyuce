@@ -76,7 +76,9 @@ def main() -> int:
         total = timing.get("total")
         if total is not None:
             print(f"完成: 无进行中比赛 · 总耗时 {format_duration(total)}")
-        return 1
+        else:
+            print("完成: 无进行中比赛")
+        return 0
     req = result.get("requests") or {}
     total = timing.get("total")
     total_part = f"总耗时 {format_duration(total)}" if total is not None else ""

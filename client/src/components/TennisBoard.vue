@@ -36,8 +36,8 @@ const loading = ref(true)
 const error = ref('')
 const filter = ref('Not started') // all | Not started | liveish | ended
 const tour = ref('all') // all | ATP | WTA
-const gapMin = ref('50') // all | 50 | 70 | 90
-const diffMax = ref('0') // all | 0 | -30 | -50 | -70
+const gapMin = ref('50') // all | 50 | 70 | 90 · 现排名差下限（弱−强，如 121−2=119）
+const diffMax = ref('0') // all | 0 | -30 | -50 | -70 · 历史最高排名差上限
 const strongRankMax = ref('20') // all | 10 | 20 | 50 | 100
 const pmFilter = ref('all') // all | yes | no — 是否只看有 Polymarket 外链的场次
 const topPoolMax = ref('50') // 20 | 50（新网球列表 · Top50 池内筛选）
@@ -184,16 +184,20 @@ function shortName(name) {
   return parts.length <= 1 ? parts[0] : parts[parts.length - 1]
 }
 
-function rankDetailOf(player) {
+function rankDetailOf(player, match = null) {
   const id = player?.id ?? player?.teamId
   const map = data.value?.rankingsByPlayer || {}
   const fromMap = id != null ? map[String(id)] || map[id] : null
+  const ev = match || detailMatch.value
+  const fromEvent = id != null && ev?.rankings
+    ? (ev.rankings[String(id)] || ev.rankings[id] || null)
+    : null
   return {
-    current: fromMap?.current ?? player?.ranking ?? player?.currentRank ?? null,
-    previous: fromMap?.previous ?? null,
-    best: fromMap?.best ?? null,
-    live: fromMap?.live ?? null,
-    utr: fromMap?.utr ?? null,
+    current: fromMap?.current ?? fromEvent?.current ?? player?.ranking ?? player?.currentRank ?? player?.rank ?? null,
+    previous: fromMap?.previous ?? fromEvent?.previous ?? player?.previousRank ?? null,
+    best: fromMap?.best ?? fromEvent?.best ?? player?.bestRank ?? player?.best ?? null,
+    live: fromMap?.live ?? fromEvent?.live ?? player?.liveRank ?? null,
+    utr: fromMap?.utr ?? fromEvent?.utr ?? player?.utr ?? null,
   }
 }
 
@@ -214,7 +218,12 @@ function playerNameWithAge(player, eloSide) {
     if (ages.every((a) => Number.isFinite(a) && a > 0)) return `${name} (${ages.join('/')})`
   }
   let age = null
-  if (player?.birthYear != null && player.birthYear !== '') age = year - Number(player.birthYear)
+  const pid = player?.id ?? player?.teamId
+  const fromMap = pid != null
+    ? (data.value?.birthYearByPlayer?.[String(pid)] ?? data.value?.birthYearByPlayer?.[pid])
+    : null
+  const birthYear = player?.birthYear ?? fromMap
+  if (birthYear != null && birthYear !== '') age = year - Number(birthYear)
   else if (player?.age != null && player.age !== '') age = Math.floor(Number(player.age))
   else if (eloSide?.age != null && eloSide.age !== '') age = Math.floor(Number(eloSide.age))
   if (!Number.isFinite(age) || age <= 0) return `${name} (无)`
@@ -229,14 +238,18 @@ function matchMetrics(m) {
   if (homeR == null || awayR == null) {
     return { gap: -1, rankDiff: 0, ready: false, hasRankDiff: false, strongRank: null }
   }
-  const gap = Math.abs(homeR - awayR)
+  // 现排名差 = 弱−强（数字大−数字小，如 121−2=119）；排差仍为高−低（如 2−121=−119）
+  const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const strongNow = homeStronger ? homeR : awayR
   const homeDetail = rankDetailOf(home)
   const awayDetail = rankDetailOf(away)
-  const weakBest = homeStronger ? awayDetail.best : homeDetail.best
-  const hasRankDiff = weakBest != null
-  const rankDiff = hasRankDiff ? strongNow - Number(weakBest) : 0
+  const homeBest = homeDetail.best != null ? Number(homeDetail.best) : null
+  const awayBest = awayDetail.best != null ? Number(awayDetail.best) : null
+  const hasRankDiff = Number.isFinite(homeBest) && Number.isFinite(awayBest)
+  const rankDiff = hasRankDiff
+    ? Math.min(homeBest, awayBest) - Math.max(homeBest, awayBest)
+    : 0
   return { gap, rankDiff, ready: true, hasRankDiff, strongRank: strongNow }
 }
 
@@ -261,6 +274,7 @@ function matchPassesRank(m) {
   }
   const metrics = matchMetrics(m)
   if (gapMin.value !== 'all') {
+    // 现排名差 ≥ 阈值（弱−强）
     if (!metrics.ready || metrics.gap < Number(gapMin.value)) return false
   }
   if (diffMax.value !== 'all') {
@@ -623,7 +637,9 @@ const filterSummary = computed(() => {
   else if (pmFilter.value === 'no') parts.push('无PM')
   if (classicRankFiltersOn.value) {
     if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
-    if (diffMax.value !== 'all') parts.push(`排位差≤${diffMax.value}`)
+    if (diffMax.value !== 'all') {
+      parts.push(diffMax.value === '0' ? '排差<0' : `排差≤${diffMax.value}`)
+    }
     if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
   } else if (props.isMember) {
     if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
@@ -1017,16 +1033,21 @@ function gapInfo(m) {
   const away = m.awayPlayer || { name: m.away }
   const homeR = currentRankOf(home)
   const awayR = currentRankOf(away)
-  const homeDetail = rankDetailOf(home)
-  const awayDetail = rankDetailOf(away)
   if (homeR == null || awayR == null) return { ready: false }
-  const gap = Math.abs(homeR - awayR)
+  // 现排名差 = 弱−强；历史最高排名差 = 高−低
+  const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const better = homeStronger ? shortName(home.name) : shortName(away.name)
   const strongNow = homeStronger ? homeR : awayR
-  const weakBest = homeStronger ? awayDetail.best : homeDetail.best
-  let rankDiff = null
-  if (weakBest != null) rankDiff = strongNow - Number(weakBest)
+  const weakNow = homeStronger ? awayR : homeR
+  const homeDetail = rankDetailOf(home, m)
+  const awayDetail = rankDetailOf(away, m)
+  const homeBest = homeDetail.best != null ? Number(homeDetail.best) : null
+  const awayBest = awayDetail.best != null ? Number(awayDetail.best) : null
+  const hasBest = Number.isFinite(homeBest) && Number.isFinite(awayBest)
+  const bestHigh = hasBest ? Math.min(homeBest, awayBest) : null
+  const bestLow = hasBest ? Math.max(homeBest, awayBest) : null
+  const rankDiff = hasBest ? bestHigh - bestLow : null
   return {
     ready: true,
     gap,
@@ -1034,7 +1055,11 @@ function gapInfo(m) {
     awayR,
     better,
     strongNow,
-    weakBest,
+    weakNow,
+    homeBest,
+    awayBest,
+    bestHigh,
+    bestLow,
     rankDiff,
   }
 }
@@ -1229,13 +1254,12 @@ function gapInfo(m) {
         </div>
         <div class="row-main">
           <div v-if="isMatchLive(m)" class="matchup is-live-board">
-            <span class="vs-pillar">VS</span>
-            <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
-              <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
-              <span class="player-name">{{ matchHomeName(m) }}</span>
-              <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
-            </span>
-            <div class="live-score-block">
+            <div class="matchup-line">
+              <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
+                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
+                <span class="player-name">{{ matchHomeName(m) }}</span>
+                <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+              </span>
               <div class="live-set-scores" aria-label="主队盘分">
                 <span
                   v-for="(cell, idx) in liveSetCells(m, 'home')"
@@ -1245,6 +1269,14 @@ function gapInfo(m) {
                 >{{ cell.text }}</span>
                 <span v-if="livePointText(m, 'home')" class="live-point">{{ livePointText(m, 'home') }}</span>
               </div>
+            </div>
+            <span class="vs-row">VS</span>
+            <div class="matchup-line">
+              <span class="name live-player-bottom" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': true }">
+                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
+                <span class="player-name">{{ matchAwayName(m) }}</span>
+                <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+              </span>
               <div class="live-set-scores" aria-label="客队盘分">
                 <span
                   v-for="(cell, idx) in liveSetCells(m, 'away')"
@@ -1255,22 +1287,17 @@ function gapInfo(m) {
                 <span v-if="livePointText(m, 'away')" class="live-point">{{ livePointText(m, 'away') }}</span>
               </div>
             </div>
-            <span class="name live-player-bottom" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': true }">
-              <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
-              <span class="player-name">{{ matchAwayName(m) }}</span>
-              <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
-            </span>
           </div>
           <div v-else class="matchup is-stacked">
-            <div class="player-row">
+            <div class="matchup-line">
               <span class="name" :class="{ pick: isMember && pickSide(m) === 'home' }">
                 <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
               </span>
             </div>
-            <span class="vs-text vs-mid">VS</span>
-            <div class="player-row">
+            <span class="vs-row">VS</span>
+            <div class="matchup-line">
               <span class="name" :class="{ pick: isMember && pickSide(m) === 'away' }">
                 <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
@@ -1339,10 +1366,10 @@ function gapInfo(m) {
                 </div>
                 <div class="duel-name">{{ playerNameWithAge(detailMatch.homePlayer || { name: detailMatch.home }, eloOf(detailMatch.id)?.home) }}</div>
                 <div class="duel-sub">
-                  周{{ rankText(rankDetailOf(detailMatch.homePlayer || {}).previous) }}
-                  · 高{{ rankText(rankDetailOf(detailMatch.homePlayer || {}).best) }}
-                  · L{{ rankText(rankDetailOf(detailMatch.homePlayer || {}).live) }}
-                  · U{{ rankText(rankDetailOf(detailMatch.homePlayer || {}).utr) }}
+                  周{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).previous) }}
+                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best) }}</span>
+                  · L{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).live) }}
+                  · U{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).utr) }}
                 </div>
               </div>
               <div class="duel-vs">VS</div>
@@ -1353,10 +1380,10 @@ function gapInfo(m) {
                 </div>
                 <div class="duel-name">{{ playerNameWithAge(detailMatch.awayPlayer || { name: detailMatch.away }, eloOf(detailMatch.id)?.away) }}</div>
                 <div class="duel-sub">
-                  周{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}).previous) }}
-                  · 高{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}).best) }}
-                  · L{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}).live) }}
-                  · U{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}).utr) }}
+                  周{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).previous) }}
+                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best) }}</span>
+                  · L{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).live) }}
+                  · U{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).utr) }}
                 </div>
               </div>
             </div>
@@ -1370,24 +1397,24 @@ function gapInfo(m) {
                 </div>
                 <template v-else>
                   <div class="kv">
-                    <span class="k">现差</span>
-                    <span class="v warn">{{ gapInfo(detailMatch).gap }}</span>
-                    <span class="s">{{ rankText(gapInfo(detailMatch).homeR) }}/{{ rankText(gapInfo(detailMatch).awayR) }} · {{ gapInfo(detailMatch).better }}高</span>
+                    <span class="k">现排名差</span>
+                    <span class="v rank-curr">{{ gapInfo(detailMatch).gap }}</span>
+                    <span class="s">{{ rankText(gapInfo(detailMatch).weakNow) }}−{{ rankText(gapInfo(detailMatch).strongNow) }} · {{ gapInfo(detailMatch).better }}高</span>
                   </div>
                   <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
-                    <span class="k">排差</span>
-                    <span class="v warn">{{ gapInfo(detailMatch).rankDiff > 0 ? '+' : '' }}{{ gapInfo(detailMatch).rankDiff }}</span>
-                    <span class="s">强{{ rankText(gapInfo(detailMatch).strongNow) }}−弱高{{ rankText(gapInfo(detailMatch).weakBest) }}</span>
+                    <span class="k">历史最高排名差</span>
+                    <span class="v rank-best">{{ gapInfo(detailMatch).rankDiff }}</span>
+                    <span class="s">{{ rankText(gapInfo(detailMatch).bestHigh) }}−{{ rankText(gapInfo(detailMatch).bestLow) }}</span>
                   </div>
                   <div class="kv" v-else>
-                    <span class="k">排差</span>
+                    <span class="k">历史最高排名差</span>
                     <span class="v muted">—</span>
                     <span class="s">缺最高排名</span>
                   </div>
                 </template>
               </template>
               <div class="kv" v-else>
-                <span class="k">现差</span>
+                <span class="k">现排名差</span>
                 <span class="v muted">—</span>
                 <span class="s">暂无现排名</span>
               </div>
@@ -1923,62 +1950,53 @@ function gapInfo(m) {
   min-width: 0;
   flex: 1;
 }
-.matchup.is-live-board {
-  display: grid;
-  grid-template-columns: auto auto;
-  column-gap: 6px;
-  row-gap: 1px;
-  align-items: center;
-  justify-content: start;
+.matchup.is-live-board,
+.matchup.is-stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
   flex: 1;
   min-width: 0;
 }
-.vs-pillar {
-  grid-column: 1;
-  grid-row: 2;
-  justify-self: start;
-  align-self: center;
+.matchup-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.matchup.is-stacked .matchup-line {
+  justify-content: flex-start;
+}
+.vs-row {
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.1;
+  padding: 1px 0;
+  flex-shrink: 0;
+}
+.matchup.is-live-board .name {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+  justify-content: flex-start;
   padding: 0;
   margin: 0;
 }
-.matchup.is-live-board .live-player-top {
-  grid-column: 1;
-  grid-row: 1;
-  justify-self: start;
-}
-.matchup.is-live-board .live-score-block {
-  grid-column: 2;
-  grid-row: 1 / 4;
-  align-self: center;
-  justify-self: start;
-}
+.matchup.is-live-board .live-player-top,
 .matchup.is-live-board .live-player-bottom {
-  grid-column: 1;
-  grid-row: 3;
-  justify-self: start;
-}
-.live-score-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-.live-line-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+  width: auto;
+  max-width: 100%;
 }
 .live-set-scores {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 5px;
+  justify-content: flex-end;
+  gap: 6px;
   padding: 0 2px;
+  flex-shrink: 0;
 }
 .live-set-scores .set-cell {
   font-variant-numeric: tabular-nums;
@@ -2010,29 +2028,6 @@ function gapInfo(m) {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.matchup.is-live-board .name {
-  min-width: 0;
-  text-align: left;
-  justify-content: flex-start;
-  padding: 0;
-  margin: 0;
-}
-.matchup.is-live-board .live-player-top,
-.matchup.is-live-board .live-player-bottom {
-  width: auto;
-  max-width: 100%;
-}
-.matchup.is-stacked {
-  flex-direction: column;
-  align-items: stretch;
-  flex-wrap: nowrap;
-  gap: 2px;
-}
-.player-row {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
 .matchup.is-stacked .name {
   min-width: 0;
   flex-wrap: wrap;
@@ -2040,10 +2035,6 @@ function gapInfo(m) {
 }
 .matchup.is-stacked .player-name {
   min-width: 0;
-}
-.matchup.is-stacked .vs-mid {
-  align-self: center;
-  margin: 1px 0;
 }
 .matchup.is-live .player-row.live-line {
   display: flex;
@@ -2254,7 +2245,7 @@ function gapInfo(m) {
   display: flex; align-items: center; justify-content: space-between; gap: 4px;
 }
 .duel-rank {
-  font-size: 0.82rem; font-weight: 800; color: var(--primary);
+  font-size: 0.82rem; font-weight: 800; color: #2563eb;
   font-variant-numeric: tabular-nums;
 }
 .duel-score {
@@ -2271,6 +2262,10 @@ function gapInfo(m) {
 .duel-sub {
   margin-top: 3px;
   font-size: 0.68rem; color: #64748b; line-height: 1.35;
+}
+.duel-sub .rank-best {
+  color: #dc2626;
+  font-weight: 700;
 }
 
 .kv-grid {
@@ -2299,6 +2294,8 @@ function gapInfo(m) {
   word-break: break-word;
 }
 .kv .v.warn { color: var(--warning); }
+.kv .v.rank-curr { color: #2563eb; }
+.kv .v.rank-best { color: #dc2626; }
 .kv .v.muted, .kv .s { color: #64748b; }
 .kv .s { font-size: 0.68rem; line-height: 1.35; font-weight: 600; }
 .kv-lines { display: grid; gap: 3px; margin-top: 1px; }

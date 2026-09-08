@@ -112,7 +112,7 @@ def _snapshot_from_events(
         key=lambda e: (e.get("startTimestamp") or 0, e.get("id") or 0),
     )
     live_count = sum(1 for ev in by_id.values() if _slimis_live(ev))
-    rankings = enrich_rankings_from_events(slim_events, board)
+    rankings = enrich_rankings_from_events(slim_events, board, client)
     attach_matches(board, slim_events)
     refresh_match_ranks(board, rankings)
     elapsed = round(time.time() - started, 2)

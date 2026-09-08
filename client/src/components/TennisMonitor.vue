@@ -232,7 +232,7 @@ const pagedLiveMatches = computed(() => {
   return liveMatches.value.slice(start, start + LIVE_PAGE_SIZE)
 })
 const logLines = computed(() => {
-  const raw = logs.value?.content || status.value?.latest_log_tail || ''
+  const raw = logs.value?.lines || logs.value?.content || status.value?.latest_log_tail || ''
   return String(raw).split('\n')
 })
 const logPageCount = computed(() => Math.max(1, Math.ceil(logLines.value.length / LOG_PAGE_SIZE)))
@@ -240,6 +240,14 @@ const pagedLogText = computed(() => {
   const start = (logPage.value - 1) * LOG_PAGE_SIZE
   return logLines.value.slice(start, start + LOG_PAGE_SIZE).join('\n') || '(暂无日志)'
 })
+
+watch(logPageCount, (pages) => {
+  if (logPage.value > pages) logPage.value = pages
+})
+
+function jumpLogToEnd() {
+  logPage.value = logPageCount.value
+}
 
 const statusLabel = computed(() => {
   if (running.value) return '采集中'
@@ -381,7 +389,8 @@ async function loadDataSource() {
 }
 
 async function loadLogs() {
-  logs.value = await api.fetchTennisMonitorLogs(150)
+  logs.value = await api.fetchTennisMonitorLogs(300)
+  jumpLogToEnd()
 }
 
 async function refreshAll({ silent = false } = {}) {
@@ -413,11 +422,17 @@ async function waitCollectDone() {
         error.value = formatMonitorError(err)
       } else if (lastRun.value?.status === 'success') {
         error.value = ''
-        showNotice(`Top100 采集完成：${lastRun.value?.total_events ?? bundle.value?.event_count ?? '—'} 场比赛`)
+        const n = lastRun.value?.total_events
+        if (n === 0 || lastRun.value?.message) {
+          showNotice(lastRun.value?.message || '采集完成：无符合条件的比赛')
+        } else {
+          showNotice(`Top100 采集完成：${n ?? bundle.value?.event_count ?? '—'} 场比赛`)
+        }
         api.refreshTennisCache().catch(() => {})
         api.refreshTennisNewCache().catch(() => {})
         await loadTop100(true)
         await loadDataSource()
+        await loadLogs()
       }
       return
     }
@@ -1046,7 +1061,7 @@ onUnmounted(() => {
       <div v-else class="panel">
         <div class="panel-h row">
           <span>采集日志</span>
-          <span class="muted truncate">{{ logs?.log_file || status?.latest_log || '—' }}</span>
+          <span class="muted truncate">{{ logs?.file || logs?.log_file || status?.latest_log || '—' }}</span>
         </div>
         <div class="pager">
           <span class="pager-info">第 {{ logPage }} / {{ logPageCount }} 页 · {{ logPageLabel() }}</span>

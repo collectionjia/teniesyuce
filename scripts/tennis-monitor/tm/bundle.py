@@ -107,11 +107,12 @@ def rankings_from_board(top20: dict[str, Any] | None) -> dict[str, dict[str, Any
             if pid is None:
                 continue
             rank = p.get("rank")
+            # 禁止用现排名冒充历史最高/上周：榜单接口常无 bestRanking
             out[str(pid)] = {
                 "current": rank,
-                "previous": p.get("previousRank") or p.get("previous") or rank,
-                "best": p.get("bestRank") or p.get("best") or rank,
-                "live": p.get("liveRank") or rank,
+                "previous": p.get("previousRank") if p.get("previousRank") is not None else p.get("previous"),
+                "best": p.get("bestRank") if p.get("bestRank") is not None else p.get("best"),
+                "live": p.get("liveRank"),
                 "utr": p.get("utr"),
             }
     return out
@@ -121,17 +122,127 @@ def _merge_event_ranks(rankings: dict[str, dict], ev: dict) -> None:
     for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
         pid = side.get("id")
         rank = side.get("rank")
-        if pid is None or rank is None:
+        if pid is None:
             continue
         key = str(pid)
         prev = rankings.get(key) or {}
         rankings[key] = {
-            "current": prev.get("current") or rank,
-            "previous": prev.get("previous") or rank,
-            "best": prev.get("best") or rank,
-            "live": prev.get("live") or rank,
+            "current": prev.get("current") if prev.get("current") is not None else rank,
+            "previous": prev.get("previous"),
+            "best": prev.get("best"),
+            "live": prev.get("live"),
             "utr": prev.get("utr"),
         }
+
+
+def _rank_rows_from_payload(data: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not data or not isinstance(data, dict):
+        return []
+    for key in ("rankings", "list", "playerRankings"):
+        rows = data.get(key)
+        if isinstance(rows, list):
+            return [r for r in rows if isinstance(r, dict)]
+    return []
+
+
+def parse_player_rank_detail(data: dict[str, Any] | None) -> dict[str, Any]:
+    """解析 team/{id}/rankings：取出官方现排 / 上周 / 历史最高。"""
+    out: dict[str, Any] = {"current": None, "previous": None, "best": None, "live": None, "utr": None}
+    for row in _rank_rows_from_payload(data):
+        cls = str(row.get("rankingClass") or "").lower()
+        typ = row.get("type")
+        ranking = _num(row.get("ranking") if row.get("ranking") is not None else row.get("rank"))
+        previous = _num(row.get("previousRanking") if row.get("previousRanking") is not None else row.get("previousRank"))
+        best = _num(row.get("bestRanking") if row.get("bestRanking") is not None else row.get("bestRank"))
+        # 历史最高：任意行只要带 bestRanking 就取（数字越小越好）
+        if best is not None and (out["best"] is None or best < out["best"]):
+            out["best"] = int(best) if best == int(best) else best
+        if cls == "utr" or typ in (34, 35):
+            if ranking is not None:
+                out["utr"] = ranking
+            continue
+        if cls in {"livetennis", "live"}:
+            if ranking is not None:
+                out["live"] = ranking
+            continue
+        if ranking is not None and out["current"] is None:
+            out["current"] = int(ranking) if ranking == int(ranking) else ranking
+        if previous is not None and out["previous"] is None:
+            out["previous"] = int(previous) if previous == int(previous) else previous
+    return out
+
+
+def fetch_player_rank_detail(client: SofascoreClient, player_id: int) -> dict[str, Any] | None:
+    for path in (f"team/{player_id}/rankings", f"player/{player_id}/rankings"):
+        try:
+            data = client._api_get(path, referer="https://www.sofascore.com/tennis")
+            parsed = parse_player_rank_detail(data)
+            if any(parsed.get(k) is not None for k in ("best", "current", "previous", "live", "utr")):
+                return parsed
+        except Exception:
+            continue
+    return None
+
+
+def fill_missing_historical_ranks(
+    client: SofascoreClient,
+    rankings: dict[str, dict[str, Any]],
+    events: list[dict],
+    *,
+    max_players: int | None = None,
+) -> int:
+    """对缺历史最高的球员补拉 team/{id}/rankings（榜单接口通常不含 bestRanking）。"""
+    import os
+
+    cap = max_players
+    if cap is None:
+        cap = int(os.environ.get("SOFA_BEST_RANK_ENRICH_MAX", "48"))
+    need: list[int] = []
+    seen: set[int] = set()
+    for ev in events:
+        for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
+            pid = side.get("id")
+            if pid is None:
+                continue
+            ipid = int(pid)
+            if ipid in seen:
+                continue
+            row = rankings.get(str(ipid)) or {}
+            if row.get("best") is not None:
+                continue
+            seen.add(ipid)
+            need.append(ipid)
+    filled = 0
+    for pid in need[: max(0, cap)]:
+        detail = fetch_player_rank_detail(client, pid)
+        if not detail:
+            continue
+        key = str(pid)
+        row = dict(rankings.get(key) or {})
+        for field in ("best", "previous", "current", "live", "utr"):
+            if row.get(field) is None and detail.get(field) is not None:
+                row[field] = detail[field]
+        rankings[key] = row
+        if detail.get("best") is not None:
+            filled += 1
+        time.sleep(0.25)
+    return filled
+
+
+def enrich_rankings_from_events(
+    events: list[dict],
+    board: dict[str, Any] | None,
+    client: SofascoreClient | None = None,
+) -> dict[str, dict[str, Any]]:
+    rankings = rankings_from_board(board)
+    for ev in events:
+        _merge_event_ranks(rankings, ev)
+    if client is not None and events:
+        filled = fill_missing_historical_ranks(client, rankings, events)
+        if filled:
+            print(f"      历史最高排名补全 {filled} 人（team/.../rankings）")
+    return rankings
+
 
 
 def _parse_fractional(raw: Any) -> float | None:
@@ -272,14 +383,93 @@ def fetch_player_birth_year(client: SofascoreClient, player_id: int) -> int | No
         try:
             data = client._api_get(path, referer="https://www.sofascore.com/tennis")
             team = data.get("team") or data.get("player") or data
-            ts = team.get("dateOfBirthTimestamp") or team.get("birthDateTimestamp")
+            if not isinstance(team, dict):
+                continue
+            # 直接出生年
+            for key in ("birthYear", "yearOfBirth"):
+                y = _num(team.get(key))
+                if y is not None and 1950 <= y <= 2020:
+                    return int(y)
+            info = team.get("playerTeamInfo") if isinstance(team.get("playerTeamInfo"), dict) else {}
+            y = _num(info.get("birthYear"))
+            if y is not None and 1950 <= y <= 2020:
+                return int(y)
+            ts = team.get("dateOfBirthTimestamp") or team.get("birthDateTimestamp") or info.get("dateOfBirthTimestamp")
             if ts:
                 from datetime import datetime, timezone
 
                 return datetime.fromtimestamp(int(ts), timezone.utc).year
+            # "1997-05-01" / "01.05.1997"
+            raw = team.get("dateOfBirth") or team.get("birthDate") or info.get("dateOfBirth")
+            if raw:
+                s = str(raw).strip()
+                for part in (s[:4], s[-4:]):
+                    try:
+                        yi = int(part)
+                        if 1950 <= yi <= 2020:
+                            return yi
+                    except ValueError:
+                        pass
         except Exception:
             continue
     return None
+
+
+def fill_missing_birth_years(
+    client: SofascoreClient,
+    events: list[dict],
+    *,
+    birth_by_player: dict[str, int] | None = None,
+    max_players: int | None = None,
+) -> dict[str, int]:
+    """对场次球员补拉出生年，写入 birthYearByPlayer 并挂到 homePlayer/awayPlayer。"""
+    import os
+
+    out: dict[str, int] = dict(birth_by_player or {})
+    cap = max_players
+    if cap is None:
+        cap = int(os.environ.get("SOFA_BIRTH_YEAR_ENRICH_MAX", "40"))
+    need: list[int] = []
+    seen: set[int] = set()
+    for ev in events:
+        for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
+            pid = side.get("id")
+            if pid is None:
+                continue
+            ipid = int(pid)
+            if ipid in seen:
+                continue
+            key = str(ipid)
+            if side.get("birthYear") is not None:
+                try:
+                    out[key] = int(side["birthYear"])
+                except (TypeError, ValueError):
+                    pass
+                seen.add(ipid)
+                continue
+            if out.get(key) is not None:
+                side["birthYear"] = out[key]
+                seen.add(ipid)
+                continue
+            seen.add(ipid)
+            need.append(ipid)
+    filled = 0
+    for pid in need[: max(0, cap)]:
+        year = fetch_player_birth_year(client, pid)
+        if not year:
+            time.sleep(0.2)
+            continue
+        key = str(pid)
+        out[key] = year
+        filled += 1
+        for ev in events:
+            for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
+                if side.get("id") == pid:
+                    side["birthYear"] = year
+        time.sleep(0.25)
+    if filled:
+        print(f"      出生年补全 {filled} 人（team/...）")
+    return out
 
 
 def _odds_incomplete(odds: dict[str, Any] | None) -> bool:
@@ -305,27 +495,16 @@ def enrich_odds_for_events(client: SofascoreClient, events: list[dict]) -> dict[
     return odds_by_event
 
 
-def enrich_rankings_from_events(
-    events: list[dict],
-    board: dict[str, Any] | None,
-) -> dict[str, dict[str, Any]]:
-    rankings = rankings_from_board(board)
-    for ev in events:
-        _merge_event_ranks(rankings, ev)
-    return rankings
-
-
 def enrich_bundle(
     client: SofascoreClient,
     events: list[dict],
     top20: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    rankings = rankings_from_board(top20)
+    rankings = enrich_rankings_from_events(events, top20, client)
     odds_by_event: dict[str, Any] = {}
     birth_by_player: dict[str, int] = {}
 
     for ev in events:
-        _merge_event_ranks(rankings, ev)
         eid = ev.get("id")
         if eid is None:
             continue
@@ -342,17 +521,7 @@ def enrich_bundle(
             if pid is not None:
                 player_ids.add(int(pid))
 
-    for pid in list(player_ids)[:40]:
-        if str(pid) in birth_by_player:
-            continue
-        year = fetch_player_birth_year(client, pid)
-        if year:
-            birth_by_player[str(pid)] = year
-            for ev in events:
-                for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
-                    if side.get("id") == pid:
-                        side["birthYear"] = year
-        time.sleep(0.25)
+    birth_by_player = fill_missing_birth_years(client, events)
 
     return {
         "rankingsByPlayer": rankings,

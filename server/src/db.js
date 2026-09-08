@@ -17,6 +17,15 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   timezone: '+08:00',
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  // 远程库偶发断线时，避免复用已死连接
+  maxIdle: 5,
+  idleTimeout: 60000,
+});
+
+pool.on('connection', () => {
+  /* pool ready */
 });
 
 module.exports = pool;

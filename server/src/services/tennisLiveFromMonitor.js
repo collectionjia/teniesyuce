@@ -92,8 +92,8 @@ function eventsFromTop100Board(payload) {
       if (pid != null) {
         rankingsByPlayer[String(pid)] = {
           current: p.rank,
-          previous: p.previousRank ?? p.rank,
-          best: p.bestRank ?? p.rank,
+          previous: p.previousRank ?? null,
+          best: p.bestRank ?? null,
           live: p.rank,
         };
       }

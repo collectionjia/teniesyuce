@@ -26,14 +26,28 @@ def main() -> int:
     args = [a for a in sys.argv[1:] if a and not a.startswith("-")]
     top100 = "--all" not in sys.argv
     match_date = args[0] if args else None
-    result = run_tier_collect(match_date=match_date, top100=top100)
+    try:
+        result = run_tier_collect(match_date=match_date, top100=top100)
+    except Exception as exc:
+        msg = str(exc)
+        if "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
+            print(f"采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度，或临时清空 IPWO 配置改直连。")
+            print(f"详情: {msg}")
+        else:
+            print(f"采集失败: {msg}")
+        import traceback
+        traceback.print_exc()
+        return 2
     timing = result.get("timing") or {}
     redis_info = (result.get("persist") or {}).get("redis") or {}
     if not result.get("total_events"):
         total = timing.get("total")
         if total is not None:
             print(f"完成: 无比赛 · 总耗时 {format_duration(total)}")
-        return 1
+        else:
+            print("完成: 无比赛")
+        # 无场次也算采集成功结束，避免管理页显示「退出码 1」
+        return 0
     req = result.get("requests") or {}
     total = timing.get("total")
     total_part = f"总耗时 {format_duration(total)}" if total is not None else ""

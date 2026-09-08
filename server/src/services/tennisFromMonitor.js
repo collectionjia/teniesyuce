@@ -27,37 +27,52 @@ async function monitorGet(pathname, timeoutMs = 15000) {
 
 function buildRankingsFromEvents(bundle) {
   const map = { ...(bundle.rankingsByPlayer || {}) };
+  const applySide = (side) => {
+    if (!side?.id) return;
+    const key = String(side.id);
+    const rank = side.rank ?? side.ranking ?? side.currentRank;
+    const prev = map[key] || {};
+    // 禁止用现排名冒充历史最高 / live
+    map[key] = {
+      current: prev.current ?? rank ?? null,
+      previous: prev.previous ?? side.previousRank ?? null,
+      best: prev.best ?? side.bestRank ?? side.best ?? null,
+      live: prev.live ?? side.liveRank ?? null,
+      utr: prev.utr ?? side.utr ?? null,
+    };
+  };
   for (const t of bundle?.scheduled?.tournaments || []) {
     for (const ev of t.events || []) {
-      for (const side of [ev.homePlayer, ev.awayPlayer]) {
-        if (!side?.id) continue;
-        const key = String(side.id);
-        const rank = side.rank ?? side.ranking ?? side.currentRank;
-        if (rank == null) continue;
-        const prev = map[key] || {};
-        map[key] = {
-          current: prev.current ?? rank,
-          previous: prev.previous ?? null,
-          best: prev.best ?? rank,
-          live: prev.live ?? rank,
-          utr: prev.utr ?? null,
+      applySide(ev.homePlayer);
+      applySide(ev.awayPlayer);
+      // 场次上已挂载的 rankings 优先保留 best
+      const byPlayer = ev.rankings || {};
+      for (const [pid, row] of Object.entries(byPlayer)) {
+        if (!row || typeof row !== 'object') continue;
+        const prev = map[pid] || {};
+        map[pid] = {
+          current: prev.current ?? row.current ?? null,
+          previous: prev.previous ?? row.previous ?? null,
+          best: prev.best ?? row.best ?? null,
+          live: prev.live ?? row.live ?? null,
+          utr: prev.utr ?? row.utr ?? null,
         };
       }
     }
   }
   for (const ev of bundle?.live?.matches || []) {
-    for (const side of [ev.homePlayer, ev.awayPlayer]) {
-      if (!side?.id) continue;
-      const key = String(side.id);
-      const rank = side.rank ?? side.ranking ?? side.currentRank;
-      if (rank == null) continue;
-      const prev = map[key] || {};
-      map[key] = {
-        current: prev.current ?? rank,
-        previous: prev.previous ?? null,
-        best: prev.best ?? rank,
-        live: prev.live ?? rank,
-        utr: prev.utr ?? null,
+    applySide(ev.homePlayer);
+    applySide(ev.awayPlayer);
+    const byPlayer = ev.rankings || {};
+    for (const [pid, row] of Object.entries(byPlayer)) {
+      if (!row || typeof row !== 'object') continue;
+      const prev = map[pid] || {};
+      map[pid] = {
+        current: prev.current ?? row.current ?? null,
+        previous: prev.previous ?? row.previous ?? null,
+        best: prev.best ?? row.best ?? null,
+        live: prev.live ?? row.live ?? null,
+        utr: prev.utr ?? row.utr ?? null,
       };
     }
   }

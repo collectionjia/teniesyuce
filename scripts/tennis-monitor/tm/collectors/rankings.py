@@ -51,7 +51,8 @@ def fetch_rank_board(client: SofascoreClient, top_n: int) -> dict[str, Any]:
                     "id": pid,
                     "rank": row.get("ranking") or row.get("rank"),
                     "previousRank": row.get("previousRanking") or row.get("previousRank"),
-                    "bestRank": row.get("bestRanking") or row.get("bestRank"),
+                    # 榜单列表常无 best；勿用现排名冒充，留给 team/.../rankings 补全
+                    "bestRank": row.get("bestRanking") or row.get("bestRank") or (team.get("bestRanking") if isinstance(team, dict) else None),
                     "name": name,
                     "country": (team.get("country") or {}).get("name")
                     if isinstance(team.get("country"), dict)

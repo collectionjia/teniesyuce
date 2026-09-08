@@ -5,7 +5,7 @@ import os
 import time
 from typing import Any
 
-from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, slim_event
+from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, fill_missing_birth_years, slim_event
 from tm.bundle_store import persist_collect_bundle
 from tm.clients.polymarket import enrich_events_polymarket, format_polymarket_label, get_request_count
 from tm.clients.proxy import proxy_status_public
@@ -120,6 +120,15 @@ def attach_match_enrichment(
             row = rankings.get(key)
             if row:
                 by_player[key] = row
+                if row.get("best") is not None:
+                    side["bestRank"] = row.get("best")
+                if row.get("previous") is not None:
+                    side["previousRank"] = row.get("previous")
+                if row.get("current") is not None:
+                    side["rank"] = row.get("current")
+                    side["ranking"] = row.get("current")
+    ev["homePlayer"] = home_p
+    ev["awayPlayer"] = away_p
     ev["rankings"] = by_player
     odds = odds_by_event.get(str(ev.get("id") or ""))
     if odds:
@@ -261,6 +270,7 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
     raw_events: list[dict] = []
     slim_events: list[dict] = []
     rankings_by_player: dict[str, dict[str, Any]] = {}
+    birth_year_by_player: dict[str, int] = {}
     odds_by_event: dict[str, Any] = {}
     polymarket_by_event: dict[str, Any] = {}
     extra_rankings = 0
@@ -307,7 +317,8 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
                     f"[4/{_STEPS}] 球员排名与赔率：{len(slim_events)} 场"
                 )
                 t0 = time.perf_counter()
-                rankings_by_player = enrich_rankings_from_events(slim_events, enrich_board)
+                rankings_by_player = enrich_rankings_from_events(slim_events, enrich_board, client)
+                birth_year_by_player = fill_missing_birth_years(client, slim_events)
                 odds_by_event = enrich_odds_for_events(client, slim_events)
                 odds_events = len(slim_events)
                 for ev in slim_events:
@@ -321,6 +332,7 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
                 log_step_done(4, _STEP_LABELS[3], timing["step4"])
                 print(
                     f"      排名 {len(rankings_by_player)} 人 · "
+                    f"年龄 {len(birth_year_by_player)} 人 · "
                     f"赔率 {len(odds_by_event)}/{len(slim_events)} · "
                     f"PM {len(polymarket_by_event)}/{len(slim_events)}"
                 )
@@ -363,6 +375,7 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
         "total_events": len(slim_events),
         "tier_before": tier_before,
         "rankingsByPlayer": rankings_by_player,
+        "birthYearByPlayer": birth_year_by_player,
         "oddsByEvent": odds_by_event,
         "polymarketByEvent": polymarket_by_event,
         "stats": collect_stats,

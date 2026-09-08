@@ -49,11 +49,14 @@ function sendProxy(res, result) {
   res.status(result.status).json(result.body);
 }
 
-/** 采集结束后：默认 collect.py 已直写 Redis，不再经 9004 同步 */
+/** 采集结束后：清内存缓存；可选再经 9004 同步 */
 function scheduleRedisRefreshAfterCollect() {
   const tennisRedis = require('../services/tennisRedis');
+  try {
+    tennisRedis.invalidateMemCache();
+  } catch { /* ignore */ }
   if (!tennisRedis.monitorSyncEnabled()) {
-    console.log('[tennis-monitor] collect 完成，数据由 collect.py 写入 Redis，跳过 monitor 同步');
+    console.log('[tennis-monitor] collect 完成，数据由 collect.py 写入 Redis，已清 API 内存缓存');
     return;
   }
   const tennisFromMonitor = require('../services/tennisFromMonitor');
@@ -160,9 +163,16 @@ router.get('/logs', async (req, res) => {
       /* collect.py logs only */
     }
     const collectLines = tennisCollectRunner.recentLogs(lines);
-    const merged = [collectLines, monitorLines].filter(Boolean).join('\n');
-    const parts = merged.split(/\r?\n/).slice(-lines);
-    res.json({ ok: true, lines: parts.join('\n'), file: 'collect.py' });
+    // collect 日志放最后，避免被 monitor 旧日志挤出 slice(-lines)
+    const merged = [monitorLines, collectLines].filter(Boolean).join('\n');
+    const parts = merged.split(/\r?\n/).filter((l) => l.length).slice(-lines);
+    const text = parts.join('\n');
+    res.json({
+      ok: true,
+      lines: text,
+      content: text,
+      file: collectLines ? 'collect.py' : 'monitor',
+    });
   } catch (err) {
     console.error('[tennis-monitor/logs]', err);
     res.status(500).json({ ok: false, error: err.message || 'logs failed' });

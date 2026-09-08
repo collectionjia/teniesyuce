@@ -49,4 +49,9 @@ module.exports = {
   getTodayBundle,
   warmOnStartup,
   monitorSyncEnabled,
+  /** 采集写入后可调用，避免 15s 内存缓存仍是旧包（无 best） */
+  invalidateMemCache() {
+    normBundle = null;
+    normAt = 0;
+  },
 };

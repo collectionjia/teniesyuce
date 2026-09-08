@@ -122,6 +122,10 @@ router.post('/login', async (req, res) => {
     res.json({ token, user: userPayload(row) });
   } catch (e) {
     console.error(e);
+    const code = e?.code || '';
+    if (['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'PROTOCOL_CONNECTION_LOST'].includes(code)) {
+      return res.status(503).json({ error: '数据库连接异常，请稍后重试' });
+    }
     res.status(500).json({ error: '登录失败' });
   }
 });
