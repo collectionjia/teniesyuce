@@ -1,16 +1,24 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
-import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT, passesInplayRankFilter, matchInplayRankMetrics, inplayTierLabel, INPLAY_RANK_RULES_TEXT } from '../utils/tennisRangeFilter'
+import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT, matchInplayRankMetrics, inplayTierLabel, INPLAY_RANK_RULES_TEXT } from '../utils/tennisRangeFilter'
+import {
+  loadFilters,
+  saveFilters,
+  applyPrematchFilters,
+  applyInplayFilters,
+  applySettledFilters,
+  passesInplayEntryRules,
+} from '../utils/tennisListFilters'
 
-const INPLAY_AUTO_RULES_TEXT = '买入：500/1000·现≤25·现差>30·首盘领先·PM<87¢｜止损：BO3第三盘落后>2局；BO5(1:2第四盘/2:2第五盘)落后>2局'
+const INPLAY_AUTO_RULES_TEXT = '买入：(现≤10且现差>20)或(现≤25且现差>30)·赢首盘·PM<91¢｜止损：局差弱−强>2（BO3第三盘；BO5 路径见§九）'
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic=原 Top20 网球；range=区间网球；live=ATP·WTA 盘中 Top100；new=新网球列表 Top50 池；inplay=盘中采集（管理员） */
+  /** classic | range | live | new | inplay | prematch | settled */
   boardMode: { type: String, default: 'classic' },
 })
 
@@ -18,16 +26,28 @@ const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
 const isNewMode = computed(() => props.boardMode === 'new')
 const isInplayMode = computed(() => props.boardMode === 'inplay')
-const isClassicMode = computed(() => !isRangeMode.value && !isLiveMode.value && !isNewMode.value && !isInplayMode.value)
+const isPrematchMode = computed(() => props.boardMode === 'prematch')
+const isSettledMode = computed(() => props.boardMode === 'settled')
+const isClassicMode = computed(() =>
+  !isRangeMode.value
+  && !isLiveMode.value
+  && !isNewMode.value
+  && !isInplayMode.value
+  && !isPrematchMode.value
+  && !isSettledMode.value
+)
 /** 经典网球：现差/排差/强现 筛选（订阅、管理员、或已开通筛选权限） */
 const classicRankFiltersOn = computed(() => isClassicMode.value && (props.isMember || props.showFilters))
-/** 网球 / 网球自投：列表不展示已结束场次；盘中采集仅进行中 */
-const hideEndedEvents = computed(() => isClassicMode.value || isInplayMode.value)
+/** 网球 / 网球自投：列表不展示已结束场次；盘中采集仅进行中；盘后展示已结束 */
+const hideEndedEvents = computed(() => isClassicMode.value || isInplayMode.value || isPrematchMode.value)
+const allowBatchTrade = computed(() => !isSettledMode.value && props.canBatchTrade)
 const apiPath = computed(() => {
+  if (isPrematchMode.value) return '/api/tennis-prematch'
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
   if (isNewMode.value) return '/api/tennis-new'
   if (isInplayMode.value) return '/api/tennis-inplay'
+  if (isSettledMode.value) return '/api/tennis-settled'
   return '/api/tennis'
 })
 const PAGE_SIZE = 5
@@ -41,14 +61,44 @@ const diffMax = ref('0') // all | 0 | -30 | -50 | -70 · 历史最高排名差�
 const strongRankMax = ref('20') // all | 10 | 20 | 50 | 100
 const pmFilter = ref('all') // all | yes | no — 是否只看有 Polymarket 外链的场次
 const topPoolMax = ref('50') // 20 | 50（新网球列表 · Top50 池内筛选）
+/** 盘中：强者现排名上限（默认 Top100） */
+const inplayStrongMax = ref('100') // 10 | 20 | 50 | 100 | all
+/** 盘中：是否套用分档现差条件 */
+const inplayGapFilter = ref('all') // all | tier
+/** 盘后：盈亏标记筛选 */
+const settledPnlMark = ref('all') // all | bet | win | loss
 const filtersOpen = ref(false)
 const detailMatch = ref(null)
+/** 详情页字段说明是否展开 */
+const detailHelpOpen = ref(false)
+
+const DETAIL_TIPS = [
+  { k: '男/女', t: '巡回赛性别（ATP 男 / WTA 女）。' },
+  { k: '级别', t: '赛事级别，如 GS（大满贯）、1000、500 等。' },
+  { k: '报', t: '已匹配到博彩全场胜负报价。' },
+  { k: '外', t: '已匹配到 Polymarket 外链市场。' },
+  { k: '盘中档', t: '按强者现排名分档；可在顶部筛选开启「分档达标」要求现排差。' },
+  { k: '优', t: '现排名更高（数字更小）的一侧，建议关注方向。' },
+  { k: '现排名 #', t: '球员当前世界排名，数字越小越强。' },
+  { k: '比分', t: '进行中比赛的盘分/局分。' },
+  { k: '年龄', t: '姓名后括号为年龄（按 2026−出生年估算）。' },
+  { k: '周', t: '约一周前的排名（previous）。' },
+  { k: '高', t: '历史最高排名（best），数字越小表示峰值越强。' },
+  { k: 'L', t: '实时排名（live ranking）。' },
+  { k: 'U', t: 'UTR 评分参考。' },
+  { k: '现排名差', t: '双方现排名之差（弱−强），衡量实力落差。' },
+  { k: '历史最高排名差', t: '双方历史最高排名之差（高−低）。' },
+  { k: 'Elo', t: 'Tennis Abstract 等来源的胜率/优势估计；edge 为相对报价的优势百分比。' },
+  { k: '报价', t: '博彩全场胜负赔率（欧赔小数）。' },
+  { k: '外链价', t: 'Polymarket 对应市场价格（美分/隐含概率）。' },
+]
 const selectedIds = ref(new Set())
 const batchAmountUsd = ref('1')
 const batchSubmitting = ref(false)
 const batchNotice = ref('')
 const batchError = ref('')
 const AUTO_BET_KEY = computed(() => {
+  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoBet.v1'
   if (isRangeMode.value) return 'yuce.tennisRange.autoBet.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoBet.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoBet.v1'
@@ -56,6 +106,7 @@ const AUTO_BET_KEY = computed(() => {
   return 'yuce.tennis.autoBet.v1'
 })
 const AUTO_PLACED_KEY = computed(() => {
+  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoPlaced.v1'
   if (isRangeMode.value) return 'yuce.tennisRange.autoPlaced.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoPlaced.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoPlaced.v1'
@@ -67,7 +118,17 @@ const autoBetEnabled = ref(false)
 const autoPlacedIds = ref(new Set())
 const autoSoldIds = ref(new Set())
 const stopLossBusy = ref(false)
+const settledStats = ref(null)
 let inplayPollTimer = null
+
+function pct(v) {
+  if (v == null || !Number.isFinite(Number(v))) return '—'
+  return `${(Number(v) * 100).toFixed(0)}%`
+}
+function num(v) {
+  if (v == null || !Number.isFinite(Number(v))) return '—'
+  return Number(v).toFixed(2)
+}
 
 function loadTennisAutoState() {
   try {
@@ -95,7 +156,7 @@ function saveTennisAutoState() {
 
 async function toggleAutoBet(ev) {
   const want = !!ev?.target?.checked
-  if (want && !props.canBatchTrade) {
+  if (want && !allowBatchTrade.value) {
     batchError.value = '当前账号未开通网球自动投注'
     ev.target.checked = false
     return
@@ -254,18 +315,17 @@ function matchMetrics(m) {
   if (homeR == null || awayR == null) {
     return { gap: -1, rankDiff: 0, ready: false, hasRankDiff: false, strongRank: null }
   }
-  // 现排名差 = 弱−强（数字大−数字小，如 121−2=119）；排差仍为高−低（如 2−121=−119）
+  // 现差 = 弱现−强现；排差 = 强者现排 − 弱者历史最高
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const strongNow = homeStronger ? homeR : awayR
   const homeDetail = rankDetailOf(home)
   const awayDetail = rankDetailOf(away)
-  const homeBest = homeDetail.best != null ? Number(homeDetail.best) : null
-  const awayBest = awayDetail.best != null ? Number(awayDetail.best) : null
-  const hasRankDiff = Number.isFinite(homeBest) && Number.isFinite(awayBest)
-  const rankDiff = hasRankDiff
-    ? Math.min(homeBest, awayBest) - Math.max(homeBest, awayBest)
-    : 0
+  const weakBest = homeStronger
+    ? (awayDetail.best != null ? Number(awayDetail.best) : null)
+    : (homeDetail.best != null ? Number(homeDetail.best) : null)
+  const hasRankDiff = Number.isFinite(weakBest)
+  const rankDiff = hasRankDiff ? strongNow - weakBest : 0
   return { gap, rankDiff, ready: true, hasRankDiff, strongRank: strongNow }
 }
 
@@ -315,11 +375,41 @@ function matchPassesPm(m) {
 }
 
 function matchPassesFilter(m, statusFilter) {
+  const rankings = data.value?.rankingsByPlayer || {}
+  const poly = data.value?.polymarketByEvent || {}
+  if (isPrematchMode.value) {
+    if (!isMatchNotStarted(m)) return false
+    return applyPrematchFilters([m], {
+      tour: tour.value,
+      pm: pmFilter.value,
+      gapMin: gapMin.value,
+      rankDiffMax: diffMax.value,
+      strongRankMax: strongRankMax.value,
+    }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
+  }
   if (isInplayMode.value) {
-    if (!matchPassesTour(m)) return false
-    if (!matchPassesPm(m)) return false
     if (!isMatchLive(m)) return false
-    return passesInplayRankFilter(m, data.value?.rankingsByPlayer || {})
+    return applyInplayFilters([m], {
+      tour: tour.value,
+      pm: pmFilter.value,
+      strongRankMax: inplayStrongMax.value,
+      gapMode: inplayGapFilter.value === 'tier' ? 'tier' : 'all',
+    }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
+  }
+  if (isSettledMode.value) {
+    if (!isMatchEnded(m)) return false
+    const stats = settledStats.value || {}
+    return applySettledFilters([m], {
+      tour: tour.value,
+      pm: pmFilter.value,
+      strongRankMax: inplayStrongMax.value,
+      pnlMark: settledPnlMark.value,
+    }, {
+      rankingsByPlayer: rankings,
+      polymarketByEvent: poly,
+      pnlByEvent: stats.pnlByEvent || {},
+      betEventIds: stats.betEventIds || {},
+    }).length > 0
   }
   if (hideEndedEvents.value && isMatchEnded(m)) return false
   const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
@@ -331,14 +421,12 @@ function matchPassesFilter(m, statusFilter) {
     return matchPassesRank(m)
   }
   if (mode === 'ended') {
-    // 已结束：不过排名筛选
     return isMatchEnded(m)
   }
   if (mode === 'Not started') {
     if (!isMatchNotStarted(m)) return false
     return matchPassesRank(m)
   }
-  // 全部：已结束不过排名；进行中与未开始均走排名筛选
   if (isMatchEnded(m)) return true
   return matchPassesRank(m)
 }
@@ -359,7 +447,6 @@ function allMatches(bundle) {
   )
   const live = (bundle.live?.matches || []).map((e) => ({ ...e }))
   const byId = new Map()
-  // 先赛程后 live：同 id 时保留 live 的状态/比分
   for (const m of fromSched) {
     if (m?.id != null) byId.set(String(m.id), m)
   }
@@ -481,9 +568,10 @@ function gamesTrailStopLoss(strongG, weakG) {
 }
 
 /**
- * 盘中止损：
- * - BO3：第三盘，强者局分落后且弱−强 > 2
- * - BO5：盘分 1:2 的第四盘，或 2:2 的第五盘，同样局分落后 > 2（见图）
+ * 盘中止损（文档 §九）：
+ * - BO3：第三盘，弱−强 > 2
+ * - BO5 路径A（曾 2:0）：第五盘局差 > 2
+ * - BO5 路径B（1:1 后变 1:2）：第四盘关键止损；或 2:2 第五盘
  */
 function shouldInplayStopLoss(m) {
   if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
@@ -501,24 +589,18 @@ function shouldInplayStopLoss(m) {
 
 function passesInplayAutoBet(m) {
   if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
-  if (!isInplayTier500Or1000(m)) return false
   const side = pickSide(m)
   if (!side) return false
-  const homeR = listRankOf(m, 'home')
-  const awayR = listRankOf(m, 'away')
-  if (homeR == null || awayR == null) return false
-  const strongR = listRankOf(m, side)
-  if (strongR == null || strongR > 25) return false
-  // 现排差 = |双人现排名之差|，须严格大于 30
-  if (Math.abs(homeR - awayR) <= 30) return false
+  if (!passesInplayEntryRules(m, data.value?.rankingsByPlayer || {})) return false
   if (!strongWonFirstSet(m)) return false
   const cents = strongPolyPriceCents(m)
-  if (cents == null || cents >= 87) return false
+  if (cents == null || cents >= 91) return false
   return !!polyUrlOf(m)
 }
 
 function canSelectMatch(m) {
-  if (!props.isMember || !props.canBatchTrade) return false
+  if (isSettledMode.value) return false
+  if (!props.isMember || !allowBatchTrade.value) return false
   if (!m?.id || isMatchEnded(m)) return false
   if (!polyUrlOf(m)) return false
   if (isInplayMode.value) return passesInplayAutoBet(m)
@@ -598,15 +680,17 @@ async function submitBatchTrade({ auto = false } = {}) {
   }
   batchSubmitting.value = true
   try {
-    const resp = isRangeMode.value
-      ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
-      : isLiveMode.value
-        ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
-        : isInplayMode.value
-          ? await api.placeTennisInplayBatchTrade({ orders, amountUsd: amount })
-          : isNewMode.value
-            ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
-            : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
+    const resp = isPrematchMode.value
+      ? await api.placeTennisPrematchBatchTrade({ orders, amountUsd: amount })
+      : isRangeMode.value
+        ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
+        : isLiveMode.value
+          ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
+          : isInplayMode.value
+            ? await api.placeTennisInplayBatchTrade({ orders, amountUsd: amount })
+            : isNewMode.value
+              ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
+              : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
     const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
     if (resp.success > 0) {
       const okLines = lines.filter((_, i) => resp.results[i]?.ok)
@@ -649,7 +733,7 @@ async function submitBatchTrade({ auto = false } = {}) {
 }
 
 async function maybeAutoBatchTrade() {
-  if (!autoBetEnabled.value || !props.canBatchTrade || batchSubmitting.value) return
+  if (!autoBetEnabled.value || !allowBatchTrade.value || batchSubmitting.value) return
   const candidates = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)))
   if (!candidates.length) return
   const next = new Set(selectedIds.value)
@@ -659,7 +743,7 @@ async function maybeAutoBatchTrade() {
 }
 
 async function maybeAutoStopLoss() {
-  if (!isInplayMode.value || !autoBetEnabled.value || !props.canBatchTrade) return
+  if (!isInplayMode.value || !autoBetEnabled.value || !allowBatchTrade.value) return
   if (batchSubmitting.value || stopLossBusy.value) return
   const targets = rawMatches.value.filter((m) => {
     const id = String(m.id)
@@ -709,7 +793,7 @@ function syncInplayPoll() {
   }, 60000)
 }
 
-watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter], () => {
+watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter, inplayStrongMax, inplayGapFilter, settledPnlMark], () => {
   currentPage.value = 1
   clearSelection()
 })
@@ -776,6 +860,20 @@ const filterSummary = computed(() => {
       parts.push(diffMax.value === '0' ? '排差<0' : `排差≤${diffMax.value}`)
     }
     if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
+  } else if (isInplayMode.value) {
+    parts.push(`强现≤${inplayStrongMax.value}`)
+    if (inplayGapFilter.value === 'tier') parts.push('分档现差')
+  } else if (isPrematchMode.value) {
+    if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
+    if (diffMax.value !== 'all') {
+      parts.push(diffMax.value === '0' ? '排差<0' : `排差≤${diffMax.value}`)
+    }
+    if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
+  } else if (isSettledMode.value) {
+    if (inplayStrongMax.value !== 'all') parts.push(`强现≤${inplayStrongMax.value}`)
+    if (settledPnlMark.value === 'bet') parts.push('有投注')
+    else if (settledPnlMark.value === 'win') parts.push('盈利')
+    else if (settledPnlMark.value === 'loss') parts.push('亏损')
   } else if (props.isMember) {
     if (isRangeMode.value) parts.push(RANGE_RULES_TEXT)
     else if (isNewMode.value) parts.push(`Top${topPoolMax.value}`)
@@ -796,6 +894,29 @@ function sanitizeBundleHint(raw) {
 const bundleHint = computed(() => {
   const msg = data.value?.message || data.value?.update?.message || ''
   return sanitizeBundleHint(msg)
+})
+
+/** 盘中列表无场次时的叹号提示文案 */
+const inplayEmptyTip = computed(() => {
+  if (!isInplayMode.value) return ''
+  const rawN = Number(
+    data.value?.live?.eventCount
+    ?? data.value?.events
+    ?? (data.value?.live?.matches || []).length
+    ?? 0,
+  )
+  const emptyFlag = !!data.value?.empty
+  const msg = String(data.value?.message || data.value?.update?.message || '')
+  if (!data.value || emptyFlag || rawN === 0) {
+    if (/无进行中|0\s*场|暂无/.test(msg)) {
+      return '当前没有符合条件的进行中赛事（Top100 · GS/500/1000）。有开打后再采集即可。'
+    }
+    return '暂无盘中数据，请先在「网球数据采集 → 盘中采集」执行采集。'
+  }
+  if (matches.value.length === 0 && rawN > 0) {
+    return `采集到 ${rawN} 场进行中，但均未通过当前筛选（强现≤${inplayStrongMax.value}${inplayGapFilter.value === 'tier' ? ' · 分档现差' : ''}）。`
+  }
+  return '暂无符合条件的盘中场次。'
 })
 
 function eloOf(id) {
@@ -881,10 +1002,16 @@ function polyUrlOf(m) {
 }
 function openDetail(m) {
   if (!props.isMember) return
+  detailHelpOpen.value = false
   detailMatch.value = m
 }
 function closeDetail() {
   detailMatch.value = null
+  detailHelpOpen.value = false
+}
+function toggleDetailHelp(ev) {
+  ev?.stopPropagation?.()
+  detailHelpOpen.value = !detailHelpOpen.value
 }
 function openMarket(m) {
   if (!props.isMember) return
@@ -1133,6 +1260,15 @@ async function loadOnce({ quiet = false } = {}) {
       serverTimeBase.value = Number(bundle.serverTime)
       loadedAtMs.value = Date.now()
     }
+    if (isSettledMode.value) {
+      try {
+        settledStats.value = await api.fetchTennisSettledStats()
+      } catch {
+        settledStats.value = null
+      }
+    } else {
+      settledStats.value = null
+    }
     await maybeAutoStopLoss()
     await maybeAutoBatchTrade()
   } catch (e) {
@@ -1144,12 +1280,67 @@ async function loadOnce({ quiet = false } = {}) {
 
 onMounted(() => {
   loadTennisAutoState()
-  if (isInplayMode.value) filter.value = 'all'
-  else if (hideEndedEvents.value && filter.value === 'ended') filter.value = 'Not started'
+  if (isPrematchMode.value) {
+    const f = loadFilters('prematch')
+    tour.value = f.tour || 'all'
+    pmFilter.value = f.pm || 'all'
+    gapMin.value = f.gapMin != null ? String(f.gapMin) : '50'
+    diffMax.value = f.rankDiffMax != null ? String(f.rankDiffMax) : '0'
+    strongRankMax.value = f.strongRankMax != null ? String(f.strongRankMax) : '20'
+    filter.value = 'Not started'
+    filtersOpen.value = true
+  } else if (isInplayMode.value) {
+    const f = loadFilters('inplay')
+    tour.value = f.tour || 'all'
+    pmFilter.value = f.pm || 'all'
+    inplayStrongMax.value = f.strongRankMax != null ? String(f.strongRankMax) : '100'
+    inplayGapFilter.value = f.gapMode === 'tier' ? 'tier' : 'all'
+    filter.value = 'all'
+    filtersOpen.value = true
+  } else if (isSettledMode.value) {
+    const f = loadFilters('settled')
+    tour.value = f.tour || 'all'
+    pmFilter.value = f.pm || 'all'
+    inplayStrongMax.value = f.strongRankMax != null ? String(f.strongRankMax) : '100'
+    settledPnlMark.value = f.pnlMark || 'all'
+    filter.value = 'ended'
+    filtersOpen.value = true
+  } else if (hideEndedEvents.value && filter.value === 'ended') {
+    filter.value = 'Not started'
+  }
   loadOnce()
   syncInplayPoll()
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
 })
+
+watch(
+  [tour, pmFilter, gapMin, diffMax, strongRankMax, inplayStrongMax, inplayGapFilter, settledPnlMark],
+  () => {
+    if (isPrematchMode.value) {
+      saveFilters('prematch', {
+        tour: tour.value,
+        pm: pmFilter.value,
+        gapMin: gapMin.value,
+        rankDiffMax: diffMax.value,
+        strongRankMax: strongRankMax.value,
+      })
+    } else if (isInplayMode.value) {
+      saveFilters('inplay', {
+        tour: tour.value,
+        pm: pmFilter.value,
+        strongRankMax: inplayStrongMax.value,
+        gapMode: inplayGapFilter.value === 'tier' ? 'tier' : 'all',
+      })
+    } else if (isSettledMode.value) {
+      saveFilters('settled', {
+        tour: tour.value,
+        pm: pmFilter.value,
+        strongRankMax: inplayStrongMax.value,
+        pnlMark: settledPnlMark.value,
+      })
+    }
+  },
+)
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
   if (inplayPollTimer) {
@@ -1219,15 +1410,32 @@ function gapInfo(m) {
     rankDiff,
   }
 }
+
+function settledPnlBadge(m) {
+  if (!isSettledMode.value || !m?.id) return null
+  const id = String(m.id)
+  const stats = settledStats.value
+  if (!stats) return null
+  const mark = stats.pnlByEvent?.[id]
+  const hasBet = stats.betEventIds?.[id] === true || mark != null
+  if (mark != null && mark > 0) return { text: '盈', cls: 'pnl-win' }
+  if (mark != null && mark < 0) return { text: '亏', cls: 'pnl-loss' }
+  if (mark != null && mark === 0) return { text: '平', cls: 'pnl-flat' }
+  if (hasBet) return { text: '投', cls: 'pnl-bet' }
+  return null
+}
 </script>
 
 <template>
   <div class="wrap">
-    <div v-if="isInplayMode" class="inplay-source-bar">
-      数据来源：<code>collect_live.py</code> · Redis <code>tennis:bundle:inplay</code>
-      <span class="inplay-auto-rules"> · 列表：{{ INPLAY_RANK_RULES_TEXT }}</span>
-      <span v-if="canBatchTrade" class="inplay-auto-rules"> · 自动投注：{{ INPLAY_AUTO_RULES_TEXT }}</span>
-      <span v-if="bundleHint"> · {{ bundleHint }}</span>
+    <div v-if="isInplayMode && (allowBatchTrade || bundleHint)" class="inplay-source-bar">
+      <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ INPLAY_AUTO_RULES_TEXT }}</span>
+      <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
+    </div>
+    <div v-if="isSettledMode && settledStats" class="settled-stats-bar">
+      <span>合计 盈{{ pct(settledStats.total?.winRate) }} / 亏{{ pct(settledStats.total?.lossRate) }} · PnL {{ num(settledStats.total?.totalPnl) }}</span>
+      <span>盘前 盈{{ pct(settledStats.prematch?.winRate) }} / 亏{{ pct(settledStats.prematch?.lossRate) }}</span>
+      <span>盘中 盈{{ pct(settledStats.inplay?.winRate) }} / 亏{{ pct(settledStats.inplay?.lossRate) }}</span>
     </div>
 
     <div class="topbar">
@@ -1274,7 +1482,7 @@ function gapInfo(m) {
       </button>
 
       <div v-show="filtersOpen" class="filter-body">
-        <div class="filters">
+        <div v-if="!isInplayMode && !isPrematchMode && !isSettledMode" class="filters">
           <button type="button" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">全部</button>
           <button type="button" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">未开始</button>
           <button type="button" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">进行中</button>
@@ -1295,7 +1503,67 @@ function gapInfo(m) {
           <button type="button" class="chip-btn" :class="{ active: pmFilter === 'no' }" @click="pmFilter = 'no'">无外链</button>
         </div>
 
-        <template v-if="classicRankFiltersOn">
+        <template v-if="isInplayMode">
+          <div class="filter-row">
+            <span class="label">强现</span>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '10' }" @click="inplayStrongMax = '10'">≤10</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '20' }" @click="inplayStrongMax = '20'">≤20</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '50' }" @click="inplayStrongMax = '50'">≤50</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '100' }" @click="inplayStrongMax = '100'">≤100</button>
+          </div>
+          <div class="filter-row">
+            <span class="label">现差</span>
+            <button type="button" class="chip-btn" :class="{ active: inplayGapFilter === 'all' }" @click="inplayGapFilter = 'all'">不限</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayGapFilter === 'tier' }" @click="inplayGapFilter = 'tier'" :title="INPLAY_RANK_RULES_TEXT">分档达标</button>
+            <span v-if="inplayGapFilter === 'tier'" class="range-rules-text">{{ INPLAY_RANK_RULES_TEXT }}</span>
+          </div>
+        </template>
+
+        <template v-else-if="isPrematchMode">
+          <div class="filter-row">
+            <span class="label">现差</span>
+            <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
+            <button type="button" class="chip-btn" :class="{ active: gapMin === '50' }" @click="gapMin = '50'">≥50</button>
+            <button type="button" class="chip-btn" :class="{ active: gapMin === '70' }" @click="gapMin = '70'">≥70</button>
+            <button type="button" class="chip-btn" :class="{ active: gapMin === '90' }" @click="gapMin = '90'">≥90</button>
+          </div>
+          <div class="filter-row">
+            <span class="label">排差</span>
+            <button type="button" class="chip-btn" :class="{ active: diffMax === 'all' }" @click="diffMax = 'all'">不限</button>
+            <button type="button" class="chip-btn" :class="{ active: diffMax === '0' }" @click="diffMax = '0'">&lt;0</button>
+            <button type="button" class="chip-btn" :class="{ active: diffMax === '-30' }" @click="diffMax = '-30'">≤-30</button>
+            <button type="button" class="chip-btn" :class="{ active: diffMax === '-50' }" @click="diffMax = '-50'">≤-50</button>
+            <button type="button" class="chip-btn" :class="{ active: diffMax === '-70' }" @click="diffMax = '-70'">≤-70</button>
+          </div>
+          <div class="filter-row">
+            <span class="label">强现</span>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === 'all' }" @click="strongRankMax = 'all'">不限</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '10' }" @click="strongRankMax = '10'">≤10</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '20' }" @click="strongRankMax = '20'">≤20</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '50' }" @click="strongRankMax = '50'">≤50</button>
+            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '100' }" @click="strongRankMax = '100'">≤100</button>
+          </div>
+        </template>
+
+        <template v-else-if="isSettledMode">
+          <div class="filter-row">
+            <span class="label">强现</span>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '10' }" @click="inplayStrongMax = '10'">≤10</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '20' }" @click="inplayStrongMax = '20'">≤20</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '50' }" @click="inplayStrongMax = '50'">≤50</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === '100' }" @click="inplayStrongMax = '100'">≤100</button>
+            <button type="button" class="chip-btn" :class="{ active: inplayStrongMax === 'all' }" @click="inplayStrongMax = 'all'">不限</button>
+          </div>
+          <div class="filter-row">
+            <span class="label">盈亏</span>
+            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'all' }" @click="settledPnlMark = 'all'">全部</button>
+            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'bet' }" @click="settledPnlMark = 'bet'">有投注</button>
+            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'win' }" @click="settledPnlMark = 'win'">盈利</button>
+            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'loss' }" @click="settledPnlMark = 'loss'">亏损</button>
+          </div>
+        </template>
+
+        <template v-else-if="classicRankFiltersOn">
           <div class="filter-row">
             <span class="label">现差</span>
             <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
@@ -1331,19 +1599,20 @@ function gapInfo(m) {
 
     <div v-if="loading && !data" class="empty">加载赛程中…</div>
     <div v-else-if="error && !data" class="empty err">{{ error }}</div>
-    <div v-else-if="!matches.length" class="empty">
-      <template v-if="isInplayMode">
-        暂无数据
-        <div class="hint">请先运行 <code>collect_live.py</code> 写入 Redis</div>
-      </template>
-      <template v-else>
-        当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
-        <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
-      </template>
+    <div v-else-if="!matches.length && !isInplayMode" class="empty">
+      当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
+      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
+    </div>
+    <div v-else-if="!matches.length && isInplayMode" class="empty inplay-empty" role="status">
+      <div class="inplay-empty-inline">
+        <span class="bang" aria-hidden="true">!</span>
+        <span>暂无盘中场次</span>
+      </div>
+      <div class="hint">{{ inplayEmptyTip }}</div>
     </div>
 
     <template v-else>
-    <div v-if="canBatchTrade" class="batch-bar">
+    <div v-if="allowBatchTrade" class="batch-bar">
       <div class="batch-bar-controls">
         <label class="auto-bet-toggle" :class="{ on: autoBetEnabled }">
           <input type="checkbox" :checked="autoBetEnabled" @change="toggleAutoBet" />
@@ -1388,7 +1657,7 @@ function gapInfo(m) {
         class="row-card"
         :class="{ selected: isSelected(m), selectable: canSelectMatch(m) }"
       >
-        <label v-if="canBatchTrade" class="row-check" :class="{ disabled: !canSelectMatch(m) }">
+        <label v-if="allowBatchTrade" class="row-check" :class="{ disabled: !canSelectMatch(m) }">
           <input
             type="checkbox"
             :checked="isSelected(m)"
@@ -1412,6 +1681,11 @@ function gapInfo(m) {
               class="badge live-tier"
               :title="`现差 ${gapInfo(m).gap} · 需≥${gapInfo(m).minGap}`"
             >{{ gapInfo(m).tier }} · 差{{ gapInfo(m).gap }}</span>
+            <span
+              v-if="settledPnlBadge(m)"
+              class="badge"
+              :class="settledPnlBadge(m).cls"
+            >{{ settledPnlBadge(m).text }}</span>
           </div>
         </div>
         <div class="row-main">
@@ -1520,7 +1794,26 @@ function gapInfo(m) {
                 <span v-if="pickSide(detailMatch)" class="badge pick">优{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
               </div>
             </div>
-            <button type="button" class="modal-x" @click="closeDetail" aria-label="关闭">×</button>
+            <div class="modal-head-actions">
+              <button
+                type="button"
+                class="help-bang modal-help-bang"
+                :class="{ on: detailHelpOpen }"
+                title="字段说明"
+                aria-label="字段说明"
+                @click="toggleDetailHelp($event)"
+              >!</button>
+              <button type="button" class="modal-x" @click="closeDetail" aria-label="关闭">×</button>
+            </div>
+          </div>
+
+          <div v-if="detailHelpOpen" class="modal-help-panel">
+            <div class="modal-help-title">字段说明</div>
+            <ul class="modal-help-list">
+              <li v-for="item in DETAIL_TIPS" :key="item.k">
+                <b>{{ item.k }}</b>：{{ item.t }}
+              </li>
+            </ul>
           </div>
 
           <div class="modal-body">
@@ -1816,11 +2109,60 @@ function gapInfo(m) {
   font-size: 0.72rem;
   line-height: 1.4;
 }
+.settled-stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
 .inplay-source-bar code {
   font-size: 0.7rem;
   background: #fef3c7;
   padding: 1px 4px;
   border-radius: 4px;
+}
+.empty.inplay-empty {
+  border-color: #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+.empty.inplay-empty .inplay-empty-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+.empty.inplay-empty .bang {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: #fff;
+  background: #ea580c;
+}
+.empty.inplay-empty .hint {
+  margin-top: 8px;
+  color: #9a3412;
+  opacity: 0.95;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 .new-pool-bar {
   display: flex;
@@ -2352,6 +2694,12 @@ function gapInfo(m) {
   border-bottom: 1px solid #f1f5f9;
 }
 .modal-head-main { min-width: 0; flex: 1; }
+.modal-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
 .modal-title { font-size: 0.92rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
 .modal-sub { margin-top: 2px; font-size: 0.88rem; font-weight: 700; color: #334155; line-height: 1.3; }
 .modal-meta {
@@ -2483,13 +2831,63 @@ function gapInfo(m) {
 .badge {
   border-radius: 999px; padding: 3px 8px;
   font-size: 0.76rem; font-weight: 700; line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 .badge.gender-m { background: #eef2ff; color: #4338ca; }
 .badge.gender-f { background: #fdf2f8; color: #be185d; }
 .badge.level { background: #f0fdf4; color: #15803d; }
 .badge.odds { background: #fffbeb; color: #b45309; }
 .badge.poly { background: #f5f3ff; color: #6d28d9; }
+.badge.pnl-win { background: #ecfdf5; color: #047857; }
+.badge.pnl-loss { background: #fef2f2; color: #b91c1c; }
+.badge.pnl-flat { background: #f8fafc; color: #64748b; }
+.badge.pnl-bet { background: #eff6ff; color: #1d4ed8; }
 .badge.pick { background: var(--primary); color: #fff; }
+.help-bang.modal-help-bang {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.help-bang.modal-help-bang.on {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #fff;
+}
+.modal-help-panel {
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.modal-help-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.modal-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.modal-help-list li { margin-bottom: 4px; }
+.modal-help-list b { color: #7c2d12; }
 .tour-title { color: #64748b; font-size: 0.72rem; font-weight: 600; }
 .pname.pick { color: var(--primary); font-weight: 700; }
 .pname .pick-tag { margin-left: 4px; vertical-align: middle; }

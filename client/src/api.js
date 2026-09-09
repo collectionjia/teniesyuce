@@ -377,6 +377,93 @@ export async function updateTennisMonitorDataSource(source) {
   return data
 }
 
+export async function fetchTennisEngines() {
+  const { data } = await api.get('/admin/tennis-monitor/engines')
+  return data
+}
+
+export async function updateTennisEngines(payload) {
+  const { data } = await api.post('/admin/tennis-monitor/engines', payload)
+  return data
+}
+
+export async function splitTennisThreeBuckets() {
+  const { data } = await api.post('/admin/tennis-monitor/engines/split-buckets')
+  return data
+}
+
+export async function runTennisInplayTick() {
+  const { data } = await api.post('/tennis-inplay/tick')
+  return data
+}
+
+// --- 调度中心 / 引擎 API Key（管理员网页 JWT）---
+export async function fetchSchedulerStatus() {
+  const { data } = await api.get('/admin/scheduler/status')
+  return data
+}
+
+export async function fetchSchedulerJobs() {
+  const { data } = await api.get('/admin/scheduler/jobs')
+  return data
+}
+
+export async function createSchedulerJob(payload) {
+  const { data } = await api.post('/admin/scheduler/jobs', payload)
+  return data
+}
+
+export async function patchSchedulerJob(id, payload) {
+  const { data } = await api.patch(`/admin/scheduler/jobs/${id}`, payload)
+  return data
+}
+
+export async function deleteSchedulerJob(id) {
+  // 用 POST，避免部分代理对 DELETE 支持不好
+  const { data } = await api.post(`/admin/scheduler/jobs/${encodeURIComponent(id)}/delete`)
+  return data
+}
+
+export async function enableSchedulerJob(id) {
+  const { data } = await api.post(`/admin/scheduler/jobs/${id}/enable`)
+  return data
+}
+
+export async function disableSchedulerJob(id) {
+  const { data } = await api.post(`/admin/scheduler/jobs/${id}/disable`)
+  return data
+}
+
+export async function runSchedulerJob(id) {
+  const { data } = await api.post(`/admin/scheduler/jobs/${id}/run`)
+  return data
+}
+
+export async function fetchSchedulerRuns(id, params = {}) {
+  const { data } = await api.get(`/admin/scheduler/jobs/${id}/runs`, { params })
+  return data
+}
+
+export async function fetchEngineApiKeys() {
+  const { data } = await api.get('/admin/engine-api-keys')
+  return data
+}
+
+export async function createEngineApiKey(payload) {
+  const { data } = await api.post('/admin/engine-api-keys', payload)
+  return data
+}
+
+export async function revokeEngineApiKey(id) {
+  const { data } = await api.post(`/admin/engine-api-keys/${id}/revoke`)
+  return data
+}
+
+export async function deleteEngineApiKey(id) {
+  const { data } = await api.delete(`/admin/engine-api-keys/${id}`)
+  return data
+}
+
 export async function refreshTennisCache() {
   const { data } = await api.post('/tennis/cache/refresh')
   return data
@@ -470,6 +557,35 @@ export async function placeTennisInplayBatchTrade(payload) {
 
 export async function placeTennisInplaySell(payload) {
   const { data } = await api.post('/tennis-inplay/trade/sell', payload)
+  return data
+}
+
+export async function fetchTennisPrematchToday() {
+  const { data } = await api.get('/tennis-prematch/today', {
+    params: { _: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  })
+  return data
+}
+
+export async function placeTennisPrematchBatchTrade(payload) {
+  const { data } = await api.post('/tennis-prematch/trade/batch', payload)
+  return data
+}
+
+export async function fetchTennisSettledToday() {
+  const { data } = await api.get('/tennis-settled/today', {
+    params: { _: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  })
+  return data
+}
+
+export async function fetchTennisSettledStats(params = {}) {
+  const { data } = await api.get('/tennis-settled/stats', {
+    params: { ...params, _: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  })
   return data
 }
 

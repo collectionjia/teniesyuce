@@ -1,10 +1,10 @@
 const { Router } = require('express');
 const { auth } = require('../middleware/auth');
-const tennisRangeCache = require('../services/tennisRangeCache');
-const tennisRangeFromMonitor = require('../services/tennisRangeFromMonitor');
+const tennisPrematchCache = require('../services/tennisPrematchCache');
 const btcWallet = require('../services/btcWallet');
 const tennisTrade = require('../services/tennisTrade');
 
+/** @deprecated 转发盘前：range → tennis-prematch */
 const router = Router();
 
 async function requireWallet(req, res, next) {
@@ -18,40 +18,48 @@ async function requireWallet(req, res, next) {
   }
 }
 
+function emptyBundle() {
+  return {
+    ok: true,
+    empty: true,
+    sport: 'tennis',
+    source: 'redis-prematch-via-range',
+    deprecated: true,
+    forward: 'tennis-prematch',
+    scheduled: { tournaments: [], tournamentCount: 0, eventCount: 0 },
+    live: { matches: [], tournaments: [], tournamentCount: 0, eventCount: 0 },
+    rankingsByPlayer: {},
+    oddsByEvent: {},
+    polymarketByEvent: {},
+    events: 0,
+    serverTime: Math.floor(Date.now() / 1000),
+    message: '已转发盘前桶（旧 tennis-range）',
+  };
+}
+
 router.get('/today', auth(), async (_req, res) => {
   try {
-    const full = await tennisRangeCache.getBundle();
-    if (!full) {
-      return res.status(503).json({
-        ok: false,
-        error: '区间网球数据尚未就绪，请稍后再试',
-      });
-    }
-    res.json({ ...full, member: true, source: 'redis-range' });
-  } catch (err) {
-    console.error('[tennis-range/today]', err);
-    res.status(500).json({
-      ok: false,
-      error: err.message || 'failed to load tennis range data',
+    const full = await tennisPrematchCache.getBundle();
+    if (!full) return res.json({ ...emptyBundle(), member: true });
+    res.json({
+      ...full,
+      member: true,
+      deprecated: true,
+      forward: 'tennis-prematch',
+      source: full.source || 'redis-prematch-via-range',
     });
+  } catch (err) {
+    console.error('[tennis-range/today→prematch]', err);
+    res.status(500).json({ ok: false, error: err.message || 'failed' });
   }
 });
 
 router.post('/cache/refresh', auth(['admin']), async (_req, res) => {
-  try {
-    const bundle = await tennisRangeFromMonitor.refreshRangeBundleFromMonitor();
-    res.json({
-      ok: true,
-      events: bundle.events,
-      date: bundle.date,
-      fetched_at: bundle.fetched_at,
-      live: bundle.live?.eventCount ?? 0,
-      source: 'sofascore-monitor→redis-range',
-    });
-  } catch (err) {
-    console.error('[tennis-range/cache/refresh]', err);
-    res.status(500).json({ ok: false, error: err.message || 'cache refresh failed' });
-  }
+  res.json({
+    ok: true,
+    deprecated: true,
+    message: '请改用全量采集写入 tennis:bundle:prematch',
+  });
 });
 
 router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
@@ -60,11 +68,11 @@ router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
     const result = await tennisTrade.placeBatchOrders(req.user.id, {
       orders,
       amountUsd,
-      product: 'tennis-range',
+      product: 'tennis-prematch',
     });
     res.json(result);
   } catch (e) {
-    console.error('[tennis-range/trade/batch]', e);
+    console.error('[tennis-range/trade/batch→prematch]', e);
     res.status(400).json({ ok: false, error: e.message || '批量下单失败' });
   }
 });

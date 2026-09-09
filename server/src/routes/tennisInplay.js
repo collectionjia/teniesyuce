@@ -80,14 +80,16 @@ function emptyInplayBundle() {
   };
 }
 
-/** 盘中采集数据（collect_live → tennis:bundle:inplay），仅管理员可访问 */
-router.get('/today', auth(['admin']), async (_req, res) => {
+/** 盘中采集列表：登录用户（用户 / 代理 / 管理员）均可查看 */
+router.get('/today', auth(), async (_req, res) => {
   try {
     const raw = await tennisInplayCache.getBundle();
     if (!raw) {
       return res.json({ ...emptyInplayBundle(), member: true });
     }
-    const full = sanitizeCollectLiveBundle(raw);
+    let full = sanitizeCollectLiveBundle(raw);
+    const tennisConditionApply = require('../services/tennisConditionApply');
+    full = await tennisConditionApply.maybeApplyCondition('inplay', full);
     res.json({ ...full, member: true });
   } catch (err) {
     console.error('[tennis-inplay/today]', err);
@@ -98,7 +100,7 @@ router.get('/today', auth(['admin']), async (_req, res) => {
   }
 });
 
-router.post('/trade/batch', auth(['admin']), requireWallet, async (req, res) => {
+router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
   try {
     const { orders, amountUsd } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.user.id, {
@@ -113,7 +115,7 @@ router.post('/trade/batch', auth(['admin']), requireWallet, async (req, res) => 
   }
 });
 
-router.post('/trade/sell', auth(['admin']), requireWallet, async (req, res) => {
+router.post('/trade/sell', auth(), requireWallet, async (req, res) => {
   try {
     const { eventId, side, shares } = req.body || {};
     const result = await tennisTrade.placeSellOrder(req.user.id, {
@@ -126,6 +128,17 @@ router.post('/trade/sell', auth(['admin']), requireWallet, async (req, res) => {
   } catch (e) {
     console.error('[tennis-inplay/trade/sell]', e);
     res.status(400).json({ ok: false, error: e.message || '止损平仓失败' });
+  }
+});
+
+router.post('/tick', auth(['admin']), async (_req, res) => {
+  try {
+    const tennisInplayTick = require('../services/tennisInplayTick');
+    const result = await tennisInplayTick.runInplayTick();
+    res.json(result);
+  } catch (e) {
+    console.error('[tennis-inplay/tick]', e);
+    res.status(500).json({ ok: false, error: e.message || 'tick failed' });
   }
 });
 

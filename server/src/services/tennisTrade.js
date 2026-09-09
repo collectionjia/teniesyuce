@@ -3,6 +3,8 @@ const tennisRangeCache = require('./tennisRangeCache');
 const tennisLiveCache = require('./tennisLiveCache');
 const tennisInplayCache = require('./tennisInplayCache');
 const tennisNewCache = require('./tennisNewCache');
+const tennisPrematchCache = require('./tennisPrematchCache');
+const tennisSettledCache = require('./tennisSettledCache');
 const btcWallet = require('./btcWallet');
 const polymarketTrade = require('./polymarketTrade');
 const tradeRecords = require('./tradeRecords');
@@ -58,7 +60,9 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
   const secrets = await btcWallet.loadWalletSecrets(userId);
   const tradeProduct = String(product || 'tennis').toLowerCase();
   let bundle;
-  if (tradeProduct === 'tennis-range') {
+  if (tradeProduct === 'tennis-prematch') {
+    bundle = await tennisPrematchCache.getBundle();
+  } else if (tradeProduct === 'tennis-range') {
     bundle = await tennisRangeCache.getBundle();
   } else if (tradeProduct === 'tennis-live') {
     bundle = await tennisLiveCache.getBundle();
@@ -66,6 +70,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
     bundle = await tennisInplayCache.getBundle();
   } else if (tradeProduct === 'tennis-new') {
     bundle = await tennisNewCache.getBundle();
+  } else if (tradeProduct === 'tennis-settled') {
+    bundle = await tennisSettledCache.getBundle();
   } else {
     bundle = await tennisCache.getBundle();
   }
@@ -193,10 +199,12 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
 
 async function resolveBundle(product) {
   const tradeProduct = String(product || 'tennis').toLowerCase();
+  if (tradeProduct === 'tennis-prematch') return tennisPrematchCache.getBundle();
   if (tradeProduct === 'tennis-range') return tennisRangeCache.getBundle();
   if (tradeProduct === 'tennis-live') return tennisLiveCache.getBundle();
   if (tradeProduct === 'tennis-inplay') return tennisInplayCache.getBundle();
   if (tradeProduct === 'tennis-new') return tennisNewCache.getBundle();
+  if (tradeProduct === 'tennis-settled') return tennisSettledCache.getBundle();
   return tennisCache.getBundle();
 }
 

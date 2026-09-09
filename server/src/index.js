@@ -30,6 +30,10 @@ const tennisRangeRoutes = require('./routes/tennisRange');
 const tennisLiveRoutes = require('./routes/tennisLive');
 const tennisNewRoutes = require('./routes/tennisNew');
 const tennisInplayRoutes = require('./routes/tennisInplay');
+const tennisPrematchRoutes = require('./routes/tennisPrematch');
+const tennisSettledRoutes = require('./routes/tennisSettled');
+const engineApiRoutes = require('./routes/engineApi');
+const adminSchedulerRoutes = require('./routes/adminScheduler');
 
 const app = express();
 app.use(cors());
@@ -47,17 +51,21 @@ app.use('/api/admin', adminRoutes);
 // 管理员：网球采集监控、BTC 看板配置
 app.use('/api/admin/tennis-monitor', tennisMonitorRoutes);
 app.use('/api/admin/btc-board', btcAdminRoutes);
+app.use('/api/admin', adminSchedulerRoutes);
+app.use('/api/engine', engineApiRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/embed', embedRoutes);
-// 网球产品（列表 / 区间 / 盘中 / 新列表）
+// 网球产品（盘前 / 盘中 / 盘后 + 旧 range/live/new 暂留）
 app.use('/api/tennis', tennisRoutes);
 app.use('/api/btc', btcRoutes);
 app.use('/api/trades', tradesRoutes);
+app.use('/api/tennis-prematch', tennisPrematchRoutes);
+app.use('/api/tennis-inplay', tennisInplayRoutes);
+app.use('/api/tennis-settled', tennisSettledRoutes);
 app.use('/api/tennis-range', tennisRangeRoutes);
 app.use('/api/tennis-live', tennisLiveRoutes);
 app.use('/api/tennis-new', tennisNewRoutes);
-app.use('/api/tennis-inplay', tennisInplayRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -71,6 +79,32 @@ app.listen(PORT, () => {
     try {
       const tennisRedis = require('./services/tennisRedis');
       await tennisRedis.warmOnStartup();
+      try {
+        const schedulerLoop = require('./services/schedulerLoop');
+        await schedulerLoop.start();
+      } catch (err) {
+        console.error('[scheduler] start failed:', err.message);
+        try {
+          const tennisInplayTickLoop = require('./services/tennisInplayTickLoop');
+          tennisInplayTickLoop.start();
+          console.warn('[scheduler] fallback: tennisInplayTickLoop started');
+        } catch (e2) {
+          console.error('[tennis/tick-loop] start failed:', e2.message);
+        }
+      }
+      try {
+        const engineApiKeys = require('./services/engineApiKeys');
+        await engineApiKeys.ensureTable();
+      } catch (err) {
+        console.error('[engine-api-keys] ensure failed:', err.message);
+      }
+      try {
+        const tennisThreeBuckets = require('./services/tennisThreeBuckets');
+        const r = await tennisThreeBuckets.splitFullToThreeBuckets();
+        if (r?.ok) console.log('[tennis/three-buckets] split on startup', r);
+      } catch (err) {
+        console.error('[tennis/three-buckets] startup split:', err.message);
+      }
       if (!tennisRedis.monitorSyncEnabled()) return;
 
       const tennisFromMonitor = require('./services/tennisFromMonitor');

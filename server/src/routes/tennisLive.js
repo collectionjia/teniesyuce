@@ -1,10 +1,10 @@
 const { Router } = require('express');
 const { auth } = require('../middleware/auth');
-const tennisLiveCache = require('../services/tennisLiveCache');
-const tennisLiveFromMonitor = require('../services/tennisLiveFromMonitor');
+const tennisInplayCache = require('../services/tennisInplayCache');
 const btcWallet = require('../services/btcWallet');
 const tennisTrade = require('../services/tennisTrade');
 
+/** @deprecated 转发盘中：live → tennis-inplay */
 const router = Router();
 
 async function requireWallet(req, res, next) {
@@ -18,40 +18,58 @@ async function requireWallet(req, res, next) {
   }
 }
 
+function sanitizeCollectLiveBundle(bundle) {
+  if (!bundle) return null;
+  const liveMatches = Array.isArray(bundle.live?.matches) ? bundle.live.matches : [];
+  const liveGroup = bundle.live || {};
+  return {
+    ok: true,
+    sport: 'tennis',
+    date: bundle.date,
+    fetched_at: bundle.fetched_at,
+    deprecated: true,
+    forward: 'tennis-inplay',
+    source: bundle.source || 'redis-inplay-via-live',
+    scheduled: { tournaments: [], tournamentCount: 0, eventCount: 0 },
+    live: {
+      matches: liveMatches,
+      tournaments: liveGroup.tournaments || [],
+      tournamentCount: liveGroup.tournamentCount ?? 0,
+      eventCount: liveMatches.length,
+    },
+    rankingsByPlayer: bundle.rankingsByPlayer || {},
+    oddsByEvent: bundle.oddsByEvent || {},
+    polymarketByEvent: bundle.polymarketByEvent || {},
+    events: liveMatches.length,
+    serverTime: bundle.serverTime || Math.floor(Date.now() / 1000),
+    message: bundle.message || `inplay via live · ${liveMatches.length} 场`,
+  };
+}
+
 router.get('/today', auth(), async (_req, res) => {
   try {
-    const full = await tennisLiveCache.getBundle();
-    if (!full) {
-      return res.status(503).json({
-        ok: false,
-        error: '盘中网球数据尚未就绪，请稍后再试',
+    const raw = await tennisInplayCache.getBundle();
+    if (!raw) {
+      return res.json({
+        ok: true,
+        empty: true,
+        deprecated: true,
+        forward: 'tennis-inplay',
+        member: true,
+        live: { matches: [] },
+        scheduled: { tournaments: [] },
+        message: '暂无盘中数据',
       });
     }
-    res.json({ ...full, member: true, source: 'redis-live' });
+    res.json({ ...sanitizeCollectLiveBundle(raw), member: true });
   } catch (err) {
-    console.error('[tennis-live/today]', err);
-    res.status(500).json({
-      ok: false,
-      error: err.message || 'failed to load tennis live data',
-    });
+    console.error('[tennis-live/today→inplay]', err);
+    res.status(500).json({ ok: false, error: err.message || 'failed' });
   }
 });
 
 router.post('/cache/refresh', auth(['admin']), async (_req, res) => {
-  try {
-    const bundle = await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
-    res.json({
-      ok: true,
-      events: bundle.events,
-      date: bundle.date,
-      fetched_at: bundle.fetched_at,
-      live: bundle.live?.eventCount ?? 0,
-      source: 'sofascore-monitor→redis-live',
-    });
-  } catch (err) {
-    console.error('[tennis-live/cache/refresh]', err);
-    res.status(500).json({ ok: false, error: err.message || 'cache refresh failed' });
-  }
+  res.json({ ok: true, deprecated: true, message: '请改用盘中 tick / 全量采集写入 tennis:bundle:inplay' });
 });
 
 router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
@@ -60,11 +78,11 @@ router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
     const result = await tennisTrade.placeBatchOrders(req.user.id, {
       orders,
       amountUsd,
-      product: 'tennis-live',
+      product: 'tennis-inplay',
     });
     res.json(result);
   } catch (e) {
-    console.error('[tennis-live/trade/batch]', e);
+    console.error('[tennis-live/trade/batch→inplay]', e);
     res.status(400).json({ ok: false, error: e.message || '批量下单失败' });
   }
 });

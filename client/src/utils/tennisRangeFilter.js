@@ -105,10 +105,18 @@ export function matchInplayRankMetrics(m, rankingsByPlayer = {}) {
   }
 }
 
+/** 盘中基础池：强者现排名 Top100 */
+export function passesInplayTop100(m, rankingsByPlayer = {}) {
+  const metrics = matchInplayRankMetrics(m, rankingsByPlayer)
+  if (!metrics.ready) return false
+  return metrics.strongRank != null && metrics.strongRank <= TOP_RANK_MAX
+}
+
+/** 盘中分档现差：Top100 内且现差达档要求 */
 export function passesInplayRankFilter(m, rankingsByPlayer = {}) {
   const metrics = matchInplayRankMetrics(m, rankingsByPlayer)
   if (!metrics.ready) return false
-  if (metrics.strongRank == null || metrics.strongRank > 100) return false
+  if (metrics.strongRank == null || metrics.strongRank > TOP_RANK_MAX) return false
   return metrics.gap >= metrics.minGap
 }
 

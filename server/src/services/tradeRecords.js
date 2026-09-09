@@ -69,7 +69,7 @@ async function addTradeRecord(userId, row = {}) {
   const action = String(row.action || '').toLowerCase();
   if (
     !userId
-    || !['btc', 'tennis', 'tennis-range', 'tennis-live', 'tennis-inplay', 'tennis-new'].includes(product)
+    || !['btc', 'tennis', 'tennis-range', 'tennis-live', 'tennis-inplay', 'tennis-new', 'tennis-prematch', 'tennis-settled'].includes(product)
     || !['buy', 'sell'].includes(action)
   ) {
     return null;

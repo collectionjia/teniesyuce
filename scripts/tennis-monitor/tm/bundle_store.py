@@ -15,6 +15,11 @@ BUNDLE_KEY = "tennis:bundle:full"
 META_KEY = "tennis:bundle:fetched_at"
 INPLAY_BUNDLE_KEY = "tennis:bundle:inplay"
 INPLAY_META_KEY = "tennis:bundle:inplay:fetched_at"
+PREMATCH_BUNDLE_KEY = "tennis:bundle:prematch"
+PREMATCH_META_KEY = "tennis:bundle:prematch:fetched_at"
+SETTLED_BUNDLE_KEY = "tennis:bundle:settled"
+SETTLED_META_KEY = "tennis:bundle:settled:fetched_at"
+META_TODAY_KEY = "tennis:bundle:meta:today"
 # collect.py / collect_live.py 写入标识（与 server 路由 dataSource 一致）
 DATA_SOURCE_COLLECT = "collect"
 DATA_SOURCE_COLLECT_LIVE = "collect_live"
@@ -118,9 +123,75 @@ def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
         payload = json.dumps(bundle, ensure_ascii=False)
         client.set(BUNDLE_KEY, payload, ex=TTL_SEC)
         client.set(META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        # 附属 meta（三桶共享）
+        meta = {
+            "fetched_at": bundle.get("fetched_at"),
+            "date": bundle.get("date"),
+            "rankingsByPlayer": bundle.get("rankingsByPlayer") or {},
+            "oddsByEvent": bundle.get("oddsByEvent") or {},
+            "polymarketByEvent": bundle.get("polymarketByEvent") or {},
+            "eloByEvent": bundle.get("eloByEvent") or {},
+            "birthYearByPlayer": bundle.get("birthYearByPlayer") or {},
+        }
+        client.set(META_TODAY_KEY, json.dumps(meta, ensure_ascii=False), ex=TTL_SEC)
+        # 按状态粗拆三桶（强者 Top100 由 Node split 再精修；此处保证键存在）
+        events = []
+        for t in (bundle.get("scheduled") or {}).get("tournaments") or []:
+            for e in t.get("events") or []:
+                events.append(e)
+        for e in (bundle.get("live") or {}).get("matches") or []:
+            events.append(e)
+        live_types = _LIVE_TYPES
+        ended_types = frozenset({"finished", "ended", "closed", "retired", "walkover"})
+        prematch_ev, inplay_ev, settled_ev = [], [], []
+        for e in events:
+            st = str(e.get("statusType") or "").lower()
+            if st in live_types:
+                inplay_ev.append(e)
+            elif st in ended_types:
+                settled_ev.append(e)
+            else:
+                prematch_ev.append(e)
+
+        def _shell(matches: list, source: str, as_live: bool) -> dict:
+            g = group_scheduled(matches)
+            return {
+                **{k: bundle.get(k) for k in (
+                    "ok", "sport", "date", "fetched_at", "rankingsByPlayer",
+                    "oddsByEvent", "polymarketByEvent", "eloByEvent", "birthYearByPlayer",
+                )},
+                "source": source,
+                "scheduled": {"tournaments": [], "tournamentCount": 0, "eventCount": 0} if as_live or source.endswith("settled") else g,
+                "live": {
+                    "matches": matches if (as_live or source.endswith("settled")) else [],
+                    "tournaments": g["tournaments"] if (as_live or source.endswith("settled")) else [],
+                    "tournamentCount": g["tournamentCount"] if (as_live or source.endswith("settled")) else 0,
+                    "eventCount": len(matches) if (as_live or source.endswith("settled")) else 0,
+                } if (as_live or source.endswith("settled")) else {
+                    "matches": [],
+                    "tournaments": [],
+                    "tournamentCount": 0,
+                    "eventCount": 0,
+                },
+                "events": len(matches),
+                "serverTime": bundle.get("serverTime"),
+                "message": f"{source} · {len(matches)}",
+            }
+
+        pre = _shell(prematch_ev, "tennis-prematch", False)
+        pre["scheduled"] = group_scheduled(prematch_ev)
+        inp = _shell(inplay_ev, "tennis-inplay", True)
+        stl = _shell(settled_ev, "tennis-settled", True)
+        client.set(PREMATCH_BUNDLE_KEY, json.dumps(pre, ensure_ascii=False), ex=TTL_SEC)
+        client.set(PREMATCH_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        client.set(INPLAY_BUNDLE_KEY, json.dumps(inp, ensure_ascii=False), ex=TTL_SEC)
+        client.set(INPLAY_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        client.set(SETTLED_BUNDLE_KEY, json.dumps(stl, ensure_ascii=False), ex=TTL_SEC)
+        client.set(SETTLED_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
         return {
             "ok": True,
             "key": BUNDLE_KEY,
+            "also": [PREMATCH_BUNDLE_KEY, INPLAY_BUNDLE_KEY, SETTLED_BUNDLE_KEY, META_TODAY_KEY],
             "events": bundle.get("events"),
             "date": bundle.get("date"),
             "ttl_sec": TTL_SEC,

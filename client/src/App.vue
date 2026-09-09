@@ -6,6 +6,8 @@ import TennisBoard from './components/TennisBoard.vue'
 import BtcBoard from './components/BtcBoard.vue'
 import BtcBoardAdmin from './components/BtcBoardAdmin.vue'
 import TennisMonitor from './components/TennisMonitor.vue'
+import SchedulerCenter from './components/SchedulerCenter.vue'
+import EngineApiKeys from './components/EngineApiKeys.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
 import { startBackgroundRunner, stopBackgroundRunner, loadSimState, setLiveTradeHandler, setLiveSellHandler } from './btcVirtualBet'
@@ -348,11 +350,9 @@ function setTradeProductFilter(product) {
 
 function tradeProductLabel(p) {
   if (p === 'btc') return 'BTC'
-  if (p === 'tennis-range') return '区间网球'
-  if (p === 'tennis-live') return '盘中网球'
-  if (p === 'tennis-inplay') return '盘中采集'
-  if (p === 'tennis-new') return '新网球列表'
-  if (p === 'tennis') return '网球'
+  if (p === 'tennis-prematch' || p === 'tennis-range' || p === 'tennis-new' || p === 'tennis') return '盘前网球'
+  if (p === 'tennis-inplay' || p === 'tennis-live') return '盘中网球'
+  if (p === 'tennis-settled' || p === 'tennis-post') return '盘后网球'
   return p
 }
 
@@ -436,7 +436,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-monitor': '网球数据采集', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -478,7 +478,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-betting', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 const adminManageSections = [
   {
     key: 'manage',
@@ -494,12 +494,23 @@ const adminManageSections = [
     ],
   },
   {
+    key: 'engines',
+    title: '引擎类',
+    desc: '网球采集 / 条件 / 投注 / 调度',
+    items: [
+      { view: 'tennis-collect', label: '采集引擎', desc: '全量拆三桶 · Top100/盘中 · tick 刷 Polymarket', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 多组强制筛', icon: 'list', color: 'from-amber-500 to-yellow-500' },
+      { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入与止损', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
+      { view: 'scheduler-center', label: '调度中心', desc: '采集/条件/投注 · 自定义时间 · 多任务', icon: 'list', color: 'from-sky-500 to-indigo-500' },
+      { view: 'engine-api-keys', label: '引擎 API Key', desc: '签发 / 吊销 · 调用 /api/engine/*', icon: 'link', color: 'from-slate-500 to-zinc-600' },
+    ],
+  },
+  {
     key: 'settings',
     title: '设置类',
-    desc: '数据采集与功能开关配置',
+    desc: '站点与其它数据看板配置',
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
-      { view: 'tennis-monitor', label: '网球数据采集', desc: 'Top100 与进行中比分', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
     ],
   },
@@ -2049,6 +2060,8 @@ function isTennisBoardHeaderProduct(product) {
     || isTennisLiveProduct(product)
     || isTennisNewProduct(product)
     || isTennisInplayProduct(product)
+    || isTennisPrematchProduct(product)
+    || isTennisSettledProduct(product)
   )
 }
 
@@ -2058,19 +2071,31 @@ function isDirectProduct(product) {
   return u.startsWith('/') && !u.startsWith('//')
 }
 
+function isTennisPrematchProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-prematch') return true
+  return /盘前网球/.test(String(product?.name || ''))
+}
+
+function isTennisSettledProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'tennis-settled') return true
+  return /盘后网球/.test(String(product?.name || ''))
+}
+
 /** Sofascore Courtline 网球：详情页用 Vue 直出，不用 iframe */
 function isTennisInplayProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-inplay') return true
-  return /盘中采集/.test(String(product?.name || ''))
+  return /盘中采集|盘中网球/.test(String(product?.name || '')) && !/盘前|盘后/.test(String(product?.name || ''))
 }
 
 function isTennisLiveProduct(product) {
-  if (isTennisInplayProduct(product)) return false
+  if (isTennisInplayProduct(product) || isTennisPrematchProduct(product) || isTennisSettledProduct(product)) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-live') return true
   const name = String(product?.name || '')
-  if (/盘中采集/.test(name)) return false
+  if (/盘中采集|盘中网球|盘前|盘后/.test(name)) return false
   return /盘中/.test(name)
 }
 
@@ -2087,7 +2112,14 @@ function isTennisRangeProduct(product) {
 }
 
 function isTennisProduct(product) {
-  if (isTennisRangeProduct(product) || isTennisLiveProduct(product) || isTennisNewProduct(product) || isTennisInplayProduct(product)) return false
+  if (
+    isTennisRangeProduct(product)
+    || isTennisLiveProduct(product)
+    || isTennisNewProduct(product)
+    || isTennisInplayProduct(product)
+    || isTennisPrematchProduct(product)
+    || isTennisSettledProduct(product)
+  ) return false
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis') return true
   return /网球|tennis/i.test(String(product?.name || ''))
@@ -2107,6 +2139,8 @@ function isNativeBoardProduct(product) {
     isTennisLiveProduct(product) ||
     isTennisNewProduct(product) ||
     isTennisInplayProduct(product) ||
+    isTennisPrematchProduct(product) ||
+    isTennisSettledProduct(product) ||
     isBtcBoardProduct(product)
   )
 }
@@ -2510,18 +2544,34 @@ function productEmbedUrl(product) {
               </div>
               <div
                 :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct))
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct) || isTennisPrematchProduct(openedProduct) || isTennisSettledProduct(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
                 <!-- 网球：登录用户统一看全量数据 -->
-                <div v-if="isTennisInplayProduct(openedProduct)" class="p-0">
+                <div v-if="isTennisPrematchProduct(openedProduct)" class="p-0">
                   <TennisBoard
-                    board-mode="inplay"
-                    :show-filters="false"
+                    board-mode="prematch"
+                    :show-filters="true"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisInplayProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="inplay"
+                    :show-filters="true"
+                    :is-member="tennisBoardMember(openedProduct)"
+                    :can-batch-trade="canShowWallet && walletConfigured"
+                  />
+                </div>
+                <div v-else-if="isTennisSettledProduct(openedProduct)" class="p-0">
+                  <TennisBoard
+                    board-mode="settled"
+                    :show-filters="true"
+                    :is-member="tennisBoardMember(openedProduct)"
+                    :can-batch-trade="false"
                   />
                 </div>
                 <div v-else-if="isTennisLiveProduct(openedProduct)" class="p-0">
@@ -2971,7 +3021,7 @@ function productEmbedUrl(product) {
                 <div class="grid grid-cols-4 gap-2">
                   <button
                     v-for="item in section.items"
-                    :key="item.view"
+                    :key="item.key || item.view"
                     type="button"
                     @click="go(item.view)"
                     class="bg-white rounded-xl px-1.5 py-2.5 shadow-sm ring-1 ring-slate-100 hover:bg-slate-50 transition-colors active:scale-[0.98] flex flex-col items-center gap-1.5 text-center"
@@ -3103,11 +3153,46 @@ function productEmbedUrl(product) {
               <BtcBoardAdmin />
             </section>
 
+            <section v-else-if="role==='admin' && view==='tennis-collect'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <TennisMonitor engine-page="collect" />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='tennis-condition'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <TennisMonitor engine-page="condition" />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='tennis-betting'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <TennisMonitor engine-page="betting" />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='scheduler-center'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <SchedulerCenter />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='engine-api-keys'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <EngineApiKeys />
+            </section>
+
             <section v-else-if="role==='admin' && view==='tennis-monitor'" class="space-y-3 fade-up">
               <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
-              <TennisMonitor />
+              <TennisMonitor engine-page="collect" />
             </section>
 
             <section v-else-if="role==='admin' && view==='redeem-codes'" class="space-y-3 fade-up">

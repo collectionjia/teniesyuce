@@ -57,6 +57,12 @@ function scheduleRedisRefreshAfterCollect() {
   } catch { /* ignore */ }
   if (!tennisRedis.monitorSyncEnabled()) {
     console.log('[tennis-monitor] collect 完成，数据由 collect.py 写入 Redis，已清 API 内存缓存');
+    try {
+      const tennisThreeBuckets = require('../services/tennisThreeBuckets');
+      tennisThreeBuckets.splitFullToThreeBuckets().then((r) => {
+        console.log('[tennis-monitor] three-buckets split', r);
+      }).catch((e) => console.error('[tennis-monitor] three-buckets', e.message));
+    } catch { /* ignore */ }
     return;
   }
   const tennisFromMonitor = require('../services/tennisFromMonitor');
@@ -374,6 +380,63 @@ router.post('/data-source', async (req, res) => {
   } catch (err) {
     console.error('[tennis-monitor/data-source]', err);
     res.status(500).json({ ok: false, error: err.message || 'update data source failed' });
+  }
+});
+
+router.get('/engines', async (_req, res) => {
+  try {
+    const tennisEngines = require('../services/tennisEngines');
+    const cfg = await tennisEngines.getConfig();
+    res.json({
+      ok: true,
+      ...cfg,
+      allowed_tick_intervals: tennisEngines.ALLOWED_TICK_SEC,
+    });
+  } catch (err) {
+    console.error('[tennis-monitor/engines]', err);
+    res.status(500).json({ ok: false, error: err.message || 'engines failed' });
+  }
+});
+
+router.post('/engines', async (req, res) => {
+  try {
+    const tennisEngines = require('../services/tennisEngines');
+    const cfg = await tennisEngines.setConfig(req.body || {});
+    try {
+      const schedulerLoop = require('../services/schedulerLoop');
+      const store = require('../services/schedulerStore');
+      if (cfg.collect?.inplay_tick_interval_sec != null) {
+        await store.syncTickIntervalFromEngines(cfg.collect.inplay_tick_interval_sec);
+      }
+      // 采集总开关 / tick 开关：同步盘中 tick 任务 enabled
+      if (cfg.collect) {
+        const tickOn =
+          cfg.collect.enabled !== false && cfg.collect.inplay_tick_enabled !== false;
+        await store.setJobEnabled('job_collect_inplay_tick', tickOn);
+      }
+      await schedulerLoop.alignTickJobFromConfig();
+    } catch (e) {
+      console.warn('[tennis-monitor/engines] scheduler sync', e.message);
+      const tennisInplayTickLoop = require('../services/tennisInplayTickLoop');
+      tennisInplayTickLoop.resyncFromConfig().catch(() => {});
+    }
+    res.json({ ok: true, ...cfg, allowed_tick_intervals: tennisEngines.ALLOWED_TICK_SEC });
+  } catch (err) {
+    console.error('[tennis-monitor/engines]', err);
+    res.status(err.status || 500).json({ ok: false, error: err.message || 'update engines failed' });
+  }
+});
+
+router.post('/engines/split-buckets', async (_req, res) => {
+  try {
+    const tennisThreeBuckets = require('../services/tennisThreeBuckets');
+    const r = await tennisThreeBuckets.splitFullToThreeBuckets();
+    await tennisThreeBuckets.migratePrematchByStartTime();
+    await tennisThreeBuckets.migrateInplayEnded();
+    res.json(r);
+  } catch (err) {
+    console.error('[tennis-monitor/split-buckets]', err);
+    res.status(500).json({ ok: false, error: err.message || 'split failed' });
   }
 });
 
