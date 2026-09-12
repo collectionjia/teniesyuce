@@ -1,0 +1,61 @@
+# 2026-09-11 · synthetic today · 60 matches · from Barcelona, Munich, Stuttgart
+2026-09-11	Munich	R32	Clay	Botic Van De Zandschulp	bt	Marc Andrea Huesler	7-6(7) 6-3	sim
+2026-09-11	Munich	R32	Clay	Francisco Cerundolo	bt	Sumit Nagal	6-2 6-2	sim
+2026-09-11	Munich	R32	Clay	Flavio Cobolli	bt	Diego Dedura Palomero	6-4 7-5	sim
+2026-09-11	Munich	R32	Clay	Luciano Darderi	bt	Zhizhen Zhang	7-6(5) 3-6 6-1	sim
+2026-09-11	Munich	R32	Clay	Zizou Bergs	bt	Marko Topo	6-1 6-4	sim
+2026-09-11	Stuttgart	R32	Clay	Ekaterina Alexandrova	bt	Gabriela Andrea Knutson	6-2 6-2	sim
+2026-09-11	Munich	R32	Clay	Gabriel Diallo	bt	Vitaliy Sachko	6-1 6-2	sim
+2026-09-11	Munich	SF	Clay	Ben Shelton	bt	Alex Molcan	6-3 6-4	sim
+2026-09-11	Munich	R32	Clay	Alex Molcan	bt	Alexander Bublik	6-4 6-2	sim
+2026-09-11	Barcelona	R32	Clay	Carlos Alcaraz	bt	Otto Virtanen	6-4 6-2	sim
+2026-09-11	Munich	QF	Clay	Alex Molcan	bt	Denis Shapovalov	6-4 6-4	sim
+2026-09-11	Munich	R16	Clay	Alex Molcan	bt	Daniel Altmaier	6-4 7-6(10)	sim
+2026-09-11	Munich	R32	Clay	Vit Kopriva	bt	Justin Engel	6-3 5-7 6-2	sim
+2026-09-11	Munich	R32	Clay	Ben Shelton	bt	Emilio Nava	7-6(4) 3-6 6-3	sim
+2026-09-11	Stuttgart	R32	Clay	Laura Siegemund	bt	Viktoriya Tomova	4-6 7-6(4) 6-1	sim
+2026-09-11	Stuttgart	R32	Clay	Alycia Parks	bt	Noma Noha Akugue	6-4 6-2	sim
+2026-09-11	Stuttgart	R32	Clay	Karolina Muchova	bt	Aliaksandra Sasnovich	6-2 6-4	sim
+2026-09-11	Barcelona	R32	Clay	Lorenzo Musetti	bt	Martin Landaluce	7-5 6-2	sim
+2026-09-11	Stuttgart	R16	Clay	Mirra Andreeva	bt	Alycia Parks	7-6(3) 6-3	sim
+2026-09-11	Stuttgart	R32	Clay	Diana Shnaider	bt	Tamara Korpatsch	6-3 6-1	sim
+2026-09-11	Barcelona	R32	Clay	Cameron Norrie	bt	Stan Wawrinka	6-4 6-7(5) 6-4	sim
+2026-09-11	Barcelona	R16	Clay	Hamad Medjedovic	bt	Alex De Minaur	6-3 6-4	sim
+2026-09-11	Barcelona	R32	Clay	Alex De Minaur	bt	Sebastian Ofner	7-6(7) 6-4	sim
+2026-09-11	Barcelona	SF	Clay	Andrey Rublev	bt	Hamad Medjedovic	3-6 6-2 6-2	sim
+2026-09-11	Stuttgart	R16	Clay	Elina Svitolina	bt	Eva Lys	6-1 6-0	sim
+2026-09-11	Stuttgart	R32	Clay	Zeynep Sonmez	bt	Jasmine Paolini	6-2 6-2	sim
+2026-09-11	Stuttgart	R32	Clay	Elise Mertens	bt	Ella Seidel	6-3 6-4	sim
+2026-09-11	Munich	R16	Clay	Ben Shelton	bt	Alexander Blockx	6-4 7-6(8)	sim
+2026-09-11	Munich	QF	Clay	Flavio Cobolli	bt	Vit Kopriva	6-3 6-2	sim
+2026-09-11	Barcelona	R32	Clay	Lorenzo Sonego	bt	Pedro Martinez	6-2 2-6 6-4	sim
+2026-09-11	Munich	R16	Clay	Vit Kopriva	bt	Luciano Darderi	2-6 6-4 6-1	sim
+2026-09-11	Munich	R32	Clay	Alexander Zverev	bt	Miomir Kecmanovic	6-3 3-6 7-6(2)	sim
+2026-09-11	Stuttgart	R16	Clay	Leylah Fernandez	bt	Zeynep Sonmez	6-7(2) 6-1 7-6(5)	sim
+2026-09-11	Stuttgart	R32	Clay	Linda Noskova	bt	Shuai Zhang	5-7 6-1 6-4	sim
+2026-09-11	Barcelona	R16	Clay	Andrey Rublev	bt	Lorenzo Sonego	6-2 6-3	sim
+2026-09-11	Barcelona	R32	Clay	Camilo Ugo Carabelli	bt	Karen Khachanov	6-3 6-4	sim
+2026-09-11	Stuttgart	R16	Clay	Iga Swiatek	bt	Laura Siegemund	6-2 6-3	sim
+2026-09-11	Barcelona	R16	Clay	Tomas Machac	bt	Carlos Alcaraz	W/O	sim
+2026-09-11	Stuttgart	R32	Clay	Liudmila Samsonova	bt	Antonia Ruzic	6-0 6-4	sim
+2026-09-11	Barcelona	R32	Clay	Brandon Nakashima	bt	Juan Manuel Cerundolo	6-3 7-5	sim
+2026-09-11	Barcelona	QF	Clay	Hamad Medjedovic	bt	Nuno Borges	7-6(6) 6-2	sim
+2026-09-11	Munich	R16	Clay	Alexander Zverev	bt	Gabriel Diallo	6-1 6-2	sim
+2026-09-11	Barcelona	QF	Clay	Andrey Rublev	bt	Tomas Machac	6-4 6-3	sim
+2026-09-11	Barcelona	QF	Clay	Rafael Jodar	bt	Cameron Norrie	6-3 6-2	sim
+2026-09-11	Munich	R16	Clay	Francisco Cerundolo	bt	Botic Van De Zandschulp	6-3 6-0	sim
+2026-09-11	Munich	QF	Clay	Ben Shelton	bt	Joao Fonseca	6-3 3-6 6-3	sim
+2026-09-11	Barcelona	R32	Clay	Andrey Rublev	bt	Mariano Navone	6-4 7-5	sim
+2026-09-11	Barcelona	R32	Clay	Corentin Moutet	bt	Ignacio Buse	6-4 6-4	sim
+2026-09-11	Stuttgart	R32	Clay	Eva Lys	bt	Paula Badosa	2-6 7-5 6-4	sim
+2026-09-11	Barcelona	R16	Clay	Cameron Norrie	bt	Ethan Quinn	6-3 4-6 6-4	sim
+2026-09-11	Barcelona	SF	Clay	Arthur Fils	bt	Rafael Jodar	3-6 6-3 6-2	sim
+2026-09-11	Munich	R32	Clay	Fabian Marozsan	bt	Stefanos Tsitsipas	3-6 7-6(5) 6-4	sim
+2026-09-11	Munich	R16	Clay	Flavio Cobolli	bt	Zizou Bergs	6-2 6-3	sim
+2026-09-11	Stuttgart	QF	Clay	Elena Rybakina	bt	Leylah Fernandez	6-7(5) 6-4 7-6(6)	sim
+2026-09-11	Barcelona	R16	Clay	Nuno Borges	bt	Tomas Martin Etcheverry	6-3 7-6(4)	sim
+2026-09-11	Barcelona	R16	Clay	Lorenzo Musetti	bt	Corentin Moutet	6-3 6-4	sim
+2026-09-11	Barcelona	QF	Clay	Arthur Fils	bt	Lorenzo Musetti	6-3 6-4	sim
+2026-09-11	Stuttgart	R32	Clay	Leylah Fernandez	bt	Alexandra Eala	6-1 6-4	sim
+2026-09-11	Munich	R32	Clay	Alexander Blockx	bt	Yannick Hanfmann	7-6(2) 6-2	sim
+2026-09-11	Stuttgart	R16	Clay	Coco Gauff	bt	Liudmila Samsonova	7-5 6-1	sim

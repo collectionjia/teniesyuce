@@ -1,0 +1,90 @@
+# 2026-02-23 · 89 matches · Acapulco, Dubai, Merida
+2026-02-23	Acapulco	F	Hard	Flavio Cobolli	bt	Frances Tiafoe	7-6(4) 6-4	peak_diff 0
+2026-02-23	Acapulco	QF	Hard	Brandon Nakashima	bt	Valentin Vacherot	2-6 6-2 6-3	peak_diff 13
+2026-02-23	Acapulco	QF	Hard	Flavio Cobolli	bt	Yibing Wu	7-6(4) 6-1	peak_diff 44
+2026-02-23	Acapulco	QF	Hard	Frances Tiafoe	bt	Mattia Bellucci	6-3 6-4	peak_diff 53
+2026-02-23	Acapulco	QF	Hard	Miomir Kecmanovic	bt	Terence Atmane	6-3 6-3	peak_diff 14
+2026-02-23	Acapulco	R16	Hard	Brandon Nakashima	bt	Patrick Kypson	6-4 6-4	peak_diff 60
+2026-02-23	Acapulco	R16	Hard	Flavio Cobolli	bt	Dalibor Svrcina	6-4 6-4	peak_diff 76
+2026-02-23	Acapulco	R16	Hard	Frances Tiafoe	bt	Aleksandar Kovacevic	6-4 3-6 7-6(7)	peak_diff 44
+2026-02-23	Acapulco	R16	Hard	Mattia Bellucci	bt	Alejandro Davidovich Fokina	6-3 6-3	peak_diff 49
+2026-02-23	Acapulco	R16	Hard	Miomir Kecmanovic	bt	Alexander Zverev	6-3 6-7(3) 7-6(4)	peak_diff 25
+2026-02-23	Acapulco	R16	Hard	Terence Atmane	bt	Rafael Jodar	6-2 4-6 6-1	peak_diff 18
+2026-02-23	Acapulco	R16	Hard	Valentin Vacherot	bt	Gael Monfils	6-3 6-3	peak_diff 7
+2026-02-23	Acapulco	R16	Hard	Yibing Wu	bt	Sho Shimabukuro	6-3 7-6(4)	peak_diff 49
+2026-02-23	Acapulco	R32	Hard	Alejandro Davidovich Fokina	bt	Daniel Altmaier	7-5 6-3	peak_diff 30
+2026-02-23	Acapulco	R32	Hard	Aleksandar Kovacevic	bt	Adam Walton	7-6(1) 7-6(3)	peak_diff 20
+2026-02-23	Acapulco	R32	Hard	Alexander Zverev	bt	Corentin Moutet	6-2 6-4	peak_diff 28
+2026-02-23	Acapulco	R32	Hard	Brandon Nakashima	bt	Elias Ymer	6-3 6-4	peak_diff 90
+2026-02-23	Acapulco	R32	Hard	Dalibor Svrcina	bt	James Duckworth	6-4 6-1	peak_diff 40
+2026-02-23	Acapulco	R32	Hard	Flavio Cobolli	bt	Rodrigo Pacheco Mendez	7-6(3) 7-6(3)	peak_diff 186
+2026-02-23	Acapulco	R32	Hard	Frances Tiafoe	bt	Nuno Borges	6-4 6-4	peak_diff 20
+2026-02-23	Acapulco	R32	Hard	Gael Monfils	bt	Damir Dzumhur	6-4 7-6(5)	peak_diff 45
+2026-02-23	Acapulco	R32	Hard	Mattia Bellucci	bt	Rinky Hijikata	7-6(5) 6-3	peak_diff 1
+2026-02-23	Acapulco	R32	Hard	Miomir Kecmanovic	bt	Tristan Schoolkate	6-2 6-2	peak_diff 68
+2026-02-23	Acapulco	R32	Hard	Patrick Kypson	bt	Alex De Minaur	6-1 6-7(4) 7-6(4)	peak_diff 83
+2026-02-23	Acapulco	R32	Hard	Rafael Jodar	bt	Cameron Norrie	6-3 6-2	peak_diff 15
+2026-02-23	Acapulco	R32	Hard	Sho Shimabukuro	bt	Adrian Mannarino	6-3 6-4	peak_diff 86
+2026-02-23	Acapulco	R32	Hard	Terence Atmane	bt	Grigor Dimitrov	6-3 6-3	peak_diff 32
+2026-02-23	Acapulco	R32	Hard	Valentin Vacherot	bt	Coleman Wong	4-6 6-3 6-2	peak_diff 92
+2026-02-23	Acapulco	R32	Hard	Yibing Wu	bt	Casper Ruud	7-6(2) 7-6(1)	peak_diff 52
+2026-02-23	Acapulco	SF	Hard	Flavio Cobolli	bt	Miomir Kecmanovic	7-6(5) 3-6 6-4	peak_diff 17
+2026-02-23	Acapulco	SF	Hard	Frances Tiafoe	bt	Brandon Nakashima	3-6 7-6(6) 6-4	peak_diff 19
+2026-02-23	Dubai	F	Hard	Daniil Medvedev	bt	Tallon Griekspoor	W/O	peak_diff 20
+2026-02-23	Dubai	QF	Hard	Andrey Rublev	bt	Arthur Rinderknech	6-2 6-4	peak_diff 19
+2026-02-23	Dubai	QF	Hard	Daniil Medvedev	bt	Jenson Brooksby	6-2 6-1	peak_diff 32
+2026-02-23	Dubai	QF	Hard	Felix Auger Aliassime	bt	Jiri Lehecka	6-3 7-6(2)	peak_diff 8
+2026-02-23	Dubai	QF	Hard	Tallon Griekspoor	bt	Jakub Mensik	6-3 3-6 6-2	peak_diff 9
+2026-02-23	Dubai	R16	Hard	Andrey Rublev	bt	Ugo Humbert	6-4 6-7(5) 6-3	peak_diff 8
+2026-02-23	Dubai	R16	Hard	Arthur Rinderknech	bt	Jack Draper	7-5 6-7(4) 6-4	peak_diff 20
+2026-02-23	Dubai	R16	Hard	Daniil Medvedev	bt	Stan Wawrinka	6-2 6-3	peak_diff 12
+2026-02-23	Dubai	R16	Hard	Felix Auger Aliassime	bt	Giovanni Mpetshi Perricard	6-4 6-4	peak_diff 25
+2026-02-23	Dubai	R16	Hard	Jakub Mensik	bt	Alexei Popyrin	6-3 6-2	peak_diff 7
+2026-02-23	Dubai	R16	Hard	Jenson Brooksby	bt	Karen Khachanov	7-6(6) 6-4	peak_diff 24
+2026-02-23	Dubai	R16	Hard	Jiri Lehecka	bt	Pablo Carreno Busta	7-6(6) 6-4	peak_diff 1
+2026-02-23	Dubai	R16	Hard	Tallon Griekspoor	bt	Alexander Bublik	6-3 7-6(4)	peak_diff 11
+2026-02-23	Dubai	R32	Hard	Alexander Bublik	bt	Jan Lennard Struff	6-3 6-4	peak_diff 11
+2026-02-23	Dubai	R32	Hard	Alexei Popyrin	bt	Kamil Majchrzak	3-6 6-3 7-5	peak_diff 34
+2026-02-23	Dubai	R32	Hard	Andrey Rublev	bt	Valentin Royer	6-3 6-4	peak_diff 49
+2026-02-23	Dubai	R32	Hard	Arthur Rinderknech	bt	Fabian Marozsan	3-6 6-3 6-4	peak_diff 12
+2026-02-23	Dubai	R32	Hard	Daniil Medvedev	bt	Juncheng Shang	6-1 6-3	peak_diff 46
+2026-02-23	Dubai	R32	Hard	Felix Auger Aliassime	bt	Zhizhen Zhang	6-3 7-6(4)	peak_diff 27
+2026-02-23	Dubai	R32	Hard	Giovanni Mpetshi Perricard	bt	Moez Echargui	7-6(3) 6-7(3) 7-6(4)	peak_diff 105
+2026-02-23	Dubai	R32	Hard	Jack Draper	bt	Quentin Halys	7-6(8) 6-3	peak_diff 42
+2026-02-23	Dubai	R32	Hard	Jakub Mensik	bt	Hubert Hurkacz	6-4 7-6(7)	peak_diff 6
+2026-02-23	Dubai	R32	Hard	Jenson Brooksby	bt	Zizou Bergs	6-3 6-4	peak_diff 5
+2026-02-23	Dubai	R32	Hard	Jiri Lehecka	bt	Luca Nardi	4-6 6-4 6-2	peak_diff 55
+2026-02-23	Dubai	R32	Hard	Karen Khachanov	bt	Alexander Shevchenko	6-7(5) 6-2 6-3	peak_diff 36
+2026-02-23	Dubai	R32	Hard	Pablo Carreno Busta	bt	Denis Shapovalov	6-2 6-4	peak_diff 1
+2026-02-23	Dubai	R32	Hard	Stan Wawrinka	bt	Benjamin Hassan	7-5 6-3	peak_diff 130
+2026-02-23	Dubai	R32	Hard	Tallon Griekspoor	bt	Otto Virtanen	6-3 6-4	peak_diff 70
+2026-02-23	Dubai	R32	Hard	Ugo Humbert	bt	Stefanos Tsitsipas	6-4 7-5	peak_diff 10
+2026-02-23	Dubai	SF	Hard	Daniil Medvedev	bt	Felix Auger Aliassime	6-4 6-2	peak_diff 3
+2026-02-23	Dubai	SF	Hard	Tallon Griekspoor	bt	Andrey Rublev	7-5 7-6(6)	peak_diff 16
+2026-02-23	Merida	F	Hard	Cristina Bucsa	bt	Magdalena Frech	6-1 4-6 6-4	peak_diff 8
+2026-02-23	Merida	QF	Hard	Cristina Bucsa	bt	Zeynep Sonmez	6-3 6-4	peak_diff 29
+2026-02-23	Merida	QF	Hard	Jasmine Paolini	bt	Katie Boulter	0-6 6-3 6-3	peak_diff 19
+2026-02-23	Merida	QF	Hard	Magdalena Frech	bt	Marie Bouzkova	6-3 4-6 6-3	peak_diff 2
+2026-02-23	Merida	QF	Hard	Shuai Zhang	bt	Victoria Jimenez Kasintseva	6-1 6-3	peak_diff 67
+2026-02-23	Merida	R16	Hard	Cristina Bucsa	bt	Marina Stakusic	7-6(1) 6-3	peak_diff 84
+2026-02-23	Merida	R16	Hard	Jasmine Paolini	bt	Priscilla Hon	6-0 6-2	peak_diff 90
+2026-02-23	Merida	R16	Hard	Katie Boulter	bt	Camila Osorio	6-3 0-0 RET	peak_diff 10
+2026-02-23	Merida	R16	Hard	Magdalena Frech	bt	Jessica Bouzas Maneiro	6-0 6-3	peak_diff 18
+2026-02-23	Merida	R16	Hard	Marie Bouzkova	bt	Emiliana Arango	2-6 6-1 2-0 RET	peak_diff 22
+2026-02-23	Merida	R16	Hard	Shuai Zhang	bt	Emma Navarro	6-4 6-4	peak_diff 14
+2026-02-23	Merida	R16	Hard	Victoria Jimenez Kasintseva	bt	Magda Linette	5-7 7-6(5) 7-5	peak_diff 70
+2026-02-23	Merida	R16	Hard	Zeynep Sonmez	bt	Ann Li	3-6 7-6(7) 6-4	peak_diff 30
+2026-02-23	Merida	R32	Hard	Camila Osorio	bt	Janice Tjen	6-4 6-3	peak_diff 3
+2026-02-23	Merida	R32	Hard	Cristina Bucsa	bt	Donna Vekic	6-3 6-2	peak_diff 13
+2026-02-23	Merida	R32	Hard	Emiliana Arango	bt	Anastasia Potapova	7-6(0) 6-2	peak_diff 25
+2026-02-23	Merida	R32	Hard	Jessica Bouzas Maneiro	bt	Heather Watson	6-3 6-1	peak_diff 2
+2026-02-23	Merida	R32	Hard	Katie Boulter	bt	Beatriz Haddad Maia	6-4 6-4	peak_diff 13
+2026-02-23	Merida	R32	Hard	Magda Linette	bt	Tatjana Maria	7-6(3) 6-3	peak_diff 17
+2026-02-23	Merida	R32	Hard	Magdalena Frech	bt	Maria Timofeeva	6-4 7-6(6)	peak_diff 71
+2026-02-23	Merida	R32	Hard	Marina Stakusic	bt	Dayana Yastremska	6-4 6-3	peak_diff 93
+2026-02-23	Merida	R32	Hard	Priscilla Hon	bt	Renata Zarazua	6-2 2-6 6-4	peak_diff 43
+2026-02-23	Merida	R32	Hard	Shuai Zhang	bt	Varvara Lepchenko	6-2 6-1	peak_diff 3
+2026-02-23	Merida	R32	Hard	Victoria Jimenez Kasintseva	bt	Yulia Putintseva	6-4 1-6 6-4	peak_diff 69
+2026-02-23	Merida	R32	Hard	Zeynep Sonmez	bt	Cadence Brace	6-2 6-0	peak_diff 123
+2026-02-23	Merida	SF	Hard	Cristina Bucsa	bt	Jasmine Paolini	7-5 6-4	peak_diff 26
+2026-02-23	Merida	SF	Hard	Magdalena Frech	bt	Shuai Zhang	6-2 6-7(6) 6-3	peak_diff 0

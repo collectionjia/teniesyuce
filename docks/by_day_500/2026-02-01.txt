@@ -1,0 +1,28 @@
+# 2026-02-01 · 27 matches · Abu Dhabi
+2026-02-01	Abu Dhabi	F	Hard	Sara Bejlek	bt	Ekaterina Alexandrova	7-6(5) 6-1	peak_diff 24
+2026-02-01	Abu Dhabi	QF	Hard	Clara Tauson	bt	Mccartney Kessler	6-3 6-4	peak_diff 18
+2026-02-01	Abu Dhabi	QF	Hard	Ekaterina Alexandrova	bt	Alexandra Eala	6-3 6-3	peak_diff 19
+2026-02-01	Abu Dhabi	QF	Hard	Hailey Baptiste	bt	Liudmila Samsonova	6-2 4-6 6-4	peak_diff 13
+2026-02-01	Abu Dhabi	QF	Hard	Sara Bejlek	bt	Sonay Kartal	6-0 6-2	peak_diff 10
+2026-02-01	Abu Dhabi	R16	Hard	Alexandra Eala	bt	Aliaksandra Sasnovich	2-6 6-4 7-6(5)	peak_diff 0
+2026-02-01	Abu Dhabi	R16	Hard	Clara Tauson	bt	Simona Waltert	6-3 6-1	peak_diff 69
+2026-02-01	Abu Dhabi	R16	Hard	Ekaterina Alexandrova	bt	Dayana Yastremska	6-3 6-0	peak_diff 11
+2026-02-01	Abu Dhabi	R16	Hard	Hailey Baptiste	bt	Emma Navarro	7-6(6) 0-6 6-3	peak_diff 17
+2026-02-01	Abu Dhabi	R16	Hard	Liudmila Samsonova	bt	Janice Tjen	6-2 6-2	peak_diff 24
+2026-02-01	Abu Dhabi	R16	Hard	Mccartney Kessler	bt	Leylah Fernandez	6-3 6-2	peak_diff 17
+2026-02-01	Abu Dhabi	R16	Hard	Sara Bejlek	bt	Jelena Ostapenko	6-4 6-3	peak_diff 29
+2026-02-01	Abu Dhabi	R16	Hard	Sonay Kartal	bt	Renata Zarazua	6-0 6-3	peak_diff 7
+2026-02-01	Abu Dhabi	R32	Hard	Alexandra Eala	bt	Zeynep Sonmez	6-4 6-3	peak_diff 30
+2026-02-01	Abu Dhabi	R32	Hard	Aliaksandra Sasnovich	bt	Paula Badosa	6-4 3-6 6-1	peak_diff 27
+2026-02-01	Abu Dhabi	R32	Hard	Dayana Yastremska	bt	Beatriz Haddad Maia	6-2 7-5	peak_diff 11
+2026-02-01	Abu Dhabi	R32	Hard	Hailey Baptiste	bt	Teodora Kostovic	4-6 6-3 6-4	peak_diff 134
+2026-02-01	Abu Dhabi	R32	Hard	Janice Tjen	bt	Maya Joint	7-6(6) 3-6 6-3	peak_diff 8
+2026-02-01	Abu Dhabi	R32	Hard	Jelena Ostapenko	bt	Oksana Selekhmeteva	5-7 7-6(4) 6-2	peak_diff 66
+2026-02-01	Abu Dhabi	R32	Hard	Leylah Fernandez	bt	Chloe Paquet	6-0 6-3	peak_diff 83
+2026-02-01	Abu Dhabi	R32	Hard	Liudmila Samsonova	bt	Sofia Kenin	6-4 6-0	peak_diff 8
+2026-02-01	Abu Dhabi	R32	Hard	Mccartney Kessler	bt	Anastasia Pavlyuchenkova	6-3 6-3	peak_diff 19
+2026-02-01	Abu Dhabi	R32	Hard	Sara Bejlek	bt	Ashlyn Krueger	6-3 6-0	peak_diff 5
+2026-02-01	Abu Dhabi	R32	Hard	Simona Waltert	bt	Daria Kasatkina	7-6(5) 3-6 6-4	peak_diff 73
+2026-02-01	Abu Dhabi	R32	Hard	Sonay Kartal	bt	Cristina Bucsa	6-3 7-6(8)	peak_diff 14
+2026-02-01	Abu Dhabi	SF	Hard	Ekaterina Alexandrova	bt	Hailey Baptiste	3-6 7-6(5) 6-3	peak_diff 15
+2026-02-01	Abu Dhabi	SF	Hard	Sara Bejlek	bt	Clara Tauson	7-5 3-6 7-5	peak_diff 22

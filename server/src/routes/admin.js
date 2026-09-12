@@ -174,17 +174,21 @@ router.get('/products/:id', auth(['admin']), async (req, res) => {
 router.post('/products', auth(['admin']), async (req, res) => {
   const { name, tag, gradient, url, desc, priceMonth, priceWeek, priceDay, online = true, adminOnly = false } = req.body;
   const defaultPlan = productService.pickDefaultPlan(req.body);
+  const conditionSelect = productService.normalizeSelectInput(req.body.conditionSelect);
+  const bettingSelect = productService.normalizeSelectInput(req.body.bettingSelect);
   if (!name || !tag) return res.status(400).json({ error: '请填写产品名称' });
   try {
     await productService.ensureProductColumns();
     const [result] = await pool.query(
-      `INSERT INTO products (name, tag, gradient, url, description, price_month, price_week, price_day, default_plan, online, admin_only)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (name, tag, gradient, url, description, price_month, price_week, price_day, default_plan, online, admin_only, condition_select, betting_select)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [name, tag, gradient || 'linear-gradient(135deg,#2563eb,#06b6d4)', url || '#',
-        desc || '', priceMonth || 0, priceWeek || 0, priceDay || 0, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0]
+        desc || '', priceMonth || 0, priceWeek || 0, priceDay || 0, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0,
+        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect)]
     );
     res.json({ id: result.insertId, message: '产品已创建' });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: '创建产品失败' });
   }
 });
@@ -192,17 +196,22 @@ router.post('/products', auth(['admin']), async (req, res) => {
 router.put('/products/:id', auth(['admin']), async (req, res) => {
   const { name, tag, gradient, url, desc, priceMonth, priceWeek, priceDay, online, adminOnly } = req.body;
   const defaultPlan = productService.pickDefaultPlan(req.body);
+  const conditionSelect = productService.normalizeSelectInput(req.body.conditionSelect);
+  const bettingSelect = productService.normalizeSelectInput(req.body.bettingSelect);
   try {
     await productService.ensureProductColumns();
     const [[exists]] = await pool.query('SELECT id FROM products WHERE id=?', [req.params.id]);
     if (!exists) return res.status(404).json({ error: '产品不存在' });
     await pool.query(
       `UPDATE products SET name=?, tag=?, gradient=?, url=?, description=?,
-       price_month=?, price_week=?, price_day=?, default_plan=?, online=?, admin_only=? WHERE id=?`,
-      [name, tag, gradient, url, desc, priceMonth, priceWeek, priceDay, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0, req.params.id]
+       price_month=?, price_week=?, price_day=?, default_plan=?, online=?, admin_only=?,
+       condition_select=?, betting_select=? WHERE id=?`,
+      [name, tag, gradient, url, desc, priceMonth, priceWeek, priceDay, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0,
+        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect), req.params.id]
     );
     res.json({ message: '产品已更新' });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: '更新产品失败' });
   }
 });

@@ -73,11 +73,6 @@ export async function fetchPaymentStatus(reference) {
   return data
 }
 
-export async function fetchPaymentSettings() {
-  const { data } = await api.get('/settings/payment')
-  return data
-}
-
 export async function fetchAdminPaymentSettings() {
   const { data } = await api.get('/admin/settings/payment')
   return data
@@ -372,8 +367,11 @@ export async function fetchTennisMonitorDataSource() {
   return data
 }
 
-export async function updateTennisMonitorDataSource(source) {
-  const { data } = await api.post('/admin/tennis-monitor/data-source', { source })
+export async function updateTennisMonitorDataSource(source, extra = {}) {
+  const body = typeof source === 'object' && source != null
+    ? source
+    : { source, ...extra }
+  const { data } = await api.post('/admin/tennis-monitor/data-source', body)
   return data
 }
 
@@ -444,6 +442,11 @@ export async function fetchSchedulerRuns(id, params = {}) {
   return data
 }
 
+export async function clearSchedulerRuns(id) {
+  const { data } = await api.post(`/admin/scheduler/jobs/${encodeURIComponent(id)}/runs/clear`)
+  return data
+}
+
 export async function fetchEngineApiKeys() {
   const { data } = await api.get('/admin/engine-api-keys')
   return data
@@ -460,7 +463,8 @@ export async function revokeEngineApiKey(id) {
 }
 
 export async function deleteEngineApiKey(id) {
-  const { data } = await api.delete(`/admin/engine-api-keys/${id}`)
+  // 用 POST，避免部分代理对 DELETE 支持不好
+  const { data } = await api.post(`/admin/engine-api-keys/${encodeURIComponent(id)}/delete`)
   return data
 }
 

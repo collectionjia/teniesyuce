@@ -1,0 +1,63 @@
+# 2026-02-09 · 62 matches · Dallas, Rotterdam
+2026-02-09	Dallas	F	Hard	Ben Shelton	bt	Taylor Fritz	3-6 6-3 7-5	peak_diff 1
+2026-02-09	Dallas	QF	Hard	Ben Shelton	bt	Miomir Kecmanovic	5-7 6-3 6-4	peak_diff 22
+2026-02-09	Dallas	QF	Hard	Denis Shapovalov	bt	Alejandro Davidovich Fokina	5-7 6-4 6-3	peak_diff 4
+2026-02-09	Dallas	QF	Hard	Marin Cilic	bt	Jack Pinnington Jones	6-1 6-4	peak_diff 119
+2026-02-09	Dallas	QF	Hard	Taylor Fritz	bt	Sebastian Korda	6-7(2) 6-4 7-6(5)	peak_diff 11
+2026-02-09	Dallas	R16	Hard	Alejandro Davidovich Fokina	bt	Alex Michelsen	6-4 6-4	peak_diff 16
+2026-02-09	Dallas	R16	Hard	Ben Shelton	bt	Adrian Mannarino	7-6(2) 6-7(4) 6-3	peak_diff 12
+2026-02-09	Dallas	R16	Hard	Denis Shapovalov	bt	Aleksandar Kovacevic	6-4 6-4	peak_diff 44
+2026-02-09	Dallas	R16	Hard	Jack Pinnington Jones	bt	Eliot Spizzirri	7-6(5) 4-6 7-6(4)	peak_diff 65
+2026-02-09	Dallas	R16	Hard	Marin Cilic	bt	Ethan Quinn	7-6(4) 6-3	peak_diff 35
+2026-02-09	Dallas	R16	Hard	Miomir Kecmanovic	bt	Tommy Paul	5-7 6-4 6-4	peak_diff 19
+2026-02-09	Dallas	R16	Hard	Sebastian Korda	bt	Frances Tiafoe	7-5 6-1	peak_diff 5
+2026-02-09	Dallas	R16	Hard	Taylor Fritz	bt	Brandon Nakashima	6-3 6-4	peak_diff 25
+2026-02-09	Dallas	R32	Hard	Adrian Mannarino	bt	Adam Walton	6-4 6-2	peak_diff 57
+2026-02-09	Dallas	R32	Hard	Alejandro Davidovich Fokina	bt	Zachary Svajda	6-4 7-6(1)	peak_diff 48
+2026-02-09	Dallas	R32	Hard	Aleksandar Kovacevic	bt	Patrick Kypson	6-4 7-6(1)	peak_diff 35
+2026-02-09	Dallas	R32	Hard	Alex Michelsen	bt	Grigor Dimitrov	5-7 6-4 6-4	peak_diff 21
+2026-02-09	Dallas	R32	Hard	Ben Shelton	bt	Gabriel Diallo	6-4 6-4	peak_diff 28
+2026-02-09	Dallas	R32	Hard	Brandon Nakashima	bt	Mattia Bellucci	6-3 6-4	peak_diff 34
+2026-02-09	Dallas	R32	Hard	Denis Shapovalov	bt	Rafael Jodar	6-1 6-2	peak_diff 13
+2026-02-09	Dallas	R32	Hard	Eliot Spizzirri	bt	James Duckworth	6-2 6-4	peak_diff 21
+2026-02-09	Dallas	R32	Hard	Ethan Quinn	bt	Trevor Svajda	7-6(3) 7-5	peak_diff 310
+2026-02-09	Dallas	R32	Hard	Frances Tiafoe	bt	Terence Atmane	4-6 6-2 6-2	peak_diff 31
+2026-02-09	Dallas	R32	Hard	Jack Pinnington Jones	bt	Flavio Cobolli	6-2 6-2	peak_diff 122
+2026-02-09	Dallas	R32	Hard	Marin Cilic	bt	Learner Tien	7-5 7-6(4)	peak_diff 5
+2026-02-09	Dallas	R32	Hard	Miomir Kecmanovic	bt	Sho Shimabukuro	6-7(3) 6-3 7-6(3)	peak_diff 76
+2026-02-09	Dallas	R32	Hard	Sebastian Korda	bt	Michael Zheng	6-3 6-4	peak_diff 130
+2026-02-09	Dallas	R32	Hard	Taylor Fritz	bt	Marcos Giron	6-4 5-7 7-6(1)	peak_diff 33
+2026-02-09	Dallas	R32	Hard	Tommy Paul	bt	Jenson Brooksby	4-6 6-4 7-6(4)	peak_diff 25
+2026-02-09	Dallas	SF	Hard	Ben Shelton	bt	Denis Shapovalov	4-6 6-4 7-6(4)	peak_diff 5
+2026-02-09	Dallas	SF	Hard	Taylor Fritz	bt	Marin Cilic	7-6(5) 7-6(3)	peak_diff 9
+2026-02-09	Rotterdam	F	Hard	Alex De Minaur	bt	Felix Auger Aliassime	6-3 6-2	peak_diff 2
+2026-02-09	Rotterdam	QF	Hard	Alex De Minaur	bt	Botic Van De Zandschulp	3-6 7-6(4) 7-5	peak_diff 16
+2026-02-09	Rotterdam	QF	Hard	Alexander Bublik	bt	Jaume Munar	6-4 6-7(4) 7-6(3)	peak_diff 23
+2026-02-09	Rotterdam	QF	Hard	Felix Auger Aliassime	bt	Tallon Griekspoor	7-6(2) 6-2	peak_diff 17
+2026-02-09	Rotterdam	QF	Hard	Ugo Humbert	bt	Christopher Oconnell	6-4 6-1	peak_diff 40
+2026-02-09	Rotterdam	R16	Hard	Alex De Minaur	bt	Stan Wawrinka	6-4 6-2	peak_diff 7
+2026-02-09	Rotterdam	R16	Hard	Alexander Bublik	bt	Jan Lennard Struff	7-6(2) 4-6 6-3	peak_diff 11
+2026-02-09	Rotterdam	R16	Hard	Botic Van De Zandschulp	bt	Stefanos Tsitsipas	6-4 7-6(4)	peak_diff 19
+2026-02-09	Rotterdam	R16	Hard	Christopher Oconnell	bt	Cameron Norrie	7-6(9) 6-4	peak_diff 45
+2026-02-09	Rotterdam	R16	Hard	Felix Auger Aliassime	bt	Hamad Medjedovic	6-4 6-4	peak_diff 52
+2026-02-09	Rotterdam	R16	Hard	Jaume Munar	bt	Karen Khachanov	7-6(8) 3-6 6-3	peak_diff 24
+2026-02-09	Rotterdam	R16	Hard	Tallon Griekspoor	bt	Quentin Halys	7-5 7-6(11)	peak_diff 25
+2026-02-09	Rotterdam	R16	Hard	Ugo Humbert	bt	Guy Den Ouden	6-4 6-3	peak_diff 134
+2026-02-09	Rotterdam	R32	Hard	Alex De Minaur	bt	Arthur Fils	7-6(3) 6-2	peak_diff 8
+2026-02-09	Rotterdam	R32	Hard	Alexander Bublik	bt	Hubert Hurkacz	6-7(2) 7-6(1) 7-5	peak_diff 4
+2026-02-09	Rotterdam	R32	Hard	Botic Van De Zandschulp	bt	Luka Pavlovic	7-6(5) 6-3	peak_diff 162
+2026-02-09	Rotterdam	R32	Hard	Cameron Norrie	bt	Roberto Bautista Agut	7-6(3) 6-1	peak_diff 1
+2026-02-09	Rotterdam	R32	Hard	Christopher Oconnell	bt	Valentin Royer	6-4 4-6 7-6(4)	peak_diff 1
+2026-02-09	Rotterdam	R32	Hard	Felix Auger Aliassime	bt	Alexei Popyrin	7-5 6-3	peak_diff 15
+2026-02-09	Rotterdam	R32	Hard	Guy Den Ouden	bt	Marton Fucsovics	7-6(5) 6-1	peak_diff 112
+2026-02-09	Rotterdam	R32	Hard	Hamad Medjedovic	bt	Zizou Bergs	7-6(5) 7-6(5)	peak_diff 18
+2026-02-09	Rotterdam	R32	Hard	Jan Lennard Struff	bt	Hugo Grenier	6-0 6-4	peak_diff 74
+2026-02-09	Rotterdam	R32	Hard	Jaume Munar	bt	Nicolai Budkov Kjaer	6-1 6-3	peak_diff 88
+2026-02-09	Rotterdam	R32	Hard	Karen Khachanov	bt	Jesper De Jong	3-6 6-4 7-5	peak_diff 62
+2026-02-09	Rotterdam	R32	Hard	Quentin Halys	bt	Mees Rottgering	3-6 6-1 6-1	peak_diff 370
+2026-02-09	Rotterdam	R32	Hard	Stan Wawrinka	bt	Thijs Boogaard	6-3 6-4	peak_diff 766
+2026-02-09	Rotterdam	R32	Hard	Stefanos Tsitsipas	bt	Arthur Rinderknech	7-5 6-3	peak_diff 21
+2026-02-09	Rotterdam	R32	Hard	Tallon Griekspoor	bt	Giovanni Mpetshi Perricard	6-4 6-4	peak_diff 8
+2026-02-09	Rotterdam	R32	Hard	Ugo Humbert	bt	Daniil Medvedev	7-6(4) 3-6 6-3	peak_diff 12
+2026-02-09	Rotterdam	SF	Hard	Alex De Minaur	bt	Ugo Humbert	6-4 6-3	peak_diff 7
+2026-02-09	Rotterdam	SF	Hard	Felix Auger Aliassime	bt	Alexander Bublik	6-1 6-2	peak_diff 6

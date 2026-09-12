@@ -44,7 +44,8 @@ router.get('/today', auth(), async (_req, res) => {
 router.get('/stats', auth(), async (req, res) => {
   try {
     const dateKey = req.query?.date ? String(req.query.date) : undefined;
-    const stats = await tennisSettledStats.computeSettledStats(req.user.id, { dateKey });
+    const bundle = await tennisSettledCache.getBundle();
+    const stats = await tennisSettledStats.computeSettledStats(req.user.id, { dateKey, bundle });
     res.json(stats);
   } catch (err) {
     console.error('[tennis-settled/stats]', err);

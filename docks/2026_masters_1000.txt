@@ -1,0 +1,932 @@
+# year: 2026
+# levels: Grand Slam / Masters-WTA 1000 / ATP-WTA 500 (+ US Open supplement)
+# primary source: Jeff Sackmann archive mirror (CC BY-NC-SA 4.0)
+# columns: date\ttournament\tround\tsurface\twinner\tbt\tloser\tscore\tpeak_diff
+# rank = 当场排名; peak = 生涯历史最高排名; peak_diff = |双方peak之差|
+# note: Sackmann 2026 dump may lag live events (e.g. US Open); see us_open file
+#
+20260208	Doha	F	Hard	Karolina Muchova (rank 19, peak 8)	bt	Victoria Mboko (rank 13, peak 9)	6-4 7-5	peak_diff 1
+20260208	Doha	QF	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Elisabetta Cocciaretto (rank 57, peak 29)	7-5 6-4	peak_diff 24
+20260208	Doha	QF	Hard	Karolina Muchova (rank 19, peak 8)	bt	Anna Kalinskaya (rank 28, peak 11)	6-3 6-4	peak_diff 3
+20260208	Doha	QF	Hard	Maria Sakkari (rank 52, peak 3)	bt	Iga Swiatek (rank 2, peak 1)	2-6 6-4 7-5	peak_diff 2
+20260208	Doha	QF	Hard	Victoria Mboko (rank 13, peak 9)	bt	Elena Rybakina (rank 3, peak 2)	7-5 4-6 6-4	peak_diff 7
+20260208	Doha	R16	Hard	Anna Kalinskaya (rank 28, peak 11)	bt	Elina Svitolina (rank 9, peak 3)	6-4 6-3	peak_diff 8
+20260208	Doha	R16	Hard	Elena Rybakina (rank 3, peak 2)	bt	Qinwen Zheng (rank 26, peak 4)	4-6 6-2 7-5	peak_diff 2
+20260208	Doha	R16	Hard	Elisabetta Cocciaretto (rank 57, peak 29)	bt	Ann Li (rank 41, peak 29)	7-6(5) 5-7 6-4	peak_diff 0
+20260208	Doha	R16	Hard	Iga Swiatek (rank 2, peak 1)	bt	Daria Kasatkina (rank 61, peak 8)	5-7 6-1 6-1	peak_diff 7
+20260208	Doha	R16	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Camila Osorio (rank 80, peak 33)	6-3 6-1	peak_diff 28
+20260208	Doha	R16	Hard	Karolina Muchova (rank 19, peak 8)	bt	Karolina Pliskova (rank 418, peak 1)	5-2 RET	peak_diff 7
+20260208	Doha	R16	Hard	Maria Sakkari (rank 52, peak 3)	bt	Varvara Gracheva (rank 73, peak 39)	7-6(3) 6-0	peak_diff 36
+20260208	Doha	R16	Hard	Victoria Mboko (rank 13, peak 9)	bt	Mirra Andreeva (rank 7, peak 5)	6-3 3-6 7-6(5)	peak_diff 4
+20260208	Doha	R32	Hard	Ann Li (rank 41, peak 29)	bt	Magdalena Frech (rank 59, peak 22)	6-3 6-4	peak_diff 7
+20260208	Doha	R32	Hard	Anna Kalinskaya (rank 28, peak 11)	bt	Emma Navarro (rank 18, peak 8)	7-5 2-6 6-2	peak_diff 3
+20260208	Doha	R32	Hard	Camila Osorio (rank 80, peak 33)	bt	Katerina Siniakova (rank 44, peak 27)	6-2 5-7 6-3	peak_diff 6
+20260208	Doha	R32	Hard	Daria Kasatkina (rank 61, peak 8)	bt	Elise Mertens (rank 22, peak 12)	6-4 6-0	peak_diff 4
+20260208	Doha	R32	Hard	Elena Rybakina (rank 3, peak 2)	bt	Xin Yu Wang (rank 33, peak 30)	6-2 6-4	peak_diff 28
+20260208	Doha	R32	Hard	Elina Svitolina (rank 9, peak 3)	bt	Dayana Yastremska (rank 42, peak 21)	6-1 6-4	peak_diff 18
+20260208	Doha	R32	Hard	Elisabetta Cocciaretto (rank 57, peak 29)	bt	Coco Gauff (rank 5, peak 2)	6-4 6-2	peak_diff 27
+20260208	Doha	R32	Hard	Iga Swiatek (rank 2, peak 1)	bt	Janice Tjen (rank 46, peak 36)	6-0 6-3	peak_diff 35
+20260208	Doha	R32	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Ekaterina Alexandrova (rank 10, peak 10)	6-4 6-2	peak_diff 5
+20260208	Doha	R32	Hard	Karolina Muchova (rank 19, peak 8)	bt	Tereza Valentova (rank 48, peak 42)	6-1 6-4	peak_diff 34
+20260208	Doha	R32	Hard	Karolina Pliskova (rank 418, peak 1)	bt	Amanda Anisimova (rank 4, peak 3)	5-7 7-6(3) 4-1 RET	peak_diff 2
+20260208	Doha	R32	Hard	Maria Sakkari (rank 52, peak 3)	bt	Jasmine Paolini (rank 8, peak 4)	6-4 6-2	peak_diff 1
+20260208	Doha	R32	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Magda Linette (rank 47, peak 19)	7-6(0) 6-1	peak_diff 14
+20260208	Doha	R32	Hard	Qinwen Zheng (rank 26, peak 4)	bt	Alycia Parks (rank 77, peak 40)	7-6(4) 3-6 6-2	peak_diff 36
+20260208	Doha	R32	Hard	Varvara Gracheva (rank 73, peak 39)	bt	Linda Noskova (rank 12, peak 12)	6-2 2-6 7-5	peak_diff 27
+20260208	Doha	R32	Hard	Victoria Mboko (rank 13, peak 9)	bt	Vera Zvonareva (rank 580, peak 2)	6-4 6-4	peak_diff 7
+20260208	Doha	R64	Hard	Alycia Parks (rank 77, peak 40)	bt	Diana Shnaider (rank 21, peak 11)	1-6 6-4 7-6(5)	peak_diff 29
+20260208	Doha	R64	Hard	Ann Li (rank 41, peak 29)	bt	Leylah Fernandez (rank 27, peak 13)	6-4 6-3	peak_diff 16
+20260208	Doha	R64	Hard	Anna Kalinskaya (rank 28, peak 11)	bt	Jessica Bouzas Maneiro (rank 45, peak 40)	6-2 6-1	peak_diff 29
+20260208	Doha	R64	Hard	Camila Osorio (rank 80, peak 33)	bt	Emma Raducanu (rank 25, peak 10)	2-6 6-4 2-0 RET	peak_diff 23
+20260208	Doha	R64	Hard	Daria Kasatkina (rank 61, peak 8)	bt	Moyuka Uchijima (rank 88, peak 47)	4-6 6-3 6-0	peak_diff 39
+20260208	Doha	R64	Hard	Dayana Yastremska (rank 42, peak 21)	bt	Cristina Bucsa (rank 56, peak 30)	6-4 4-6 7-6(5)	peak_diff 9
+20260208	Doha	R64	Hard	Elisabetta Cocciaretto (rank 57, peak 29)	bt	Elsa Jacquemot (rank 60, peak 53)	7-6(4) 6-2	peak_diff 24
+20260208	Doha	R64	Hard	Elise Mertens (rank 22, peak 12)	bt	Anastasia Pavlyuchenkova (rank 110, peak 11)	6-2 6-1	peak_diff 1
+20260208	Doha	R64	Hard	Emma Navarro (rank 18, peak 8)	bt	Tatjana Maria (rank 54, peak 36)	7-5 6-1	peak_diff 28
+20260208	Doha	R64	Hard	Janice Tjen (rank 46, peak 36)	bt	Beatriz Haddad Maia (rank 67, peak 10)	6-0 6-1	peak_diff 26
+20260208	Doha	R64	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Anastasia Zakharova (rank 105, peak 65)	6-7(6) 6-3 6-4	peak_diff 60
+20260208	Doha	R64	Hard	Karolina Muchova (rank 19, peak 8)	bt	Jaqueline Cristian (rank 36, peak 28)	6-2 6-3	peak_diff 20
+20260208	Doha	R64	Hard	Karolina Pliskova (rank 418, peak 1)	bt	Solana Sierra (rank 62, peak 56)	6-1 6-2	peak_diff 55
+20260208	Doha	R64	Hard	Katerina Siniakova (rank 44, peak 27)	bt	Clara Tauson (rank 14, peak 12)	6-4 6-1	peak_diff 15
+20260208	Doha	R64	Hard	Linda Noskova (rank 12, peak 12)	bt	Maya Joint (rank 30, peak 28)	6-4 6-0	peak_diff 16
+20260208	Doha	R64	Hard	Magda Linette (rank 47, peak 19)	bt	Sonay Kartal (rank 50, peak 44)	6-4 3-6 6-3	peak_diff 25
+20260208	Doha	R64	Hard	Magdalena Frech (rank 59, peak 22)	bt	Liudmila Samsonova (rank 17, peak 12)	6-3 4-6 7-6(7)	peak_diff 10
+20260208	Doha	R64	Hard	Maria Sakkari (rank 52, peak 3)	bt	Zeynep Sonmez (rank 85, peak 59)	6-1 6-3	peak_diff 56
+20260208	Doha	R64	Hard	Qinwen Zheng (rank 26, peak 4)	bt	Sofia Kenin (rank 29, peak 4)	4-6 6-1 6-2	peak_diff 0
+20260208	Doha	R64	Hard	Tereza Valentova (rank 48, peak 42)	bt	Alexandra Eala (rank 40, peak 29)	7-6(6) 6-1	peak_diff 13
+20260208	Doha	R64	Hard	Varvara Gracheva (rank 73, peak 39)	bt	Laura Siegemund (rank 51, peak 27)	7-6(3) 6-4	peak_diff 12
+20260208	Doha	R64	Hard	Vera Zvonareva (rank 580, peak 2)	bt	Peyton Stearns (rank 55, peak 28)	2-6 6-2 6-3	peak_diff 26
+20260208	Doha	R64	Hard	Victoria Mboko (rank 13, peak 9)	bt	Marie Bouzkova (rank 37, peak 24)	7-5 6-2	peak_diff 15
+20260208	Doha	R64	Hard	Xin Yu Wang (rank 33, peak 30)	bt	Emiliana Arango (rank 49, peak 46)	6-1 7-5	peak_diff 16
+20260208	Doha	SF	Hard	Karolina Muchova (rank 19, peak 8)	bt	Maria Sakkari (rank 52, peak 3)	3-6 6-4 6-1	peak_diff 5
+20260208	Doha	SF	Hard	Victoria Mboko (rank 13, peak 9)	bt	Jelena Ostapenko (rank 24, peak 5)	6-3 6-2	peak_diff 4
+20260215	Dubai	F	Hard	Jessica Pegula (rank 5, peak 3)	bt	Elina Svitolina (rank 9, peak 3)	6-2 6-4	peak_diff 0
+20260215	Dubai	QF	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Mirra Andreeva (rank 7, peak 5)	2-6 7-5 7-6(4)	peak_diff 2
+20260215	Dubai	QF	Hard	Coco Gauff (rank 4, peak 2)	bt	Alexandra Eala (rank 47, peak 29)	6-0 6-2	peak_diff 27
+20260215	Dubai	QF	Hard	Elina Svitolina (rank 9, peak 3)	bt	Antonia Ruzic (rank 67, peak 51)	3-6 6-2 6-3	peak_diff 48
+20260215	Dubai	QF	Hard	Jessica Pegula (rank 5, peak 3)	bt	Clara Tauson (rank 15, peak 12)	6-3 2-6 6-4	peak_diff 9
+20260215	Dubai	R16	Hard	Alexandra Eala (rank 47, peak 29)	bt	Sorana Cirstea (rank 32, peak 18)	7-5 6-4	peak_diff 11
+20260215	Dubai	R16	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Janice Tjen (rank 46, peak 36)	6-1 6-3	peak_diff 33
+20260215	Dubai	R16	Hard	Antonia Ruzic (rank 67, peak 51)	bt	Elena Rybakina (rank 3, peak 2)	5-7 6-4 1-0 RET	peak_diff 49
+20260215	Dubai	R16	Hard	Clara Tauson (rank 15, peak 12)	bt	Magda Linette (rank 50, peak 19)	6-4 6-2	peak_diff 7
+20260215	Dubai	R16	Hard	Coco Gauff (rank 4, peak 2)	bt	Elise Mertens (rank 22, peak 12)	2-6 7-6(9) 6-3	peak_diff 10
+20260215	Dubai	R16	Hard	Elina Svitolina (rank 9, peak 3)	bt	Belinda Bencic (rank 13, peak 4)	4-6 6-1 6-3	peak_diff 1
+20260215	Dubai	R16	Hard	Jessica Pegula (rank 5, peak 3)	bt	Iva Jovic (rank 20, peak 16)	6-4 6-2	peak_diff 13
+20260215	Dubai	R16	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Jaqueline Cristian (rank 39, peak 28)	7-5 6-3	peak_diff 23
+20260215	Dubai	R32	Hard	Alexandra Eala (rank 47, peak 29)	bt	Jasmine Paolini (rank 8, peak 4)	6-1 7-6(5)	peak_diff 25
+20260215	Dubai	R32	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Barbora Krejcikova (rank 53, peak 2)	W/O	peak_diff 1
+20260215	Dubai	R32	Hard	Antonia Ruzic (rank 67, peak 51)	bt	Anastasia Zakharova (rank 104, peak 65)	6-1 6-7(2) 6-1	peak_diff 14
+20260215	Dubai	R32	Hard	Belinda Bencic (rank 13, peak 4)	bt	Sara Bejlek (rank 41, peak 34)	W/O	peak_diff 30
+20260215	Dubai	R32	Hard	Clara Tauson (rank 15, peak 12)	bt	Peyton Stearns (rank 58, peak 28)	6-2 6-4	peak_diff 16
+20260215	Dubai	R32	Hard	Coco Gauff (rank 4, peak 2)	bt	Anna Kalinskaya (rank 23, peak 11)	6-4 6-4	peak_diff 9
+20260215	Dubai	R32	Hard	Elena Rybakina (rank 3, peak 2)	bt	Kimberly Birrell (rank 94, peak 60)	6-1 6-2	peak_diff 58
+20260215	Dubai	R32	Hard	Elina Svitolina (rank 9, peak 3)	bt	Paula Badosa (rank 70, peak 2)	6-4 0-0 RET	peak_diff 1
+20260215	Dubai	R32	Hard	Elise Mertens (rank 22, peak 12)	bt	Emma Navarro (rank 19, peak 8)	6-2 6-2	peak_diff 4
+20260215	Dubai	R32	Hard	Iva Jovic (rank 20, peak 16)	bt	Diana Shnaider (rank 21, peak 11)	6-4 1-6 6-0	peak_diff 5
+20260215	Dubai	R32	Hard	Janice Tjen (rank 46, peak 36)	bt	Leylah Fernandez (rank 29, peak 13)	7-6(5) 6-4	peak_diff 23
+20260215	Dubai	R32	Hard	Jaqueline Cristian (rank 39, peak 28)	bt	Ella Seidel (rank 95, peak 78)	6-0 0-0 RET	peak_diff 50
+20260215	Dubai	R32	Hard	Jessica Pegula (rank 5, peak 3)	bt	Varvara Gracheva (rank 60, peak 39)	6-4 6-0	peak_diff 36
+20260215	Dubai	R32	Hard	Magda Linette (rank 50, peak 19)	bt	Ekaterina Alexandrova (rank 12, peak 10)	6-2 4-6 6-1	peak_diff 9
+20260215	Dubai	R32	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Daria Kasatkina (rank 61, peak 8)	W/O	peak_diff 3
+20260215	Dubai	R32	Hard	Sorana Cirstea (rank 32, peak 18)	bt	Linda Noskova (rank 14, peak 12)	6-1 6-4	peak_diff 6
+20260215	Dubai	R64	Hard	Alexandra Eala (rank 47, peak 29)	bt	Hailey Baptiste (rank 45, peak 25)	6-4 0-1 RET	peak_diff 4
+20260215	Dubai	R64	Hard	Anastasia Zakharova (rank 104, peak 65)	bt	Moyuka Uchijima (rank 90, peak 47)	6-2 6-4	peak_diff 18
+20260215	Dubai	R64	Hard	Anna Kalinskaya (rank 23, peak 11)	bt	Jelena Ostapenko (rank 27, peak 5)	2-6 6-1 6-4	peak_diff 6
+20260215	Dubai	R64	Hard	Antonia Ruzic (rank 67, peak 51)	bt	Emma Raducanu (rank 25, peak 10)	6-1 5-7 6-2	peak_diff 41
+20260215	Dubai	R64	Hard	Barbora Krejcikova (rank 53, peak 2)	bt	Anastasia Pavlyuchenkova (rank 110, peak 11)	6-4 6-4	peak_diff 9
+20260215	Dubai	R64	Hard	Belinda Bencic (rank 13, peak 4)	bt	Jessica Bouzas Maneiro (rank 48, peak 40)	2-6 6-1 6-2	peak_diff 36
+20260215	Dubai	R64	Hard	Clara Tauson (rank 15, peak 12)	bt	Sofia Kenin (rank 30, peak 4)	7-6(4) 6-2	peak_diff 8
+20260215	Dubai	R64	Hard	Daria Kasatkina (rank 61, peak 8)	bt	Laura Siegemund (rank 52, peak 27)	6-2 6-3	peak_diff 19
+20260215	Dubai	R64	Hard	Diana Shnaider (rank 21, peak 11)	bt	Maya Joint (rank 28, peak 28)	6-4 6-1	peak_diff 17
+20260215	Dubai	R64	Hard	Elise Mertens (rank 22, peak 12)	bt	Marie Bouzkova (rank 38, peak 24)	6-2 6-2	peak_diff 12
+20260215	Dubai	R64	Hard	Ella Seidel (rank 95, peak 78)	bt	Cristina Bucsa (rank 63, peak 30)	6-1 6-4	peak_diff 48
+20260215	Dubai	R64	Hard	Emma Navarro (rank 19, peak 8)	bt	Elena Gabriela Ruse (rank 80, peak 51)	6-4 7-5	peak_diff 43
+20260215	Dubai	R64	Hard	Iva Jovic (rank 20, peak 16)	bt	Kamilla Rakhimova (rank 91, peak 60)	6-1 1-6 6-1	peak_diff 44
+20260215	Dubai	R64	Hard	Janice Tjen (rank 46, peak 36)	bt	Dayana Yastremska (rank 44, peak 21)	6-4 6-1	peak_diff 15
+20260215	Dubai	R64	Hard	Jaqueline Cristian (rank 39, peak 28)	bt	Petra Marcinko (rank 69, peak 50)	6-1 6-1	peak_diff 22
+20260215	Dubai	R64	Hard	Kimberly Birrell (rank 94, peak 60)	bt	Tatjana Maria (rank 54, peak 36)	6-4 3-6 7-5	peak_diff 24
+20260215	Dubai	R64	Hard	Leylah Fernandez (rank 29, peak 13)	bt	Liudmila Samsonova (rank 18, peak 12)	5-7 7-5 6-3	peak_diff 1
+20260215	Dubai	R64	Hard	Linda Noskova (rank 14, peak 12)	bt	Ann Li (rank 36, peak 29)	6-3 5-7 6-4	peak_diff 17
+20260215	Dubai	R64	Hard	Magda Linette (rank 50, peak 19)	bt	Lulu Sun (rank 98, peak 39)	4-6 6-4 6-1	peak_diff 20
+20260215	Dubai	R64	Hard	Paula Badosa (rank 70, peak 2)	bt	Katerina Siniakova (rank 42, peak 27)	6-3 7-5	peak_diff 25
+20260215	Dubai	R64	Hard	Peyton Stearns (rank 58, peak 28)	bt	Magdalena Frech (rank 55, peak 22)	6-4 6-2	peak_diff 6
+20260215	Dubai	R64	Hard	Sara Bejlek (rank 41, peak 34)	bt	Zeynep Sonmez (rank 84, peak 59)	6-2 6-2	peak_diff 25
+20260215	Dubai	R64	Hard	Sorana Cirstea (rank 32, peak 18)	bt	Aliaksandra Sasnovich (rank 113, peak 29)	6-3 7-6(6)	peak_diff 11
+20260215	Dubai	R64	Hard	Varvara Gracheva (rank 60, peak 39)	bt	Rebecca Sramkova (rank 103, peak 33)	7-5 1-6 6-4	peak_diff 6
+20260215	Dubai	SF	Hard	Elina Svitolina (rank 9, peak 3)	bt	Coco Gauff (rank 4, peak 2)	6-4 6-7(13) 6-4	peak_diff 1
+20260215	Dubai	SF	Hard	Jessica Pegula (rank 5, peak 3)	bt	Amanda Anisimova (rank 6, peak 3)	1-6 6-4 6-3	peak_diff 0
+20260304	Indian Wells	F	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Elena Rybakina (rank 3, peak 2)	3-6 6-3 7-6(6)	peak_diff 1
+20260304	Indian Wells	QF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Victoria Mboko (rank 10, peak 9)	7-6(0) 6-4	peak_diff 8
+20260304	Indian Wells	QF	Hard	Elena Rybakina (rank 3, peak 2)	bt	Jessica Pegula (rank 5, peak 3)	6-1 7-6(4)	peak_diff 1
+20260304	Indian Wells	QF	Hard	Elina Svitolina (rank 9, peak 3)	bt	Iga Swiatek (rank 2, peak 1)	6-2 4-6 6-4	peak_diff 2
+20260304	Indian Wells	QF	Hard	Linda Noskova (rank 14, peak 12)	bt	Talia Gibson (rank 112, peak 55)	6-2 4-6 6-2	peak_diff 43
+20260304	Indian Wells	R128	Hard	Ajla Tomljanovic (rank 85, peak 32)	bt	Elena Gabriela Ruse (rank 74, peak 51)	7-5 6-2	peak_diff 19
+20260304	Indian Wells	R128	Hard	Anastasia Potapova (rank 91, peak 21)	bt	Marina Stakusic (rank 130, peak 114)	4-6 6-1 7-5	peak_diff 93
+20260304	Indian Wells	R128	Hard	Anastasia Zakharova (rank 86, peak 65)	bt	Ella Seidel (rank 83, peak 78)	6-2 6-2	peak_diff 13
+20260304	Indian Wells	R128	Hard	Anna Blinkova (rank 94, peak 35)	bt	Dalma Galfi (rank 84, peak 79)	6-4 7-5	peak_diff 44
+20260304	Indian Wells	R128	Hard	Anna Bondar (rank 66, peak 50)	bt	Elsa Jacquemot (rank 63, peak 53)	7-6(5) 7-5	peak_diff 3
+20260304	Indian Wells	R128	Hard	Antonia Ruzic (rank 57, peak 51)	bt	Jennifer Brady (rank 801, peak 13)	3-6 6-4 6-2	peak_diff 38
+20260304	Indian Wells	R128	Hard	Ashlyn Krueger (rank 82, peak 29)	bt	Magda Linette (rank 49, peak 19)	6-1 6-4	peak_diff 10
+20260304	Indian Wells	R128	Hard	Camila Osorio (rank 61, peak 33)	bt	Sloane Stephens (rank 780, peak 3)	6-4 6-1	peak_diff 30
+20260304	Indian Wells	R128	Hard	Cristina Bucsa (rank 31, peak 30)	bt	Darja Vidmanova (rank 122, peak 101)	6-4 6-0	peak_diff 71
+20260304	Indian Wells	R128	Hard	Dayana Yastremska (rank 52, peak 21)	bt	Shuai Zhang (rank 62, peak 22)	6-3 6-2	peak_diff 1
+20260304	Indian Wells	R128	Hard	Diane Parry (rank 111, peak 48)	bt	Venus Williams (rank 554, peak 1)	6-3 6-7(4) 6-1	peak_diff 47
+20260304	Indian Wells	R128	Hard	Donna Vekic (rank 103, peak 17)	bt	Tereza Valentova (rank 47, peak 42)	7-6(4) 7-6(4)	peak_diff 25
+20260304	Indian Wells	R128	Hard	Hailey Baptiste (rank 43, peak 25)	bt	Emiliana Arango (rank 108, peak 46)	2-6 6-2 6-3	peak_diff 21
+20260304	Indian Wells	R128	Hard	Himeno Sakatsume (rank 136, peak 127)	bt	Alycia Parks (rank 96, peak 40)	6-4 6-3	peak_diff 87
+20260304	Indian Wells	R128	Hard	Jaqueline Cristian (rank 35, peak 28)	bt	Janice Tjen (rank 39, peak 36)	4-6 6-4 7-6(6)	peak_diff 8
+20260304	Indian Wells	R128	Hard	Jessica Bouzas Maneiro (rank 50, peak 40)	bt	Beatriz Haddad Maia (rank 67, peak 10)	6-1 6-7(5) 6-1	peak_diff 30
+20260304	Indian Wells	R128	Hard	Kamilla Rakhimova (rank 88, peak 60)	bt	Bianca Andreescu (rank 165, peak 4)	6-7(6) 6-0 6-1	peak_diff 56
+20260304	Indian Wells	R128	Hard	Katerina Siniakova (rank 44, peak 27)	bt	Sofia Kenin (rank 45, peak 4)	1-6 6-4 6-1	peak_diff 23
+20260304	Indian Wells	R128	Hard	Katie Volynets (rank 98, peak 56)	bt	Rebecca Sramkova (rank 118, peak 33)	6-1 0-0 RET	peak_diff 23
+20260304	Indian Wells	R128	Hard	Kayla Day (rank 187, peak 84)	bt	Francesca Jones (rank 93, peak 65)	6-3 6-1	peak_diff 19
+20260304	Indian Wells	R128	Hard	Kimberly Birrell (rank 69, peak 60)	bt	Oksana Selekhmeteva (rank 71, peak 71)	6-1 6-4	peak_diff 11
+20260304	Indian Wells	R128	Hard	Laura Siegemund (rank 55, peak 27)	bt	Petra Marcinko (rank 72, peak 50)	3-6 6-3 6-4	peak_diff 23
+20260304	Indian Wells	R128	Hard	Lilli Tagger (rank 119, peak 86)	bt	Varvara Gracheva (rank 58, peak 39)	6-2 6-4	peak_diff 47
+20260304	Indian Wells	R128	Hard	Solana Sierra (rank 65, peak 56)	bt	Peyton Stearns (rank 48, peak 28)	7-5 7-5	peak_diff 28
+20260304	Indian Wells	R128	Hard	Sonay Kartal (rank 54, peak 44)	bt	Lanlana Tararudee (rank 124, peak 94)	6-4 6-4	peak_diff 50
+20260304	Indian Wells	R128	Hard	Sorana Cirstea (rank 38, peak 18)	bt	Tatjana Maria (rank 59, peak 36)	6-4 4-6 6-3	peak_diff 18
+20260304	Indian Wells	R128	Hard	Storm Hunter (rank 234, peak 114)	bt	Magdalena Frech (rank 36, peak 22)	3-6 7-5 6-3	peak_diff 92
+20260304	Indian Wells	R128	Hard	Talia Gibson (rank 112, peak 55)	bt	Ann Li (rank 41, peak 29)	6-3 7-5	peak_diff 26
+20260304	Indian Wells	R128	Hard	Taylor Townsend (rank 87, peak 46)	bt	Marie Bouzkova (rank 33, peak 24)	6-2 6-1	peak_diff 22
+20260304	Indian Wells	R128	Hard	Victoria Jimenez Kasintseva (rank 97, peak 89)	bt	Caty Mcnally (rank 68, peak 54)	6-2 6-7(4) 6-4	peak_diff 35
+20260304	Indian Wells	R128	Hard	Yulia Putintseva (rank 76, peak 20)	bt	Paula Badosa (rank 106, peak 2)	6-4 6-2	peak_diff 18
+20260304	Indian Wells	R128	Hard	Zeynep Sonmez (rank 80, peak 59)	bt	Mccartney Kessler (rank 51, peak 30)	7-6(7) 6-0	peak_diff 29
+20260304	Indian Wells	R16	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Naomi Osaka (rank 16, peak 1)	6-2 6-4	peak_diff 0
+20260304	Indian Wells	R16	Hard	Elena Rybakina (rank 3, peak 2)	bt	Sonay Kartal (rank 54, peak 44)	6-4 4-3 RET	peak_diff 42
+20260304	Indian Wells	R16	Hard	Elina Svitolina (rank 9, peak 3)	bt	Katerina Siniakova (rank 44, peak 27)	6-1 1-1 RET	peak_diff 24
+20260304	Indian Wells	R16	Hard	Iga Swiatek (rank 2, peak 1)	bt	Karolina Muchova (rank 13, peak 8)	6-2 6-0	peak_diff 7
+20260304	Indian Wells	R16	Hard	Jessica Pegula (rank 5, peak 3)	bt	Belinda Bencic (rank 12, peak 4)	6-3 7-6(5)	peak_diff 1
+20260304	Indian Wells	R16	Hard	Linda Noskova (rank 14, peak 12)	bt	Alexandra Eala (rank 32, peak 29)	6-2 6-0	peak_diff 17
+20260304	Indian Wells	R16	Hard	Talia Gibson (rank 112, peak 55)	bt	Jasmine Paolini (rank 7, peak 4)	7-5 2-6 6-1	peak_diff 51
+20260304	Indian Wells	R16	Hard	Victoria Mboko (rank 10, peak 9)	bt	Amanda Anisimova (rank 6, peak 3)	6-4 6-1	peak_diff 6
+20260304	Indian Wells	R32	Hard	Alexandra Eala (rank 32, peak 29)	bt	Coco Gauff (rank 4, peak 2)	6-2 2-0 RET	peak_diff 27
+20260304	Indian Wells	R32	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Emma Raducanu (rank 24, peak 10)	6-1 6-1	peak_diff 7
+20260304	Indian Wells	R32	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Jaqueline Cristian (rank 35, peak 28)	6-4 6-1	peak_diff 27
+20260304	Indian Wells	R32	Hard	Belinda Bencic (rank 12, peak 4)	bt	Elise Mertens (rank 21, peak 12)	6-2 6-3	peak_diff 8
+20260304	Indian Wells	R32	Hard	Elena Rybakina (rank 3, peak 2)	bt	Marta Kostyuk (rank 28, peak 12)	6-4 6-4	peak_diff 10
+20260304	Indian Wells	R32	Hard	Elina Svitolina (rank 9, peak 3)	bt	Ashlyn Krueger (rank 82, peak 29)	6-4 6-2	peak_diff 26
+20260304	Indian Wells	R32	Hard	Iga Swiatek (rank 2, peak 1)	bt	Maria Sakkari (rank 34, peak 3)	6-3 6-2	peak_diff 2
+20260304	Indian Wells	R32	Hard	Jasmine Paolini (rank 7, peak 4)	bt	Ajla Tomljanovic (rank 85, peak 32)	7-5 5-7 6-1	peak_diff 28
+20260304	Indian Wells	R32	Hard	Jessica Pegula (rank 5, peak 3)	bt	Jelena Ostapenko (rank 26, peak 5)	4-6 6-3 6-2	peak_diff 2
+20260304	Indian Wells	R32	Hard	Karolina Muchova (rank 13, peak 8)	bt	Antonia Ruzic (rank 57, peak 51)	6-0 6-3	peak_diff 43
+20260304	Indian Wells	R32	Hard	Katerina Siniakova (rank 44, peak 27)	bt	Mirra Andreeva (rank 8, peak 5)	4-6 7-6(5) 6-3	peak_diff 22
+20260304	Indian Wells	R32	Hard	Linda Noskova (rank 14, peak 12)	bt	Sorana Cirstea (rank 38, peak 18)	6-7(5) 6-4 6-4	peak_diff 6
+20260304	Indian Wells	R32	Hard	Naomi Osaka (rank 16, peak 1)	bt	Camila Osorio (rank 61, peak 33)	6-1 3-6 6-1	peak_diff 32
+20260304	Indian Wells	R32	Hard	Sonay Kartal (rank 54, peak 44)	bt	Madison Keys (rank 15, peak 5)	2-6 6-2 6-3	peak_diff 39
+20260304	Indian Wells	R32	Hard	Talia Gibson (rank 112, peak 55)	bt	Clara Tauson (rank 17, peak 12)	7-6(2) 4-6 6-4	peak_diff 43
+20260304	Indian Wells	R32	Hard	Victoria Mboko (rank 10, peak 9)	bt	Anna Kalinskaya (rank 22, peak 11)	6-4 6-1	peak_diff 2
+20260304	Indian Wells	R64	Hard	Ajla Tomljanovic (rank 85, peak 32)	bt	Xin Yu Wang (rank 30, peak 30)	6-3 6-1	peak_diff 2
+20260304	Indian Wells	R64	Hard	Alexandra Eala (rank 32, peak 29)	bt	Dayana Yastremska (rank 52, peak 21)	7-5 4-6 7-5	peak_diff 8
+20260304	Indian Wells	R64	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Anna Blinkova (rank 94, peak 35)	5-7 6-1 6-0	peak_diff 32
+20260304	Indian Wells	R64	Hard	Anna Kalinskaya (rank 22, peak 11)	bt	Zeynep Sonmez (rank 80, peak 59)	6-4 7-6(4)	peak_diff 48
+20260304	Indian Wells	R64	Hard	Antonia Ruzic (rank 57, peak 51)	bt	Qinwen Zheng (rank 23, peak 4)	6-4 7-5	peak_diff 47
+20260304	Indian Wells	R64	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Himeno Sakatsume (rank 136, peak 127)	6-4 6-2	peak_diff 126
+20260304	Indian Wells	R64	Hard	Ashlyn Krueger (rank 82, peak 29)	bt	Liudmila Samsonova (rank 19, peak 12)	3-6 7-5 6-2	peak_diff 17
+20260304	Indian Wells	R64	Hard	Belinda Bencic (rank 12, peak 4)	bt	Storm Hunter (rank 234, peak 114)	6-3 6-2	peak_diff 110
+20260304	Indian Wells	R64	Hard	Camila Osorio (rank 61, peak 33)	bt	Iva Jovic (rank 18, peak 16)	4-6 7-6(4) 6-3	peak_diff 17
+20260304	Indian Wells	R64	Hard	Clara Tauson (rank 17, peak 12)	bt	Yulia Putintseva (rank 76, peak 20)	7-6(9) 6-2	peak_diff 8
+20260304	Indian Wells	R64	Hard	Coco Gauff (rank 4, peak 2)	bt	Kamilla Rakhimova (rank 88, peak 60)	6-3 7-6(5)	peak_diff 58
+20260304	Indian Wells	R64	Hard	Elena Rybakina (rank 3, peak 2)	bt	Hailey Baptiste (rank 43, peak 25)	7-6(5) 2-6 6-2	peak_diff 23
+20260304	Indian Wells	R64	Hard	Elina Svitolina (rank 9, peak 3)	bt	Laura Siegemund (rank 55, peak 27)	7-6(5) 4-6 6-3	peak_diff 24
+20260304	Indian Wells	R64	Hard	Elise Mertens (rank 21, peak 12)	bt	Cristina Bucsa (rank 31, peak 30)	6-2 6-1	peak_diff 18
+20260304	Indian Wells	R64	Hard	Emma Raducanu (rank 24, peak 10)	bt	Anastasia Zakharova (rank 86, peak 65)	6-1 6-3	peak_diff 55
+20260304	Indian Wells	R64	Hard	Iga Swiatek (rank 2, peak 1)	bt	Kayla Day (rank 187, peak 84)	6-0 7-6(2)	peak_diff 83
+20260304	Indian Wells	R64	Hard	Jaqueline Cristian (rank 35, peak 28)	bt	Maya Joint (rank 29, peak 28)	0-6 6-2 7-5	peak_diff 0
+20260304	Indian Wells	R64	Hard	Jasmine Paolini (rank 7, peak 4)	bt	Anastasia Potapova (rank 91, peak 21)	6-7(5) 6-2 6-3	peak_diff 17
+20260304	Indian Wells	R64	Hard	Jelena Ostapenko (rank 26, peak 5)	bt	Katie Volynets (rank 98, peak 56)	6-4 7-6(5)	peak_diff 51
+20260304	Indian Wells	R64	Hard	Jessica Pegula (rank 5, peak 3)	bt	Donna Vekic (rank 103, peak 17)	4-6 6-2 6-3	peak_diff 14
+20260304	Indian Wells	R64	Hard	Karolina Muchova (rank 13, peak 8)	bt	Anna Bondar (rank 66, peak 50)	7-5 6-2	peak_diff 42
+20260304	Indian Wells	R64	Hard	Katerina Siniakova (rank 44, peak 27)	bt	Leylah Fernandez (rank 27, peak 13)	5-7 6-4 7-6(1)	peak_diff 14
+20260304	Indian Wells	R64	Hard	Linda Noskova (rank 14, peak 12)	bt	Jessica Bouzas Maneiro (rank 50, peak 40)	6-3 6-3	peak_diff 28
+20260304	Indian Wells	R64	Hard	Madison Keys (rank 15, peak 5)	bt	Diane Parry (rank 111, peak 48)	6-4 6-3	peak_diff 43
+20260304	Indian Wells	R64	Hard	Maria Sakkari (rank 34, peak 3)	bt	Lilli Tagger (rank 119, peak 86)	7-5 6-0	peak_diff 83
+20260304	Indian Wells	R64	Hard	Marta Kostyuk (rank 28, peak 12)	bt	Taylor Townsend (rank 87, peak 46)	6-3 6-2	peak_diff 34
+20260304	Indian Wells	R64	Hard	Mirra Andreeva (rank 8, peak 5)	bt	Solana Sierra (rank 65, peak 56)	6-0 6-0	peak_diff 51
+20260304	Indian Wells	R64	Hard	Naomi Osaka (rank 16, peak 1)	bt	Victoria Jimenez Kasintseva (rank 97, peak 89)	7-5 6-2	peak_diff 88
+20260304	Indian Wells	R64	Hard	Sonay Kartal (rank 54, peak 44)	bt	Emma Navarro (rank 25, peak 8)	6-1 3-6 7-6(2)	peak_diff 36
+20260304	Indian Wells	R64	Hard	Sorana Cirstea (rank 38, peak 18)	bt	Diana Shnaider (rank 20, peak 11)	6-2 7-6(0)	peak_diff 7
+20260304	Indian Wells	R64	Hard	Talia Gibson (rank 112, peak 55)	bt	Ekaterina Alexandrova (rank 11, peak 10)	6-3 7-5	peak_diff 45
+20260304	Indian Wells	R64	Hard	Victoria Mboko (rank 10, peak 9)	bt	Kimberly Birrell (rank 69, peak 60)	6-4 7-6(5)	peak_diff 51
+20260304	Indian Wells	SF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Linda Noskova (rank 14, peak 12)	6-3 6-4	peak_diff 11
+20260304	Indian Wells	SF	Hard	Elena Rybakina (rank 3, peak 2)	bt	Elina Svitolina (rank 9, peak 3)	7-5 6-4	peak_diff 1
+20260304	Indian Wells Masters	F	Hard	Jannik Sinner (rank 2, peak 1)	bt	Daniil Medvedev (rank 11, peak 1)	7-6(6) 7-6(4)	peak_diff 0
+20260304	Indian Wells Masters	QF	Hard	Alexander Zverev (rank 4, peak 2)	bt	Arthur Fils (rank 32, peak 14)	6-2 6-3	peak_diff 12
+20260304	Indian Wells Masters	QF	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Cameron Norrie (rank 29, peak 8)	6-3 6-4	peak_diff 7
+20260304	Indian Wells Masters	QF	Hard	Daniil Medvedev (rank 11, peak 1)	bt	Jack Draper (rank 14, peak 4)	6-1 7-5	peak_diff 3
+20260304	Indian Wells Masters	QF	Hard	Jannik Sinner (rank 2, peak 1)	bt	Learner Tien (rank 27, peak 18)	6-1 6-2	peak_diff 17
+20260304	Indian Wells Masters	R128	Hard	Adam Walton (rank 91, peak 74)	bt	Quentin Halys (rank 102, peak 46)	6-3 6-3	peak_diff 28
+20260304	Indian Wells Masters	R128	Hard	Alejandro Tabilo (rank 40, peak 19)	bt	Rafael Jodar (rank 103, peak 23)	6-1 6-2	peak_diff 4
+20260304	Indian Wells Masters	R128	Hard	Aleksandar Kovacevic (rank 72, peak 54)	bt	Hubert Hurkacz (rank 71, peak 6)	7-6(6) 7-6(4)	peak_diff 48
+20260304	Indian Wells Masters	R128	Hard	Alex Michelsen (rank 44, peak 30)	bt	Daniel Merida Aguilar (rank 139, peak 82)	6-3 6-4	peak_diff 52
+20260304	Indian Wells Masters	R128	Hard	Alexander Shevchenko (rank 88, peak 45)	bt	Sho Shimabukuro (rank 113, peak 103)	6-4 3-6 6-2	peak_diff 58
+20260304	Indian Wells Masters	R128	Hard	Benjamin Bonzi (rank 111, peak 42)	bt	Valentin Royer (rank 60, peak 54)	6-4 6-3	peak_diff 12
+20260304	Indian Wells Masters	R128	Hard	Camilo Ugo Carabelli (rank 67, peak 43)	bt	Martin Damm (rank 129, peak 42)	7-6(5) 6-3	peak_diff 1
+20260304	Indian Wells Masters	R128	Hard	Dalibor Svrcina (rank 109, peak 86)	bt	James Duckworth (rank 83, peak 46)	6-2 6-4	peak_diff 40
+20260304	Indian Wells Masters	R128	Hard	Denis Shapovalov (rank 39, peak 10)	bt	Stefanos Tsitsipas (rank 43, peak 3)	6-2 3-6 6-4	peak_diff 7
+20260304	Indian Wells Masters	R128	Hard	Dino Prizmic (rank 119, peak 70)	bt	Tristan Schoolkate (rank 118, peak 95)	7-6(5) 3-6 7-5	peak_diff 25
+20260304	Indian Wells Masters	R128	Hard	Gabriel Diallo (rank 38, peak 33)	bt	Mattia Bellucci (rank 94, peak 63)	7-6(5) 6-4	peak_diff 30
+20260304	Indian Wells Masters	R128	Hard	Gael Monfils (rank 148, peak 9)	bt	Alexis Galarneau (rank 219, peak 153)	6-3 6-4	peak_diff 144
+20260304	Indian Wells Masters	R128	Hard	Grigor Dimitrov (rank 42, peak 9)	bt	Terence Atmane (rank 52, peak 41)	6-4 5-7 6-4	peak_diff 32
+20260304	Indian Wells Masters	R128	Hard	Jacob Fearnley (rank 87, peak 49)	bt	Damir Dzumhur (rank 64, peak 54)	6-3 6-3	peak_diff 5
+20260304	Indian Wells Masters	R128	Hard	Jenson Brooksby (rank 41, peak 33)	bt	Alexei Popyrin (rank 45, peak 19)	6-3 6-4	peak_diff 14
+20260304	Indian Wells Masters	R128	Hard	Joao Fonseca (rank 35, peak 24)	bt	Raphael Collignon (rank 77, peak 51)	7-6(2) 6-4	peak_diff 27
+20260304	Indian Wells Masters	R128	Hard	Juan Manuel Cerundolo (rank 70, peak 45)	bt	Botic Van De Zandschulp (rank 59, peak 22)	7-6(3) 6-7(5) 6-3	peak_diff 23
+20260304	Indian Wells Masters	R128	Hard	Kamil Majchrzak (rank 57, peak 53)	bt	Giovanni Mpetshi Perricard (rank 54, peak 29)	6-3 1-6 7-5	peak_diff 24
+20260304	Indian Wells Masters	R128	Hard	Mackenzie Mcdonald (rank 126, peak 37)	bt	Matteo Arnaldi (rank 85, peak 29)	6-0 6-1	peak_diff 8
+20260304	Indian Wells Masters	R128	Hard	Marcos Giron (rank 69, peak 37)	bt	Mariano Navone (rank 79, peak 29)	4-6 7-5 6-3	peak_diff 8
+20260304	Indian Wells Masters	R128	Hard	Marton Fucsovics (rank 56, peak 35)	bt	Christopher Oconnell (rank 127, peak 53)	7-5 6-3	peak_diff 18
+20260304	Indian Wells Masters	R128	Hard	Matteo Berrettini (rank 66, peak 6)	bt	Adrian Mannarino (rank 48, peak 17)	4-6 7-5 7-5	peak_diff 11
+20260304	Indian Wells Masters	R128	Hard	Miomir Kecmanovic (rank 58, peak 27)	bt	Daniel Altmaier (rank 55, peak 44)	6-3 1-0 RET	peak_diff 17
+20260304	Indian Wells Masters	R128	Hard	Nuno Borges (rank 49, peak 30)	bt	Emilio Nava (rank 75, peak 74)	7-6(9) 7-5	peak_diff 44
+20260304	Indian Wells Masters	R128	Hard	Reilly Opelka (rank 68, peak 17)	bt	Ethan Quinn (rank 73, peak 48)	7-5 7-6(3)	peak_diff 31
+20260304	Indian Wells Masters	R128	Hard	Rinky Hijikata (rank 117, peak 62)	bt	Francesco Maestrelli (rank 114, peak 108)	7-6(5) 6-4	peak_diff 46
+20260304	Indian Wells Masters	R128	Hard	Roberto Bautista Agut (rank 93, peak 9)	bt	Fabian Marozsan (rank 46, peak 36)	6-4 6-7(2) 6-4	peak_diff 27
+20260304	Indian Wells Masters	R128	Hard	Sebastian Baez (rank 53, peak 18)	bt	Chun Hsin Tseng (rank 144, peak 83)	6-3 6-2	peak_diff 65
+20260304	Indian Wells Masters	R128	Hard	Sebastian Korda (rank 37, peak 15)	bt	Francisco Comesana (rank 82, peak 54)	7-5 6-0	peak_diff 39
+20260304	Indian Wells Masters	R128	Hard	Vit Kopriva (rank 62, peak 55)	bt	Michael Zheng (rank 145, peak 145)	7-6(1) 7-5	peak_diff 90
+20260304	Indian Wells Masters	R128	Hard	Zachary Svajda (rank 99, peak 62)	bt	Marin Cilic (rank 51, peak 13)	7-6(5) 6-4	peak_diff 49
+20260304	Indian Wells Masters	R128	Hard	Zizou Bergs (rank 47, peak 38)	bt	Jan Lennard Struff (rank 80, peak 21)	6-3 6-4	peak_diff 17
+20260304	Indian Wells Masters	R16	Hard	Alexander Zverev (rank 4, peak 2)	bt	Frances Tiafoe (rank 22, peak 10)	6-3 6-4	peak_diff 8
+20260304	Indian Wells Masters	R16	Hard	Arthur Fils (rank 32, peak 14)	bt	Felix Auger Aliassime (rank 9, peak 4)	6-3 7-6(9)	peak_diff 10
+20260304	Indian Wells Masters	R16	Hard	Cameron Norrie (rank 29, peak 8)	bt	Rinky Hijikata (rank 117, peak 62)	6-4 6-2	peak_diff 54
+20260304	Indian Wells Masters	R16	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Casper Ruud (rank 13, peak 2)	6-1 7-6(2)	peak_diff 1
+20260304	Indian Wells Masters	R16	Hard	Daniil Medvedev (rank 11, peak 1)	bt	Alex Michelsen (rank 44, peak 30)	6-2 6-4	peak_diff 29
+20260304	Indian Wells Masters	R16	Hard	Jack Draper (rank 14, peak 4)	bt	Novak Djokovic (rank 3, peak 1)	4-6 6-4 7-6(5)	peak_diff 3
+20260304	Indian Wells Masters	R16	Hard	Jannik Sinner (rank 2, peak 1)	bt	Joao Fonseca (rank 35, peak 24)	7-6(6) 7-6(4)	peak_diff 23
+20260304	Indian Wells Masters	R16	Hard	Learner Tien (rank 27, peak 18)	bt	Alejandro Davidovich Fokina (rank 19, peak 14)	4-6 6-1 7-6(4)	peak_diff 4
+20260304	Indian Wells Masters	R32	Hard	Alejandro Davidovich Fokina (rank 19, peak 14)	bt	Jakub Mensik (rank 12, peak 12)	6-2 4-6 6-2	peak_diff 2
+20260304	Indian Wells Masters	R32	Hard	Alex Michelsen (rank 44, peak 30)	bt	Taylor Fritz (rank 7, peak 4)	6-4 7-6(6)	peak_diff 26
+20260304	Indian Wells Masters	R32	Hard	Alexander Zverev (rank 4, peak 2)	bt	Brandon Nakashima (rank 30, peak 29)	7-6(2) 5-7 6-4	peak_diff 27
+20260304	Indian Wells Masters	R32	Hard	Arthur Fils (rank 32, peak 14)	bt	Marton Fucsovics (rank 56, peak 35)	6-3 7-5	peak_diff 21
+20260304	Indian Wells Masters	R32	Hard	Cameron Norrie (rank 29, peak 8)	bt	Alex De Minaur (rank 6, peak 6)	6-4 6-4	peak_diff 2
+20260304	Indian Wells Masters	R32	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Arthur Rinderknech (rank 28, peak 24)	6-7(6) 6-3 6-2	peak_diff 23
+20260304	Indian Wells Masters	R32	Hard	Casper Ruud (rank 13, peak 2)	bt	Valentin Vacherot (rank 26, peak 16)	3-6 6-3 6-4	peak_diff 14
+20260304	Indian Wells Masters	R32	Hard	Daniil Medvedev (rank 11, peak 1)	bt	Sebastian Baez (rank 53, peak 18)	6-4 6-0	peak_diff 17
+20260304	Indian Wells Masters	R32	Hard	Felix Auger Aliassime (rank 9, peak 4)	bt	Gabriel Diallo (rank 38, peak 33)	6-7(5) 6-3 6-3	peak_diff 29
+20260304	Indian Wells Masters	R32	Hard	Frances Tiafoe (rank 22, peak 10)	bt	Flavio Cobolli (rank 15, peak 10)	6-1 6-2	peak_diff 0
+20260304	Indian Wells Masters	R32	Hard	Jack Draper (rank 14, peak 4)	bt	Francisco Cerundolo (rank 20, peak 18)	6-1 7-5	peak_diff 14
+20260304	Indian Wells Masters	R32	Hard	Jannik Sinner (rank 2, peak 1)	bt	Denis Shapovalov (rank 39, peak 10)	6-3 6-2	peak_diff 9
+20260304	Indian Wells Masters	R32	Hard	Joao Fonseca (rank 35, peak 24)	bt	Tommy Paul (rank 24, peak 8)	6-2 6-3	peak_diff 16
+20260304	Indian Wells Masters	R32	Hard	Learner Tien (rank 27, peak 18)	bt	Ben Shelton (rank 8, peak 5)	7-6(3) 4-6 6-3	peak_diff 13
+20260304	Indian Wells Masters	R32	Hard	Novak Djokovic (rank 3, peak 1)	bt	Aleksandar Kovacevic (rank 72, peak 54)	6-4 1-6 6-4	peak_diff 53
+20260304	Indian Wells Masters	R32	Hard	Rinky Hijikata (rank 117, peak 62)	bt	Alexander Bublik (rank 10, peak 10)	6-7(3) 7-6(3) 6-3	peak_diff 52
+20260304	Indian Wells Masters	R64	Hard	Alejandro Davidovich Fokina (rank 19, peak 14)	bt	Zachary Svajda (rank 99, peak 62)	7-6(0) 6-2	peak_diff 48
+20260304	Indian Wells Masters	R64	Hard	Aleksandar Kovacevic (rank 72, peak 54)	bt	Corentin Moutet (rank 33, peak 30)	6-1 6-4	peak_diff 24
+20260304	Indian Wells Masters	R64	Hard	Alex De Minaur (rank 6, peak 6)	bt	Sebastian Korda (rank 37, peak 15)	4-6 6-4 6-4	peak_diff 9
+20260304	Indian Wells Masters	R64	Hard	Alex Michelsen (rank 44, peak 30)	bt	Ugo Humbert (rank 34, peak 13)	7-5 6-7(5) 7-6(6)	peak_diff 17
+20260304	Indian Wells Masters	R64	Hard	Alexander Bublik (rank 10, peak 10)	bt	Vit Kopriva (rank 62, peak 55)	3-6 7-6(3) 6-2	peak_diff 45
+20260304	Indian Wells Masters	R64	Hard	Alexander Zverev (rank 4, peak 2)	bt	Matteo Berrettini (rank 66, peak 6)	6-3 6-4	peak_diff 4
+20260304	Indian Wells Masters	R64	Hard	Arthur Fils (rank 32, peak 14)	bt	Dino Prizmic (rank 119, peak 70)	6-2 3-2 RET	peak_diff 56
+20260304	Indian Wells Masters	R64	Hard	Arthur Rinderknech (rank 28, peak 24)	bt	Juan Manuel Cerundolo (rank 70, peak 45)	W/O	peak_diff 21
+20260304	Indian Wells Masters	R64	Hard	Ben Shelton (rank 8, peak 5)	bt	Reilly Opelka (rank 68, peak 17)	6-7(3) 7-6(4) 6-3	peak_diff 12
+20260304	Indian Wells Masters	R64	Hard	Brandon Nakashima (rank 30, peak 29)	bt	Camilo Ugo Carabelli (rank 67, peak 43)	6-3 6-4	peak_diff 14
+20260304	Indian Wells Masters	R64	Hard	Cameron Norrie (rank 29, peak 8)	bt	Mackenzie Mcdonald (rank 126, peak 37)	6-2 6-3	peak_diff 29
+20260304	Indian Wells Masters	R64	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Grigor Dimitrov (rank 42, peak 9)	6-2 6-3	peak_diff 8
+20260304	Indian Wells Masters	R64	Hard	Casper Ruud (rank 13, peak 2)	bt	Alexander Shevchenko (rank 88, peak 45)	6-1 7-6(4)	peak_diff 43
+20260304	Indian Wells Masters	R64	Hard	Daniil Medvedev (rank 11, peak 1)	bt	Alejandro Tabilo (rank 40, peak 19)	6-4 6-2	peak_diff 18
+20260304	Indian Wells Masters	R64	Hard	Denis Shapovalov (rank 39, peak 10)	bt	Tomas Martin Etcheverry (rank 31, peak 25)	6-3 2-6 7-6(5)	peak_diff 15
+20260304	Indian Wells Masters	R64	Hard	Felix Auger Aliassime (rank 9, peak 4)	bt	Gael Monfils (rank 148, peak 9)	6-7(5) 6-3 6-4	peak_diff 5
+20260304	Indian Wells Masters	R64	Hard	Flavio Cobolli (rank 15, peak 10)	bt	Miomir Kecmanovic (rank 58, peak 27)	3-6 6-3 6-4	peak_diff 17
+20260304	Indian Wells Masters	R64	Hard	Frances Tiafoe (rank 22, peak 10)	bt	Jenson Brooksby (rank 41, peak 33)	6-4 6-2	peak_diff 23
+20260304	Indian Wells Masters	R64	Hard	Francisco Cerundolo (rank 20, peak 18)	bt	Benjamin Bonzi (rank 111, peak 42)	6-4 5-7 7-6(5)	peak_diff 24
+20260304	Indian Wells Masters	R64	Hard	Gabriel Diallo (rank 38, peak 33)	bt	Andrey Rublev (rank 17, peak 5)	6-7(4) 7-6(1) 6-3	peak_diff 28
+20260304	Indian Wells Masters	R64	Hard	Jack Draper (rank 14, peak 4)	bt	Roberto Bautista Agut (rank 93, peak 9)	3-6 6-3 6-2	peak_diff 5
+20260304	Indian Wells Masters	R64	Hard	Jakub Mensik (rank 12, peak 12)	bt	Marcos Giron (rank 69, peak 37)	7-5 7-6(4)	peak_diff 25
+20260304	Indian Wells Masters	R64	Hard	Jannik Sinner (rank 2, peak 1)	bt	Dalibor Svrcina (rank 109, peak 86)	6-1 6-1	peak_diff 85
+20260304	Indian Wells Masters	R64	Hard	Joao Fonseca (rank 35, peak 24)	bt	Karen Khachanov (rank 16, peak 9)	4-6 7-6(7) 6-4	peak_diff 15
+20260304	Indian Wells Masters	R64	Hard	Learner Tien (rank 27, peak 18)	bt	Adam Walton (rank 91, peak 74)	7-6(3) 7-6(8)	peak_diff 56
+20260304	Indian Wells Masters	R64	Hard	Marton Fucsovics (rank 56, peak 35)	bt	Lorenzo Musetti (rank 5, peak 5)	7-5 6-1	peak_diff 30
+20260304	Indian Wells Masters	R64	Hard	Novak Djokovic (rank 3, peak 1)	bt	Kamil Majchrzak (rank 57, peak 53)	4-6 6-1 6-2	peak_diff 52
+20260304	Indian Wells Masters	R64	Hard	Rinky Hijikata (rank 117, peak 62)	bt	Luciano Darderi (rank 21, peak 16)	4-6 6-2 6-4	peak_diff 46
+20260304	Indian Wells Masters	R64	Hard	Sebastian Baez (rank 53, peak 18)	bt	Jiri Lehecka (rank 23, peak 12)	6-4 6-1	peak_diff 6
+20260304	Indian Wells Masters	R64	Hard	Taylor Fritz (rank 7, peak 4)	bt	Jacob Fearnley (rank 87, peak 49)	6-3 6-7(8) 6-1	peak_diff 45
+20260304	Indian Wells Masters	R64	Hard	Tommy Paul (rank 24, peak 8)	bt	Zizou Bergs (rank 47, peak 38)	6-1 6-2	peak_diff 30
+20260304	Indian Wells Masters	R64	Hard	Valentin Vacherot (rank 26, peak 16)	bt	Nuno Borges (rank 49, peak 30)	7-5 7-5	peak_diff 14
+20260304	Indian Wells Masters	SF	Hard	Daniil Medvedev (rank 11, peak 1)	bt	Carlos Alcaraz (rank 1, peak 1)	6-3 7-6(3)	peak_diff 0
+20260304	Indian Wells Masters	SF	Hard	Jannik Sinner (rank 2, peak 1)	bt	Alexander Zverev (rank 4, peak 2)	6-2 6-4	peak_diff 1
+20260317	Miami	F	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Coco Gauff (rank 4, peak 2)	6-2 4-6 6-3	peak_diff 1
+20260317	Miami	QF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Hailey Baptiste (rank 45, peak 25)	6-4 6-4	peak_diff 24
+20260317	Miami	QF	Hard	Coco Gauff (rank 4, peak 2)	bt	Belinda Bencic (rank 12, peak 4)	6-3 1-6 6-3	peak_diff 2
+20260317	Miami	QF	Hard	Elena Rybakina (rank 2, peak 2)	bt	Jessica Pegula (rank 5, peak 3)	2-6 6-3 6-4	peak_diff 1
+20260317	Miami	QF	Hard	Karolina Muchova (rank 14, peak 8)	bt	Victoria Mboko (rank 9, peak 9)	7-5 7-6(5)	peak_diff 1
+20260317	Miami	R128	Hard	Ajla Tomljanovic (rank 81, peak 32)	bt	Simona Waltert (rank 88, peak 81)	6-3 6-4	peak_diff 49
+20260317	Miami	R128	Hard	Alycia Parks (rank 105, peak 40)	bt	Sinja Kraus (rank 120, peak 92)	7-5 7-6(4)	peak_diff 52
+20260317	Miami	R128	Hard	Anastasia Zakharova (rank 74, peak 65)	bt	Anna Bondar (rank 65, peak 50)	5-7 6-3 6-1	peak_diff 15
+20260317	Miami	R128	Hard	Ann Li (rank 39, peak 29)	bt	Kimberly Birrell (rank 70, peak 60)	6-2 2-6 6-3	peak_diff 31
+20260317	Miami	R128	Hard	Anna Blinkova (rank 92, peak 35)	bt	Sofia Kenin (rank 46, peak 4)	3-6 6-1 6-3	peak_diff 31
+20260317	Miami	R128	Hard	Camila Osorio (rank 58, peak 33)	bt	Katerina Siniakova (rank 42, peak 27)	6-1 6-4	peak_diff 6
+20260317	Miami	R128	Hard	Caty Mcnally (rank 72, peak 54)	bt	Rebeka Masarova (rank 113, peak 62)	6-2 7-5	peak_diff 8
+20260317	Miami	R128	Hard	Dayana Yastremska (rank 54, peak 21)	bt	Ashlyn Krueger (rank 79, peak 29)	2-6 6-4 7-5	peak_diff 8
+20260317	Miami	R128	Hard	Elena Gabriela Ruse (rank 73, peak 51)	bt	Antonia Ruzic (rank 55, peak 51)	7-5 7-6(3)	peak_diff 0
+20260317	Miami	R128	Hard	Elisabetta Cocciaretto (rank 44, peak 29)	bt	Darja Semenistaja (rank 103, peak 87)	6-4 6-1	peak_diff 58
+20260317	Miami	R128	Hard	Elsa Jacquemot (rank 62, peak 53)	bt	Darja Vidmanova (rank 118, peak 101)	6-7(5) 7-5 7-5	peak_diff 48
+20260317	Miami	R128	Hard	Elvina Kalieva (rank 154, peak 134)	bt	Dalma Galfi (rank 87, peak 79)	6-3 6-7(5) 7-6(5)	peak_diff 55
+20260317	Miami	R128	Hard	Emerson Jones (rank 147, peak 129)	bt	Linda Fruhvirtova (rank 121, peak 49)	3-6 7-6(3) 7-6(4)	peak_diff 80
+20260317	Miami	R128	Hard	Francesca Jones (rank 93, peak 65)	bt	Venus Williams (rank 517, peak 1)	7-5 7-5	peak_diff 64
+20260317	Miami	R128	Hard	Hailey Baptiste (rank 45, peak 25)	bt	Tatjana Maria (rank 59, peak 36)	7-5 6-2	peak_diff 11
+20260317	Miami	R128	Hard	Kamilla Rakhimova (rank 82, peak 60)	bt	Solana Sierra (rank 63, peak 56)	6-1 6-3	peak_diff 4
+20260317	Miami	R128	Hard	Katie Boulter (rank 67, peak 23)	bt	Jessica Bouzas Maneiro (rank 48, peak 40)	7-6(9) 6-4	peak_diff 17
+20260317	Miami	R128	Hard	Laura Siegemund (rank 53, peak 27)	bt	Petra Marcinko (rank 76, peak 50)	6-4 6-4	peak_diff 23
+20260317	Miami	R128	Hard	Lilli Tagger (rank 115, peak 86)	bt	Ella Seidel (rank 86, peak 78)	6-7(8) 6-4 7-5	peak_diff 8
+20260317	Miami	R128	Hard	Magda Linette (rank 50, peak 19)	bt	Varvara Gracheva (rank 60, peak 39)	2-6 6-2 6-0	peak_diff 20
+20260317	Miami	R128	Hard	Mccartney Kessler (rank 51, peak 30)	bt	Magdalena Frech (rank 37, peak 22)	2-6 6-4 6-2	peak_diff 8
+20260317	Miami	R128	Hard	Oksana Selekhmeteva (rank 71, peak 71)	bt	Emiliana Arango (rank 109, peak 46)	6-3 4-6 6-3	peak_diff 25
+20260317	Miami	R128	Hard	Paula Badosa (rank 100, peak 2)	bt	Aliaksandra Sasnovich (rank 116, peak 29)	7-5 6-3	peak_diff 27
+20260317	Miami	R128	Hard	Peyton Stearns (rank 47, peak 28)	bt	Viktorija Golubic (rank 84, peak 35)	7-6(6) 6-4	peak_diff 7
+20260317	Miami	R128	Hard	Sloane Stephens (rank 717, peak 3)	bt	Jennifer Brady (rank 744, peak 13)	6-4 6-2	peak_diff 10
+20260317	Miami	R128	Hard	Sorana Cirstea (rank 35, peak 18)	bt	Shuai Zhang (rank 61, peak 22)	6-3 6-4	peak_diff 4
+20260317	Miami	R128	Hard	Talia Gibson (rank 68, peak 55)	bt	Sara Bejlek (rank 41, peak 34)	6-1 6-0	peak_diff 21
+20260317	Miami	R128	Hard	Taylor Townsend (rank 80, peak 46)	bt	Lulu Sun (rank 111, peak 39)	7-6(5) 6-3	peak_diff 7
+20260317	Miami	R128	Hard	Tereza Valentova (rank 49, peak 42)	bt	Katie Volynets (rank 95, peak 56)	6-2 6-4	peak_diff 14
+20260317	Miami	R128	Hard	Yulia Putintseva (rank 75, peak 20)	bt	Janice Tjen (rank 40, peak 36)	3-6 6-3 6-4	peak_diff 16
+20260317	Miami	R128	Hard	Yuliia Starodubtseva (rank 108, peak 53)	bt	Eva Lys (rank 77, peak 39)	6-1 6-4	peak_diff 14
+20260317	Miami	R128	Hard	Zeynep Sonmez (rank 83, peak 59)	bt	Beatriz Haddad Maia (rank 69, peak 10)	6-3 6-2	peak_diff 49
+20260317	Miami	R16	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Qinwen Zheng (rank 26, peak 4)	6-3 6-4	peak_diff 3
+20260317	Miami	R16	Hard	Belinda Bencic (rank 12, peak 4)	bt	Amanda Anisimova (rank 6, peak 3)	6-2 6-2	peak_diff 1
+20260317	Miami	R16	Hard	Coco Gauff (rank 4, peak 2)	bt	Sorana Cirstea (rank 35, peak 18)	6-4 3-6 6-2	peak_diff 16
+20260317	Miami	R16	Hard	Elena Rybakina (rank 2, peak 2)	bt	Talia Gibson (rank 68, peak 55)	6-2 6-2	peak_diff 53
+20260317	Miami	R16	Hard	Hailey Baptiste (rank 45, peak 25)	bt	Jelena Ostapenko (rank 24, peak 5)	6-3 6-4	peak_diff 20
+20260317	Miami	R16	Hard	Jessica Pegula (rank 5, peak 3)	bt	Jaqueline Cristian (rank 36, peak 28)	6-4 6-1	peak_diff 25
+20260317	Miami	R16	Hard	Karolina Muchova (rank 14, peak 8)	bt	Alexandra Eala (rank 29, peak 29)	6-0 6-2	peak_diff 21
+20260317	Miami	R16	Hard	Victoria Mboko (rank 9, peak 9)	bt	Mirra Andreeva (rank 10, peak 5)	7-6(4) 4-6 6-0	peak_diff 4
+20260317	Miami	R32	Hard	Alexandra Eala (rank 29, peak 29)	bt	Magda Linette (rank 50, peak 19)	6-3 7-6(2)	peak_diff 10
+20260317	Miami	R32	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Yuliia Starodubtseva (rank 108, peak 53)	6-4 6-2	peak_diff 50
+20260317	Miami	R32	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Caty Mcnally (rank 72, peak 54)	6-4 6-2	peak_diff 53
+20260317	Miami	R32	Hard	Belinda Bencic (rank 12, peak 4)	bt	Diana Shnaider (rank 20, peak 11)	6-3 6-3	peak_diff 7
+20260317	Miami	R32	Hard	Coco Gauff (rank 4, peak 2)	bt	Alycia Parks (rank 105, peak 40)	3-6 6-0 6-1	peak_diff 38
+20260317	Miami	R32	Hard	Elena Rybakina (rank 2, peak 2)	bt	Marta Kostyuk (rank 28, peak 12)	6-3 6-4	peak_diff 10
+20260317	Miami	R32	Hard	Hailey Baptiste (rank 45, peak 25)	bt	Elina Svitolina (rank 8, peak 3)	6-3 7-5	peak_diff 22
+20260317	Miami	R32	Hard	Jaqueline Cristian (rank 36, peak 28)	bt	Ekaterina Alexandrova (rank 11, peak 10)	6-3 4-6 7-6(5)	peak_diff 18
+20260317	Miami	R32	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Jasmine Paolini (rank 7, peak 4)	5-7 6-2 7-5	peak_diff 1
+20260317	Miami	R32	Hard	Jessica Pegula (rank 5, peak 3)	bt	Leylah Fernandez (rank 25, peak 13)	6-2 6-2	peak_diff 10
+20260317	Miami	R32	Hard	Karolina Muchova (rank 14, peak 8)	bt	Katie Boulter (rank 67, peak 23)	6-3 7-5	peak_diff 15
+20260317	Miami	R32	Hard	Mirra Andreeva (rank 10, peak 5)	bt	Marie Bouzkova (rank 32, peak 24)	7-6(4) 6-2	peak_diff 19
+20260317	Miami	R32	Hard	Qinwen Zheng (rank 26, peak 4)	bt	Madison Keys (rank 18, peak 5)	4-6 6-2 6-4	peak_diff 1
+20260317	Miami	R32	Hard	Sorana Cirstea (rank 35, peak 18)	bt	Elise Mertens (rank 19, peak 12)	6-3 6-2	peak_diff 6
+20260317	Miami	R32	Hard	Talia Gibson (rank 68, peak 55)	bt	Iva Jovic (rank 17, peak 16)	6-2 6-2	peak_diff 39
+20260317	Miami	R32	Hard	Victoria Mboko (rank 9, peak 9)	bt	Anastasia Zakharova (rank 74, peak 65)	6-1 7-5	peak_diff 56
+20260317	Miami	R64	Hard	Alexandra Eala (rank 29, peak 29)	bt	Laura Siegemund (rank 53, peak 27)	6-7(6) 6-3 6-3	peak_diff 2
+20260317	Miami	R64	Hard	Alycia Parks (rank 105, peak 40)	bt	Maria Sakkari (rank 33, peak 3)	6-3 6-3	peak_diff 37
+20260317	Miami	R64	Hard	Amanda Anisimova (rank 6, peak 3)	bt	Ajla Tomljanovic (rank 81, peak 32)	6-1 5-7 6-4	peak_diff 29
+20260317	Miami	R64	Hard	Anastasia Zakharova (rank 74, peak 65)	bt	Anna Kalinskaya (rank 21, peak 11)	3-6 6-1 7-5	peak_diff 54
+20260317	Miami	R64	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Ann Li (rank 39, peak 29)	7-6(5) 6-4	peak_diff 28
+20260317	Miami	R64	Hard	Belinda Bencic (rank 12, peak 4)	bt	Zeynep Sonmez (rank 83, peak 59)	6-3 6-2	peak_diff 55
+20260317	Miami	R64	Hard	Caty Mcnally (rank 72, peak 54)	bt	Xin Yu Wang (rank 34, peak 30)	6-4 1-6 6-0	peak_diff 24
+20260317	Miami	R64	Hard	Coco Gauff (rank 4, peak 2)	bt	Elisabetta Cocciaretto (rank 44, peak 29)	3-6 6-4 6-3	peak_diff 27
+20260317	Miami	R64	Hard	Diana Shnaider (rank 20, peak 11)	bt	Tereza Valentova (rank 49, peak 42)	7-6(7) 7-6(3)	peak_diff 31
+20260317	Miami	R64	Hard	Ekaterina Alexandrova (rank 11, peak 10)	bt	Lilli Tagger (rank 115, peak 86)	6-3 6-3	peak_diff 76
+20260317	Miami	R64	Hard	Elena Rybakina (rank 2, peak 2)	bt	Yulia Putintseva (rank 75, peak 20)	6-3 6-3	peak_diff 18
+20260317	Miami	R64	Hard	Elina Svitolina (rank 8, peak 3)	bt	Emerson Jones (rank 147, peak 129)	6-2 6-4	peak_diff 126
+20260317	Miami	R64	Hard	Elise Mertens (rank 19, peak 12)	bt	Elvina Kalieva (rank 154, peak 134)	6-2 6-0	peak_diff 122
+20260317	Miami	R64	Hard	Hailey Baptiste (rank 45, peak 25)	bt	Liudmila Samsonova (rank 22, peak 12)	6-3 7-5	peak_diff 13
+20260317	Miami	R64	Hard	Iva Jovic (rank 17, peak 16)	bt	Paula Badosa (rank 100, peak 2)	6-2 6-1	peak_diff 14
+20260317	Miami	R64	Hard	Jaqueline Cristian (rank 36, peak 28)	bt	Peyton Stearns (rank 47, peak 28)	6-4 7-5	peak_diff 0
+20260317	Miami	R64	Hard	Jasmine Paolini (rank 7, peak 4)	bt	Taylor Townsend (rank 80, peak 46)	6-3 1-6 6-2	peak_diff 42
+20260317	Miami	R64	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Dayana Yastremska (rank 54, peak 21)	6-4 6-4	peak_diff 16
+20260317	Miami	R64	Hard	Jessica Pegula (rank 5, peak 3)	bt	Francesca Jones (rank 93, peak 65)	6-1 3-0 RET	peak_diff 62
+20260317	Miami	R64	Hard	Karolina Muchova (rank 14, peak 8)	bt	Camila Osorio (rank 58, peak 33)	4-6 6-2 7-5	peak_diff 25
+20260317	Miami	R64	Hard	Katie Boulter (rank 67, peak 23)	bt	Clara Tauson (rank 16, peak 12)	6-7(4) 6-4 1-0 RET	peak_diff 11
+20260317	Miami	R64	Hard	Leylah Fernandez (rank 25, peak 13)	bt	Oksana Selekhmeteva (rank 71, peak 71)	7-6(1) 3-6 6-1	peak_diff 58
+20260317	Miami	R64	Hard	Madison Keys (rank 18, peak 5)	bt	Elena Gabriela Ruse (rank 73, peak 51)	6-0 6-3	peak_diff 46
+20260317	Miami	R64	Hard	Magda Linette (rank 50, peak 19)	bt	Iga Swiatek (rank 3, peak 1)	1-6 7-5 6-3	peak_diff 18
+20260317	Miami	R64	Hard	Marie Bouzkova (rank 32, peak 24)	bt	Elsa Jacquemot (rank 62, peak 53)	6-2 6-2	peak_diff 29
+20260317	Miami	R64	Hard	Marta Kostyuk (rank 28, peak 12)	bt	Kamilla Rakhimova (rank 82, peak 60)	6-2 6-4	peak_diff 48
+20260317	Miami	R64	Hard	Mirra Andreeva (rank 10, peak 5)	bt	Mccartney Kessler (rank 51, peak 30)	6-1 6-7(3) 6-1	peak_diff 25
+20260317	Miami	R64	Hard	Qinwen Zheng (rank 26, peak 4)	bt	Sloane Stephens (rank 717, peak 3)	6-3 6-2	peak_diff 1
+20260317	Miami	R64	Hard	Sorana Cirstea (rank 35, peak 18)	bt	Linda Noskova (rank 13, peak 12)	6-2 3-6 6-4	peak_diff 6
+20260317	Miami	R64	Hard	Talia Gibson (rank 68, peak 55)	bt	Naomi Osaka (rank 15, peak 1)	7-5 6-4	peak_diff 54
+20260317	Miami	R64	Hard	Victoria Mboko (rank 9, peak 9)	bt	Anna Blinkova (rank 92, peak 35)	6-2 6-0	peak_diff 26
+20260317	Miami	R64	Hard	Yuliia Starodubtseva (rank 108, peak 53)	bt	Cristina Bucsa (rank 30, peak 30)	6-2 3-2 RET	peak_diff 23
+20260317	Miami	SF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Elena Rybakina (rank 2, peak 2)	6-4 6-3	peak_diff 1
+20260317	Miami	SF	Hard	Coco Gauff (rank 4, peak 2)	bt	Karolina Muchova (rank 14, peak 8)	6-1 6-1	peak_diff 6
+20260318	Miami Masters	F	Hard	Jannik Sinner (rank 2, peak 1)	bt	Jiri Lehecka (rank 22, peak 12)	6-4 6-4	peak_diff 11
+20260318	Miami Masters	QF	Hard	Alexander Zverev (rank 4, peak 2)	bt	Francisco Cerundolo (rank 19, peak 18)	6-1 6-2	peak_diff 16
+20260318	Miami Masters	QF	Hard	Arthur Fils (rank 31, peak 14)	bt	Tommy Paul (rank 23, peak 8)	6-7(3) 7-6(4) 7-6(6)	peak_diff 6
+20260318	Miami Masters	QF	Hard	Jannik Sinner (rank 2, peak 1)	bt	Frances Tiafoe (rank 20, peak 10)	6-2 6-2	peak_diff 9
+20260318	Miami Masters	QF	Hard	Jiri Lehecka (rank 22, peak 12)	bt	Martin Landaluce (rank 151, peak 58)	7-6(1) 7-5	peak_diff 46
+20260318	Miami Masters	R128	Hard	Adam Walton (rank 85, peak 74)	bt	Sebastian Baez (rank 52, peak 18)	6-2 6-2	peak_diff 56
+20260318	Miami Masters	R128	Hard	Adrian Mannarino (rank 43, peak 17)	bt	Zhizhen Zhang (rank 270, peak 31)	6-3 6-2	peak_diff 14
+20260318	Miami Masters	R128	Hard	Alejandro Tabilo (rank 41, peak 19)	bt	Francisco Comesana (rank 82, peak 54)	6-4 6-2	peak_diff 35
+20260318	Miami Masters	R128	Hard	Alex Michelsen (rank 40, peak 30)	bt	Mattia Bellucci (rank 77, peak 63)	6-2 6-1	peak_diff 33
+20260318	Miami Masters	R128	Hard	Alexander Shevchenko (rank 84, peak 45)	bt	Matteo Arnaldi (rank 101, peak 29)	7-6(5) 6-7(5) 6-2	peak_diff 16
+20260318	Miami Masters	R128	Hard	Arthur Cazaux (rank 73, peak 58)	bt	Tomas Barrios Vera (rank 119, peak 93)	7-5 6-4	peak_diff 35
+20260318	Miami Masters	R128	Hard	Botic Van De Zandschulp (rank 65, peak 22)	bt	Denis Shapovalov (rank 38, peak 10)	7-5 6-3	peak_diff 12
+20260318	Miami Masters	R128	Hard	Camilo Ugo Carabelli (rank 66, peak 43)	bt	Giovanni Mpetshi Perricard (rank 59, peak 29)	2-6 6-3 7-6(3)	peak_diff 14
+20260318	Miami Masters	R128	Hard	Damir Dzumhur (rank 76, peak 54)	bt	Ignacio Buse (rank 63, peak 31)	6-7(6) 7-6(6) 6-1	peak_diff 23
+20260318	Miami Masters	R128	Hard	Darwin Blanch (rank 272, peak 219)	bt	Jan Lennard Struff (rank 78, peak 21)	6-3 3-6 6-3	peak_diff 198
+20260318	Miami Masters	R128	Hard	Ethan Quinn (rank 56, peak 48)	bt	Hubert Hurkacz (rank 75, peak 6)	6-2 6-4	peak_diff 42
+20260318	Miami Masters	R128	Hard	Gabriel Diallo (rank 37, peak 33)	bt	Yibing Wu (rank 118, peak 54)	6-2 7-6(3)	peak_diff 21
+20260318	Miami Masters	R128	Hard	Joao Fonseca (rank 39, peak 24)	bt	Fabian Marozsan (rank 46, peak 36)	6-4 3-6 6-2	peak_diff 12
+20260318	Miami Masters	R128	Hard	Kamil Majchrzak (rank 57, peak 53)	bt	Miomir Kecmanovic (rank 58, peak 27)	4-6 6-3 6-1	peak_diff 26
+20260318	Miami Masters	R128	Hard	Mariano Navone (rank 61, peak 29)	bt	Nikoloz Basilashvili (rank 134, peak 18)	7-6(7) 6-3	peak_diff 11
+20260318	Miami Masters	R128	Hard	Marin Cilic (rank 49, peak 13)	bt	Alexei Popyrin (rank 47, peak 19)	6-4 6-4	peak_diff 6
+20260318	Miami Masters	R128	Hard	Martin Damm (rank 133, peak 42)	bt	Jacob Fearnley (rank 83, peak 49)	6-0 0-0 RET	peak_diff 7
+20260318	Miami Masters	R128	Hard	Martin Landaluce (rank 151, peak 58)	bt	Marcos Giron (rank 70, peak 37)	6-3 7-6(6)	peak_diff 21
+20260318	Miami Masters	R128	Hard	Marton Fucsovics (rank 54, peak 35)	bt	Christopher Oconnell (rank 130, peak 53)	7-6(6) 6-3	peak_diff 18
+20260318	Miami Masters	R128	Hard	Matteo Berrettini (rank 68, peak 6)	bt	Alexandre Muller (rank 90, peak 38)	6-4 6-2	peak_diff 32
+20260318	Miami Masters	R128	Hard	Moise Kouame (rank 385, peak 216)	bt	Zachary Svajda (rank 96, peak 62)	5-7 6-4 6-4	peak_diff 154
+20260318	Miami Masters	R128	Hard	Quentin Halys (rank 111, peak 46)	bt	Liam Draxl (rank 147, peak 113)	6-7(4) 6-1 6-1	peak_diff 67
+20260318	Miami Masters	R128	Hard	Rafael Jodar (rank 109, peak 23)	bt	Yannick Hanfmann (rank 64, peak 45)	6-4 4-6 6-1	peak_diff 22
+20260318	Miami Masters	R128	Hard	Raphael Collignon (rank 72, peak 51)	bt	Grigor Dimitrov (rank 44, peak 9)	7-6(3) 4-6 7-6(6)	peak_diff 42
+20260318	Miami Masters	R128	Hard	Rei Sakamoto (rank 164, peak 149)	bt	Aleksandar Kovacevic (rank 92, peak 54)	6-4 3-6 7-6(7)	peak_diff 95
+20260318	Miami Masters	R128	Hard	Reilly Opelka (rank 67, peak 17)	bt	Nuno Borges (rank 50, peak 30)	6-7(6) 6-2 7-6(5)	peak_diff 13
+20260318	Miami Masters	R128	Hard	Roberto Bautista Agut (rank 89, peak 9)	bt	James Duckworth (rank 80, peak 46)	7-6(3) 7-6(4)	peak_diff 37
+20260318	Miami Masters	R128	Hard	Stefanos Tsitsipas (rank 51, peak 3)	bt	Arthur Fery (rank 174, peak 141)	6-1 7-6(4)	peak_diff 138
+20260318	Miami Masters	R128	Hard	Terence Atmane (rank 53, peak 41)	bt	Daniel Altmaier (rank 55, peak 44)	6-4 6-2	peak_diff 3
+20260318	Miami Masters	R128	Hard	Thiago Agustin Tirante (rank 81, peak 52)	bt	Valentin Royer (rank 69, peak 54)	7-5 6-7(9) 7-6(5)	peak_diff 2
+20260318	Miami Masters	R128	Hard	Tomas Machac (rank 48, peak 20)	bt	Emilio Nava (rank 74, peak 74)	2-6 6-4 6-1	peak_diff 54
+20260318	Miami Masters	R128	Hard	Zizou Bergs (rank 45, peak 38)	bt	Jenson Brooksby (rank 42, peak 33)	7-5 6-2	peak_diff 5
+20260318	Miami Masters	R16	Hard	Alexander Zverev (rank 4, peak 2)	bt	Quentin Halys (rank 111, peak 46)	7-6(4) 7-6(1)	peak_diff 44
+20260318	Miami Masters	R16	Hard	Arthur Fils (rank 31, peak 14)	bt	Valentin Vacherot (rank 25, peak 16)	6-4 6-7(4) 6-4	peak_diff 2
+20260318	Miami Masters	R16	Hard	Frances Tiafoe (rank 20, peak 10)	bt	Terence Atmane (rank 53, peak 41)	6-4 1-6 6-4	peak_diff 31
+20260318	Miami Masters	R16	Hard	Francisco Cerundolo (rank 19, peak 18)	bt	Ugo Humbert (rank 34, peak 13)	6-4 6-3	peak_diff 5
+20260318	Miami Masters	R16	Hard	Jannik Sinner (rank 2, peak 1)	bt	Alex Michelsen (rank 40, peak 30)	7-5 7-6(4)	peak_diff 29
+20260318	Miami Masters	R16	Hard	Jiri Lehecka (rank 22, peak 12)	bt	Taylor Fritz (rank 7, peak 4)	6-4 6-7(4) 6-2	peak_diff 8
+20260318	Miami Masters	R16	Hard	Martin Landaluce (rank 151, peak 58)	bt	Sebastian Korda (rank 36, peak 15)	2-6 7-6(6) 6-4	peak_diff 43
+20260318	Miami Masters	R16	Hard	Tommy Paul (rank 23, peak 8)	bt	Tomas Martin Etcheverry (rank 32, peak 25)	6-1 6-3	peak_diff 17
+20260318	Miami Masters	R32	Hard	Alex Michelsen (rank 40, peak 30)	bt	Alejandro Tabilo (rank 41, peak 19)	3-6 6-3 6-4	peak_diff 11
+20260318	Miami Masters	R32	Hard	Alexander Zverev (rank 4, peak 2)	bt	Marin Cilic (rank 49, peak 13)	6-2 5-7 6-4	peak_diff 11
+20260318	Miami Masters	R32	Hard	Arthur Fils (rank 31, peak 14)	bt	Stefanos Tsitsipas (rank 51, peak 3)	6-0 6-1	peak_diff 11
+20260318	Miami Masters	R32	Hard	Frances Tiafoe (rank 20, peak 10)	bt	Jakub Mensik (rank 13, peak 12)	7-6(4) 4-6 7-6(11)	peak_diff 2
+20260318	Miami Masters	R32	Hard	Francisco Cerundolo (rank 19, peak 18)	bt	Daniil Medvedev (rank 10, peak 1)	6-0 4-6 7-5	peak_diff 17
+20260318	Miami Masters	R32	Hard	Jannik Sinner (rank 2, peak 1)	bt	Corentin Moutet (rank 33, peak 30)	6-1 6-4	peak_diff 29
+20260318	Miami Masters	R32	Hard	Jiri Lehecka (rank 22, peak 12)	bt	Ethan Quinn (rank 56, peak 48)	6-3 7-6(6)	peak_diff 36
+20260318	Miami Masters	R32	Hard	Martin Landaluce (rank 151, peak 58)	bt	Karen Khachanov (rank 15, peak 9)	6-3 7-6(2)	peak_diff 49
+20260318	Miami Masters	R32	Hard	Quentin Halys (rank 111, peak 46)	bt	Kamil Majchrzak (rank 57, peak 53)	7-6(4) 6-1	peak_diff 7
+20260318	Miami Masters	R32	Hard	Sebastian Korda (rank 36, peak 15)	bt	Carlos Alcaraz (rank 1, peak 1)	6-3 5-7 6-4	peak_diff 14
+20260318	Miami Masters	R32	Hard	Taylor Fritz (rank 7, peak 4)	bt	Reilly Opelka (rank 67, peak 17)	6-3 6-4	peak_diff 13
+20260318	Miami Masters	R32	Hard	Terence Atmane (rank 53, peak 41)	bt	Felix Auger Aliassime (rank 8, peak 4)	6-3 1-6 6-3	peak_diff 37
+20260318	Miami Masters	R32	Hard	Tomas Martin Etcheverry (rank 32, peak 25)	bt	Rafael Jodar (rank 109, peak 23)	7-5 6-4	peak_diff 2
+20260318	Miami Masters	R32	Hard	Tommy Paul (rank 23, peak 8)	bt	Raphael Collignon (rank 72, peak 51)	6-2 3-6 7-6(5)	peak_diff 43
+20260318	Miami Masters	R32	Hard	Ugo Humbert (rank 34, peak 13)	bt	Alexander Shevchenko (rank 84, peak 45)	6-4 7-6(2)	peak_diff 32
+20260318	Miami Masters	R32	Hard	Valentin Vacherot (rank 25, peak 16)	bt	Matteo Berrettini (rank 68, peak 6)	7-6(5) 6-4	peak_diff 10
+20260318	Miami Masters	R64	Hard	Alejandro Tabilo (rank 41, peak 19)	bt	Andrey Rublev (rank 16, peak 5)	6-7(5) 6-2 6-4	peak_diff 14
+20260318	Miami Masters	R64	Hard	Alex Michelsen (rank 40, peak 30)	bt	Cameron Norrie (rank 24, peak 8)	7-5 6-7(4) 6-4	peak_diff 22
+20260318	Miami Masters	R64	Hard	Alexander Shevchenko (rank 84, peak 45)	bt	Ben Shelton (rank 9, peak 5)	6-7(3) 7-6(3) 6-3	peak_diff 40
+20260318	Miami Masters	R64	Hard	Alexander Zverev (rank 4, peak 2)	bt	Martin Damm (rank 133, peak 42)	6-2 6-4	peak_diff 40
+20260318	Miami Masters	R64	Hard	Arthur Fils (rank 31, peak 14)	bt	Darwin Blanch (rank 272, peak 219)	6-2 6-3	peak_diff 205
+20260318	Miami Masters	R64	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Joao Fonseca (rank 39, peak 24)	6-4 6-4	peak_diff 23
+20260318	Miami Masters	R64	Hard	Corentin Moutet (rank 33, peak 30)	bt	Tomas Machac (rank 48, peak 20)	6-0 1-6 6-4	peak_diff 10
+20260318	Miami Masters	R64	Hard	Daniil Medvedev (rank 10, peak 1)	bt	Rei Sakamoto (rank 164, peak 149)	6-7(10) 6-3 6-1	peak_diff 148
+20260318	Miami Masters	R64	Hard	Ethan Quinn (rank 56, peak 48)	bt	Casper Ruud (rank 12, peak 2)	6-4 7-6(7)	peak_diff 46
+20260318	Miami Masters	R64	Hard	Felix Auger Aliassime (rank 8, peak 4)	bt	Marton Fucsovics (rank 54, peak 35)	7-6(3) 7-5	peak_diff 31
+20260318	Miami Masters	R64	Hard	Frances Tiafoe (rank 20, peak 10)	bt	Arthur Cazaux (rank 73, peak 58)	7-6(1) 6-1	peak_diff 48
+20260318	Miami Masters	R64	Hard	Francisco Cerundolo (rank 19, peak 18)	bt	Thiago Agustin Tirante (rank 81, peak 52)	6-4 6-2	peak_diff 34
+20260318	Miami Masters	R64	Hard	Jakub Mensik (rank 13, peak 12)	bt	Adam Walton (rank 85, peak 74)	3-6 6-2 6-4	peak_diff 62
+20260318	Miami Masters	R64	Hard	Jannik Sinner (rank 2, peak 1)	bt	Damir Dzumhur (rank 76, peak 54)	6-3 6-3	peak_diff 53
+20260318	Miami Masters	R64	Hard	Jiri Lehecka (rank 22, peak 12)	bt	Moise Kouame (rank 385, peak 216)	6-2 7-5	peak_diff 204
+20260318	Miami Masters	R64	Hard	Kamil Majchrzak (rank 57, peak 53)	bt	Learner Tien (rank 21, peak 18)	6-2 4-6 6-2	peak_diff 35
+20260318	Miami Masters	R64	Hard	Karen Khachanov (rank 15, peak 9)	bt	Roberto Bautista Agut (rank 89, peak 9)	6-3 6-3	peak_diff 0
+20260318	Miami Masters	R64	Hard	Marin Cilic (rank 49, peak 13)	bt	Brandon Nakashima (rank 30, peak 29)	2-6 6-4 7-6(7)	peak_diff 16
+20260318	Miami Masters	R64	Hard	Martin Landaluce (rank 151, peak 58)	bt	Luciano Darderi (rank 18, peak 16)	6-3 6-7(4) 6-4	peak_diff 42
+20260318	Miami Masters	R64	Hard	Matteo Berrettini (rank 68, peak 6)	bt	Alexander Bublik (rank 11, peak 10)	6-4 6-4	peak_diff 4
+20260318	Miami Masters	R64	Hard	Quentin Halys (rank 111, peak 46)	bt	Alejandro Davidovich Fokina (rank 17, peak 14)	7-6(8) 6-4	peak_diff 32
+20260318	Miami Masters	R64	Hard	Rafael Jodar (rank 109, peak 23)	bt	Aleksandar Vukic (rank 93, peak 48)	6-1 6-2	peak_diff 25
+20260318	Miami Masters	R64	Hard	Raphael Collignon (rank 72, peak 51)	bt	Flavio Cobolli (rank 14, peak 10)	7-5 6-3	peak_diff 41
+20260318	Miami Masters	R64	Hard	Reilly Opelka (rank 67, peak 17)	bt	Jack Draper (rank 26, peak 4)	7-6(3) 7-6(0)	peak_diff 13
+20260318	Miami Masters	R64	Hard	Sebastian Korda (rank 36, peak 15)	bt	Camilo Ugo Carabelli (rank 66, peak 43)	6-0 6-3	peak_diff 28
+20260318	Miami Masters	R64	Hard	Stefanos Tsitsipas (rank 51, peak 3)	bt	Alex De Minaur (rank 6, peak 6)	6-3 7-6(3)	peak_diff 3
+20260318	Miami Masters	R64	Hard	Taylor Fritz (rank 7, peak 4)	bt	Botic Van De Zandschulp (rank 65, peak 22)	6-3 6-7(2) 6-3	peak_diff 18
+20260318	Miami Masters	R64	Hard	Terence Atmane (rank 53, peak 41)	bt	Arthur Rinderknech (rank 27, peak 24)	7-6(4) 6-3	peak_diff 17
+20260318	Miami Masters	R64	Hard	Tomas Martin Etcheverry (rank 32, peak 25)	bt	Zizou Bergs (rank 45, peak 38)	7-6(5) 7-6(3)	peak_diff 13
+20260318	Miami Masters	R64	Hard	Tommy Paul (rank 23, peak 8)	bt	Adrian Mannarino (rank 43, peak 17)	6-2 2-6 6-4	peak_diff 9
+20260318	Miami Masters	R64	Hard	Ugo Humbert (rank 34, peak 13)	bt	Gabriel Diallo (rank 37, peak 33)	6-1 6-4	peak_diff 20
+20260318	Miami Masters	R64	Hard	Valentin Vacherot (rank 25, peak 16)	bt	Mariano Navone (rank 61, peak 29)	6-3 6-4	peak_diff 13
+20260318	Miami Masters	SF	Hard	Jannik Sinner (rank 2, peak 1)	bt	Alexander Zverev (rank 4, peak 2)	6-3 7-6(4)	peak_diff 1
+20260318	Miami Masters	SF	Hard	Jiri Lehecka (rank 22, peak 12)	bt	Arthur Fils (rank 31, peak 14)	6-2 6-2	peak_diff 2
+20260405	Monte Carlo Masters	F	Clay	Jannik Sinner (rank 2, peak 1)	bt	Carlos Alcaraz (rank 1, peak 1)	7-6(5) 6-3	peak_diff 0
+20260405	Monte Carlo Masters	QF	Clay	Alexander Zverev (rank 3, peak 2)	bt	Joao Fonseca (rank 40, peak 24)	7-5 6-7(3) 6-3	peak_diff 22
+20260405	Monte Carlo Masters	QF	Clay	Carlos Alcaraz (rank 1, peak 1)	bt	Alexander Bublik (rank 11, peak 10)	6-3 6-0	peak_diff 9
+20260405	Monte Carlo Masters	QF	Clay	Jannik Sinner (rank 2, peak 1)	bt	Felix Auger Aliassime (rank 7, peak 4)	6-3 6-4	peak_diff 3
+20260405	Monte Carlo Masters	QF	Clay	Valentin Vacherot (rank 23, peak 16)	bt	Alex De Minaur (rank 6, peak 6)	6-4 3-6 6-3	peak_diff 10
+20260405	Monte Carlo Masters	R16	Clay	Alex De Minaur (rank 6, peak 6)	bt	Alexander Blockx (rank 91, peak 36)	7-5 7-6(4)	peak_diff 30
+20260405	Monte Carlo Masters	R16	Clay	Alexander Bublik (rank 11, peak 10)	bt	Jiri Lehecka (rank 13, peak 12)	6-2 7-5	peak_diff 2
+20260405	Monte Carlo Masters	R16	Clay	Alexander Zverev (rank 3, peak 2)	bt	Zizou Bergs (rank 47, peak 38)	6-2 7-5	peak_diff 36
+20260405	Monte Carlo Masters	R16	Clay	Carlos Alcaraz (rank 1, peak 1)	bt	Tomas Martin Etcheverry (rank 30, peak 25)	6-1 4-6 6-3	peak_diff 24
+20260405	Monte Carlo Masters	R16	Clay	Felix Auger Aliassime (rank 7, peak 4)	bt	Casper Ruud (rank 12, peak 2)	7-5 2-2 RET	peak_diff 2
+20260405	Monte Carlo Masters	R16	Clay	Jannik Sinner (rank 2, peak 1)	bt	Tomas Machac (rank 53, peak 20)	6-1 6-7(3) 6-3	peak_diff 19
+20260405	Monte Carlo Masters	R16	Clay	Joao Fonseca (rank 40, peak 24)	bt	Matteo Berrettini (rank 90, peak 6)	6-3 6-2	peak_diff 18
+20260405	Monte Carlo Masters	R16	Clay	Valentin Vacherot (rank 23, peak 16)	bt	Hubert Hurkacz (rank 74, peak 6)	6-7(4) 6-3 6-4	peak_diff 10
+20260405	Monte Carlo Masters	R32	Clay	Alex De Minaur (rank 6, peak 6)	bt	Cameron Norrie (rank 24, peak 8)	7-6(5) 2-6 6-2	peak_diff 2
+20260405	Monte Carlo Masters	R32	Clay	Alexander Blockx (rank 91, peak 36)	bt	Flavio Cobolli (rank 16, peak 10)	6-3 6-3	peak_diff 26
+20260405	Monte Carlo Masters	R32	Clay	Alexander Bublik (rank 11, peak 10)	bt	Gael Monfils (rank 199, peak 9)	6-4 6-4	peak_diff 1
+20260405	Monte Carlo Masters	R32	Clay	Alexander Zverev (rank 3, peak 2)	bt	Cristian Garin (rank 109, peak 17)	4-6 6-4 7-5	peak_diff 15
+20260405	Monte Carlo Masters	R32	Clay	Carlos Alcaraz (rank 1, peak 1)	bt	Sebastian Baez (rank 65, peak 18)	6-1 6-3	peak_diff 17
+20260405	Monte Carlo Masters	R32	Clay	Casper Ruud (rank 12, peak 2)	bt	Corentin Moutet (rank 31, peak 30)	7-5 6-3	peak_diff 28
+20260405	Monte Carlo Masters	R32	Clay	Felix Auger Aliassime (rank 7, peak 4)	bt	Marin Cilic (rank 51, peak 13)	7-6(4) 6-3	peak_diff 9
+20260405	Monte Carlo Masters	R32	Clay	Hubert Hurkacz (rank 74, peak 6)	bt	Fabian Marozsan (rank 43, peak 36)	6-2 6-3	peak_diff 30
+20260405	Monte Carlo Masters	R32	Clay	Jannik Sinner (rank 2, peak 1)	bt	Ugo Humbert (rank 34, peak 13)	6-3 6-0	peak_diff 12
+20260405	Monte Carlo Masters	R32	Clay	Jiri Lehecka (rank 13, peak 12)	bt	Alejandro Tabilo (rank 39, peak 19)	4-6 7-6(4) 6-3	peak_diff 7
+20260405	Monte Carlo Masters	R32	Clay	Joao Fonseca (rank 40, peak 24)	bt	Arthur Rinderknech (rank 27, peak 24)	7-5 4-6 6-3	peak_diff 0
+20260405	Monte Carlo Masters	R32	Clay	Matteo Berrettini (rank 90, peak 6)	bt	Daniil Medvedev (rank 10, peak 1)	6-0 6-0	peak_diff 5
+20260405	Monte Carlo Masters	R32	Clay	Tomas Machac (rank 53, peak 20)	bt	Francisco Cerundolo (rank 19, peak 18)	7-6(2) 6-3	peak_diff 2
+20260405	Monte Carlo Masters	R32	Clay	Tomas Martin Etcheverry (rank 30, peak 25)	bt	Terence Atmane (rank 45, peak 41)	3-6 6-3 6-2	peak_diff 16
+20260405	Monte Carlo Masters	R32	Clay	Valentin Vacherot (rank 23, peak 16)	bt	Lorenzo Musetti (rank 5, peak 5)	7-6(6) 7-5	peak_diff 11
+20260405	Monte Carlo Masters	R32	Clay	Zizou Bergs (rank 47, peak 38)	bt	Andrey Rublev (rank 15, peak 5)	6-4 6-1	peak_diff 33
+20260405	Monte Carlo Masters	R64	Clay	Alejandro Tabilo (rank 39, peak 19)	bt	Marton Fucsovics (rank 58, peak 35)	6-4 6-3	peak_diff 16
+20260405	Monte Carlo Masters	R64	Clay	Alexander Blockx (rank 91, peak 36)	bt	Denis Shapovalov (rank 38, peak 10)	6-4 4-6 6-3	peak_diff 26
+20260405	Monte Carlo Masters	R64	Clay	Andrey Rublev (rank 15, peak 5)	bt	Nuno Borges (rank 50, peak 30)	6-4 1-6 6-1	peak_diff 25
+20260405	Monte Carlo Masters	R64	Clay	Arthur Rinderknech (rank 27, peak 24)	bt	Karen Khachanov (rank 14, peak 9)	7-5 6-2	peak_diff 15
+20260405	Monte Carlo Masters	R64	Clay	Cameron Norrie (rank 24, peak 8)	bt	Miomir Kecmanovic (rank 59, peak 27)	6-2 4-6 7-6(0)	peak_diff 19
+20260405	Monte Carlo Masters	R64	Clay	Casper Ruud (rank 12, peak 2)	bt	Alexei Popyrin (rank 44, peak 19)	6-3 6-4	peak_diff 17
+20260405	Monte Carlo Masters	R64	Clay	Corentin Moutet (rank 31, peak 30)	bt	Alexandre Muller (rank 88, peak 38)	6-4 6-1	peak_diff 8
+20260405	Monte Carlo Masters	R64	Clay	Cristian Garin (rank 109, peak 17)	bt	Matteo Arnaldi (rank 107, peak 29)	6-2 6-4	peak_diff 12
+20260405	Monte Carlo Masters	R64	Clay	Fabian Marozsan (rank 43, peak 36)	bt	Damir Dzumhur (rank 81, peak 54)	6-2 6-1	peak_diff 18
+20260405	Monte Carlo Masters	R64	Clay	Flavio Cobolli (rank 16, peak 10)	bt	Francisco Comesana (rank 99, peak 54)	7-5 2-6 6-3	peak_diff 44
+20260405	Monte Carlo Masters	R64	Clay	Francisco Cerundolo (rank 19, peak 18)	bt	Stefanos Tsitsipas (rank 48, peak 3)	7-5 6-4	peak_diff 15
+20260405	Monte Carlo Masters	R64	Clay	Gael Monfils (rank 199, peak 9)	bt	Tallon Griekspoor (rank 32, peak 21)	6-7(7) 6-1 6-4	peak_diff 12
+20260405	Monte Carlo Masters	R64	Clay	Hubert Hurkacz (rank 74, peak 6)	bt	Luciano Darderi (rank 21, peak 16)	7-6(4) 5-7 6-1	peak_diff 10
+20260405	Monte Carlo Masters	R64	Clay	Jiri Lehecka (rank 13, peak 12)	bt	Emilio Nava (rank 103, peak 74)	7-6(1) 6-7(8) 6-2	peak_diff 62
+20260405	Monte Carlo Masters	R64	Clay	Joao Fonseca (rank 40, peak 24)	bt	Gabriel Diallo (rank 36, peak 33)	6-2 6-3	peak_diff 9
+20260405	Monte Carlo Masters	R64	Clay	Marin Cilic (rank 51, peak 13)	bt	Alexander Shevchenko (rank 77, peak 45)	6-1 6-3	peak_diff 32
+20260405	Monte Carlo Masters	R64	Clay	Matteo Berrettini (rank 90, peak 6)	bt	Roberto Bautista Agut (rank 85, peak 9)	4-0 RET	peak_diff 3
+20260405	Monte Carlo Masters	R64	Clay	Sebastian Baez (rank 65, peak 18)	bt	Stan Wawrinka (rank 104, peak 13)	7-5 7-5	peak_diff 5
+20260405	Monte Carlo Masters	R64	Clay	Terence Atmane (rank 45, peak 41)	bt	Ethan Quinn (rank 54, peak 48)	6-1 6-4	peak_diff 7
+20260405	Monte Carlo Masters	R64	Clay	Tomas Machac (rank 53, peak 20)	bt	Daniel Altmaier (rank 49, peak 44)	6-4 1-6 6-3	peak_diff 24
+20260405	Monte Carlo Masters	R64	Clay	Tomas Martin Etcheverry (rank 30, peak 25)	bt	Grigor Dimitrov (rank 93, peak 9)	6-4 2-6 6-3	peak_diff 16
+20260405	Monte Carlo Masters	R64	Clay	Ugo Humbert (rank 34, peak 13)	bt	Moise Kouame (rank 334, peak 216)	6-3 7-5	peak_diff 203
+20260405	Monte Carlo Masters	R64	Clay	Valentin Vacherot (rank 23, peak 16)	bt	Juan Manuel Cerundolo (rank 71, peak 45)	5-7 6-2 6-1	peak_diff 29
+20260405	Monte Carlo Masters	R64	Clay	Zizou Bergs (rank 47, peak 38)	bt	Adrian Mannarino (rank 46, peak 17)	6-4 6-3	peak_diff 21
+20260405	Monte Carlo Masters	SF	Clay	Carlos Alcaraz (rank 1, peak 1)	bt	Valentin Vacherot (rank 23, peak 16)	6-4 6-4	peak_diff 15
+20260405	Monte Carlo Masters	SF	Clay	Jannik Sinner (rank 2, peak 1)	bt	Alexander Zverev (rank 3, peak 2)	6-1 6-4	peak_diff 1
+20260421	Madrid	F	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Mirra Andreeva (rank 8, peak 5)	6-3 7-5	peak_diff 7
+20260421	Madrid	QF	Clay	Anastasia Potapova (rank 56, peak 21)	bt	Karolina Pliskova (rank 197, peak 1)	6-1 6-7(4) 6-3	peak_diff 20
+20260421	Madrid	QF	Clay	Hailey Baptiste (rank 32, peak 25)	bt	Aryna Sabalenka (rank 1, peak 1)	2-6 6-2 7-6(6)	peak_diff 24
+20260421	Madrid	QF	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Linda Noskova (rank 13, peak 12)	7-6(1) 6-0	peak_diff 0
+20260421	Madrid	QF	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Leylah Fernandez (rank 25, peak 13)	7-6(1) 6-3	peak_diff 8
+20260421	Madrid	R128	Clay	Alexandra Eala (rank 44, peak 29)	bt	Anastasia Pavlyuchenkova (rank 116, peak 11)	6-3 6-3	peak_diff 18
+20260421	Madrid	R128	Clay	Alycia Parks (rank 84, peak 40)	bt	Elisabetta Cocciaretto (rank 41, peak 29)	6-3 6-2	peak_diff 11
+20260421	Madrid	R128	Clay	Anhelina Kalinina (rank 110, peak 25)	bt	Kamilla Rakhimova (rank 73, peak 60)	6-2 5-7 6-2	peak_diff 35
+20260421	Madrid	R128	Clay	Anna Bondar (rank 63, peak 50)	bt	Viktorija Golubic (rank 81, peak 35)	6-2 6-3	peak_diff 15
+20260421	Madrid	R128	Clay	Camila Osorio (rank 83, peak 33)	bt	Anastasia Zakharova (rank 79, peak 65)	6-0 6-3	peak_diff 32
+20260421	Madrid	R128	Clay	Caty Mcnally (rank 76, peak 54)	bt	Katie Volynets (rank 101, peak 56)	6-1 6-2	peak_diff 2
+20260421	Madrid	R128	Clay	Dalma Galfi (rank 117, peak 79)	bt	Ajla Tomljanovic (rank 85, peak 32)	7-6(7) 6-4	peak_diff 47
+20260421	Madrid	R128	Clay	Daria Snigur (rank 98, peak 84)	bt	Daria Kasatkina (rank 75, peak 8)	6-3 3-6 7-6(13)	peak_diff 76
+20260421	Madrid	R128	Clay	Elena Gabriela Ruse (rank 71, peak 51)	bt	Antonia Ruzic (rank 59, peak 51)	6-3 4-6 6-0	peak_diff 0
+20260421	Madrid	R128	Clay	Emiliana Arango (rank 86, peak 46)	bt	Talia Gibson (rank 58, peak 55)	6-3 6-2	peak_diff 9
+20260421	Madrid	R128	Clay	Janice Tjen (rank 39, peak 36)	bt	Alina Charaeva (rank 129, peak 122)	6-4 6-2	peak_diff 86
+20260421	Madrid	R128	Clay	Jessica Bouzas Maneiro (rank 50, peak 40)	bt	Beatriz Haddad Maia (rank 69, peak 10)	6-1 6-1	peak_diff 30
+20260421	Madrid	R128	Clay	Julia Grabher (rank 107, peak 54)	bt	Paula Badosa (rank 103, peak 2)	7-6(3) 4-6 6-0	peak_diff 52
+20260421	Madrid	R128	Clay	Kaitlin Quevedo (rank 140, peak 107)	bt	Venus Williams (rank 479, peak 1)	6-2 6-4	peak_diff 106
+20260421	Madrid	R128	Clay	Karolina Pliskova (rank 197, peak 1)	bt	Sinja Kraus (rank 104, peak 92)	2-6 6-1 6-4	peak_diff 91
+20260421	Madrid	R128	Clay	Katerina Siniakova (rank 42, peak 27)	bt	Elvina Kalieva (rank 134, peak 134)	6-3 6-4	peak_diff 107
+20260421	Madrid	R128	Clay	Katie Boulter (rank 61, peak 23)	bt	Taylor Townsend (rank 90, peak 46)	6-4 6-2	peak_diff 23
+20260421	Madrid	R128	Clay	Laura Samson (rank 171, peak 137)	bt	Tatjana Maria (rank 54, peak 36)	6-4 6-2	peak_diff 101
+20260421	Madrid	R128	Clay	Laura Siegemund (rank 47, peak 27)	bt	Irina Camelia Begu (rank 182, peak 22)	6-4 6-0	peak_diff 5
+20260421	Madrid	R128	Clay	Leolia Jeanjean (rank 126, peak 91)	bt	Oksana Selekhmeteva (rank 77, peak 71)	6-4 6-1	peak_diff 20
+20260421	Madrid	R128	Clay	Magda Linette (rank 57, peak 19)	bt	Robin Montgomery (rank 339, peak 95)	6-4 6-3	peak_diff 76
+20260421	Madrid	R128	Clay	Panna Udvardy (rank 78, peak 59)	bt	Kimberly Birrell (rank 82, peak 60)	6-4 1-6 6-1	peak_diff 1
+20260421	Madrid	R128	Clay	Petra Marcinko (rank 74, peak 50)	bt	Victoria Jimenez Kasintseva (rank 115, peak 89)	6-0 7-5	peak_diff 39
+20260421	Madrid	R128	Clay	Peyton Stearns (rank 43, peak 28)	bt	Lois Boisson (rank 46, peak 34)	6-1 6-3	peak_diff 6
+20260421	Madrid	R128	Clay	Shuai Zhang (rank 65, peak 22)	bt	Eva Lys (rank 72, peak 39)	6-4 6-3	peak_diff 17
+20260421	Madrid	R128	Clay	Simona Waltert (rank 97, peak 81)	bt	Oleksandra Oliynykova (rank 70, peak 51)	7-5 6-0	peak_diff 30
+20260421	Madrid	R128	Clay	Sofia Kenin (rank 68, peak 4)	bt	Ashlyn Krueger (rank 108, peak 29)	7-6(2) 6-4	peak_diff 25
+20260421	Madrid	R128	Clay	Solana Sierra (rank 88, peak 56)	bt	Dayana Yastremska (rank 49, peak 21)	7-6(10) 7-6(8)	peak_diff 35
+20260421	Madrid	R128	Clay	Tyra Caterina Grant (rank 262, peak 157)	bt	Elsa Jacquemot (rank 62, peak 53)	6-1 6-2	peak_diff 104
+20260421	Madrid	R128	Clay	Yulia Putintseva (rank 80, peak 20)	bt	Tereza Valentova (rank 51, peak 42)	6-4 4-6 6-3	peak_diff 22
+20260421	Madrid	R128	Clay	Yuliia Starodubtseva (rank 53, peak 53)	bt	Moyuka Uchijima (rank 94, peak 47)	6-3 1-6 6-3	peak_diff 6
+20260421	Madrid	R128	Clay	Zeynep Sonmez (rank 67, peak 59)	bt	Carlota Martinez Cirez (rank 352, peak 203)	7-5 6-2	peak_diff 144
+20260421	Madrid	R16	Clay	Anastasia Potapova (rank 56, peak 21)	bt	Elena Rybakina (rank 2, peak 2)	7-6(8) 6-4	peak_diff 19
+20260421	Madrid	R16	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Naomi Osaka (rank 15, peak 1)	6-7(1) 6-3 6-2	peak_diff 0
+20260421	Madrid	R16	Clay	Hailey Baptiste (rank 32, peak 25)	bt	Belinda Bencic (rank 12, peak 4)	6-1 6-7(14) 6-3	peak_diff 21
+20260421	Madrid	R16	Clay	Karolina Pliskova (rank 197, peak 1)	bt	Solana Sierra (rank 88, peak 56)	6-4 6-3	peak_diff 55
+20260421	Madrid	R16	Clay	Leylah Fernandez (rank 25, peak 13)	bt	Ann Li (rank 34, peak 29)	6-3 6-2	peak_diff 16
+20260421	Madrid	R16	Clay	Linda Noskova (rank 13, peak 12)	bt	Coco Gauff (rank 3, peak 2)	6-4 1-6 7-6(5)	peak_diff 10
+20260421	Madrid	R16	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Caty Mcnally (rank 76, peak 54)	6-2 6-3	peak_diff 42
+20260421	Madrid	R16	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Anna Bondar (rank 63, peak 50)	6-7(5) 6-3 7-6(5)	peak_diff 45
+20260421	Madrid	R32	Clay	Anastasia Potapova (rank 56, peak 21)	bt	Jelena Ostapenko (rank 40, peak 5)	4-6 6-4 6-4	peak_diff 16
+20260421	Madrid	R32	Clay	Ann Li (rank 34, peak 29)	bt	Iga Swiatek (rank 4, peak 1)	7-6(4) 2-6 3-0 RET	peak_diff 28
+20260421	Madrid	R32	Clay	Anna Bondar (rank 63, peak 50)	bt	Laura Samson (rank 171, peak 137)	7-6(3) 6-1	peak_diff 87
+20260421	Madrid	R32	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Jaqueline Cristian (rank 33, peak 28)	6-1 6-4	peak_diff 27
+20260421	Madrid	R32	Clay	Belinda Bencic (rank 12, peak 4)	bt	Diana Shnaider (rank 19, peak 11)	6-2 7-6(6)	peak_diff 7
+20260421	Madrid	R32	Clay	Caty Mcnally (rank 76, peak 54)	bt	Katerina Siniakova (rank 42, peak 27)	6-3 2-6 7-6(2)	peak_diff 27
+20260421	Madrid	R32	Clay	Coco Gauff (rank 3, peak 2)	bt	Sorana Cirstea (rank 26, peak 18)	4-6 7-5 6-1	peak_diff 16
+20260421	Madrid	R32	Clay	Elena Rybakina (rank 2, peak 2)	bt	Qinwen Zheng (rank 36, peak 4)	4-6 6-4 6-3	peak_diff 2
+20260421	Madrid	R32	Clay	Hailey Baptiste (rank 32, peak 25)	bt	Jasmine Paolini (rank 9, peak 4)	7-5 6-3	peak_diff 21
+20260421	Madrid	R32	Clay	Karolina Pliskova (rank 197, peak 1)	bt	Elise Mertens (rank 21, peak 12)	7-5 2-6 7-6(3)	peak_diff 11
+20260421	Madrid	R32	Clay	Leylah Fernandez (rank 25, peak 13)	bt	Iva Jovic (rank 16, peak 16)	3-6 6-3 6-2	peak_diff 3
+20260421	Madrid	R32	Clay	Linda Noskova (rank 13, peak 12)	bt	Liudmila Samsonova (rank 20, peak 12)	W/O	peak_diff 0
+20260421	Madrid	R32	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Jessica Pegula (rank 5, peak 3)	6-1 6-4	peak_diff 9
+20260421	Madrid	R32	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Dalma Galfi (rank 117, peak 79)	6-3 6-2	peak_diff 74
+20260421	Madrid	R32	Clay	Naomi Osaka (rank 15, peak 1)	bt	Anhelina Kalinina (rank 110, peak 25)	6-1 6-3	peak_diff 24
+20260421	Madrid	R32	Clay	Solana Sierra (rank 88, peak 56)	bt	Zeynep Sonmez (rank 67, peak 59)	0-6 6-2 6-3	peak_diff 3
+20260421	Madrid	R64	Clay	Anastasia Potapova (rank 56, peak 21)	bt	Shuai Zhang (rank 65, peak 22)	6-3 6-1	peak_diff 1
+20260421	Madrid	R64	Clay	Anhelina Kalinina (rank 110, peak 25)	bt	Marie Bouzkova (rank 24, peak 24)	6-4 6-3	peak_diff 1
+20260421	Madrid	R64	Clay	Ann Li (rank 34, peak 29)	bt	Alycia Parks (rank 84, peak 40)	6-2 6-7(5) 6-3	peak_diff 11
+20260421	Madrid	R64	Clay	Anna Bondar (rank 63, peak 50)	bt	Elina Svitolina (rank 7, peak 3)	6-3 6-4	peak_diff 47
+20260421	Madrid	R64	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Peyton Stearns (rank 43, peak 28)	7-5 6-3	peak_diff 27
+20260421	Madrid	R64	Clay	Belinda Bencic (rank 12, peak 4)	bt	Petra Marcinko (rank 74, peak 50)	6-4 6-2	peak_diff 46
+20260421	Madrid	R64	Clay	Caty Mcnally (rank 76, peak 54)	bt	Victoria Mboko (rank 10, peak 9)	6-4 6-1	peak_diff 45
+20260421	Madrid	R64	Clay	Coco Gauff (rank 3, peak 2)	bt	Leolia Jeanjean (rank 126, peak 91)	6-3 6-0	peak_diff 89
+20260421	Madrid	R64	Clay	Dalma Galfi (rank 117, peak 79)	bt	Anna Kalinskaya (rank 22, peak 11)	6-3 6-3	peak_diff 68
+20260421	Madrid	R64	Clay	Diana Shnaider (rank 19, peak 11)	bt	Jessica Bouzas Maneiro (rank 50, peak 40)	3-6 7-5 6-1	peak_diff 29
+20260421	Madrid	R64	Clay	Elena Rybakina (rank 2, peak 2)	bt	Elena Gabriela Ruse (rank 71, peak 51)	4-6 6-3 7-5	peak_diff 49
+20260421	Madrid	R64	Clay	Elise Mertens (rank 21, peak 12)	bt	Alexandra Eala (rank 44, peak 29)	6-2 6-1	peak_diff 17
+20260421	Madrid	R64	Clay	Hailey Baptiste (rank 32, peak 25)	bt	Kaitlin Quevedo (rank 140, peak 107)	6-1 6-4	peak_diff 82
+20260421	Madrid	R64	Clay	Iga Swiatek (rank 4, peak 1)	bt	Daria Snigur (rank 98, peak 84)	6-1 6-2	peak_diff 83
+20260421	Madrid	R64	Clay	Iva Jovic (rank 16, peak 16)	bt	Magda Linette (rank 57, peak 19)	6-4 6-1	peak_diff 3
+20260421	Madrid	R64	Clay	Jaqueline Cristian (rank 33, peak 28)	bt	Yuliia Starodubtseva (rank 53, peak 53)	3-6 7-6(5) 6-4	peak_diff 25
+20260421	Madrid	R64	Clay	Jasmine Paolini (rank 9, peak 4)	bt	Laura Siegemund (rank 47, peak 27)	3-6 6-2 6-4	peak_diff 23
+20260421	Madrid	R64	Clay	Jelena Ostapenko (rank 40, peak 5)	bt	Simona Waltert (rank 97, peak 81)	6-2 7-5	peak_diff 76
+20260421	Madrid	R64	Clay	Jessica Pegula (rank 5, peak 3)	bt	Katie Boulter (rank 61, peak 23)	6-4 6-4	peak_diff 20
+20260421	Madrid	R64	Clay	Karolina Pliskova (rank 197, peak 1)	bt	Maria Sakkari (rank 37, peak 3)	6-4 7-6(6)	peak_diff 2
+20260421	Madrid	R64	Clay	Katerina Siniakova (rank 42, peak 27)	bt	Anna Blinkova (rank 89, peak 35)	6-2 6-2	peak_diff 8
+20260421	Madrid	R64	Clay	Laura Samson (rank 171, peak 137)	bt	Xin Yu Wang (rank 31, peak 30)	2-6 6-3 6-0	peak_diff 107
+20260421	Madrid	R64	Clay	Leylah Fernandez (rank 25, peak 13)	bt	Julia Grabher (rank 107, peak 54)	6-2 6-3	peak_diff 41
+20260421	Madrid	R64	Clay	Linda Noskova (rank 13, peak 12)	bt	Emiliana Arango (rank 86, peak 46)	6-3 6-2	peak_diff 34
+20260421	Madrid	R64	Clay	Liudmila Samsonova (rank 20, peak 12)	bt	Janice Tjen (rank 39, peak 36)	6-2 6-1	peak_diff 24
+20260421	Madrid	R64	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Yulia Putintseva (rank 80, peak 20)	6-1 6-3	peak_diff 8
+20260421	Madrid	R64	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Panna Udvardy (rank 78, peak 59)	7-5 6-2	peak_diff 54
+20260421	Madrid	R64	Clay	Naomi Osaka (rank 15, peak 1)	bt	Camila Osorio (rank 83, peak 33)	6-2 7-5	peak_diff 32
+20260421	Madrid	R64	Clay	Qinwen Zheng (rank 36, peak 4)	bt	Sofia Kenin (rank 68, peak 4)	1-6 6-3 6-3	peak_diff 0
+20260421	Madrid	R64	Clay	Solana Sierra (rank 88, peak 56)	bt	Magdalena Frech (rank 38, peak 22)	6-2 6-4	peak_diff 34
+20260421	Madrid	R64	Clay	Sorana Cirstea (rank 26, peak 18)	bt	Tyra Caterina Grant (rank 262, peak 157)	6-2 7-6(5)	peak_diff 139
+20260421	Madrid	R64	Clay	Zeynep Sonmez (rank 67, peak 59)	bt	Cristina Bucsa (rank 30, peak 30)	6-1 6-7(4) 6-2	peak_diff 29
+20260421	Madrid	SF	Clay	Marta Kostyuk (rank 23, peak 12)	bt	Anastasia Potapova (rank 56, peak 21)	6-2 1-6 6-1	peak_diff 9
+20260421	Madrid	SF	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Hailey Baptiste (rank 32, peak 25)	6-4 7-6(8)	peak_diff 20
+20260422	Madrid Masters	F	Clay	Jannik Sinner (rank 1, peak 1)	bt	Alexander Zverev (rank 3, peak 2)	6-1 6-2	peak_diff 1
+20260422	Madrid Masters	QF	Clay	Alexander Blockx (rank 69, peak 36)	bt	Casper Ruud (rank 15, peak 2)	6-4 6-4	peak_diff 34
+20260422	Madrid Masters	QF	Clay	Alexander Zverev (rank 3, peak 2)	bt	Flavio Cobolli (rank 13, peak 10)	6-1 6-4	peak_diff 8
+20260422	Madrid Masters	QF	Clay	Arthur Fils (rank 25, peak 14)	bt	Jiri Lehecka (rank 14, peak 12)	6-3 6-4	peak_diff 2
+20260422	Madrid Masters	QF	Clay	Jannik Sinner (rank 1, peak 1)	bt	Rafael Jodar (rank 42, peak 23)	6-2 7-6(0)	peak_diff 22
+20260422	Madrid Masters	R128	Clay	Adam Walton (rank 117, peak 74)	bt	Martin Landaluce (rank 99, peak 58)	6-2 6-3	peak_diff 16
+20260422	Madrid Masters	R128	Clay	Adolfo Daniel Vallejo (rank 96, peak 70)	bt	Grigor Dimitrov (rank 137, peak 9)	6-4 6-4	peak_diff 61
+20260422	Madrid Masters	R128	Clay	Alejandro Tabilo (rank 43, peak 19)	bt	Valentin Royer (rank 72, peak 54)	6-2 6-4	peak_diff 35
+20260422	Madrid Masters	R128	Clay	Alexander Blockx (rank 69, peak 36)	bt	Cristian Garin (rank 85, peak 17)	4-6 7-5 7-5	peak_diff 19
+20260422	Madrid Masters	R128	Clay	Benjamin Bonzi (rank 104, peak 42)	bt	Titouan Droguet (rank 113, peak 107)	6-7(4) 7-6(4) 6-4	peak_diff 65
+20260422	Madrid Masters	R128	Clay	Camilo Ugo Carabelli (rank 57, peak 43)	bt	Gael Monfils (rank 200, peak 9)	6-3 6-4	peak_diff 34
+20260422	Madrid Masters	R128	Clay	Damir Dzumhur (rank 84, peak 54)	bt	Mattia Bellucci (rank 78, peak 63)	6-2 6-4	peak_diff 9
+20260422	Madrid Masters	R128	Clay	Daniel Merida Aguilar (rank 102, peak 82)	bt	Marco Trungelliti (rank 77, peak 76)	6-4 1-6 7-6(6)	peak_diff 6
+20260422	Madrid Masters	R128	Clay	Dino Prizmic (rank 87, peak 70)	bt	Matteo Berrettini (rank 92, peak 6)	6-3 6-4	peak_diff 64
+20260422	Madrid Masters	R128	Clay	Dusan Lajovic (rank 138, peak 23)	bt	Lorenzo Sonego (rank 62, peak 21)	6-3 7-6(1)	peak_diff 2
+20260422	Madrid Masters	R128	Clay	Elmer Moller (rank 169, peak 102)	bt	Federico Cina (rank 205, peak 183)	6-4 7-6(4)	peak_diff 81
+20260422	Madrid Masters	R128	Clay	Emilio Nava (rank 116, peak 74)	bt	Jenson Brooksby (rank 61, peak 33)	6-3 7-5	peak_diff 41
+20260422	Madrid Masters	R128	Clay	Fabian Marozsan (rank 50, peak 36)	bt	Ethan Quinn (rank 48, peak 48)	7-6(5) 7-6(6)	peak_diff 12
+20260422	Madrid Masters	R128	Clay	Hubert Hurkacz (rank 63, peak 6)	bt	Jaime Faria (rank 136, peak 87)	6-3 6-3	peak_diff 81
+20260422	Madrid Masters	R128	Clay	Ignacio Buse (rank 58, peak 31)	bt	Adrian Mannarino (rank 46, peak 17)	6-4 6-2	peak_diff 14
+20260422	Madrid Masters	R128	Clay	Jan Lennard Struff (rank 81, peak 21)	bt	Alexandre Muller (rank 95, peak 38)	7-6(3) 6-0	peak_diff 17
+20260422	Madrid Masters	R128	Clay	Jaume Munar (rank 38, peak 33)	bt	Alexander Shevchenko (rank 82, peak 45)	6-4 6-1	peak_diff 12
+20260422	Madrid Masters	R128	Clay	Juan Manuel Cerundolo (rank 67, peak 45)	bt	Daniel Altmaier (rank 55, peak 44)	6-4 6-4	peak_diff 1
+20260422	Madrid Masters	R128	Clay	Mariano Navone (rank 45, peak 29)	bt	Nuno Borges (rank 49, peak 30)	6-3 6-4	peak_diff 1
+20260422	Madrid Masters	R128	Clay	Marin Cilic (rank 51, peak 13)	bt	Zizou Bergs (rank 44, peak 38)	4-6 6-3 6-4	peak_diff 25
+20260422	Madrid Masters	R128	Clay	Martin Damm (rank 126, peak 42)	bt	Alexei Popyrin (rank 56, peak 19)	7-6(7) 6-4	peak_diff 23
+20260422	Madrid Masters	R128	Clay	Nicolai Budkov Kjaer (rank 140, peak 121)	bt	Reilly Opelka (rank 70, peak 17)	5-3 RET	peak_diff 104
+20260422	Madrid Masters	R128	Clay	Pablo Carreno Busta (rank 94, peak 11)	bt	Marton Fucsovics (rank 54, peak 35)	4-6 7-6(5) 6-2	peak_diff 24
+20260422	Madrid Masters	R128	Clay	Rafael Jodar (rank 42, peak 23)	bt	Jesper De Jong (rank 109, peak 71)	2-6 7-5 6-4	peak_diff 48
+20260422	Madrid Masters	R128	Clay	Sebastian Ofner (rank 83, peak 37)	bt	Nikoloz Basilashvili (rank 120, peak 18)	7-6(5) 7-6(0)	peak_diff 19
+20260422	Madrid Masters	R128	Clay	Stefanos Tsitsipas (rank 80, peak 3)	bt	Patrick Kypson (rank 90, peak 89)	3-6 7-6(6) 7-6(4)	peak_diff 86
+20260422	Madrid Masters	R128	Clay	Terence Atmane (rank 47, peak 41)	bt	Miomir Kecmanovic (rank 65, peak 27)	6-4 7-5	peak_diff 14
+20260422	Madrid Masters	R128	Clay	Thiago Agustin Tirante (rank 75, peak 52)	bt	Roberto Bautista Agut (rank 93, peak 9)	6-2 6-4	peak_diff 43
+20260422	Madrid Masters	R128	Clay	Tomas Machac (rank 41, peak 20)	bt	Francisco Comesana (rank 105, peak 54)	3-6 7-6(3) 6-3	peak_diff 34
+20260422	Madrid Masters	R128	Clay	Vilius Gaubas (rank 124, peak 101)	bt	Sebastian Baez (rank 64, peak 18)	7-5 6-1	peak_diff 83
+20260422	Madrid Masters	R128	Clay	Vit Kopriva (rank 66, peak 55)	bt	Zhizhen Zhang (rank 245, peak 31)	6-2 6-0	peak_diff 24
+20260422	Madrid Masters	R128	Clay	Yannick Hanfmann (rank 60, peak 45)	bt	Marcos Giron (rank 76, peak 37)	6-4 6-7(3) 7-5	peak_diff 8
+20260422	Madrid Masters	R16	Clay	Alexander Blockx (rank 69, peak 36)	bt	Francisco Cerundolo (rank 20, peak 18)	7-6(8) 6-2	peak_diff 18
+20260422	Madrid Masters	R16	Clay	Alexander Zverev (rank 3, peak 2)	bt	Jakub Mensik (rank 27, peak 12)	6-4 6-7(4) 6-3	peak_diff 10
+20260422	Madrid Masters	R16	Clay	Arthur Fils (rank 25, peak 14)	bt	Tomas Martin Etcheverry (rank 29, peak 25)	6-3 6-4	peak_diff 11
+20260422	Madrid Masters	R16	Clay	Casper Ruud (rank 15, peak 2)	bt	Stefanos Tsitsipas (rank 80, peak 3)	6-7(4) 7-6(2) 7-6(3)	peak_diff 1
+20260422	Madrid Masters	R16	Clay	Flavio Cobolli (rank 13, peak 10)	bt	Daniil Medvedev (rank 10, peak 1)	6-3 5-7 6-4	peak_diff 9
+20260422	Madrid Masters	R16	Clay	Jannik Sinner (rank 1, peak 1)	bt	Cameron Norrie (rank 23, peak 8)	6-2 7-5	peak_diff 7
+20260422	Madrid Masters	R16	Clay	Jiri Lehecka (rank 14, peak 12)	bt	Lorenzo Musetti (rank 9, peak 5)	6-3 6-3	peak_diff 7
+20260422	Madrid Masters	R16	Clay	Rafael Jodar (rank 42, peak 23)	bt	Vit Kopriva (rank 66, peak 55)	7-5 6-0	peak_diff 32
+20260422	Madrid Masters	R32	Clay	Alexander Blockx (rank 69, peak 36)	bt	Felix Auger Aliassime (rank 5, peak 4)	7-6(3) 6-3	peak_diff 32
+20260422	Madrid Masters	R32	Clay	Alexander Zverev (rank 3, peak 2)	bt	Terence Atmane (rank 47, peak 41)	6-3 7-6(2)	peak_diff 39
+20260422	Madrid Masters	R32	Clay	Arthur Fils (rank 25, peak 14)	bt	Emilio Nava (rank 116, peak 74)	7-6(2) 6-3	peak_diff 60
+20260422	Madrid Masters	R32	Clay	Cameron Norrie (rank 23, peak 8)	bt	Thiago Agustin Tirante (rank 75, peak 52)	7-5 7-6(5)	peak_diff 44
+20260422	Madrid Masters	R32	Clay	Casper Ruud (rank 15, peak 2)	bt	Alejandro Davidovich Fokina (rank 24, peak 14)	6-3 6-1	peak_diff 12
+20260422	Madrid Masters	R32	Clay	Daniil Medvedev (rank 10, peak 1)	bt	Nicolai Budkov Kjaer (rank 140, peak 121)	6-3 6-2	peak_diff 120
+20260422	Madrid Masters	R32	Clay	Flavio Cobolli (rank 13, peak 10)	bt	Adolfo Daniel Vallejo (rank 96, peak 70)	6-3 6-2	peak_diff 60
+20260422	Madrid Masters	R32	Clay	Francisco Cerundolo (rank 20, peak 18)	bt	Luciano Darderi (rank 22, peak 16)	6-2 6-3	peak_diff 2
+20260422	Madrid Masters	R32	Clay	Jakub Mensik (rank 27, peak 12)	bt	Karen Khachanov (rank 16, peak 9)	6-4 7-6(11)	peak_diff 3
+20260422	Madrid Masters	R32	Clay	Jannik Sinner (rank 1, peak 1)	bt	Elmer Moller (rank 169, peak 102)	6-2 6-3	peak_diff 101
+20260422	Madrid Masters	R32	Clay	Jiri Lehecka (rank 14, peak 12)	bt	Alex Michelsen (rank 37, peak 30)	6-4 6-2	peak_diff 18
+20260422	Madrid Masters	R32	Clay	Lorenzo Musetti (rank 9, peak 5)	bt	Tallon Griekspoor (rank 33, peak 21)	6-4 7-5	peak_diff 16
+20260422	Madrid Masters	R32	Clay	Rafael Jodar (rank 42, peak 23)	bt	Joao Fonseca (rank 31, peak 24)	7-6(4) 4-6 6-1	peak_diff 1
+20260422	Madrid Masters	R32	Clay	Stefanos Tsitsipas (rank 80, peak 3)	bt	Daniel Merida Aguilar (rank 102, peak 82)	6-4 6-2	peak_diff 79
+20260422	Madrid Masters	R32	Clay	Tomas Martin Etcheverry (rank 29, peak 25)	bt	Dino Prizmic (rank 87, peak 70)	2-6 6-4 6-3	peak_diff 45
+20260422	Madrid Masters	R32	Clay	Vit Kopriva (rank 66, peak 55)	bt	Arthur Rinderknech (rank 26, peak 24)	6-4 3-6 0-0 RET	peak_diff 31
+20260422	Madrid Masters	R64	Clay	Adolfo Daniel Vallejo (rank 96, peak 70)	bt	Learner Tien (rank 21, peak 18)	6-4 6-3	peak_diff 52
+20260422	Madrid Masters	R64	Clay	Alejandro Davidovich Fokina (rank 24, peak 14)	bt	Pablo Carreno Busta (rank 94, peak 11)	6-3 6-3	peak_diff 3
+20260422	Madrid Masters	R64	Clay	Alex Michelsen (rank 37, peak 30)	bt	Jan Lennard Struff (rank 81, peak 21)	6-2 6-1	peak_diff 9
+20260422	Madrid Masters	R64	Clay	Alexander Blockx (rank 69, peak 36)	bt	Brandon Nakashima (rank 32, peak 29)	3-6 6-3 6-4	peak_diff 7
+20260422	Madrid Masters	R64	Clay	Alexander Zverev (rank 3, peak 2)	bt	Mariano Navone (rank 45, peak 29)	6-1 3-6 6-3	peak_diff 27
+20260422	Madrid Masters	R64	Clay	Arthur Fils (rank 25, peak 14)	bt	Ignacio Buse (rank 58, peak 31)	6-7(4) 7-6(3) 7-5	peak_diff 17
+20260422	Madrid Masters	R64	Clay	Arthur Rinderknech (rank 26, peak 24)	bt	Dusan Lajovic (rank 138, peak 23)	6-3 6-2	peak_diff 1
+20260422	Madrid Masters	R64	Clay	Cameron Norrie (rank 23, peak 8)	bt	Tomas Machac (rank 41, peak 20)	6-2 6-7(6) 7-6(5)	peak_diff 12
+20260422	Madrid Masters	R64	Clay	Casper Ruud (rank 15, peak 2)	bt	Jaume Munar (rank 38, peak 33)	6-0 6-1	peak_diff 31
+20260422	Madrid Masters	R64	Clay	Daniel Merida Aguilar (rank 102, peak 82)	bt	Corentin Moutet (rank 30, peak 30)	6-3 6-4	peak_diff 52
+20260422	Madrid Masters	R64	Clay	Daniil Medvedev (rank 10, peak 1)	bt	Fabian Marozsan (rank 50, peak 36)	6-2 6-7(3) 6-4	peak_diff 35
+20260422	Madrid Masters	R64	Clay	Dino Prizmic (rank 87, peak 70)	bt	Ben Shelton (rank 6, peak 5)	6-4 6-7(4) 7-6(5)	peak_diff 65
+20260422	Madrid Masters	R64	Clay	Elmer Moller (rank 169, peak 102)	bt	Gabriel Diallo (rank 36, peak 33)	7-5 3-3 RET	peak_diff 69
+20260422	Madrid Masters	R64	Clay	Emilio Nava (rank 116, peak 74)	bt	Valentin Vacherot (rank 17, peak 16)	6-7(5) 7-6(1) 6-3	peak_diff 58
+20260422	Madrid Masters	R64	Clay	Felix Auger Aliassime (rank 5, peak 4)	bt	Vilius Gaubas (rank 124, peak 101)	6-3 6-4	peak_diff 97
+20260422	Madrid Masters	R64	Clay	Flavio Cobolli (rank 13, peak 10)	bt	Camilo Ugo Carabelli (rank 57, peak 43)	6-7(7) 6-1 6-4	peak_diff 33
+20260422	Madrid Masters	R64	Clay	Francisco Cerundolo (rank 20, peak 18)	bt	Yannick Hanfmann (rank 60, peak 45)	6-1 7-5	peak_diff 27
+20260422	Madrid Masters	R64	Clay	Jakub Mensik (rank 27, peak 12)	bt	Martin Damm (rank 126, peak 42)	6-3 6-4	peak_diff 30
+20260422	Madrid Masters	R64	Clay	Jannik Sinner (rank 1, peak 1)	bt	Benjamin Bonzi (rank 104, peak 42)	6-7(6) 6-1 6-4	peak_diff 41
+20260422	Madrid Masters	R64	Clay	Jiri Lehecka (rank 14, peak 12)	bt	Alejandro Tabilo (rank 43, peak 19)	3-6 7-6(3) 6-4	peak_diff 7
+20260422	Madrid Masters	R64	Clay	Joao Fonseca (rank 31, peak 24)	bt	Marin Cilic (rank 51, peak 13)	W/O	peak_diff 11
+20260422	Madrid Masters	R64	Clay	Karen Khachanov (rank 16, peak 9)	bt	Adam Walton (rank 117, peak 74)	6-2 6-3	peak_diff 65
+20260422	Madrid Masters	R64	Clay	Lorenzo Musetti (rank 9, peak 5)	bt	Hubert Hurkacz (rank 63, peak 6)	6-4 7-6(4)	peak_diff 1
+20260422	Madrid Masters	R64	Clay	Luciano Darderi (rank 22, peak 16)	bt	Juan Manuel Cerundolo (rank 67, peak 45)	6-1 6-3	peak_diff 29
+20260422	Madrid Masters	R64	Clay	Nicolai Budkov Kjaer (rank 140, peak 121)	bt	Denis Shapovalov (rank 35, peak 10)	6-2 6-1	peak_diff 111
+20260422	Madrid Masters	R64	Clay	Rafael Jodar (rank 42, peak 23)	bt	Alex De Minaur (rank 8, peak 6)	6-3 6-1	peak_diff 17
+20260422	Madrid Masters	R64	Clay	Stefanos Tsitsipas (rank 80, peak 3)	bt	Alexander Bublik (rank 11, peak 10)	6-2 7-5	peak_diff 7
+20260422	Madrid Masters	R64	Clay	Tallon Griekspoor (rank 33, peak 21)	bt	Damir Dzumhur (rank 84, peak 54)	6-3 6-4	peak_diff 33
+20260422	Madrid Masters	R64	Clay	Terence Atmane (rank 47, peak 41)	bt	Ugo Humbert (rank 34, peak 13)	7-6(3) 7-6(5)	peak_diff 28
+20260422	Madrid Masters	R64	Clay	Thiago Agustin Tirante (rank 75, peak 52)	bt	Tommy Paul (rank 18, peak 8)	7-5 6-4	peak_diff 44
+20260422	Madrid Masters	R64	Clay	Tomas Martin Etcheverry (rank 29, peak 25)	bt	Sebastian Ofner (rank 83, peak 37)	6-4 6-4	peak_diff 12
+20260422	Madrid Masters	R64	Clay	Vit Kopriva (rank 66, peak 55)	bt	Andrey Rublev (rank 12, peak 5)	6-3 6-4	peak_diff 50
+20260422	Madrid Masters	SF	Clay	Alexander Zverev (rank 3, peak 2)	bt	Alexander Blockx (rank 69, peak 36)	6-2 7-5	peak_diff 34
+20260422	Madrid Masters	SF	Clay	Jannik Sinner (rank 1, peak 1)	bt	Arthur Fils (rank 25, peak 14)	6-2 6-4	peak_diff 13
+20260505	Rome	F	Clay	Elina Svitolina (rank 10, peak 3)	bt	Coco Gauff (rank 4, peak 2)	6-4 6-7(3) 6-2	peak_diff 1
+20260505	Rome	QF	Clay	Coco Gauff (rank 4, peak 2)	bt	Mirra Andreeva (rank 7, peak 5)	4-6 6-2 6-4	peak_diff 3
+20260505	Rome	QF	Clay	Elina Svitolina (rank 10, peak 3)	bt	Elena Rybakina (rank 2, peak 2)	2-6 6-4 6-4	peak_diff 1
+20260505	Rome	QF	Clay	Iga Swiatek (rank 3, peak 1)	bt	Jessica Pegula (rank 5, peak 3)	6-1 6-2	peak_diff 2
+20260505	Rome	QF	Clay	Sorana Cirstea (rank 27, peak 18)	bt	Jelena Ostapenko (rank 36, peak 5)	6-1 7-6(0)	peak_diff 13
+20260505	Rome	R128	Clay	Alexandra Eala (rank 42, peak 29)	bt	Magdalena Frech (rank 45, peak 22)	6-0 3-6 6-4	peak_diff 7
+20260505	Rome	R128	Clay	Anastasia Potapova (rank 38, peak 21)	bt	Dalma Galfi (rank 119, peak 79)	5-7 6-2 6-4	peak_diff 58
+20260505	Rome	R128	Clay	Anastasia Zakharova (rank 81, peak 65)	bt	Dayana Yastremska (rank 52, peak 21)	4-6 7-5 7-6(6)	peak_diff 44
+20260505	Rome	R128	Clay	Ann Li (rank 29, peak 29)	bt	Shuai Zhang (rank 73, peak 22)	1-6 6-4 6-2	peak_diff 7
+20260505	Rome	R128	Clay	Antonia Ruzic (rank 59, peak 51)	bt	Kamilla Rakhimova (rank 76, peak 60)	6-4 1-6 6-3	peak_diff 9
+20260505	Rome	R128	Clay	Barbora Krejcikova (rank 53, peak 2)	bt	Elsa Jacquemot (rank 64, peak 53)	6-2 6-4	peak_diff 51
+20260505	Rome	R128	Clay	Bianca Andreescu (rank 137, peak 4)	bt	Sofia Kenin (rank 74, peak 4)	6-4 7-5	peak_diff 0
+20260505	Rome	R128	Clay	Caty Mcnally (rank 63, peak 54)	bt	Daria Kasatkina (rank 66, peak 8)	6-2 6-3	peak_diff 46
+20260505	Rome	R128	Clay	Elisabetta Cocciaretto (rank 41, peak 29)	bt	Sinja Kraus (rank 103, peak 92)	6-2 6-4	peak_diff 63
+20260505	Rome	R128	Clay	Eva Lys (rank 80, peak 39)	bt	Katie Boulter (rank 60, peak 23)	6-4 3-6 6-4	peak_diff 16
+20260505	Rome	R128	Clay	Jelena Ostapenko (rank 36, peak 5)	bt	Lucrezia Stefanini (rank 154, peak 100)	6-0 6-1	peak_diff 95
+20260505	Rome	R128	Clay	Karolina Pliskova (rank 130, peak 1)	bt	Jessica Bouzas Maneiro (rank 51, peak 40)	4-6 6-3 7-5	peak_diff 39
+20260505	Rome	R128	Clay	Katerina Siniakova (rank 39, peak 27)	bt	Lois Boisson (rank 43, peak 34)	6-2 6-3	peak_diff 7
+20260505	Rome	R128	Clay	Laura Siegemund (rank 46, peak 27)	bt	Sara Bejlek (rank 37, peak 34)	6-4 6-4	peak_diff 7
+20260505	Rome	R128	Clay	Leolia Jeanjean (rank 127, peak 91)	bt	Beatriz Haddad Maia (rank 78, peak 10)	7-6(6) 6-4	peak_diff 81
+20260505	Rome	R128	Clay	Maria Sakkari (rank 47, peak 3)	bt	Lilli Tagger (rank 92, peak 86)	5-7 6-3 6-0	peak_diff 83
+20260505	Rome	R128	Clay	Mccartney Kessler (rank 50, peak 30)	bt	Lucia Bronzetti (rank 173, peak 46)	6-3 5-7 6-4	peak_diff 16
+20260505	Rome	R128	Clay	Noemi Basiletti (rank 427, peak 327)	bt	Ajla Tomljanovic (rank 88, peak 32)	7-5 6-4	peak_diff 295
+20260505	Rome	R128	Clay	Oleksandra Oliynykova (rank 68, peak 51)	bt	Petra Marcinko (rank 69, peak 50)	6-1 6-3	peak_diff 1
+20260505	Rome	R128	Clay	Panna Udvardy (rank 71, peak 59)	bt	Alina Korneeva (rank 122, peak 96)	6-2 7-6(2)	peak_diff 37
+20260505	Rome	R128	Clay	Peyton Stearns (rank 49, peak 28)	bt	Janice Tjen (rank 40, peak 36)	6-4 6-4	peak_diff 8
+20260505	Rome	R128	Clay	Qinwen Zheng (rank 32, peak 4)	bt	Anna Bondar (rank 58, peak 50)	3-6 6-3 6-4	peak_diff 46
+20260505	Rome	R128	Clay	Rebeka Masarova (rank 160, peak 62)	bt	Oksana Selekhmeteva (rank 84, peak 71)	7-5 5-7 6-1	peak_diff 9
+20260505	Rome	R128	Clay	Simona Waltert (rank 91, peak 81)	bt	Yuliia Starodubtseva (rank 57, peak 53)	7-5 4-6 6-1	peak_diff 28
+20260505	Rome	R128	Clay	Solana Sierra (rank 72, peak 56)	bt	Tamara Korpatsch (rank 87, peak 71)	6-3 6-1	peak_diff 15
+20260505	Rome	R128	Clay	Talia Gibson (rank 62, peak 55)	bt	Martina Trevisan (rank 516, peak 18)	6-4 0-6 6-3	peak_diff 37
+20260505	Rome	R128	Clay	Tatjana Maria (rank 54, peak 36)	bt	Magda Linette (rank 55, peak 19)	6-0 6-3	peak_diff 17
+20260505	Rome	R128	Clay	Taylor Townsend (rank 96, peak 46)	bt	Nuria Brancaccio (rank 171, peak 150)	6-3 6-2	peak_diff 104
+20260505	Rome	R128	Clay	Tereza Valentova (rank 48, peak 42)	bt	Yulia Putintseva (rank 77, peak 20)	6-3 6-2	peak_diff 22
+20260505	Rome	R128	Clay	Tyra Caterina Grant (rank 234, peak 157)	bt	Lisa Pigato (rank 141, peak 132)	1-6 6-2 6-4	peak_diff 25
+20260505	Rome	R128	Clay	Viktorija Golubic (rank 90, peak 35)	bt	Federica Urgesi (rank 410, peak 285)	6-1 6-1	peak_diff 250
+20260505	Rome	R128	Clay	Zeynep Sonmez (rank 65, peak 59)	bt	Jennifer Ruggeri (rank 265, peak 213)	4-6 6-2 6-2	peak_diff 154
+20260505	Rome	R16	Clay	Coco Gauff (rank 4, peak 2)	bt	Iva Jovic (rank 17, peak 16)	5-7 7-5 6-2	peak_diff 14
+20260505	Rome	R16	Clay	Elena Rybakina (rank 2, peak 2)	bt	Karolina Pliskova (rank 130, peak 1)	6-0 6-2	peak_diff 1
+20260505	Rome	R16	Clay	Elina Svitolina (rank 10, peak 3)	bt	Nikola Bartunkova (rank 94, peak 61)	6-2 6-3	peak_diff 58
+20260505	Rome	R16	Clay	Iga Swiatek (rank 3, peak 1)	bt	Naomi Osaka (rank 16, peak 1)	6-2 6-1	peak_diff 0
+20260505	Rome	R16	Clay	Jelena Ostapenko (rank 36, peak 5)	bt	Anna Kalinskaya (rank 24, peak 11)	6-1 6-2	peak_diff 6
+20260505	Rome	R16	Clay	Jessica Pegula (rank 5, peak 3)	bt	Anastasia Potapova (rank 38, peak 21)	7-6(6) 6-2	peak_diff 18
+20260505	Rome	R16	Clay	Mirra Andreeva (rank 7, peak 5)	bt	Elise Mertens (rank 22, peak 12)	6-3 6-3	peak_diff 7
+20260505	Rome	R16	Clay	Sorana Cirstea (rank 27, peak 18)	bt	Linda Noskova (rank 13, peak 12)	6-2 6-4	peak_diff 6
+20260505	Rome	R32	Clay	Anastasia Potapova (rank 38, peak 21)	bt	Liudmila Samsonova (rank 21, peak 12)	6-3 6-2	peak_diff 9
+20260505	Rome	R32	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Belinda Bencic (rank 12, peak 4)	6-4 6-3	peak_diff 7
+20260505	Rome	R32	Clay	Coco Gauff (rank 4, peak 2)	bt	Solana Sierra (rank 72, peak 56)	5-7 6-0 6-4	peak_diff 54
+20260505	Rome	R32	Clay	Elena Rybakina (rank 2, peak 2)	bt	Alexandra Eala (rank 42, peak 29)	6-4 6-3	peak_diff 27
+20260505	Rome	R32	Clay	Elina Svitolina (rank 10, peak 3)	bt	Hailey Baptiste (rank 25, peak 25)	6-1 6-2	peak_diff 22
+20260505	Rome	R32	Clay	Elise Mertens (rank 22, peak 12)	bt	Jasmine Paolini (rank 8, peak 4)	4-6 7-6(5) 6-3	peak_diff 8
+20260505	Rome	R32	Clay	Iga Swiatek (rank 3, peak 1)	bt	Elisabetta Cocciaretto (rank 41, peak 29)	6-1 6-0	peak_diff 28
+20260505	Rome	R32	Clay	Iva Jovic (rank 17, peak 16)	bt	Taylor Townsend (rank 96, peak 46)	7-5 6-2	peak_diff 30
+20260505	Rome	R32	Clay	Jelena Ostapenko (rank 36, peak 5)	bt	Qinwen Zheng (rank 32, peak 4)	4-6 6-4 6-4	peak_diff 1
+20260505	Rome	R32	Clay	Jessica Pegula (rank 5, peak 3)	bt	Rebeka Masarova (rank 160, peak 62)	6-0 6-0	peak_diff 59
+20260505	Rome	R32	Clay	Karolina Pliskova (rank 130, peak 1)	bt	Laura Siegemund (rank 46, peak 27)	6-1 6-4	peak_diff 26
+20260505	Rome	R32	Clay	Linda Noskova (rank 13, peak 12)	bt	Oleksandra Oliynykova (rank 68, peak 51)	6-1 6-3	peak_diff 39
+20260505	Rome	R32	Clay	Mirra Andreeva (rank 7, peak 5)	bt	Viktorija Golubic (rank 90, peak 35)	6-1 4-6 6-0	peak_diff 30
+20260505	Rome	R32	Clay	Naomi Osaka (rank 16, peak 1)	bt	Diana Shnaider (rank 20, peak 11)	6-1 6-2	peak_diff 10
+20260505	Rome	R32	Clay	Nikola Bartunkova (rank 94, peak 61)	bt	Madison Keys (rank 19, peak 5)	6-3 1-6 6-4	peak_diff 56
+20260505	Rome	R32	Clay	Sorana Cirstea (rank 27, peak 18)	bt	Aryna Sabalenka (rank 1, peak 1)	2-6 6-3 7-5	peak_diff 17
+20260505	Rome	R64	Clay	Alexandra Eala (rank 42, peak 29)	bt	Xin Yu Wang (rank 33, peak 30)	6-4 6-3	peak_diff 1
+20260505	Rome	R64	Clay	Anastasia Potapova (rank 38, peak 21)	bt	Karolina Muchova (rank 11, peak 8)	6-3 6-2	peak_diff 13
+20260505	Rome	R64	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Katerina Siniakova (rank 39, peak 27)	4-6 7-6(4) 7-5	peak_diff 16
+20260505	Rome	R64	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Barbora Krejcikova (rank 53, peak 2)	6-2 6-3	peak_diff 1
+20260505	Rome	R64	Clay	Belinda Bencic (rank 12, peak 4)	bt	Bianca Andreescu (rank 137, peak 4)	6-4 6-1	peak_diff 0
+20260505	Rome	R64	Clay	Coco Gauff (rank 4, peak 2)	bt	Tereza Valentova (rank 48, peak 42)	6-3 6-4	peak_diff 40
+20260505	Rome	R64	Clay	Diana Shnaider (rank 20, peak 11)	bt	Talia Gibson (rank 62, peak 55)	5-7 6-1 6-1	peak_diff 44
+20260505	Rome	R64	Clay	Elena Rybakina (rank 2, peak 2)	bt	Maria Sakkari (rank 47, peak 3)	6-4 6-1	peak_diff 1
+20260505	Rome	R64	Clay	Elina Svitolina (rank 10, peak 3)	bt	Noemi Basiletti (rank 427, peak 327)	6-1 6-3	peak_diff 324
+20260505	Rome	R64	Clay	Elisabetta Cocciaretto (rank 41, peak 29)	bt	Emma Navarro (rank 35, peak 8)	6-3 6-3	peak_diff 21
+20260505	Rome	R64	Clay	Elise Mertens (rank 22, peak 12)	bt	Panna Udvardy (rank 71, peak 59)	6-4 6-2	peak_diff 47
+20260505	Rome	R64	Clay	Hailey Baptiste (rank 25, peak 25)	bt	Simona Waltert (rank 91, peak 81)	6-7(9) 6-4 6-4	peak_diff 56
+20260505	Rome	R64	Clay	Iga Swiatek (rank 3, peak 1)	bt	Caty Mcnally (rank 63, peak 54)	6-1 6-7(5) 6-3	peak_diff 53
+20260505	Rome	R64	Clay	Iva Jovic (rank 17, peak 16)	bt	Mccartney Kessler (rank 50, peak 30)	7-6(5) 7-6(4)	peak_diff 14
+20260505	Rome	R64	Clay	Jasmine Paolini (rank 8, peak 4)	bt	Leolia Jeanjean (rank 127, peak 91)	6-7(4) 6-2 6-4	peak_diff 87
+20260505	Rome	R64	Clay	Jelena Ostapenko (rank 36, peak 5)	bt	Elena Gabriela Ruse (rank 67, peak 51)	2-6 6-2 6-3	peak_diff 46
+20260505	Rome	R64	Clay	Jessica Pegula (rank 5, peak 3)	bt	Zeynep Sonmez (rank 65, peak 59)	6-4 6-0	peak_diff 56
+20260505	Rome	R64	Clay	Karolina Pliskova (rank 130, peak 1)	bt	Jaqueline Cristian (rank 28, peak 28)	6-7(5) 7-6(2) 6-4	peak_diff 27
+20260505	Rome	R64	Clay	Laura Siegemund (rank 46, peak 27)	bt	Ekaterina Alexandrova (rank 14, peak 10)	6-4 6-7(4) 6-1	peak_diff 17
+20260505	Rome	R64	Clay	Linda Noskova (rank 13, peak 12)	bt	Anastasia Zakharova (rank 81, peak 65)	6-4 6-1	peak_diff 53
+20260505	Rome	R64	Clay	Liudmila Samsonova (rank 21, peak 12)	bt	Ann Li (rank 29, peak 29)	6-4 6-3	peak_diff 17
+20260505	Rome	R64	Clay	Madison Keys (rank 19, peak 5)	bt	Peyton Stearns (rank 49, peak 28)	4-6 6-4 6-2	peak_diff 23
+20260505	Rome	R64	Clay	Mirra Andreeva (rank 7, peak 5)	bt	Antonia Ruzic (rank 59, peak 51)	6-1 6-0	peak_diff 46
+20260505	Rome	R64	Clay	Naomi Osaka (rank 16, peak 1)	bt	Eva Lys (rank 80, peak 39)	6-4 4-6 6-3	peak_diff 38
+20260505	Rome	R64	Clay	Nikola Bartunkova (rank 94, peak 61)	bt	Tyra Caterina Grant (rank 234, peak 157)	4-6 6-3 6-4	peak_diff 96
+20260505	Rome	R64	Clay	Oleksandra Oliynykova (rank 68, peak 51)	bt	Clara Tauson (rank 18, peak 12)	6-1 3-1 RET	peak_diff 39
+20260505	Rome	R64	Clay	Qinwen Zheng (rank 32, peak 4)	bt	Cristina Bucsa (rank 31, peak 30)	7-6(6) 6-2	peak_diff 26
+20260505	Rome	R64	Clay	Rebeka Masarova (rank 160, peak 62)	bt	Leylah Fernandez (rank 23, peak 13)	4-6 6-4 6-4	peak_diff 49
+20260505	Rome	R64	Clay	Solana Sierra (rank 72, peak 56)	bt	Anhelina Kalinina (rank 93, peak 25)	6-2 6-3	peak_diff 31
+20260505	Rome	R64	Clay	Sorana Cirstea (rank 27, peak 18)	bt	Tatjana Maria (rank 54, peak 36)	6-2 6-0	peak_diff 18
+20260505	Rome	R64	Clay	Taylor Townsend (rank 96, peak 46)	bt	Marie Bouzkova (rank 26, peak 24)	6-3 7-5	peak_diff 22
+20260505	Rome	R64	Clay	Viktorija Golubic (rank 90, peak 35)	bt	Maya Joint (rank 34, peak 28)	7-5 6-2	peak_diff 7
+20260505	Rome	SF	Clay	Coco Gauff (rank 4, peak 2)	bt	Sorana Cirstea (rank 27, peak 18)	6-4 6-3	peak_diff 16
+20260505	Rome	SF	Clay	Elina Svitolina (rank 10, peak 3)	bt	Iga Swiatek (rank 3, peak 1)	6-4 2-6 6-2	peak_diff 2
+20260506	Rome Masters	F	Clay	Jannik Sinner (rank 1, peak 1)	bt	Casper Ruud (rank 25, peak 2)	6-4 6-4	peak_diff 1
+20260506	Rome Masters	QF	Clay	Casper Ruud (rank 25, peak 2)	bt	Karen Khachanov (rank 15, peak 9)	6-1 1-6 6-2	peak_diff 7
+20260506	Rome Masters	QF	Clay	Daniil Medvedev (rank 9, peak 1)	bt	Martin Landaluce (rank 94, peak 58)	1-6 6-4 7-5	peak_diff 57
+20260506	Rome Masters	QF	Clay	Jannik Sinner (rank 1, peak 1)	bt	Andrey Rublev (rank 14, peak 5)	6-2 6-4	peak_diff 4
+20260506	Rome Masters	QF	Clay	Luciano Darderi (rank 20, peak 16)	bt	Rafael Jodar (rank 34, peak 23)	7-6(5) 5-7 6-0	peak_diff 7
+20260506	Rome Masters	R128	Clay	Alejandro Tabilo (rank 35, peak 19)	bt	Pablo Carreno Busta (rank 91, peak 11)	6-2 6-1	peak_diff 8
+20260506	Rome Masters	R128	Clay	Aleksandar Vukic (rank 99, peak 48)	bt	Patrick Kypson (rank 89, peak 89)	6-3 5-7 6-0	peak_diff 41
+20260506	Rome Masters	R128	Clay	Alexander Blockx (rank 36, peak 36)	bt	Federico Cina (rank 225, peak 183)	4-6 6-1 6-3	peak_diff 147
+20260506	Rome Masters	R128	Clay	Alexander Shevchenko (rank 85, peak 45)	bt	Camilo Ugo Carabelli (rank 61, peak 43)	6-3 4-6 7-6(5)	peak_diff 2
+20260506	Rome Masters	R128	Clay	Alexei Popyrin (rank 60, peak 19)	bt	Matteo Berrettini (rank 100, peak 6)	6-2 6-3	peak_diff 13
+20260506	Rome Masters	R128	Clay	Andrea Pellegrino (rank 155, peak 109)	bt	Luca Nardi (rank 151, peak 67)	4-6 6-3 6-3	peak_diff 42
+20260506	Rome Masters	R128	Clay	Botic Van De Zandschulp (rank 54, peak 22)	bt	Alexandre Muller (rank 105, peak 38)	7-5 6-3	peak_diff 16
+20260506	Rome Masters	R128	Clay	Cristian Garin (rank 104, peak 17)	bt	Juan Manuel Cerundolo (rank 72, peak 45)	7-6(2) 7-5	peak_diff 28
+20260506	Rome Masters	R128	Clay	Damir Dzumhur (rank 87, peak 54)	bt	Adrian Mannarino (rank 45, peak 17)	6-4 6-0	peak_diff 37
+20260506	Rome Masters	R128	Clay	Daniel Altmaier (rank 64, peak 44)	bt	Zhizhen Zhang (rank 239, peak 31)	4-6 7-6(3) 6-4	peak_diff 13
+20260506	Rome Masters	R128	Clay	Dino Prizmic (rank 79, peak 70)	bt	Marton Fucsovics (rank 57, peak 35)	6-4 6-3	peak_diff 35
+20260506	Rome Masters	R128	Clay	Giovanni Mpetshi Perricard (rank 58, peak 29)	bt	Jacob Fearnley (rank 123, peak 49)	7-6(6) 4-6 6-2	peak_diff 20
+20260506	Rome Masters	R128	Clay	Hamad Medjedovic (rank 67, peak 56)	bt	Valentin Royer (rank 71, peak 54)	6-4 6-3	peak_diff 2
+20260506	Rome Masters	R128	Clay	Ignacio Buse (rank 62, peak 31)	bt	Lorenzo Sonego (rank 66, peak 21)	6-3 6-3	peak_diff 10
+20260506	Rome Masters	R128	Clay	Jan Lennard Struff (rank 83, peak 21)	bt	Francisco Comesana (rank 114, peak 54)	6-2 6-4	peak_diff 33
+20260506	Rome Masters	R128	Clay	Mariano Navone (rank 44, peak 29)	bt	Denis Shapovalov (rank 37, peak 10)	6-4 6-2	peak_diff 19
+20260506	Rome Masters	R128	Clay	Marin Cilic (rank 47, peak 13)	bt	Marcos Giron (rank 77, peak 37)	7-5 6-4	peak_diff 24
+20260506	Rome Masters	R128	Clay	Matteo Arnaldi (rank 106, peak 29)	bt	Jaume Munar (rank 38, peak 33)	6-3 3-6 6-3	peak_diff 4
+20260506	Rome Masters	R128	Clay	Mattia Bellucci (rank 80, peak 63)	bt	Roman Andres Burruchaga (rank 56, peak 56)	6-4 6-4	peak_diff 7
+20260506	Rome Masters	R128	Clay	Miomir Kecmanovic (rank 70, peak 27)	bt	Dalibor Svrcina (rank 116, peak 86)	6-2 6-3	peak_diff 59
+20260506	Rome Masters	R128	Clay	Nikoloz Basilashvili (rank 117, peak 18)	bt	Daniel Merida Aguilar (rank 86, peak 82)	6-4 2-6 6-3	peak_diff 64
+20260506	Rome Masters	R128	Clay	Nuno Borges (rank 52, peak 30)	bt	Jesper De Jong (rank 102, peak 71)	6-3 6-0	peak_diff 41
+20260506	Rome Masters	R128	Clay	Pablo Llamas Ruiz (rank 139, peak 120)	bt	Ethan Quinn (rank 48, peak 48)	6-3 5-7 6-3	peak_diff 72
+20260506	Rome Masters	R128	Clay	Roberto Bautista Agut (rank 98, peak 9)	bt	Francesco Maestrelli (rank 112, peak 108)	6-3 7-6(2)	peak_diff 99
+20260506	Rome Masters	R128	Clay	Sebastian Baez (rank 65, peak 18)	bt	Jenson Brooksby (rank 63, peak 33)	6-3 7-6(8)	peak_diff 15
+20260506	Rome Masters	R128	Clay	Sebastian Ofner (rank 82, peak 37)	bt	Alex Michelsen (rank 42, peak 30)	6-3 6-3	peak_diff 7
+20260506	Rome Masters	R128	Clay	Terence Atmane (rank 51, peak 41)	bt	Zizou Bergs (rank 39, peak 38)	6-3 6-4	peak_diff 3
+20260506	Rome Masters	R128	Clay	Thiago Agustin Tirante (rank 69, peak 52)	bt	Gianluca Cadenasso (rank 196, peak 193)	6-7(5) 6-4 6-0	peak_diff 141
+20260506	Rome Masters	R128	Clay	Tomas Machac (rank 41, peak 20)	bt	Stefanos Tsitsipas (rank 75, peak 3)	6-4 7-6(4)	peak_diff 17
+20260506	Rome Masters	R128	Clay	Vit Kopriva (rank 55, peak 55)	bt	Fabian Marozsan (rank 49, peak 36)	6-3 6-3	peak_diff 19
+20260506	Rome Masters	R128	Clay	Yannick Hanfmann (rank 59, peak 45)	bt	Hubert Hurkacz (rank 53, peak 6)	6-7(3) 7-6(2) 6-2	peak_diff 39
+20260506	Rome Masters	R128	Clay	Zachary Svajda (rank 90, peak 62)	bt	Marco Trungelliti (rank 78, peak 76)	0-6 6-4 7-6(4)	peak_diff 14
+20260506	Rome Masters	R16	Clay	Andrey Rublev (rank 14, peak 5)	bt	Nikoloz Basilashvili (rank 117, peak 18)	3-6 7-6(5) 6-2	peak_diff 13
+20260506	Rome Masters	R16	Clay	Casper Ruud (rank 25, peak 2)	bt	Lorenzo Musetti (rank 10, peak 5)	6-3 6-1	peak_diff 3
+20260506	Rome Masters	R16	Clay	Daniil Medvedev (rank 9, peak 1)	bt	Thiago Agustin Tirante (rank 69, peak 52)	6-3 6-2	peak_diff 51
+20260506	Rome Masters	R16	Clay	Jannik Sinner (rank 1, peak 1)	bt	Andrea Pellegrino (rank 155, peak 109)	6-2 6-3	peak_diff 108
+20260506	Rome Masters	R16	Clay	Karen Khachanov (rank 15, peak 9)	bt	Dino Prizmic (rank 79, peak 70)	6-1 7-6(2)	peak_diff 61
+20260506	Rome Masters	R16	Clay	Luciano Darderi (rank 20, peak 16)	bt	Alexander Zverev (rank 3, peak 2)	1-6 7-6(10) 6-0	peak_diff 14
+20260506	Rome Masters	R16	Clay	Martin Landaluce (rank 94, peak 58)	bt	Hamad Medjedovic (rank 67, peak 56)	7-5 6-4	peak_diff 2
+20260506	Rome Masters	R16	Clay	Rafael Jodar (rank 34, peak 23)	bt	Learner Tien (rank 21, peak 18)	6-1 6-4	peak_diff 5
+20260506	Rome Masters	R32	Clay	Alexander Zverev (rank 3, peak 2)	bt	Alexander Blockx (rank 36, peak 36)	6-1 6-4	peak_diff 34
+20260506	Rome Masters	R32	Clay	Andrea Pellegrino (rank 155, peak 109)	bt	Frances Tiafoe (rank 22, peak 10)	7-6(8) 6-1	peak_diff 99
+20260506	Rome Masters	R32	Clay	Andrey Rublev (rank 14, peak 5)	bt	Alejandro Davidovich Fokina (rank 23, peak 14)	6-4 6-4	peak_diff 9
+20260506	Rome Masters	R32	Clay	Casper Ruud (rank 25, peak 2)	bt	Jiri Lehecka (rank 13, peak 12)	6-3 6-4	peak_diff 10
+20260506	Rome Masters	R32	Clay	Daniil Medvedev (rank 9, peak 1)	bt	Pablo Llamas Ruiz (rank 139, peak 120)	3-6 6-4 6-2	peak_diff 119
+20260506	Rome Masters	R32	Clay	Dino Prizmic (rank 79, peak 70)	bt	Ugo Humbert (rank 33, peak 13)	6-1 7-5	peak_diff 57
+20260506	Rome Masters	R32	Clay	Hamad Medjedovic (rank 67, peak 56)	bt	Mariano Navone (rank 44, peak 29)	4-6 6-3 6-4	peak_diff 27
+20260506	Rome Masters	R32	Clay	Jannik Sinner (rank 1, peak 1)	bt	Alexei Popyrin (rank 60, peak 19)	6-2 6-0	peak_diff 18
+20260506	Rome Masters	R32	Clay	Karen Khachanov (rank 15, peak 9)	bt	Botic Van De Zandschulp (rank 54, peak 22)	5-7 6-4 6-4	peak_diff 13
+20260506	Rome Masters	R32	Clay	Learner Tien (rank 21, peak 18)	bt	Alexander Bublik (rank 11, peak 10)	4-6 6-3 7-5	peak_diff 8
+20260506	Rome Masters	R32	Clay	Lorenzo Musetti (rank 10, peak 5)	bt	Francisco Cerundolo (rank 27, peak 18)	7-6(7) 6-4	peak_diff 13
+20260506	Rome Masters	R32	Clay	Luciano Darderi (rank 20, peak 16)	bt	Tommy Paul (rank 18, peak 8)	3-6 6-3 6-2	peak_diff 8
+20260506	Rome Masters	R32	Clay	Martin Landaluce (rank 94, peak 58)	bt	Mattia Bellucci (rank 80, peak 63)	6-4 6-3	peak_diff 5
+20260506	Rome Masters	R32	Clay	Nikoloz Basilashvili (rank 117, peak 18)	bt	Brandon Nakashima (rank 32, peak 29)	7-6(5) 6-4	peak_diff 11
+20260506	Rome Masters	R32	Clay	Rafael Jodar (rank 34, peak 23)	bt	Matteo Arnaldi (rank 106, peak 29)	6-1 4-6 6-3	peak_diff 6
+20260506	Rome Masters	R32	Clay	Thiago Agustin Tirante (rank 69, peak 52)	bt	Flavio Cobolli (rank 12, peak 10)	6-3 6-4	peak_diff 42
+20260506	Rome Masters	R64	Clay	Alejandro Davidovich Fokina (rank 23, peak 14)	bt	Cristian Garin (rank 104, peak 17)	7-6(2) 6-4	peak_diff 3
+20260506	Rome Masters	R64	Clay	Alexander Blockx (rank 36, peak 36)	bt	Tallon Griekspoor (rank 31, peak 21)	6-7(5) 6-3 6-4	peak_diff 15
+20260506	Rome Masters	R64	Clay	Alexander Bublik (rank 11, peak 10)	bt	Sebastian Baez (rank 65, peak 18)	6-1 6-2	peak_diff 8
+20260506	Rome Masters	R64	Clay	Alexander Zverev (rank 3, peak 2)	bt	Daniel Altmaier (rank 64, peak 44)	7-5 6-3	peak_diff 42
+20260506	Rome Masters	R64	Clay	Alexei Popyrin (rank 60, peak 19)	bt	Jakub Mensik (rank 28, peak 12)	6-3 2-6 6-4	peak_diff 7
+20260506	Rome Masters	R64	Clay	Andrea Pellegrino (rank 155, peak 109)	bt	Arthur Fils (rank 17, peak 14)	4-0 RET	peak_diff 95
+20260506	Rome Masters	R64	Clay	Andrey Rublev (rank 14, peak 5)	bt	Miomir Kecmanovic (rank 70, peak 27)	6-4 6-4	peak_diff 22
+20260506	Rome Masters	R64	Clay	Botic Van De Zandschulp (rank 54, peak 22)	bt	Aleksandar Kovacevic (rank 95, peak 54)	2-6 6-2 7-6(5)	peak_diff 32
+20260506	Rome Masters	R64	Clay	Brandon Nakashima (rank 32, peak 29)	bt	Roberto Bautista Agut (rank 98, peak 9)	6-4 6-0	peak_diff 20
+20260506	Rome Masters	R64	Clay	Casper Ruud (rank 25, peak 2)	bt	Zachary Svajda (rank 90, peak 62)	6-1 6-3	peak_diff 60
+20260506	Rome Masters	R64	Clay	Daniil Medvedev (rank 9, peak 1)	bt	Tomas Machac (rank 41, peak 20)	W/O	peak_diff 19
+20260506	Rome Masters	R64	Clay	Dino Prizmic (rank 79, peak 70)	bt	Novak Djokovic (rank 4, peak 1)	2-6 6-2 6-4	peak_diff 69
+20260506	Rome Masters	R64	Clay	Flavio Cobolli (rank 12, peak 10)	bt	Terence Atmane (rank 51, peak 41)	7-6(1) 6-3	peak_diff 31
+20260506	Rome Masters	R64	Clay	Frances Tiafoe (rank 22, peak 10)	bt	Ignacio Buse (rank 62, peak 31)	6-7(5) 6-3 6-2	peak_diff 21
+20260506	Rome Masters	R64	Clay	Francisco Cerundolo (rank 27, peak 18)	bt	Alejandro Tabilo (rank 35, peak 19)	6-0 6-2	peak_diff 1
+20260506	Rome Masters	R64	Clay	Hamad Medjedovic (rank 67, peak 56)	bt	Joao Fonseca (rank 29, peak 24)	3-6 6-3 7-6(1)	peak_diff 32
+20260506	Rome Masters	R64	Clay	Jannik Sinner (rank 1, peak 1)	bt	Sebastian Ofner (rank 82, peak 37)	6-3 6-4	peak_diff 36
+20260506	Rome Masters	R64	Clay	Jiri Lehecka (rank 13, peak 12)	bt	Jan Lennard Struff (rank 83, peak 21)	7-6(4) 6-3	peak_diff 9
+20260506	Rome Masters	R64	Clay	Karen Khachanov (rank 15, peak 9)	bt	Alexander Shevchenko (rank 85, peak 45)	6-4 6-4	peak_diff 36
+20260506	Rome Masters	R64	Clay	Learner Tien (rank 21, peak 18)	bt	Damir Dzumhur (rank 87, peak 54)	6-2 6-1	peak_diff 36
+20260506	Rome Masters	R64	Clay	Lorenzo Musetti (rank 10, peak 5)	bt	Giovanni Mpetshi Perricard (rank 58, peak 29)	6-4 6-4	peak_diff 24
+20260506	Rome Masters	R64	Clay	Luciano Darderi (rank 20, peak 16)	bt	Yannick Hanfmann (rank 59, peak 45)	6-4 6-4	peak_diff 29
+20260506	Rome Masters	R64	Clay	Mariano Navone (rank 44, peak 29)	bt	Felix Auger Aliassime (rank 5, peak 4)	7-6(4) 7-6(5)	peak_diff 25
+20260506	Rome Masters	R64	Clay	Martin Landaluce (rank 94, peak 58)	bt	Marin Cilic (rank 47, peak 13)	6-4 6-4	peak_diff 45
+20260506	Rome Masters	R64	Clay	Matteo Arnaldi (rank 106, peak 29)	bt	Alex De Minaur (rank 8, peak 6)	4-6 7-6(5) 6-4	peak_diff 23
+20260506	Rome Masters	R64	Clay	Mattia Bellucci (rank 80, peak 63)	bt	Tomas Martin Etcheverry (rank 26, peak 25)	5-7 6-2 6-3	peak_diff 38
+20260506	Rome Masters	R64	Clay	Nikoloz Basilashvili (rank 117, peak 18)	bt	Ben Shelton (rank 6, peak 5)	6-4 6-7(5) 6-3	peak_diff 13
+20260506	Rome Masters	R64	Clay	Pablo Llamas Ruiz (rank 139, peak 120)	bt	Corentin Moutet (rank 30, peak 30)	6-4 3-6 7-6(4)	peak_diff 90
+20260506	Rome Masters	R64	Clay	Rafael Jodar (rank 34, peak 23)	bt	Nuno Borges (rank 52, peak 30)	7-6(4) 6-4	peak_diff 7
+20260506	Rome Masters	R64	Clay	Thiago Agustin Tirante (rank 69, peak 52)	bt	Cameron Norrie (rank 19, peak 8)	6-3 7-5	peak_diff 44
+20260506	Rome Masters	R64	Clay	Tommy Paul (rank 18, peak 8)	bt	Aleksandar Vukic (rank 99, peak 48)	6-4 6-2	peak_diff 40
+20260506	Rome Masters	R64	Clay	Ugo Humbert (rank 33, peak 13)	bt	Vit Kopriva (rank 55, peak 55)	6-3 6-2	peak_diff 42
+20260506	Rome Masters	SF	Clay	Casper Ruud (rank 25, peak 2)	bt	Luciano Darderi (rank 20, peak 16)	6-1 6-1	peak_diff 14
+20260506	Rome Masters	SF	Clay	Jannik Sinner (rank 1, peak 1)	bt	Daniil Medvedev (rank 9, peak 1)	6-2 5-7 6-4	peak_diff 0

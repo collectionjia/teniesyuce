@@ -327,14 +327,25 @@ router.get('/data-source', async (_req, res) => {
     const allsports = require('../services/allsports');
     const tennisCache = require('../services/tennisCache');
     const tennisFromMonitor = require('../services/tennisFromMonitor');
+    const tennisDocks500 = require('../services/tennisDocks500');
     const pref = await tennisDataSource.get();
     const bundle = await tennisCache.getBundle();
     const lastRedis = tennisFromMonitor.getLastRedisRefresh();
+    let docks500 = null;
+    try {
+      const days = tennisDocks500.listDays();
+      const date = await tennisDocks500.getSelectedDate();
+      docks500 = { days, date, available: days.length > 0 };
+    } catch (e) {
+      docks500 = { days: [], date: null, available: false, error: e.message };
+    }
     res.json({
       ok: true,
       source: pref,
       label: tennisDataSource.label(pref),
       api_available: allsports.isConfigured(),
+      docks500_available: !!docks500?.available,
+      docks500,
       redis_read: true,
       redis_upstream: bundle?.upstream || bundle?.source || null,
       redis_fetched_at: bundle?.fetched_at || null,
@@ -353,6 +364,8 @@ router.post('/data-source', async (req, res) => {
     const tennisDataSource = require('../services/tennisDataSource');
     const tennisFromMonitor = require('../services/tennisFromMonitor');
     const allsports = require('../services/allsports');
+    const tennisDocks500 = require('../services/tennisDocks500');
+    const tennisRedis = require('../services/tennisRedis');
     const next = tennisDataSource.normalize(req.body?.source);
     if (next === 'api' && !allsports.isConfigured()) {
       return res.status(400).json({
@@ -360,26 +373,53 @@ router.post('/data-source', async (req, res) => {
         error: 'AllSports API 未配置（需 RAPIDAPI_KEY），无法切换到 API 源',
       });
     }
-    await tennisDataSource.set(next);
-    const tennisRedis = require('../services/tennisRedis');
-    if (tennisRedis.monitorSyncEnabled()) {
-      tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true }).catch((err) => {
-        console.error('[tennis-monitor/data-source] redis refresh:', err.message);
-      });
+    if (next === 'docks500') {
+      try {
+        const existing = tennisDocks500.listDays();
+        if (!existing.length) tennisDocks500.splitByDay();
+      } catch (e) {
+        return res.status(400).json({ ok: false, error: e.message || 'docks500 数据不可用' });
+      }
+      if (req.body?.date) {
+        await tennisDocks500.setSelectedDate(req.body.date);
+      } else {
+        const days = tennisDocks500.listDays();
+        if (!days.length) {
+          return res.status(400).json({ ok: false, error: 'docks/2026_500.txt 无可用按日数据' });
+        }
+        await tennisDocks500.setSelectedDate(days[0].date);
+      }
     }
+    await tennisDataSource.set(next);
+    let refreshed = null;
+    if (next === 'docks500' || tennisRedis.monitorSyncEnabled()) {
+      refreshed = await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: next !== 'docks500' });
+    }
+    const days = tennisDocks500.listDays();
+    const date = await tennisDocks500.getSelectedDate();
+    const split = refreshed?.bucketSplit || null;
+    const sim = refreshed?.virtualSim || null;
     res.json({
       ok: true,
       source: next,
       label: tennisDataSource.label(next),
       api_available: allsports.isConfigured(),
+      docks500_available: days.length > 0,
+      docks500: { days, date, available: days.length > 0, split, sim },
       redis_read: true,
-      message: tennisRedis.monitorSyncEnabled()
-        ? '已切换写入源，正在从 monitor 刷新 Redis'
-        : '已切换写入源；网球列表从 Redis 读取（由 collect.py 写入）',
+      redis_upstream: refreshed?.upstream || next,
+      redis_fetched_at: refreshed?.fetched_at || null,
+      events: refreshed?.events ?? null,
+      message:
+        next === 'docks500'
+          ? `已切换虚拟 · ${date} · 盘前${split?.prematch ?? sim?.prematch ?? '?'} / 盘中${split?.inplay ?? sim?.inplay ?? '?'} / 盘后${split?.settled ?? sim?.settled ?? '?'}`
+          : tennisRedis.monitorSyncEnabled()
+            ? '已切换写入源，正在从 monitor 刷新 Redis'
+            : '已切换写入源；网球列表从 Redis 读取（由 collect.py 写入）',
     });
   } catch (err) {
     console.error('[tennis-monitor/data-source]', err);
-    res.status(500).json({ ok: false, error: err.message || 'update data source failed' });
+    res.status(err.status || 500).json({ ok: false, error: err.message || 'update data source failed' });
   }
 });
 

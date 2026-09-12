@@ -1,0 +1,48 @@
+# 2026-03-30 · 47 matches · Charleston
+2026-03-30	Charleston	F	Clay	Jessica Pegula	bt	Yuliia Starodubtseva	6-2 6-2	peak_diff 50
+2026-03-30	Charleston	QF	Clay	Iva Jovic	bt	Anna Kalinskaya	6-3 6-4	peak_diff 5
+2026-03-30	Charleston	QF	Clay	Jessica Pegula	bt	Diana Shnaider	3-6 6-3 6-2	peak_diff 8
+2026-03-30	Charleston	QF	Clay	Madison Keys	bt	Belinda Bencic	4-6 6-3 6-2	peak_diff 1
+2026-03-30	Charleston	QF	Clay	Yuliia Starodubtseva	bt	Mccartney Kessler	6-4 6-4	peak_diff 23
+2026-03-30	Charleston	R16	Clay	Anna Kalinskaya	bt	Paula Badosa	6-4 6-2	peak_diff 9
+2026-03-30	Charleston	R16	Clay	Belinda Bencic	bt	Sara Bejlek	7-6(4) 6-2	peak_diff 30
+2026-03-30	Charleston	R16	Clay	Diana Shnaider	bt	Leylah Fernandez	6-3 6-0	peak_diff 2
+2026-03-30	Charleston	R16	Clay	Iva Jovic	bt	Sofia Kenin	7-5 7-5	peak_diff 12
+2026-03-30	Charleston	R16	Clay	Jessica Pegula	bt	Elisabetta Cocciaretto	1-6 6-1 7-6(1)	peak_diff 26
+2026-03-30	Charleston	R16	Clay	Madison Keys	bt	Anna Bondar	6-2 7-5	peak_diff 45
+2026-03-30	Charleston	R16	Clay	Mccartney Kessler	bt	Peyton Stearns	6-0 3-6 6-4	peak_diff 2
+2026-03-30	Charleston	R16	Clay	Yuliia Starodubtseva	bt	Renata Zarazua	6-1 6-0	peak_diff 2
+2026-03-30	Charleston	R32	Clay	Anna Bondar	bt	Magdalena Frech	7-5 6-3	peak_diff 28
+2026-03-30	Charleston	R32	Clay	Anna Kalinskaya	bt	Viktoriya Tomova	6-2 6-4	peak_diff 35
+2026-03-30	Charleston	R32	Clay	Belinda Bencic	bt	Dayana Yastremska	6-2 6-7(5) 6-3	peak_diff 17
+2026-03-30	Charleston	R32	Clay	Diana Shnaider	bt	Katie Volynets	7-5 7-5	peak_diff 45
+2026-03-30	Charleston	R32	Clay	Elisabetta Cocciaretto	bt	Yue Yuan	6-0 7-5	peak_diff 7
+2026-03-30	Charleston	R32	Clay	Iva Jovic	bt	Alycia Parks	6-3 6-2	peak_diff 24
+2026-03-30	Charleston	R32	Clay	Jessica Pegula	bt	Yulia Putintseva	4-6 6-4 7-5	peak_diff 17
+2026-03-30	Charleston	R32	Clay	Leylah Fernandez	bt	Polina Kudermetova	6-2 6-1	peak_diff 41
+2026-03-30	Charleston	R32	Clay	Madison Keys	bt	Donna Vekic	6-2 6-3	peak_diff 12
+2026-03-30	Charleston	R32	Clay	Mccartney Kessler	bt	Janice Tjen	6-2 6-1	peak_diff 6
+2026-03-30	Charleston	R32	Clay	Paula Badosa	bt	Maria Sakkari	6-3 6-4	peak_diff 1
+2026-03-30	Charleston	R32	Clay	Peyton Stearns	bt	Ashlyn Krueger	7-6(8) 7-5	peak_diff 1
+2026-03-30	Charleston	R32	Clay	Renata Zarazua	bt	Hailey Baptiste	3-6 6-3 6-4	peak_diff 26
+2026-03-30	Charleston	R32	Clay	Sara Bejlek	bt	Akasha Urhobo	6-1 6-1	peak_diff 146
+2026-03-30	Charleston	R32	Clay	Sofia Kenin	bt	Bianca Andreescu	6-4 6-4	peak_diff 0
+2026-03-30	Charleston	R32	Clay	Yuliia Starodubtseva	bt	Ekaterine Gorgodze	3-6 6-1 6-2	peak_diff 55
+2026-03-30	Charleston	R64	Clay	Akasha Urhobo	bt	Solana Sierra	7-5 3-0 RET	peak_diff 124
+2026-03-30	Charleston	R64	Clay	Alycia Parks	bt	Mary Stoiana	2-6 6-4 6-1	peak_diff 102
+2026-03-30	Charleston	R64	Clay	Anna Bondar	bt	Darja Vidmanova	7-5 7-5	peak_diff 51
+2026-03-30	Charleston	R64	Clay	Ashlyn Krueger	bt	Caty Mcnally	6-4 1-6 6-3	peak_diff 25
+2026-03-30	Charleston	R64	Clay	Bianca Andreescu	bt	Dalma Galfi	1-6 6-4 6-1	peak_diff 75
+2026-03-30	Charleston	R64	Clay	Dayana Yastremska	bt	Anastasia Zakharova	7-5 6-2	peak_diff 44
+2026-03-30	Charleston	R64	Clay	Donna Vekic	bt	Ajla Tomljanovic	3-6 6-1 6-4	peak_diff 15
+2026-03-30	Charleston	R64	Clay	Katie Volynets	bt	Eva Lys	5-7 6-2 6-0	peak_diff 17
+2026-03-30	Charleston	R64	Clay	Mccartney Kessler	bt	Elvina Kalieva	4-6 6-3 6-3	peak_diff 104
+2026-03-30	Charleston	R64	Clay	Paula Badosa	bt	Kayla Day	6-4 6-3	peak_diff 82
+2026-03-30	Charleston	R64	Clay	Polina Kudermetova	bt	Oleksandra Oliynykova	3-6 7-6(1) 6-4	peak_diff 3
+2026-03-30	Charleston	R64	Clay	Renata Zarazua	bt	Sloane Stephens	6-2 6-0	peak_diff 48
+2026-03-30	Charleston	R64	Clay	Viktoriya Tomova	bt	Jennifer Brady	6-4 6-3	peak_diff 33
+2026-03-30	Charleston	R64	Clay	Yue Yuan	bt	Mayar Sherif	2-6 7-6(4) 7-6(5)	peak_diff 5
+2026-03-30	Charleston	R64	Clay	Yulia Putintseva	bt	Lulu Sun	7-6(6) 6-2	peak_diff 19
+2026-03-30	Charleston	R64	Clay	Yuliia Starodubtseva	bt	Shuai Zhang	6-3 6-0	peak_diff 31
+2026-03-30	Charleston	SF	Clay	Jessica Pegula	bt	Iva Jovic	6-4 5-7 6-3	peak_diff 13
+2026-03-30	Charleston	SF	Clay	Yuliia Starodubtseva	bt	Madison Keys	6-1 6-4	peak_diff 48

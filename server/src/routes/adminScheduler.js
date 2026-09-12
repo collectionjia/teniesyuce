@@ -146,6 +146,15 @@ router.get('/scheduler/jobs/:id/runs', async (req, res) => {
   }
 });
 
+router.post('/scheduler/jobs/:id/runs/clear', async (req, res) => {
+  try {
+    const r = await store.clearRuns(req.params.id);
+    res.json({ ok: true, jobId: req.params.id, ...r });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.message });
+  }
+});
+
 // —— API Key ——
 router.get('/engine-api-keys', async (_req, res) => {
   try {
@@ -190,15 +199,18 @@ router.post('/engine-api-keys/:id/revoke', async (req, res) => {
   }
 });
 
-router.delete('/engine-api-keys/:id', async (req, res) => {
+async function handleEngineApiKeyDelete(req, res) {
   try {
     const okDel = await engineApiKeys.deleteKey(Number(req.params.id));
     if (!okDel) return res.status(404).json({ ok: false, error: '密钥不存在' });
-    res.json({ ok: true });
+    res.json({ ok: true, deleted: true, id: Number(req.params.id) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
-});
+}
+
+router.delete('/engine-api-keys/:id', handleEngineApiKeyDelete);
+router.post('/engine-api-keys/:id/delete', handleEngineApiKeyDelete);
 
 router.post('/engine-api-keys/:id/enable', async (req, res) => {
   try {

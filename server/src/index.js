@@ -19,7 +19,6 @@ const agentRoutes = require('./routes/agent');
 const adminRoutes = require('./routes/admin');
 
 const paymentRoutes = require('./routes/payments');
-const settingsRoutes = require('./routes/settings');
 const embedRoutes = require('./routes/embed');
 const tennisRoutes = require('./routes/tennis');
 const btcRoutes = require('./routes/btc');
@@ -54,7 +53,6 @@ app.use('/api/admin/btc-board', btcAdminRoutes);
 app.use('/api/admin', adminSchedulerRoutes);
 app.use('/api/engine', engineApiRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/settings', settingsRoutes);
 app.use('/api/embed', embedRoutes);
 // 网球产品（盘前 / 盘中 / 盘后 + 旧 range/live/new 暂留）
 app.use('/api/tennis', tennisRoutes);

@@ -118,6 +118,32 @@ function strongWonFirstSet(m, side) {
   return side === 'home' ? homeWon : !homeWon;
 }
 
+/** 解析「7:5」「7-5」→ { hi, lo }；无效返回 null */
+function parseGameScorePair(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const m = s.match(/^(\d+)\s*[:\-–／/]\s*(\d+)$/);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return { hi: Math.max(a, b), lo: Math.min(a, b) };
+}
+
+/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
+function firstSetMatchesExcludeScore(m, excludeRaw) {
+  const pair = parseGameScorePair(excludeRaw);
+  if (!pair) return false;
+  const hs = scoreSide(m, 'home');
+  const as = scoreSide(m, 'away');
+  const h1 = periodScore(hs, 1);
+  const a1 = periodScore(as, 1);
+  if (h1 == null || a1 == null) return false;
+  const hi = Math.max(h1, a1);
+  const lo = Math.min(h1, a1);
+  return hi === pair.hi && lo === pair.lo;
+}
+
 function analyzeSets(m, strongSide) {
   const hs = scoreSide(m, 'home');
   const as = scoreSide(m, 'away');
@@ -156,37 +182,11 @@ function gamesTrailStop(strongG, weakG, lead) {
   return strongG < weakG && weakG - strongG > n;
 }
 
-function passEntryGroup(m, group, rankings, bundle, side) {
-  if (!tennisConditionApply.passGroup) {
-    // fallback: reuse filter fields via temporary group
-  }
-  // tour/pm/gap/rank via condition passGroup shape
-  const filterShape = {
-    tour: group.tour,
-    pm: group.pm,
-    gapMin: group.gapMin,
-    rankDiffMin: group.rankDiffMin,
-    rankDiffMax: group.rankDiffMax,
-    strongRankMax: group.strongRankMax,
-  };
-  if (!tennisConditionApply.passGroup(m, filterShape, bundle)) return false;
-  if (group.requireWonFirstSet && !strongWonFirstSet(m, side)) return false;
-  const pmMax = Number(group.pmMaxCents);
-  if (Number.isFinite(pmMax)) {
-    const cents = strongPolyCents(m, bundle, side);
-    if (cents == null || cents >= pmMax) return false;
-  }
-  const poly = bundle.polymarketByEvent?.[String(m.id)] || bundle.polymarketByEvent?.[m.id];
-  if (group.pm === 'yes' || group.pm === 'all') {
-    if (!poly?.url && !poly?.slug && group.pm === 'yes') return false;
-  }
-  return true;
-}
-
-function passesEntry(m, rankings, groups, bundle, side) {
-  const list = Array.isArray(groups) ? groups : [];
+/** 买入：产品 betting_select 解析出的条件组链（组内 AND，组间 joinPrev） */
+function passesEntry(m, rankings, entryGroups, bundle) {
+  const list = Array.isArray(entryGroups) ? entryGroups : [];
   if (!list.length) return false;
-  return tennisConditionApply.evalGroupsChain(list, (g) => passEntryGroup(m, g, rankings, bundle, side));
+  return tennisConditionApply.evalGroupsChain(list, (g) => tennisConditionApply.passGroup(m, g, bundle));
 }
 
 function matchStopRule(m, side, rule) {
@@ -251,7 +251,8 @@ async function runBucketPass({
   bucketKey,
   product,
   bundle,
-  groups,
+  stopGroups,
+  entryGroups,
   uidNum,
   stake,
   state,
@@ -273,7 +274,7 @@ async function runBucketPass({
     for (const m of matches) {
       const id = String(m.id);
       if (!placed.has(id) || sold.has(id)) continue;
-      const side = shouldStopLoss(m, rankings, groups);
+      const side = shouldStopLoss(m, rankings, stopGroups);
       if (side) sellOrders.push({ eventId: m.id, side });
     }
   }
@@ -299,7 +300,7 @@ async function runBucketPass({
     if (placed.has(id) || sold.has(id)) continue;
     const side = pickStrongSide(m, rankings);
     if (!side) continue;
-    if (!passesEntry(m, rankings, groups, bundle, side)) continue;
+    if (!passesEntry(m, rankings, entryGroups, bundle)) continue;
     buyOrders.push({ eventId: m.id, side });
   }
 
@@ -371,29 +372,34 @@ async function runBettingPass({
   const results = [];
 
   async function runOne(bucketKey, product) {
+    const productService = require('./product');
     const bucketCfg = cfg.betting.buckets?.[bucketKey];
     if (!bucketCfg?.enabled && onlyGroupIndex == null) return;
     if (onlyBucket && onlyBucket !== bucketKey) return;
-    let groups = bucketCfg?.groups || [];
+    let stopGroups = bucketCfg?.groups || [];
     if (onlyGroupIndex != null) {
-      const g = groups[onlyGroupIndex];
+      const g = stopGroups[onlyGroupIndex];
       if (!g) return;
-      groups = [g];
+      stopGroups = [g];
     }
-    if (!groups.length) return;
+
+    const onlineProduct = await productService.findOnlineProductForBucket(bucketKey);
+    const condLib = cfg.condition?.buckets?.[bucketKey]?.groups || [];
+    const entryGroups = onlineProduct
+      ? tennisConditionApply.resolveGroupsFromProductSelect(condLib, onlineProduct.bettingSelect)
+      : [];
+    if (!stopGroups.length && !entryGroups.length) return;
 
     let bundle = bucketKey === 'inplay'
       ? await tennisInplayCache.getBundle()
       : await tennisPrematchCache.getBundle();
     if (!bundle) return;
-    if (cfg.condition?.enabled) {
-      bundle = await tennisConditionApply.maybeApplyCondition(bucketKey, bundle);
-    }
     results.push(await runBucketPass({
       bucketKey,
       product,
       bundle,
-      groups,
+      stopGroups,
+      entryGroups,
       uidNum: resolvedUid,
       stake,
       state,
@@ -428,5 +434,4 @@ module.exports = {
   saveState,
   shouldStopLoss,
   passesEntry,
-  passEntryGroup,
 };

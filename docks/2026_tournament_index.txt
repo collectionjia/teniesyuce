@@ -1,0 +1,52 @@
+# Included tournaments by bucket
+# Coverage note: Sackmann 2026 archive currently has AO+RG (+ completed 1000/500).
+# Missing from archive so far: Wimbledon, US Open, late-season 1000/500.
+# US Open singles (through current round) appended from TennisExplorer into us_open + GS files.
+# peak / peak_diff from ranking history (career-high = min rank).
+
+## ATP_atp_500
+A	Acapulco
+A	Barcelona
+A	Dallas
+A	Doha
+A	Dubai
+A	Hamburg
+A	Munich
+A	Rio de Janeiro
+A	Rotterdam
+
+## ATP_grand_slam
+G	Australian Open
+G	Roland Garros
+
+## ATP_masters_1000
+M	Indian Wells Masters
+M	Madrid Masters
+M	Miami Masters
+M	Monte Carlo Masters
+M	Rome Masters
+
+## WTA_grand_slam
+G	Australian Open
+G	Roland Garros
+
+## WTA_wta_1000
+PM	Doha
+PM	Dubai
+PM	Indian Wells
+PM	Madrid
+PM	Miami
+PM	Rome
+
+## WTA_wta_500
+P	Abu Dhabi
+P	Adelaide
+P	Brisbane
+P	Charleston
+P	Linz
+P	Merida
+P	Strasbourg
+P	Stuttgart
+
+## LIVE_US_Open_TennisExplorer
+matches	248

@@ -32,7 +32,7 @@ function sanitizeCollectLiveBundle(bundle) {
     source: bundle.source || 'tennis-collect-live',
     dataSource: bundle.dataSource || bundle.collectScript || 'collect_live',
     collectScript: bundle.collectScript || 'collect_live',
-    upstream: bundle.upstream || 'ipwo',
+    upstream: bundle.upstream || bundle.dataSource || 'ipwo',
     scheduled: {
       tournaments: [],
       tournamentCount: 0,

@@ -6,10 +6,11 @@ const DEFAULT = String(process.env.TENNIS_DATA_SOURCE || 'ipwo').trim().toLowerC
 function normalize(raw) {
   const v = String(raw || '').trim().toLowerCase();
   if (v === 'api' || v === 'allsports' || v === 'allsportsapi2') return 'api';
+  if (v === 'docks500' || v === 'docks' || v === '500' || v === 'replay500') return 'docks500';
   return 'ipwo';
 }
 
-/** 网球页 Redis 写入源：ipwo（Sofascore+IPWO）或 api（AllSports） */
+/** 网球页 Redis 写入源：ipwo / api / docks500（本地 2026_500 按日回放） */
 async function get() {
   const client = await redis.getClient();
   if (!client) return normalize(DEFAULT);
@@ -37,7 +38,10 @@ async function set(source) {
 }
 
 function label(source) {
-  return normalize(source) === 'api' ? 'AllSports API' : 'IPWO';
+  const v = normalize(source);
+  if (v === 'api') return 'AllSports API';
+  if (v === 'docks500') return '虚拟(txt)';
+  return 'IPWO';
 }
 
 module.exports = {

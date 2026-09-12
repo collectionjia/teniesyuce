@@ -7,11 +7,18 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, slim_event, _odds_incomplete
+from tm.bundle import (
+    enrich_odds_for_events,
+    enrich_rankings_from_events,
+    fill_missing_birth_years,
+    slim_event,
+    _odds_incomplete,
+)
 from tm.enrich import _event_tour, _is_ended, _player_side
 from tm.collectors.events import collect_tennis_events, today_bj
 from tm.clients.sofascore import SofascoreClient, _event_score
 from tm.collectors.rankings import attach_matches, event_matches_board, fetch_rank_board, is_live, name_keys, refresh_match_ranks
+from tm.collectors.tier_collect import attach_match_enrichment
 
 TOP_N = 100
 
@@ -99,6 +106,7 @@ def _slimis_live(ev: dict) -> bool:
 
 
 def _snapshot_from_events(
+    client: SofascoreClient,
     board: dict[str, Any],
     by_id: dict[int, dict],
     *,
@@ -106,6 +114,7 @@ def _snapshot_from_events(
     started: float,
     error: str | None,
     odds_by_event: dict[str, Any],
+    enrich_birth: bool = True,
 ) -> dict[str, Any]:
     slim_events = sorted(
         by_id.values(),
@@ -113,6 +122,21 @@ def _snapshot_from_events(
     )
     live_count = sum(1 for ev in by_id.values() if _slimis_live(ev))
     rankings = enrich_rankings_from_events(slim_events, board, client)
+    prev_birth = dict((_last_snapshot or {}).get("birthYearByPlayer") or {})
+    birth_by_player = dict(prev_birth)
+    if enrich_birth and slim_events:
+        try:
+            birth_by_player = fill_missing_birth_years(
+                client,
+                slim_events,
+                birth_by_player=prev_birth,
+            )
+            print(f"[top100] birth years filled {len(birth_by_player)} players")
+        except Exception as exc:
+            print(f"[top100] birth year enrich failed: {exc}")
+            birth_by_player = prev_birth
+    for ev in slim_events:
+        attach_match_enrichment(ev, rankings, odds_by_event)
     attach_matches(board, slim_events)
     refresh_match_ranks(board, rankings)
     elapsed = round(time.time() - started, 2)
@@ -127,7 +151,7 @@ def _snapshot_from_events(
         "events": slim_events,
         "rankingsByPlayer": rankings,
         "oddsByEvent": odds_by_event,
-        "birthYearByPlayer": (_last_snapshot or {}).get("birthYearByPlayer") or {},
+        "birthYearByPlayer": birth_by_player,
         "top100": {
             "atp": board["atp"],
             "wta": board["wta"],
@@ -196,12 +220,14 @@ def collect_top100_snapshot(*, include_scheduled: bool = True, force_schedule: b
                 print(f"[top100] odds enrich failed: {exc}")
 
         snap = _snapshot_from_events(
+            client,
             board,
             by_id,
             match_date=match_date,
             started=started,
             error=error,
             odds_by_event=odds_by_event,
+            enrich_birth=True,
         )
         from tm.collectors.events import get_collect_stats
 
@@ -210,7 +236,7 @@ def collect_top100_snapshot(*, include_scheduled: bool = True, force_schedule: b
         snap["requests"] = {
             **client_stats,
             "collect": collect_stats,
-            "estimated_formula": "warmup + rankings + live + schedule + odds",
+            "estimated_formula": "warmup + rankings + live + schedule + odds + birth",
         }
         _last_snapshot = snap
         return snap
@@ -265,14 +291,17 @@ def refresh_top100_live() -> dict[str, Any]:
                 print(f"[top100/live] odds failed: {exc}")
         client_stats = client.get_request_stats()
 
-    snap = _snapshot_from_events(
-        board,
-        by_id,
-        match_date=match_date,
-        started=started,
-        error=error,
-        odds_by_event=odds_by_event,
-    )
+        snap = _snapshot_from_events(
+            client,
+            board,
+            by_id,
+            match_date=match_date,
+            started=started,
+            error=error,
+            odds_by_event=odds_by_event,
+            # live 轮询沿用已有出生年，避免每次补拉拖慢
+            enrich_birth=False,
+        )
     snap["collect_mode"] = "live"
     snap["requests"] = client_stats
     _last_snapshot = snap

@@ -406,6 +406,18 @@ async function listRuns(jobId, { limit = 30, offset = 0 } = {}) {
   return rows.map(mapRun);
 }
 
+async function clearRuns(jobId) {
+  await ensureTables();
+  const cur = await getJob(jobId);
+  if (!cur) {
+    const err = new Error('job not found');
+    err.status = 404;
+    throw err;
+  }
+  const [r] = await pool.query(`DELETE FROM scheduler_runs WHERE job_id=?`, [jobId]);
+  return { deleted: r?.affectedRows ?? 0 };
+}
+
 async function getRun(runId) {
   await ensureTables();
   const [rows] = await pool.query(`SELECT * FROM scheduler_runs WHERE run_id=? LIMIT 1`, [runId]);
@@ -506,6 +518,7 @@ module.exports = {
   startRun,
   finishRun,
   listRuns,
+  clearRuns,
   getRun,
   hasRunningSchedule,
   syncTickIntervalFromEngines,

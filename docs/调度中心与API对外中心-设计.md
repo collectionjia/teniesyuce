@@ -151,7 +151,7 @@ SchedulerRun {
 
 - `bet.scan`：`投注打开` = false → 定时与立即执行均 **skipped**（记日志，不算失败）。  
 - `collect.inplay_tick`：采集引擎停 → 不跑 tick。  
-- 条件打开与否 **不阻止** 采集/投注调度；只影响列表与投注候选过滤（投注引擎内部仍读条件结果）。  
+- 条件打开与否 **不阻止** 采集/投注调度；只影响 **列表** 过滤。投注引擎读采集桶 + 自身买入/止损规则，**不**再套条件引擎结果。  
 - 某 job 定时轮次仍在跑时，管理员点「立即执行」→ **另开一轮**（`trigger=manual`），不排队、不打断定时轮。
 
 ### 1.5 运行时行为
@@ -241,7 +241,7 @@ SchedulerRun {
 | POST | `/rules/:bucket/groups` | 新增条件组（body=组对象） | API Key |
 | PATCH | `/rules/:bucket/groups/:index` | 部分更新条件组 | API Key |
 | PUT | `/rules/:bucket/groups/:index` | 整组替换 | API Key |
-| DELETE | `/rules/:bucket/groups/:index` | 删除条件组（至少留 1 个） | API Key |
+| DELETE | `/rules/:bucket/groups/:index` | 删除条件组（可删到空） | API Key |
 | POST | `/preview` | body：样本 event 或 product → 是否命中（可选后续） | API Key |
 
 条件组字段示例：`name`、`joinPrev`（`and`\|`or`）、`tour`、`pm`、`gapMin`、`rankDiffMin`、`rankDiffMax`、`strongRankMax`、`gapMode`。

@@ -1,0 +1,5047 @@
+{
+  "meta": {
+    "date": "2026-02-01",
+    "ymd": "20260201",
+    "matchCount": 27,
+    "tournaments": [
+      "Abu Dhabi"
+    ]
+  },
+  "bundle": {
+    "sport": "tennis",
+    "date": "2026-02-01",
+    "fetched_at": "2026-09-10T10:19:46.509Z",
+    "source": "docks500",
+    "upstream": "docks500",
+    "dataSource": "docks500",
+    "filter": "atp-wta-500-replay",
+    "top_rank_max": 999,
+    "exclude_ended": false,
+    "update": {
+      "message": "docks/2026_500 · 2026-02-01 · 27 场",
+      "at": "2026-09-10T10:19:46.509Z"
+    },
+    "scheduled": {
+      "tournaments": [
+        {
+          "name": "Abu Dhabi",
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "events": [
+            {
+              "id": 1696600726,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Ekaterina Alexandrova",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(5) 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Final",
+                "round": 1
+              },
+              "roundLabel": "F",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 34918826,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Clara Tauson",
+              "away": "Mccartney Kessler",
+              "homePlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 18,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 11496199,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Alexandra Eala",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1577868410,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Liudmila Samsonova",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-2 4-6 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 13,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1116338105,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Sonay Kartal",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 10,
+              "rankings": {
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 468595459,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Alexandra Eala",
+              "away": "Aliaksandra Sasnovich",
+              "homePlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 324769922,
+                "name": "Aliaksandra Sasnovich",
+                "shortName": "Aliaksandra Sasnovich",
+                "ranking": 109,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "2-6 6-4 7-6(5)",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 0,
+              "rankings": {
+                "324769922": {
+                  "current": 109,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 497103520,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Clara Tauson",
+              "away": "Simona Waltert",
+              "homePlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 323744119,
+                "name": "Simona Waltert",
+                "shortName": "Simona Waltert",
+                "ranking": 94,
+                "bestRank": 81,
+                "best": 81,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 69,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "323744119": {
+                  "current": 94,
+                  "best": 81,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 415319127,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Dayana Yastremska",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 43,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 11,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1021917783": {
+                  "current": 43,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 50552411,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Emma Navarro",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 17,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(6) 0-6 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 17,
+              "rankings": {
+                "707499274": {
+                  "current": 17,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1069231976,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Liudmila Samsonova",
+              "away": "Janice Tjen",
+              "homePlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1432225070,
+                "name": "Janice Tjen",
+                "shortName": "Janice Tjen",
+                "ranking": 47,
+                "bestRank": 36,
+                "best": 36,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1432225070": {
+                  "current": 47,
+                  "best": 36,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 242765364,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mccartney Kessler",
+              "away": "Leylah Fernandez",
+              "homePlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 25,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 17,
+              "rankings": {
+                "518120166": {
+                  "current": 25,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1702973287,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Jelena Ostapenko",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 29,
+              "rankings": {
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 856647167,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sonay Kartal",
+              "away": "Renata Zarazua",
+              "homePlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 35275797,
+                "name": "Renata Zarazua",
+                "shortName": "Renata Zarazua",
+                "ranking": 92,
+                "bestRank": 51,
+                "best": 51,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 7,
+              "rankings": {
+                "35275797": {
+                  "current": 92,
+                  "best": 51,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1114451693,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Alexandra Eala",
+              "away": "Zeynep Sonmez",
+              "homePlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1376090541,
+                "name": "Zeynep Sonmez",
+                "shortName": "Zeynep Sonmez",
+                "ranking": 79,
+                "bestRank": 59,
+                "best": 59,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 30,
+              "rankings": {
+                "1376090541": {
+                  "current": 79,
+                  "best": 59,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1596208418,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Aliaksandra Sasnovich",
+              "away": "Paula Badosa",
+              "homePlayer": {
+                "id": 324769922,
+                "name": "Aliaksandra Sasnovich",
+                "shortName": "Aliaksandra Sasnovich",
+                "ranking": 109,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 623570761,
+                "name": "Paula Badosa",
+                "shortName": "Paula Badosa",
+                "ranking": 65,
+                "bestRank": 2,
+                "best": 2,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-4 3-6 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 27,
+              "rankings": {
+                "324769922": {
+                  "current": 109,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "623570761": {
+                  "current": 65,
+                  "best": 2,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 723412167,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Dayana Yastremska",
+              "away": "Beatriz Haddad Maia",
+              "homePlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 43,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 757950081,
+                "name": "Beatriz Haddad Maia",
+                "shortName": "Beatriz Haddad Maia",
+                "ranking": 68,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 7-5",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 11,
+              "rankings": {
+                "757950081": {
+                  "current": 68,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1021917783": {
+                  "current": 43,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1824556380,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Teodora Kostovic",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1972314654,
+                "name": "Teodora Kostovic",
+                "shortName": "Teodora Kostovic",
+                "ranking": 171,
+                "bestRank": 159,
+                "best": 159,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "4-6 6-3 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 134,
+              "rankings": {
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1972314654": {
+                  "current": 171,
+                  "best": 159,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 890981304,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Janice Tjen",
+              "away": "Maya Joint",
+              "homePlayer": {
+                "id": 1432225070,
+                "name": "Janice Tjen",
+                "shortName": "Janice Tjen",
+                "ranking": 47,
+                "bestRank": 36,
+                "best": 36,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 29,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(6) 3-6 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 8,
+              "rankings": {
+                "616435211": {
+                  "current": 29,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1432225070": {
+                  "current": 47,
+                  "best": 36,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 908992373,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jelena Ostapenko",
+              "away": "Oksana Selekhmeteva",
+              "homePlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1083432221,
+                "name": "Oksana Selekhmeteva",
+                "shortName": "Oksana Selekhmeteva",
+                "ranking": 76,
+                "bestRank": 71,
+                "best": 71,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 7-6(4) 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 66,
+              "rankings": {
+                "1083432221": {
+                  "current": 76,
+                  "best": 71,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 87630156,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Leylah Fernandez",
+              "away": "Chloe Paquet",
+              "homePlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 25,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 652483697,
+                "name": "Chloe Paquet",
+                "shortName": "Chloe Paquet",
+                "ranking": 220,
+                "bestRank": 96,
+                "best": 96,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 83,
+              "rankings": {
+                "518120166": {
+                  "current": 25,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "652483697": {
+                  "current": 220,
+                  "best": 96,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1538762595,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Liudmila Samsonova",
+              "away": "Sofia Kenin",
+              "homePlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1806625288,
+                "name": "Sofia Kenin",
+                "shortName": "Sofia Kenin",
+                "ranking": 28,
+                "bestRank": 4,
+                "best": 4,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 8,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1806625288": {
+                  "current": 28,
+                  "best": 4,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1632814395,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mccartney Kessler",
+              "away": "Anastasia Pavlyuchenkova",
+              "homePlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 963052180,
+                "name": "Anastasia Pavlyuchenkova",
+                "shortName": "Anastasia Pavlyuchenkova",
+                "ranking": 100,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "963052180": {
+                  "current": 100,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 938442455,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Ashlyn Krueger",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 17566472,
+                "name": "Ashlyn Krueger",
+                "shortName": "Ashlyn Krueger",
+                "ranking": 55,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 5,
+              "rankings": {
+                "17566472": {
+                  "current": 55,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1412936131,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Simona Waltert",
+              "away": "Daria Kasatkina",
+              "homePlayer": {
+                "id": 323744119,
+                "name": "Simona Waltert",
+                "shortName": "Simona Waltert",
+                "ranking": 94,
+                "bestRank": 81,
+                "best": 81,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 62,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(5) 3-6 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 73,
+              "rankings": {
+                "323744119": {
+                  "current": 94,
+                  "best": 81,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 62,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 878971299,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sonay Kartal",
+              "away": "Cristina Bucsa",
+              "homePlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1215447528,
+                "name": "Cristina Bucsa",
+                "shortName": "Cristina Bucsa",
+                "ranking": 57,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 7-6(8)",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 14,
+              "rankings": {
+                "1215447528": {
+                  "current": 57,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1110980166,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Hailey Baptiste",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "3-6 7-6(5) 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 15,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 545385001,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Clara Tauson",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-5 3-6 7-5",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 22,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "tournamentCount": 1,
+      "eventCount": 27
+    },
+    "live": {
+      "tournaments": [],
+      "matches": [],
+      "tournamentCount": 0,
+      "eventCount": 0
+    },
+    "settled": {
+      "tournaments": [
+        {
+          "name": "Abu Dhabi",
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "events": [
+            {
+              "id": 1696600726,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Ekaterina Alexandrova",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(5) 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Final",
+                "round": 1
+              },
+              "roundLabel": "F",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 34918826,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Clara Tauson",
+              "away": "Mccartney Kessler",
+              "homePlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 18,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 11496199,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Alexandra Eala",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1577868410,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Liudmila Samsonova",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-2 4-6 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 13,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1116338105,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Sonay Kartal",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 10,
+              "rankings": {
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 468595459,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Alexandra Eala",
+              "away": "Aliaksandra Sasnovich",
+              "homePlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 324769922,
+                "name": "Aliaksandra Sasnovich",
+                "shortName": "Aliaksandra Sasnovich",
+                "ranking": 109,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "2-6 6-4 7-6(5)",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 0,
+              "rankings": {
+                "324769922": {
+                  "current": 109,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 497103520,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Clara Tauson",
+              "away": "Simona Waltert",
+              "homePlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 323744119,
+                "name": "Simona Waltert",
+                "shortName": "Simona Waltert",
+                "ranking": 94,
+                "bestRank": 81,
+                "best": 81,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 69,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "323744119": {
+                  "current": 94,
+                  "best": 81,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 415319127,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Dayana Yastremska",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 43,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 11,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1021917783": {
+                  "current": 43,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 50552411,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Emma Navarro",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 17,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(6) 0-6 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 17,
+              "rankings": {
+                "707499274": {
+                  "current": 17,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1069231976,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Liudmila Samsonova",
+              "away": "Janice Tjen",
+              "homePlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1432225070,
+                "name": "Janice Tjen",
+                "shortName": "Janice Tjen",
+                "ranking": 47,
+                "bestRank": 36,
+                "best": 36,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1432225070": {
+                  "current": 47,
+                  "best": 36,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 242765364,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mccartney Kessler",
+              "away": "Leylah Fernandez",
+              "homePlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 25,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 17,
+              "rankings": {
+                "518120166": {
+                  "current": 25,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1702973287,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Jelena Ostapenko",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 29,
+              "rankings": {
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 856647167,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sonay Kartal",
+              "away": "Renata Zarazua",
+              "homePlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 35275797,
+                "name": "Renata Zarazua",
+                "shortName": "Renata Zarazua",
+                "ranking": 92,
+                "bestRank": 51,
+                "best": 51,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 7,
+              "rankings": {
+                "35275797": {
+                  "current": 92,
+                  "best": 51,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1114451693,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Alexandra Eala",
+              "away": "Zeynep Sonmez",
+              "homePlayer": {
+                "id": 1789201715,
+                "name": "Alexandra Eala",
+                "shortName": "Alexandra Eala",
+                "ranking": 45,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1376090541,
+                "name": "Zeynep Sonmez",
+                "shortName": "Zeynep Sonmez",
+                "ranking": 79,
+                "bestRank": 59,
+                "best": 59,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 30,
+              "rankings": {
+                "1376090541": {
+                  "current": 79,
+                  "best": 59,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1789201715": {
+                  "current": 45,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1596208418,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Aliaksandra Sasnovich",
+              "away": "Paula Badosa",
+              "homePlayer": {
+                "id": 324769922,
+                "name": "Aliaksandra Sasnovich",
+                "shortName": "Aliaksandra Sasnovich",
+                "ranking": 109,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 623570761,
+                "name": "Paula Badosa",
+                "shortName": "Paula Badosa",
+                "ranking": 65,
+                "bestRank": 2,
+                "best": 2,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-4 3-6 6-1",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 27,
+              "rankings": {
+                "324769922": {
+                  "current": 109,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "623570761": {
+                  "current": 65,
+                  "best": 2,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 723412167,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Dayana Yastremska",
+              "away": "Beatriz Haddad Maia",
+              "homePlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 43,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 757950081,
+                "name": "Beatriz Haddad Maia",
+                "shortName": "Beatriz Haddad Maia",
+                "ranking": 68,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 7-5",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 11,
+              "rankings": {
+                "757950081": {
+                  "current": 68,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1021917783": {
+                  "current": 43,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1824556380,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Hailey Baptiste",
+              "away": "Teodora Kostovic",
+              "homePlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1972314654,
+                "name": "Teodora Kostovic",
+                "shortName": "Teodora Kostovic",
+                "ranking": 171,
+                "bestRank": 159,
+                "best": 159,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "4-6 6-3 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 134,
+              "rankings": {
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1972314654": {
+                  "current": 171,
+                  "best": 159,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 890981304,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Janice Tjen",
+              "away": "Maya Joint",
+              "homePlayer": {
+                "id": 1432225070,
+                "name": "Janice Tjen",
+                "shortName": "Janice Tjen",
+                "ranking": 47,
+                "bestRank": 36,
+                "best": 36,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 29,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(6) 3-6 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 8,
+              "rankings": {
+                "616435211": {
+                  "current": 29,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1432225070": {
+                  "current": 47,
+                  "best": 36,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 908992373,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jelena Ostapenko",
+              "away": "Oksana Selekhmeteva",
+              "homePlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1083432221,
+                "name": "Oksana Selekhmeteva",
+                "shortName": "Oksana Selekhmeteva",
+                "ranking": 76,
+                "bestRank": 71,
+                "best": 71,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 7-6(4) 6-2",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 66,
+              "rankings": {
+                "1083432221": {
+                  "current": 76,
+                  "best": 71,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 87630156,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Leylah Fernandez",
+              "away": "Chloe Paquet",
+              "homePlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 25,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 652483697,
+                "name": "Chloe Paquet",
+                "shortName": "Chloe Paquet",
+                "ranking": 220,
+                "bestRank": 96,
+                "best": 96,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 83,
+              "rankings": {
+                "518120166": {
+                  "current": 25,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "652483697": {
+                  "current": 220,
+                  "best": 96,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1538762595,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Liudmila Samsonova",
+              "away": "Sofia Kenin",
+              "homePlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1806625288,
+                "name": "Sofia Kenin",
+                "shortName": "Sofia Kenin",
+                "ranking": 28,
+                "bestRank": 4,
+                "best": 4,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 8,
+              "rankings": {
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1806625288": {
+                  "current": 28,
+                  "best": 4,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1632814395,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mccartney Kessler",
+              "away": "Anastasia Pavlyuchenkova",
+              "homePlayer": {
+                "id": 1172704723,
+                "name": "Mccartney Kessler",
+                "shortName": "Mccartney Kessler",
+                "ranking": 32,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 963052180,
+                "name": "Anastasia Pavlyuchenkova",
+                "shortName": "Anastasia Pavlyuchenkova",
+                "ranking": 100,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "963052180": {
+                  "current": 100,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1172704723": {
+                  "current": 32,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 938442455,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Ashlyn Krueger",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 17566472,
+                "name": "Ashlyn Krueger",
+                "shortName": "Ashlyn Krueger",
+                "ranking": 55,
+                "bestRank": 29,
+                "best": 29,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-0",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 5,
+              "rankings": {
+                "17566472": {
+                  "current": 55,
+                  "best": 29,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1412936131,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Simona Waltert",
+              "away": "Daria Kasatkina",
+              "homePlayer": {
+                "id": 323744119,
+                "name": "Simona Waltert",
+                "shortName": "Simona Waltert",
+                "ranking": 94,
+                "bestRank": 81,
+                "best": 81,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 62,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-6(5) 3-6 6-4",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 73,
+              "rankings": {
+                "323744119": {
+                  "current": 94,
+                  "best": 81,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 62,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 878971299,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sonay Kartal",
+              "away": "Cristina Bucsa",
+              "homePlayer": {
+                "id": 1953491392,
+                "name": "Sonay Kartal",
+                "shortName": "Sonay Kartal",
+                "ranking": 61,
+                "bestRank": 44,
+                "best": 44,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1215447528,
+                "name": "Cristina Bucsa",
+                "shortName": "Cristina Bucsa",
+                "ranking": 57,
+                "bestRank": 30,
+                "best": 30,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 7-6(8)",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 14,
+              "rankings": {
+                "1215447528": {
+                  "current": 57,
+                  "best": 30,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1953491392": {
+                  "current": 61,
+                  "best": 44,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1110980166,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ekaterina Alexandrova",
+              "away": "Hailey Baptiste",
+              "homePlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1723742861,
+                "name": "Hailey Baptiste",
+                "shortName": "Hailey Baptiste",
+                "ranking": 56,
+                "bestRank": 25,
+                "best": 25,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "3-6 7-6(5) 6-3",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 15,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1723742861": {
+                  "current": 56,
+                  "best": 25,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 545385001,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Abu Dhabi",
+              "tournamentShort": "Abu Dhabi",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Sara Bejlek",
+              "away": "Clara Tauson",
+              "homePlayer": {
+                "id": 325788695,
+                "name": "Sara Bejlek",
+                "shortName": "Sara Bejlek",
+                "ranking": 101,
+                "bestRank": 34,
+                "best": 34,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 16,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "7-5 3-6 7-5",
+              "startTimestamp": 1769947200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 22,
+              "rankings": {
+                "322125920": {
+                  "current": 16,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "325788695": {
+                  "current": 101,
+                  "best": 34,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "tournamentCount": 1,
+      "eventCount": 27,
+      "matches": [
+        {
+          "id": 1696600726,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sara Bejlek",
+          "away": "Ekaterina Alexandrova",
+          "homePlayer": {
+            "id": 325788695,
+            "name": "Sara Bejlek",
+            "shortName": "Sara Bejlek",
+            "ranking": 101,
+            "bestRank": 34,
+            "best": 34,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 19114058,
+            "name": "Ekaterina Alexandrova",
+            "shortName": "Ekaterina Alexandrova",
+            "ranking": 11,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "7-6(5) 6-1",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Final",
+            "round": 1
+          },
+          "roundLabel": "F",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 24,
+          "rankings": {
+            "19114058": {
+              "current": 11,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "325788695": {
+              "current": 101,
+              "best": 34,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 34918826,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Clara Tauson",
+          "away": "Mccartney Kessler",
+          "homePlayer": {
+            "id": 322125920,
+            "name": "Clara Tauson",
+            "shortName": "Clara Tauson",
+            "ranking": 16,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1172704723,
+            "name": "Mccartney Kessler",
+            "shortName": "Mccartney Kessler",
+            "ranking": 32,
+            "bestRank": 30,
+            "best": 30,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-4",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 18,
+          "rankings": {
+            "322125920": {
+              "current": 16,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1172704723": {
+              "current": 32,
+              "best": 30,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 11496199,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Ekaterina Alexandrova",
+          "away": "Alexandra Eala",
+          "homePlayer": {
+            "id": 19114058,
+            "name": "Ekaterina Alexandrova",
+            "shortName": "Ekaterina Alexandrova",
+            "ranking": 11,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1789201715,
+            "name": "Alexandra Eala",
+            "shortName": "Alexandra Eala",
+            "ranking": 45,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 19,
+          "rankings": {
+            "19114058": {
+              "current": 11,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1789201715": {
+              "current": 45,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1577868410,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Hailey Baptiste",
+          "away": "Liudmila Samsonova",
+          "homePlayer": {
+            "id": 1723742861,
+            "name": "Hailey Baptiste",
+            "shortName": "Hailey Baptiste",
+            "ranking": 56,
+            "bestRank": 25,
+            "best": 25,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 659913289,
+            "name": "Liudmila Samsonova",
+            "shortName": "Liudmila Samsonova",
+            "ranking": 18,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-2 4-6 6-4",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 13,
+          "rankings": {
+            "659913289": {
+              "current": 18,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1723742861": {
+              "current": 56,
+              "best": 25,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1116338105,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sara Bejlek",
+          "away": "Sonay Kartal",
+          "homePlayer": {
+            "id": 325788695,
+            "name": "Sara Bejlek",
+            "shortName": "Sara Bejlek",
+            "ranking": 101,
+            "bestRank": 34,
+            "best": 34,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1953491392,
+            "name": "Sonay Kartal",
+            "shortName": "Sonay Kartal",
+            "ranking": 61,
+            "bestRank": 44,
+            "best": 44,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-0 6-2",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 10,
+          "rankings": {
+            "325788695": {
+              "current": 101,
+              "best": 34,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1953491392": {
+              "current": 61,
+              "best": 44,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 468595459,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Alexandra Eala",
+          "away": "Aliaksandra Sasnovich",
+          "homePlayer": {
+            "id": 1789201715,
+            "name": "Alexandra Eala",
+            "shortName": "Alexandra Eala",
+            "ranking": 45,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 324769922,
+            "name": "Aliaksandra Sasnovich",
+            "shortName": "Aliaksandra Sasnovich",
+            "ranking": 109,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "2-6 6-4 7-6(5)",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 0,
+          "rankings": {
+            "324769922": {
+              "current": 109,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1789201715": {
+              "current": 45,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 497103520,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Clara Tauson",
+          "away": "Simona Waltert",
+          "homePlayer": {
+            "id": 322125920,
+            "name": "Clara Tauson",
+            "shortName": "Clara Tauson",
+            "ranking": 16,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 323744119,
+            "name": "Simona Waltert",
+            "shortName": "Simona Waltert",
+            "ranking": 94,
+            "bestRank": 81,
+            "best": 81,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-1",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 69,
+          "rankings": {
+            "322125920": {
+              "current": 16,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "323744119": {
+              "current": 94,
+              "best": 81,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 415319127,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Ekaterina Alexandrova",
+          "away": "Dayana Yastremska",
+          "homePlayer": {
+            "id": 19114058,
+            "name": "Ekaterina Alexandrova",
+            "shortName": "Ekaterina Alexandrova",
+            "ranking": 11,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1021917783,
+            "name": "Dayana Yastremska",
+            "shortName": "Dayana Yastremska",
+            "ranking": 43,
+            "bestRank": 21,
+            "best": 21,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-0",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 11,
+          "rankings": {
+            "19114058": {
+              "current": 11,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1021917783": {
+              "current": 43,
+              "best": 21,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 50552411,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Hailey Baptiste",
+          "away": "Emma Navarro",
+          "homePlayer": {
+            "id": 1723742861,
+            "name": "Hailey Baptiste",
+            "shortName": "Hailey Baptiste",
+            "ranking": 56,
+            "bestRank": 25,
+            "best": 25,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 707499274,
+            "name": "Emma Navarro",
+            "shortName": "Emma Navarro",
+            "ranking": 17,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "7-6(6) 0-6 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 17,
+          "rankings": {
+            "707499274": {
+              "current": 17,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1723742861": {
+              "current": 56,
+              "best": 25,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1069231976,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Liudmila Samsonova",
+          "away": "Janice Tjen",
+          "homePlayer": {
+            "id": 659913289,
+            "name": "Liudmila Samsonova",
+            "shortName": "Liudmila Samsonova",
+            "ranking": 18,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1432225070,
+            "name": "Janice Tjen",
+            "shortName": "Janice Tjen",
+            "ranking": 47,
+            "bestRank": 36,
+            "best": 36,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-2 6-2",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 24,
+          "rankings": {
+            "659913289": {
+              "current": 18,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1432225070": {
+              "current": 47,
+              "best": 36,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 242765364,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mccartney Kessler",
+          "away": "Leylah Fernandez",
+          "homePlayer": {
+            "id": 1172704723,
+            "name": "Mccartney Kessler",
+            "shortName": "Mccartney Kessler",
+            "ranking": 32,
+            "bestRank": 30,
+            "best": 30,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 518120166,
+            "name": "Leylah Fernandez",
+            "shortName": "Leylah Fernandez",
+            "ranking": 25,
+            "bestRank": 13,
+            "best": 13,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-2",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 17,
+          "rankings": {
+            "518120166": {
+              "current": 25,
+              "best": 13,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1172704723": {
+              "current": 32,
+              "best": 30,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1702973287,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sara Bejlek",
+          "away": "Jelena Ostapenko",
+          "homePlayer": {
+            "id": 325788695,
+            "name": "Sara Bejlek",
+            "shortName": "Sara Bejlek",
+            "ranking": 101,
+            "bestRank": 34,
+            "best": 34,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1691462359,
+            "name": "Jelena Ostapenko",
+            "shortName": "Jelena Ostapenko",
+            "ranking": 24,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 29,
+          "rankings": {
+            "325788695": {
+              "current": 101,
+              "best": 34,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1691462359": {
+              "current": 24,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 856647167,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sonay Kartal",
+          "away": "Renata Zarazua",
+          "homePlayer": {
+            "id": 1953491392,
+            "name": "Sonay Kartal",
+            "shortName": "Sonay Kartal",
+            "ranking": 61,
+            "bestRank": 44,
+            "best": 44,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 35275797,
+            "name": "Renata Zarazua",
+            "shortName": "Renata Zarazua",
+            "ranking": 92,
+            "bestRank": 51,
+            "best": 51,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-0 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 7,
+          "rankings": {
+            "35275797": {
+              "current": 92,
+              "best": 51,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1953491392": {
+              "current": 61,
+              "best": 44,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1114451693,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Alexandra Eala",
+          "away": "Zeynep Sonmez",
+          "homePlayer": {
+            "id": 1789201715,
+            "name": "Alexandra Eala",
+            "shortName": "Alexandra Eala",
+            "ranking": 45,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1376090541,
+            "name": "Zeynep Sonmez",
+            "shortName": "Zeynep Sonmez",
+            "ranking": 79,
+            "bestRank": 59,
+            "best": 59,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 30,
+          "rankings": {
+            "1376090541": {
+              "current": 79,
+              "best": 59,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1789201715": {
+              "current": 45,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1596208418,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Aliaksandra Sasnovich",
+          "away": "Paula Badosa",
+          "homePlayer": {
+            "id": 324769922,
+            "name": "Aliaksandra Sasnovich",
+            "shortName": "Aliaksandra Sasnovich",
+            "ranking": 109,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 623570761,
+            "name": "Paula Badosa",
+            "shortName": "Paula Badosa",
+            "ranking": 65,
+            "bestRank": 2,
+            "best": 2,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-4 3-6 6-1",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 27,
+          "rankings": {
+            "324769922": {
+              "current": 109,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "623570761": {
+              "current": 65,
+              "best": 2,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 723412167,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Dayana Yastremska",
+          "away": "Beatriz Haddad Maia",
+          "homePlayer": {
+            "id": 1021917783,
+            "name": "Dayana Yastremska",
+            "shortName": "Dayana Yastremska",
+            "ranking": 43,
+            "bestRank": 21,
+            "best": 21,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 757950081,
+            "name": "Beatriz Haddad Maia",
+            "shortName": "Beatriz Haddad Maia",
+            "ranking": 68,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-2 7-5",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 11,
+          "rankings": {
+            "757950081": {
+              "current": 68,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1021917783": {
+              "current": 43,
+              "best": 21,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1824556380,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Hailey Baptiste",
+          "away": "Teodora Kostovic",
+          "homePlayer": {
+            "id": 1723742861,
+            "name": "Hailey Baptiste",
+            "shortName": "Hailey Baptiste",
+            "ranking": 56,
+            "bestRank": 25,
+            "best": 25,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1972314654,
+            "name": "Teodora Kostovic",
+            "shortName": "Teodora Kostovic",
+            "ranking": 171,
+            "bestRank": 159,
+            "best": 159,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "4-6 6-3 6-4",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 134,
+          "rankings": {
+            "1723742861": {
+              "current": 56,
+              "best": 25,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1972314654": {
+              "current": 171,
+              "best": 159,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 890981304,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Janice Tjen",
+          "away": "Maya Joint",
+          "homePlayer": {
+            "id": 1432225070,
+            "name": "Janice Tjen",
+            "shortName": "Janice Tjen",
+            "ranking": 47,
+            "bestRank": 36,
+            "best": 36,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 616435211,
+            "name": "Maya Joint",
+            "shortName": "Maya Joint",
+            "ranking": 29,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "7-6(6) 3-6 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 8,
+          "rankings": {
+            "616435211": {
+              "current": 29,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1432225070": {
+              "current": 47,
+              "best": 36,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 908992373,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Jelena Ostapenko",
+          "away": "Oksana Selekhmeteva",
+          "homePlayer": {
+            "id": 1691462359,
+            "name": "Jelena Ostapenko",
+            "shortName": "Jelena Ostapenko",
+            "ranking": 24,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1083432221,
+            "name": "Oksana Selekhmeteva",
+            "shortName": "Oksana Selekhmeteva",
+            "ranking": 76,
+            "bestRank": 71,
+            "best": 71,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "5-7 7-6(4) 6-2",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 66,
+          "rankings": {
+            "1083432221": {
+              "current": 76,
+              "best": 71,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1691462359": {
+              "current": 24,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 87630156,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Leylah Fernandez",
+          "away": "Chloe Paquet",
+          "homePlayer": {
+            "id": 518120166,
+            "name": "Leylah Fernandez",
+            "shortName": "Leylah Fernandez",
+            "ranking": 25,
+            "bestRank": 13,
+            "best": 13,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 652483697,
+            "name": "Chloe Paquet",
+            "shortName": "Chloe Paquet",
+            "ranking": 220,
+            "bestRank": 96,
+            "best": 96,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-0 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 83,
+          "rankings": {
+            "518120166": {
+              "current": 25,
+              "best": 13,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "652483697": {
+              "current": 220,
+              "best": 96,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1538762595,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Liudmila Samsonova",
+          "away": "Sofia Kenin",
+          "homePlayer": {
+            "id": 659913289,
+            "name": "Liudmila Samsonova",
+            "shortName": "Liudmila Samsonova",
+            "ranking": 18,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1806625288,
+            "name": "Sofia Kenin",
+            "shortName": "Sofia Kenin",
+            "ranking": 28,
+            "bestRank": 4,
+            "best": 4,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-0",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 8,
+          "rankings": {
+            "659913289": {
+              "current": 18,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1806625288": {
+              "current": 28,
+              "best": 4,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1632814395,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mccartney Kessler",
+          "away": "Anastasia Pavlyuchenkova",
+          "homePlayer": {
+            "id": 1172704723,
+            "name": "Mccartney Kessler",
+            "shortName": "Mccartney Kessler",
+            "ranking": 32,
+            "bestRank": 30,
+            "best": 30,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 963052180,
+            "name": "Anastasia Pavlyuchenkova",
+            "shortName": "Anastasia Pavlyuchenkova",
+            "ranking": 100,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 19,
+          "rankings": {
+            "963052180": {
+              "current": 100,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1172704723": {
+              "current": 32,
+              "best": 30,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 938442455,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sara Bejlek",
+          "away": "Ashlyn Krueger",
+          "homePlayer": {
+            "id": 325788695,
+            "name": "Sara Bejlek",
+            "shortName": "Sara Bejlek",
+            "ranking": 101,
+            "bestRank": 34,
+            "best": 34,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 17566472,
+            "name": "Ashlyn Krueger",
+            "shortName": "Ashlyn Krueger",
+            "ranking": 55,
+            "bestRank": 29,
+            "best": 29,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-0",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 5,
+          "rankings": {
+            "17566472": {
+              "current": 55,
+              "best": 29,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "325788695": {
+              "current": 101,
+              "best": 34,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1412936131,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Simona Waltert",
+          "away": "Daria Kasatkina",
+          "homePlayer": {
+            "id": 323744119,
+            "name": "Simona Waltert",
+            "shortName": "Simona Waltert",
+            "ranking": 94,
+            "bestRank": 81,
+            "best": 81,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 942276140,
+            "name": "Daria Kasatkina",
+            "shortName": "Daria Kasatkina",
+            "ranking": 62,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "7-6(5) 3-6 6-4",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 73,
+          "rankings": {
+            "323744119": {
+              "current": 94,
+              "best": 81,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "942276140": {
+              "current": 62,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 878971299,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sonay Kartal",
+          "away": "Cristina Bucsa",
+          "homePlayer": {
+            "id": 1953491392,
+            "name": "Sonay Kartal",
+            "shortName": "Sonay Kartal",
+            "ranking": 61,
+            "bestRank": 44,
+            "best": 44,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1215447528,
+            "name": "Cristina Bucsa",
+            "shortName": "Cristina Bucsa",
+            "ranking": 57,
+            "bestRank": 30,
+            "best": 30,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 7-6(8)",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 14,
+          "rankings": {
+            "1215447528": {
+              "current": 57,
+              "best": 30,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1953491392": {
+              "current": 61,
+              "best": 44,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1110980166,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Ekaterina Alexandrova",
+          "away": "Hailey Baptiste",
+          "homePlayer": {
+            "id": 19114058,
+            "name": "Ekaterina Alexandrova",
+            "shortName": "Ekaterina Alexandrova",
+            "ranking": 11,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1723742861,
+            "name": "Hailey Baptiste",
+            "shortName": "Hailey Baptiste",
+            "ranking": 56,
+            "bestRank": 25,
+            "best": 25,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "3-6 7-6(5) 6-3",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Semifinals",
+            "round": 4
+          },
+          "roundLabel": "SF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 15,
+          "rankings": {
+            "19114058": {
+              "current": 11,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1723742861": {
+              "current": 56,
+              "best": 25,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 545385001,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Abu Dhabi",
+          "tournamentShort": "Abu Dhabi",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Sara Bejlek",
+          "away": "Clara Tauson",
+          "homePlayer": {
+            "id": 325788695,
+            "name": "Sara Bejlek",
+            "shortName": "Sara Bejlek",
+            "ranking": 101,
+            "bestRank": 34,
+            "best": 34,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 322125920,
+            "name": "Clara Tauson",
+            "shortName": "Clara Tauson",
+            "ranking": 16,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "7-5 3-6 7-5",
+          "startTimestamp": 1769947200,
+          "roundInfo": {
+            "name": "Semifinals",
+            "round": 4
+          },
+          "roundLabel": "SF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 22,
+          "rankings": {
+            "322125920": {
+              "current": 16,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "325788695": {
+              "current": 101,
+              "best": 34,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        }
+      ]
+    },
+    "rankingsByPlayer": {
+      "17566472": {
+        "current": 55,
+        "best": 29,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "19114058": {
+        "current": 11,
+        "best": 10,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "35275797": {
+        "current": 92,
+        "best": 51,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "322125920": {
+        "current": 16,
+        "best": 12,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "323744119": {
+        "current": 94,
+        "best": 81,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "324769922": {
+        "current": 109,
+        "best": 29,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "325788695": {
+        "current": 101,
+        "best": 34,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "518120166": {
+        "current": 25,
+        "best": 13,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "616435211": {
+        "current": 29,
+        "best": 28,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "623570761": {
+        "current": 65,
+        "best": 2,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "652483697": {
+        "current": 220,
+        "best": 96,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "659913289": {
+        "current": 18,
+        "best": 12,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "707499274": {
+        "current": 17,
+        "best": 8,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "757950081": {
+        "current": 68,
+        "best": 10,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "942276140": {
+        "current": 62,
+        "best": 8,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "963052180": {
+        "current": 100,
+        "best": 11,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1021917783": {
+        "current": 43,
+        "best": 21,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1083432221": {
+        "current": 76,
+        "best": 71,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1172704723": {
+        "current": 32,
+        "best": 30,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1215447528": {
+        "current": 57,
+        "best": 30,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1376090541": {
+        "current": 79,
+        "best": 59,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1432225070": {
+        "current": 47,
+        "best": 36,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1691462359": {
+        "current": 24,
+        "best": 5,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1723742861": {
+        "current": 56,
+        "best": 25,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1789201715": {
+        "current": 45,
+        "best": 29,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1806625288": {
+        "current": 28,
+        "best": 4,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1953491392": {
+        "current": 61,
+        "best": 44,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1972314654": {
+        "current": 171,
+        "best": 159,
+        "previous": null,
+        "live": null,
+        "utr": null
+      }
+    },
+    "oddsByEvent": {},
+    "eloByEvent": {},
+    "polymarketByEvent": {},
+    "theOddsApiByEvent": {},
+    "birthYearByPlayer": {},
+    "ok": true,
+    "member": true,
+    "events": 27,
+    "message": "docks500 · 2026-02-01 · 27 events"
+  }
+}

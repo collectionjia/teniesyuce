@@ -120,15 +120,19 @@ curl -s -X POST -H "X-Api-Key: eng_xxx" \
 
 | 入口 | 鉴权 | 能力 |
 |------|------|------|
-| `/api/engine/condition/*` | API Key | **只读** status / rules |
+| `/api/engine/condition/*` | API Key | status / rules **读写**（含分组 CRUD、删除） |
 | `/api/admin/tennis-monitor/engines` | 管理员 JWT | **读写**完整条件配置（设置） |
 
-### 4.1 只读（API Key）`/api/engine/condition`
+### 4.1 API Key 接口 `/api/engine/condition`
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/condition/status` | 条件是否打开、各桶分组数量 |
 | GET | `/condition/rules` | 当前规则配置（含 buckets） |
+| PUT | `/condition/rules` | 整表更新 `{ open?, buckets? }` |
+| POST | `/condition/switch` | 总开关 `{ open: true\|false }` |
+| DELETE | `/condition/rules/:bucket/groups/:index` | 删除条件组（index 从 **0** 起；可删到 0 组） |
+| POST | `/condition/rules/:bucket/groups/:index/delete` | 同上（兼容部分代理对 DELETE 支持差） |
 
 `GET /condition/status` · data：
 
@@ -136,6 +140,20 @@ curl -s -X POST -H "X-Api-Key: eng_xxx" \
 |------|------|
 | `open` | 条件总开关 |
 | `buckets` | `{ prematch\|inplay\|settled: { enabled, groupCount } }` |
+
+删除示例：
+
+```bash
+# 推荐（兼容性更好）
+curl -s -X POST -H "X-Api-Key: $ENGINE_KEY" \
+  https://你的域名/api/engine/condition/rules/inplay/groups/0/delete
+
+# 或标准 DELETE
+curl -s -X DELETE -H "X-Api-Key: $ENGINE_KEY" \
+  https://你的域名/api/engine/condition/rules/inplay/groups/0
+```
+
+桶键：`prematch` / `inplay` / `settled`。空 `groups: []` 表示该桶无条件组（筛选放行）。
 
 ### 4.2 条件设置（管理员 JWT）
 
@@ -218,10 +236,22 @@ curl -s -X POST -H "Authorization: Bearer $ADMIN_JWT" \
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/betting/status` | 投注是否打开、金额、桶摘要、最近扫描 |
-| GET | `/betting/rules` | 规则与 buckets 详情 |
-| POST | `/betting/scan/run` | 立即执行投注扫描（预置 `job_bet_scan`） |
+| GET | `/betting/status` | 投注是否打开、**amountUsd**、桶摘要、最近扫描 |
+| GET | `/betting/rules` | 规则与 buckets 详情（含 **amountUsd**） |
+| PUT | `/betting/amount` | 设置默认投注金额 `{ "amountUsd": 5 }` |
+| POST | `/betting/scan/run` | 立即执行投注扫描（预置 `job_bet_scan`，用配置里的 amountUsd） |
 | POST | `/betting/stop-loss/run` | P0 与 scan 同源 |
+
+#### 设置投注金额
+
+```bash
+curl -s -X PUT -H "X-Api-Key: $ENGINE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"amountUsd":5}' \
+  https://你的域名/api/engine/betting/amount
+```
+
+`amountUsd` 须为正数（USD）；成功返回完整投注配置（含更新后的金额）。
 
 未配置登录邮箱或「投注打开」关闭时，运行多为 `skipped`。
 

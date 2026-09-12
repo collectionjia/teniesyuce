@@ -4,9 +4,10 @@
  *
  * 条件引擎 buckets：
  *   prematch|inplay|settled: { enabled, groups[] }
- *   groups 组间 OR；组内字段 AND
- *   组字段：tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankMax / gapMode
+ *   groups = 条件组库（组间 AND/OR 在产品管理配置）；组内字段 AND
+ *   组字段：id / name / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankMax / strongRankGt / strongRankLt / gapMode
  */
+const crypto = require('crypto');
 const redis = require('./redis');
 
 const CONFIG_KEY = 'tennis:engines:config';
@@ -14,17 +15,30 @@ const ALLOWED_TICK_SEC = [1, 2, 5, 10];
 const BUCKET_KEYS = ['prematch', 'inplay', 'settled'];
 const BETTING_BUCKET_KEYS = ['prematch', 'inplay'];
 
+function newGroupId() {
+  return crypto.randomBytes(8).toString('hex');
+}
+
 function emptyGroup() {
   return {
+    id: newGroupId(),
     name: '',
-    joinPrev: 'or', // 与上一组：and | or（首组忽略）
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
     rankDiffMin: 'all',
     rankDiffMax: 'all',
     strongRankMax: 'all',
+    /** 强现开区间下界：rank > strongRankGt（如 0） */
+    strongRankGt: 'all',
+    /** 强现开区间上界：rank < strongRankLt（如 10） */
+    strongRankLt: 'all',
     gapMode: 'all',
+    /** 盘中：要求强者已赢首盘 */
+    requireWonFirstSet: false,
+    /** 勾选后排除首盘局分为 firstSetExcludeScore（默认 7:5）的场次 */
+    firstSetExcludeEnabled: false,
+    firstSetExcludeScore: '7:5',
   };
 }
 
@@ -44,16 +58,9 @@ function emptyStopRule() {
 function emptyBettingGroup(kind = 'inplay') {
   const isInplay = kind === 'inplay';
   return {
+    id: newGroupId(),
     name: '',
     joinPrev: 'or',
-    tour: 'all',
-    pm: 'yes',
-    gapMin: 'all',
-    rankDiffMin: 'all',
-    rankDiffMax: 'all',
-    strongRankMax: 'all',
-    pmMaxCents: 91,
-    requireWonFirstSet: isInplay,
     stopEnabled: isInplay,
     stopRules: isInplay ? [emptyStopRule()] : [],
   };
@@ -62,17 +69,25 @@ function emptyBettingGroup(kind = 'inplay') {
 function normalizeGroup(g) {
   const base = emptyGroup();
   if (!g || typeof g !== 'object' || Array.isArray(g)) return base;
-  const join = String(g.joinPrev || 'or').toLowerCase();
+  const id = g.id != null && String(g.id).trim() ? String(g.id).trim().slice(0, 40) : newGroupId();
+  const excludeScore = g.firstSetExcludeScore != null && String(g.firstSetExcludeScore).trim()
+    ? String(g.firstSetExcludeScore).trim().slice(0, 12)
+    : base.firstSetExcludeScore;
   return {
+    id,
     name: g.name != null ? String(g.name).slice(0, 40) : '',
-    joinPrev: join === 'and' ? 'and' : 'or',
     tour: g.tour != null ? g.tour : base.tour,
     pm: g.pm != null ? g.pm : base.pm,
     gapMin: g.gapMin != null ? g.gapMin : base.gapMin,
     rankDiffMin: g.rankDiffMin != null ? g.rankDiffMin : base.rankDiffMin,
     rankDiffMax: g.rankDiffMax != null ? g.rankDiffMax : base.rankDiffMax,
     strongRankMax: g.strongRankMax != null ? g.strongRankMax : base.strongRankMax,
+    strongRankGt: g.strongRankGt != null ? g.strongRankGt : base.strongRankGt,
+    strongRankLt: g.strongRankLt != null ? g.strongRankLt : base.strongRankLt,
     gapMode: g.gapMode != null ? g.gapMode : base.gapMode,
+    requireWonFirstSet: g.requireWonFirstSet === true,
+    firstSetExcludeEnabled: g.firstSetExcludeEnabled === true,
+    firstSetExcludeScore: excludeScore || '7:5',
   };
 }
 
@@ -118,7 +133,8 @@ function migrateLegacyStop(g, base) {
 }
 
 function resolveStopRules(g, kind = 'inplay') {
-  if (Array.isArray(g?.stopRules) && g.stopRules.length) {
+  // 显式空数组 = 无止损，勿回填默认条
+  if (Array.isArray(g?.stopRules)) {
     return g.stopRules.map(normalizeStopRule);
   }
   const legacy = migrateLegacyStop(g || {}, emptyStopRule());
@@ -130,17 +146,11 @@ function normalizeBettingGroup(g, kind = 'inplay') {
   const base = emptyBettingGroup(kind);
   if (!g || typeof g !== 'object' || Array.isArray(g)) return base;
   const join = String(g.joinPrev || 'or').toLowerCase();
+  const id = g.id != null && String(g.id).trim() ? String(g.id).trim().slice(0, 40) : newGroupId();
   return {
+    id,
     name: g.name != null ? String(g.name).slice(0, 40) : '',
     joinPrev: join === 'and' ? 'and' : 'or',
-    tour: g.tour != null ? g.tour : base.tour,
-    pm: g.pm != null ? g.pm : base.pm,
-    gapMin: g.gapMin != null ? g.gapMin : base.gapMin,
-    rankDiffMin: g.rankDiffMin != null ? g.rankDiffMin : base.rankDiffMin,
-    rankDiffMax: g.rankDiffMax != null ? g.rankDiffMax : base.rankDiffMax,
-    strongRankMax: g.strongRankMax != null ? g.strongRankMax : base.strongRankMax,
-    pmMaxCents: g.pmMaxCents != null ? g.pmMaxCents : base.pmMaxCents,
-    requireWonFirstSet: g.requireWonFirstSet != null ? !!g.requireWonFirstSet : base.requireWonFirstSet,
     stopEnabled: g.stopEnabled != null ? !!g.stopEnabled : base.stopEnabled,
     stopRules: resolveStopRules(g, kind),
   };
@@ -191,28 +201,17 @@ function defaultSection9StopRules() {
 }
 
 function defaultInplayBettingGroups() {
-  // §九：两组买入 OR；每组内多条止损 OR
   const stops = defaultSection9StopRules();
   return [
     normalizeBettingGroup({
-      name: '现≤10·现差≥21',
+      name: '止损组 A',
       joinPrev: 'or',
-      pm: 'yes',
-      strongRankMax: 10,
-      gapMin: 21,
-      pmMaxCents: 91,
-      requireWonFirstSet: true,
       stopEnabled: true,
       stopRules: stops,
     }, 'inplay'),
     normalizeBettingGroup({
-      name: '现≤25·现差≥31',
+      name: '止损组 B',
       joinPrev: 'or',
-      pm: 'yes',
-      strongRankMax: 25,
-      gapMin: 31,
-      pmMaxCents: 91,
-      requireWonFirstSet: true,
       stopEnabled: true,
       stopRules: stops,
     }, 'inplay'),
@@ -222,13 +221,10 @@ function defaultInplayBettingGroups() {
 function defaultPrematchBettingGroups() {
   return [
     normalizeBettingGroup({
-      pm: 'yes',
-      gapMin: 50,
-      rankDiffMax: 0,
-      strongRankMax: 20,
-      pmMaxCents: 91,
-      requireWonFirstSet: false,
+      name: '盘前止损',
+      joinPrev: 'or',
       stopEnabled: false,
+      stopRules: [],
     }, 'prematch'),
   ];
 }
@@ -266,7 +262,7 @@ const DEFAULT_CONFIG = {
       inplay: { enabled: false, groups: defaultInplayBettingGroups() },
     },
     rules: {
-      note: '盘前/盘中分桶；多组 OR；组内买入且止损可配',
+      note: '盘前/盘中分桶；买入条件在产品管理选择；此处仅配止损',
     },
   },
 };
@@ -292,7 +288,8 @@ function normalizeCondition(condition) {
   const buckets = {};
   for (const key of BUCKET_KEYS) {
     const raw = src?.[key];
-    if (raw && Array.isArray(raw.groups) && raw.groups.length) {
+    // 显式 groups 数组（含空数组）必须保留，否则删除会被 normalize 回默认组
+    if (raw && Array.isArray(raw.groups)) {
       buckets[key] = {
         enabled: !!raw.enabled,
         groups: raw.groups.map(normalizeGroup),
@@ -320,7 +317,7 @@ function normalizeBetting(betting) {
   const buckets = {};
   for (const key of BETTING_BUCKET_KEYS) {
     const raw = src?.[key];
-    if (raw && Array.isArray(raw.groups) && raw.groups.length) {
+    if (raw && Array.isArray(raw.groups)) {
       buckets[key] = {
         enabled: !!raw.enabled,
         groups: raw.groups.map((g) => normalizeBettingGroup(g, key)),
@@ -495,9 +492,12 @@ async function setConfig(patch) {
     next.collect.inplay_tick_interval_sec = n;
   }
   const client = await redis.getClient();
-  if (client) {
-    await client.set(CONFIG_KEY, JSON.stringify(next));
+  if (!client) {
+    const err = new Error('Redis unavailable; engine config not persisted');
+    err.status = 503;
+    throw err;
   }
+  await client.set(CONFIG_KEY, JSON.stringify(next));
   return next;
 }
 
@@ -513,9 +513,12 @@ async function writeConfig(cfg) {
     next.collect.inplay_tick_interval_sec = n;
   }
   const client = await redis.getClient();
-  if (client) {
-    await client.set(CONFIG_KEY, JSON.stringify(next));
+  if (!client) {
+    const err = new Error('Redis unavailable; engine config not persisted');
+    err.status = 503;
+    throw err;
   }
+  await client.set(CONFIG_KEY, JSON.stringify(next));
   return next;
 }
 
@@ -532,6 +535,34 @@ async function getCondition() {
   return {
     open: !!cfg.condition?.enabled,
     buckets: cfg.condition?.buckets || {},
+  };
+}
+
+/**
+ * 设置默认投注金额（USD）
+ * @param {number|string} amountUsd
+ */
+async function setBettingAmountUsd(amountUsd) {
+  const n = Number(amountUsd);
+  if (!Number.isFinite(n) || n <= 0) {
+    const err = new Error('amountUsd must be a positive number');
+    err.status = 400;
+    throw err;
+  }
+  // 保留两位小数，避免浮点脏值
+  const rounded = Math.round(n * 100) / 100;
+  return setConfig({ betting: { amountUsd: rounded } });
+}
+
+async function getBetting() {
+  const cfg = await getConfig();
+  return {
+    open: !!cfg.betting?.enabled,
+    amountUsd: cfg.betting?.amountUsd != null ? Number(cfg.betting.amountUsd) : 1,
+    userAccount: cfg.betting?.userAccount || null,
+    userId: cfg.betting?.userId || null,
+    buckets: cfg.betting?.buckets || {},
+    rules: cfg.betting?.rules || {},
   };
 }
 
@@ -554,9 +585,7 @@ async function putConditionRules({ open, buckets } = {}) {
       const b = buckets[key];
       cur.condition.buckets[key] = {
         enabled: !!b.enabled,
-        groups: Array.isArray(b.groups) && b.groups.length
-          ? b.groups.map(normalizeGroup)
-          : [emptyGroup()],
+        groups: Array.isArray(b.groups) ? b.groups.map(normalizeGroup) : [emptyGroup()],
       };
     }
   }
@@ -569,11 +598,17 @@ async function putConditionBucket(bucket, { enabled, groups } = {}) {
   cur.condition = cur.condition || { enabled: false, buckets: {} };
   cur.condition.buckets = cur.condition.buckets || {};
   const prev = cur.condition.buckets[bucket] || defaultBucket(null, false);
+  let nextGroups;
+  if (Array.isArray(groups)) {
+    nextGroups = groups.map(normalizeGroup);
+  } else if (Array.isArray(prev.groups)) {
+    nextGroups = prev.groups.map(normalizeGroup);
+  } else {
+    nextGroups = [emptyGroup()];
+  }
   cur.condition.buckets[bucket] = {
     enabled: enabled != null ? !!enabled : !!prev.enabled,
-    groups: Array.isArray(groups) && groups.length
-      ? groups.map(normalizeGroup)
-      : (Array.isArray(prev.groups) && prev.groups.length ? prev.groups.map(normalizeGroup) : [emptyGroup()]),
+    groups: nextGroups,
   };
   return writeConfig(cur);
 }
@@ -633,11 +668,7 @@ async function deleteConditionGroup(bucket, index) {
     err.status = 404;
     throw err;
   }
-  if (groups.length <= 1) {
-    groups[0] = emptyGroup();
-  } else {
-    groups.splice(i, 1);
-  }
+  groups.splice(i, 1);
   cur.condition.buckets[bucket] = { enabled: !!prev.enabled, groups };
   return writeConfig(cur);
 }
@@ -659,7 +690,12 @@ module.exports = {
   normalizeStopRule,
   normalizeCondition,
   normalizeBetting,
+  newGroupId,
+  emptyGroup,
+  emptyBettingGroup,
   getCondition,
+  getBetting,
+  setBettingAmountUsd,
   setConditionOpen,
   putConditionRules,
   putConditionBucket,

@@ -1,0 +1,763 @@
+# year: 2026
+# levels: Grand Slam / Masters-WTA 1000 / ATP-WTA 500 (+ US Open supplement)
+# primary source: Jeff Sackmann archive mirror (CC BY-NC-SA 4.0)
+# columns: date\ttournament\tround\tsurface\twinner\tbt\tloser\tscore\tpeak_diff
+# rank = 当场排名; peak = 生涯历史最高排名; peak_diff = |双方peak之差|
+# note: Sackmann 2026 dump may lag live events (e.g. US Open); see us_open file
+#
+20260119	Australian Open	F	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Novak Djokovic (rank 4, peak 1)	2-6 6-2 6-3 7-5	peak_diff 0
+20260119	Australian Open	F	Hard	Elena Rybakina (rank 5, peak 2)	bt	Aryna Sabalenka (rank 1, peak 1)	6-4 4-6 6-4	peak_diff 1
+20260119	Australian Open	QF	Hard	Alexander Zverev (rank 3, peak 2)	bt	Learner Tien (rank 29, peak 18)	6-3 6-7(5) 6-1 7-6(3)	peak_diff 16
+20260119	Australian Open	QF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Iva Jovic (rank 27, peak 16)	6-3 6-0	peak_diff 15
+20260119	Australian Open	QF	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Alex De Minaur (rank 6, peak 6)	7-5 6-2 6-1	peak_diff 5
+20260119	Australian Open	QF	Hard	Elena Rybakina (rank 5, peak 2)	bt	Iga Swiatek (rank 2, peak 1)	7-5 6-1	peak_diff 1
+20260119	Australian Open	QF	Hard	Elina Svitolina (rank 12, peak 3)	bt	Coco Gauff (rank 3, peak 2)	6-1 6-2	peak_diff 1
+20260119	Australian Open	QF	Hard	Jannik Sinner (rank 2, peak 1)	bt	Ben Shelton (rank 7, peak 5)	6-3 6-4 6-4	peak_diff 4
+20260119	Australian Open	QF	Hard	Jessica Pegula (rank 6, peak 3)	bt	Amanda Anisimova (rank 4, peak 3)	6-2 7-6(1)	peak_diff 0
+20260119	Australian Open	QF	Hard	Novak Djokovic (rank 4, peak 1)	bt	Lorenzo Musetti (rank 5, peak 5)	4-6 3-6 3-1 RET	peak_diff 4
+20260119	Australian Open	R128	Hard	Ajla Tomljanovic (rank 78, peak 32)	bt	Yuliia Starodubtseva (rank 110, peak 53)	4-6 7-6(3) 6-1	peak_diff 21
+20260119	Australian Open	R128	Hard	Alejandro Davidovich Fokina (rank 14, peak 14)	bt	Filip Misolic (rank 84, peak 76)	6-2 6-3 6-3	peak_diff 62
+20260119	Australian Open	R128	Hard	Alex De Minaur (rank 6, peak 6)	bt	Mackenzie Mcdonald (rank 113, peak 37)	6-2 6-2 6-3	peak_diff 31
+20260119	Australian Open	R128	Hard	Alexander Bublik (rank 10, peak 10)	bt	Jenson Brooksby (rank 48, peak 33)	6-4 6-4 6-4	peak_diff 23
+20260119	Australian Open	R128	Hard	Alexander Shevchenko (rank 97, peak 45)	bt	Elias Ymer (rank 175, peak 119)	3-6 7-5 6-4 6-1	peak_diff 74
+20260119	Australian Open	R128	Hard	Alexander Zverev (rank 3, peak 2)	bt	Gabriel Diallo (rank 41, peak 33)	6-7(1) 6-1 6-4 6-2	peak_diff 31
+20260119	Australian Open	R128	Hard	Alexandre Muller (rank 52, peak 38)	bt	Alexei Popyrin (rank 50, peak 19)	2-6 6-3 3-6 7-6(5) 7-6(4)	peak_diff 19
+20260119	Australian Open	R128	Hard	Alycia Parks (rank 99, peak 40)	bt	Alexandra Eala (rank 49, peak 29)	0-6 6-3 6-2	peak_diff 11
+20260119	Australian Open	R128	Hard	Amanda Anisimova (rank 4, peak 3)	bt	Simona Waltert (rank 87, peak 81)	6-3 6-2	peak_diff 78
+20260119	Australian Open	R128	Hard	Anastasia Potapova (rank 55, peak 21)	bt	Suzan Lamens (rank 97, peak 57)	3-6 7-5 6-2	peak_diff 36
+20260119	Australian Open	R128	Hard	Andrey Rublev (rank 15, peak 5)	bt	Matteo Arnaldi (rank 65, peak 29)	6-4 6-2 6-3	peak_diff 24
+20260119	Australian Open	R128	Hard	Ann Li (rank 38, peak 29)	bt	Camila Osorio (rank 84, peak 33)	6-4 6-7(5) 7-5	peak_diff 4
+20260119	Australian Open	R128	Hard	Anna Bondar (rank 74, peak 50)	bt	Elizabeth Mandlik (rank 182, peak 97)	6-0 6-4	peak_diff 47
+20260119	Australian Open	R128	Hard	Anna Kalinskaya (rank 33, peak 11)	bt	Sonay Kartal (rank 66, peak 44)	7-6(3) 6-1	peak_diff 33
+20260119	Australian Open	R128	Hard	Arthur Fery (rank 186, peak 141)	bt	Flavio Cobolli (rank 22, peak 10)	7-6(1) 6-4 6-1	peak_diff 131
+20260119	Australian Open	R128	Hard	Arthur Gea (rank 198, peak 135)	bt	Jiri Lehecka (rank 19, peak 12)	7-5 7-6(1) 7-5	peak_diff 123
+20260119	Australian Open	R128	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Tiantsoa Sarah Rakotomanga Rajaonah (rank 118, peak 116)	6-4 6-1	peak_diff 115
+20260119	Australian Open	R128	Hard	Ashlyn Krueger (rank 62, peak 29)	bt	Sara Bejlek (rank 89, peak 34)	6-3 6-3	peak_diff 5
+20260119	Australian Open	R128	Hard	Belinda Bencic (rank 10, peak 4)	bt	Katie Boulter (rank 113, peak 23)	6-0 7-5	peak_diff 19
+20260119	Australian Open	R128	Hard	Ben Shelton (rank 7, peak 5)	bt	Ugo Humbert (rank 33, peak 13)	6-3 7-6(2) 7-6(5)	peak_diff 8
+20260119	Australian Open	R128	Hard	Botic Van De Zandschulp (rank 75, peak 22)	bt	Brandon Nakashima (rank 30, peak 29)	6-3 4-6 7-6(1) 7-6(3)	peak_diff 7
+20260119	Australian Open	R128	Hard	Cameron Norrie (rank 27, peak 8)	bt	Benjamin Bonzi (rank 106, peak 42)	6-0 6-7(2) 4-6 6-3 6-4	peak_diff 34
+20260119	Australian Open	R128	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Adam Walton (rank 81, peak 74)	6-3 7-6(2) 6-2	peak_diff 73
+20260119	Australian Open	R128	Hard	Casper Ruud (rank 13, peak 2)	bt	Mattia Bellucci (rank 76, peak 63)	6-1 6-2 6-4	peak_diff 61
+20260119	Australian Open	R128	Hard	Caty Mcnally (rank 85, peak 54)	bt	Himeno Sakatsume (rank 140, peak 127)	6-3 6-1	peak_diff 73
+20260119	Australian Open	R128	Hard	Clara Tauson (rank 14, peak 12)	bt	Dalma Galfi (rank 91, peak 79)	6-3 6-3	peak_diff 67
+20260119	Australian Open	R128	Hard	Coco Gauff (rank 3, peak 2)	bt	Kamilla Rakhimova (rank 93, peak 60)	6-2 6-3	peak_diff 58
+20260119	Australian Open	R128	Hard	Corentin Moutet (rank 37, peak 30)	bt	Tristan Schoolkate (rank 98, peak 95)	6-4 7-6(1) 6-3	peak_diff 65
+20260119	Australian Open	R128	Hard	Damir Dzumhur (rank 66, peak 54)	bt	Liam Draxl (rank 145, peak 113)	7-5 6-0 6-4	peak_diff 59
+20260119	Australian Open	R128	Hard	Dane Sweeny (rank 182, peak 131)	bt	Gael Monfils (rank 110, peak 9)	6-7(3) 7-5 6-4 7-5	peak_diff 122
+20260119	Australian Open	R128	Hard	Daniil Medvedev (rank 12, peak 1)	bt	Jesper De Jong (rank 73, peak 71)	7-5 6-2 7-6(2)	peak_diff 70
+20260119	Australian Open	R128	Hard	Denis Shapovalov (rank 23, peak 10)	bt	Bu Yunchaokete (rank 120, peak 64)	6-3 7-6(3) 6-1	peak_diff 54
+20260119	Australian Open	R128	Hard	Diana Shnaider (rank 22, peak 11)	bt	Barbora Krejcikova (rank 58, peak 2)	2-6 6-3 6-3	peak_diff 9
+20260119	Australian Open	R128	Hard	Elena Gabriela Ruse (rank 79, peak 51)	bt	Dayana Yastremska (rank 28, peak 21)	6-4 7-5	peak_diff 30
+20260119	Australian Open	R128	Hard	Elena Rybakina (rank 5, peak 2)	bt	Kaja Juvan (rank 100, peak 58)	6-4 6-3	peak_diff 56
+20260119	Australian Open	R128	Hard	Elina Svitolina (rank 12, peak 3)	bt	Cristina Bucsa (rank 52, peak 30)	6-4 6-1	peak_diff 27
+20260119	Australian Open	R128	Hard	Eliot Spizzirri (rank 85, peak 67)	bt	Joao Fonseca (rank 32, peak 24)	6-4 2-6 6-1 6-2	peak_diff 43
+20260119	Australian Open	R128	Hard	Elise Mertens (rank 21, peak 12)	bt	Lanlana Tararudee (rank 131, peak 94)	7-5 6-1	peak_diff 82
+20260119	Australian Open	R128	Hard	Elsa Jacquemot (rank 60, peak 53)	bt	Marta Kostyuk (rank 20, peak 12)	6-7(4) 7-6(4) 7-6(7)	peak_diff 41
+20260119	Australian Open	R128	Hard	Emilio Nava (rank 89, peak 74)	bt	Kyrian Jacquet (rank 128, peak 102)	6-2 7-5 6-7(5) 4-6 7-6(6)	peak_diff 28
+20260119	Australian Open	R128	Hard	Emma Raducanu (rank 29, peak 10)	bt	Mananchaya Sawangkaew (rank 197, peak 100)	6-4 6-1	peak_diff 90
+20260119	Australian Open	R128	Hard	Ethan Quinn (rank 80, peak 48)	bt	Tallon Griekspoor (rank 26, peak 21)	6-2 6-3 6-2	peak_diff 27
+20260119	Australian Open	R128	Hard	Fabian Marozsan (rank 47, peak 36)	bt	Arthur Rinderknech (rank 28, peak 24)	6-3 6-4 6-7(2) 6-4	peak_diff 12
+20260119	Australian Open	R128	Hard	Frances Tiafoe (rank 34, peak 10)	bt	Jason Kubler (rank 194, peak 63)	7-6(4) 6-3 6-2	peak_diff 53
+20260119	Australian Open	R128	Hard	Francesco Maestrelli (rank 141, peak 108)	bt	Terence Atmane (rank 64, peak 41)	6-4 3-6 6-7(4) 6-1 6-1	peak_diff 67
+20260119	Australian Open	R128	Hard	Francisco Cerundolo (rank 21, peak 18)	bt	Zhizhen Zhang (rank 368, peak 31)	6-3 7-6(0) 6-3	peak_diff 13
+20260119	Australian Open	R128	Hard	Francisco Comesana (rank 68, peak 54)	bt	Patrick Kypson (rank 116, peak 89)	6-2 6-3 3-6 6-3	peak_diff 35
+20260119	Australian Open	R128	Hard	Hailey Baptiste (rank 70, peak 25)	bt	Taylor Townsend (rank 116, peak 46)	6-3 6-7(3) 6-3	peak_diff 21
+20260119	Australian Open	R128	Hard	Hamad Medjedovic (rank 90, peak 56)	bt	Mariano Navone (rank 74, peak 29)	6-2 6-7(3) 6-4 6-2	peak_diff 27
+20260119	Australian Open	R128	Hard	Hubert Hurkacz (rank 55, peak 6)	bt	Zizou Bergs (rank 43, peak 38)	6-7(6) 7-6(6) 6-3 6-3	peak_diff 32
+20260119	Australian Open	R128	Hard	Iga Swiatek (rank 2, peak 1)	bt	Yue Yuan (rank 130, peak 36)	7-6(5) 6-3	peak_diff 35
+20260119	Australian Open	R128	Hard	Iva Jovic (rank 27, peak 16)	bt	Katie Volynets (rank 96, peak 56)	6-2 6-3	peak_diff 40
+20260119	Australian Open	R128	Hard	Jaime Faria (rank 151, peak 87)	bt	Alexander Blockx (rank 96, peak 36)	6-3 3-6 6-3 6-4	peak_diff 51
+20260119	Australian Open	R128	Hard	Jakub Mensik (rank 17, peak 12)	bt	Pablo Carreno Busta (rank 94, peak 11)	7-5 4-6 2-6 7-6(1) 6-3	peak_diff 1
+20260119	Australian Open	R128	Hard	James Duckworth (rank 88, peak 46)	bt	Dino Prizmic (rank 127, peak 70)	7-6(4) 3-6 1-6 7-5 6-3	peak_diff 24
+20260119	Australian Open	R128	Hard	Janice Tjen (rank 59, peak 36)	bt	Leylah Fernandez (rank 23, peak 13)	6-2 7-6(1)	peak_diff 23
+20260119	Australian Open	R128	Hard	Jannik Sinner (rank 2, peak 1)	bt	Hugo Gaston (rank 93, peak 58)	6-2 6-1 0-0 RET	peak_diff 57
+20260119	Australian Open	R128	Hard	Jasmine Paolini (rank 8, peak 4)	bt	Aliaksandra Sasnovich (rank 104, peak 29)	6-1 6-2	peak_diff 25
+20260119	Australian Open	R128	Hard	Jaume Munar (rank 39, peak 33)	bt	Dalibor Svrcina (rank 95, peak 86)	3-6 6-2 6-7(5) 7-5 6-3	peak_diff 53
+20260119	Australian Open	R128	Hard	Jelena Ostapenko (rank 24, peak 5)	bt	Rebecca Sramkova (rank 73, peak 33)	6-4 6-4	peak_diff 28
+20260119	Australian Open	R128	Hard	Jessica Pegula (rank 6, peak 3)	bt	Anastasia Zakharova (rank 105, peak 65)	6-2 6-1	peak_diff 62
+20260119	Australian Open	R128	Hard	Jordan Thompson (rank 111, peak 26)	bt	Juan Manuel Cerundolo (rank 87, peak 45)	6-7(3) 7-5 6-1 6-1	peak_diff 19
+20260119	Australian Open	R128	Hard	Julia Grabher (rank 95, peak 54)	bt	Elisabetta Cocciaretto (rank 56, peak 29)	7-5 2-6 6-4	peak_diff 25
+20260119	Australian Open	R128	Hard	Juncheng Shang (rank 318, peak 47)	bt	Roberto Bautista Agut (rank 91, peak 9)	6-4 6-7(2) 6-4 6-0	peak_diff 38
+20260119	Australian Open	R128	Hard	Kamil Majchrzak (rank 59, peak 53)	bt	Jacob Fearnley (rank 77, peak 49)	7-6(2) 7-5 3-6 7-6(3)	peak_diff 4
+20260119	Australian Open	R128	Hard	Karen Khachanov (rank 18, peak 9)	bt	Alex Michelsen (rank 38, peak 30)	4-6 6-4 6-3 5-7 6-3	peak_diff 21
+20260119	Australian Open	R128	Hard	Karolina Muchova (rank 19, peak 8)	bt	Jaqueline Cristian (rank 35, peak 28)	6-3 7-6(6)	peak_diff 20
+20260119	Australian Open	R128	Hard	Karolina Pliskova (rank 1057, peak 1)	bt	Sloane Stephens (rank 1102, peak 3)	7-6(7) 6-2	peak_diff 2
+20260119	Australian Open	R128	Hard	Katerina Siniakova (rank 45, peak 27)	bt	Panna Udvardy (rank 90, peak 59)	6-1 6-2	peak_diff 32
+20260119	Australian Open	R128	Hard	Laura Siegemund (rank 48, peak 27)	bt	Liudmila Samsonova (rank 18, peak 12)	0-6 7-5 6-4	peak_diff 15
+20260119	Australian Open	R128	Hard	Learner Tien (rank 29, peak 18)	bt	Marcos Giron (rank 51, peak 37)	7-6(2) 4-6 3-6 7-6(3) 6-2	peak_diff 19
+20260119	Australian Open	R128	Hard	Linda Fruhvirtova (rank 132, peak 49)	bt	Lulu Sun (rank 86, peak 39)	6-3 7-5	peak_diff 10
+20260119	Australian Open	R128	Hard	Linda Klimovicova (rank 134, peak 129)	bt	Francesca Jones (rank 71, peak 65)	6-2 3-2 RET	peak_diff 64
+20260119	Australian Open	R128	Hard	Linda Noskova (rank 13, peak 12)	bt	Darja Semenistaja (rank 98, peak 87)	6-3 6-0	peak_diff 75
+20260119	Australian Open	R128	Hard	Lorenzo Musetti (rank 5, peak 5)	bt	Raphael Collignon (rank 72, peak 51)	4-6 7-6(3) 7-5 3-2 RET	peak_diff 46
+20260119	Australian Open	R128	Hard	Lorenzo Sonego (rank 40, peak 21)	bt	Carlos Taberner (rank 99, peak 83)	6-4 6-0 6-3	peak_diff 62
+20260119	Australian Open	R128	Hard	Luciano Darderi (rank 25, peak 16)	bt	Cristian Garin (rank 82, peak 17)	7-6(5) 7-5 7-6(3)	peak_diff 1
+20260119	Australian Open	R128	Hard	Maddison Inglis (rank 168, peak 112)	bt	Kimberly Birrell (rank 76, peak 60)	7-6(6) 6-7(9) 6-4	peak_diff 52
+20260119	Australian Open	R128	Hard	Madison Keys (rank 9, peak 5)	bt	Oleksandra Oliynykova (rank 92, peak 51)	7-6(6) 6-1	peak_diff 46
+20260119	Australian Open	R128	Hard	Magda Linette (rank 50, peak 19)	bt	Emma Navarro (rank 15, peak 8)	3-6 6-3 6-3	peak_diff 11
+20260119	Australian Open	R128	Hard	Magdalena Frech (rank 57, peak 22)	bt	Veronika Erjavec (rank 102, peak 84)	6-1 6-1	peak_diff 62
+20260119	Australian Open	R128	Hard	Maria Sakkari (rank 53, peak 3)	bt	Leolia Jeanjean (rank 103, peak 91)	6-4 6-2	peak_diff 88
+20260119	Australian Open	R128	Hard	Marie Bouzkova (rank 44, peak 24)	bt	Renata Zarazua (rank 80, peak 51)	6-2 7-5	peak_diff 27
+20260119	Australian Open	R128	Hard	Marin Cilic (rank 70, peak 13)	bt	Daniel Altmaier (rank 44, peak 44)	6-0 6-0 7-6(3)	peak_diff 31
+20260119	Australian Open	R128	Hard	Marton Fucsovics (rank 54, peak 35)	bt	Camilo Ugo Carabelli (rank 49, peak 43)	7-6(5) 6-1 6-2	peak_diff 8
+20260119	Australian Open	R128	Hard	Mccartney Kessler (rank 37, peak 30)	bt	Emiliana Arango (rank 51, peak 46)	6-3 6-2	peak_diff 16
+20260119	Australian Open	R128	Hard	Michael Zheng (rank 174, peak 145)	bt	Sebastian Korda (rank 53, peak 15)	6-4 6-4 3-6 6-7(0) 6-3	peak_diff 130
+20260119	Australian Open	R128	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Donna Vekic (rank 72, peak 17)	4-6 6-3 6-0	peak_diff 12
+20260119	Australian Open	R128	Hard	Moyuka Uchijima (rank 88, peak 47)	bt	Solana Sierra (rank 63, peak 56)	6-3 6-1	peak_diff 9
+20260119	Australian Open	R128	Hard	Naomi Osaka (rank 17, peak 1)	bt	Antonia Ruzic (rank 65, peak 51)	6-3 3-6 6-4	peak_diff 50
+20260119	Australian Open	R128	Hard	Nikola Bartunkova (rank 126, peak 61)	bt	Daria Kasatkina (rank 43, peak 8)	7-6(7) 0-6 6-3	peak_diff 53
+20260119	Australian Open	R128	Hard	Nishesh Basavareddy (rank 242, peak 99)	bt	Christopher Oconnell (rank 118, peak 53)	4-6 7-6(7) 6-7(3) 6-2 6-3	peak_diff 46
+20260119	Australian Open	R128	Hard	Novak Djokovic (rank 4, peak 1)	bt	Pedro Martinez (rank 71, peak 36)	6-3 6-2 6-2	peak_diff 35
+20260119	Australian Open	R128	Hard	Nuno Borges (rank 46, peak 30)	bt	Felix Auger Aliassime (rank 8, peak 4)	3-6 6-4 6-4 0-0 RET	peak_diff 26
+20260119	Australian Open	R128	Hard	Oksana Selekhmeteva (rank 101, peak 71)	bt	Ella Seidel (rank 82, peak 78)	6-3 3-6 6-0	peak_diff 7
+20260119	Australian Open	R128	Hard	Olga Danilovic (rank 69, peak 32)	bt	Venus Williams (rank 578, peak 1)	6-7(5) 6-3 6-4	peak_diff 31
+20260119	Australian Open	R128	Hard	Paula Badosa (rank 26, peak 2)	bt	Zarina Diyas (rank 290, peak 31)	6-2 6-4	peak_diff 29
+20260119	Australian Open	R128	Hard	Petra Marcinko (rank 81, peak 50)	bt	Tatjana Maria (rank 42, peak 36)	6-3 7-5	peak_diff 14
+20260119	Australian Open	R128	Hard	Peyton Stearns (rank 68, peak 28)	bt	Sofia Kenin (rank 30, peak 4)	6-3 6-2	peak_diff 24
+20260119	Australian Open	R128	Hard	Polina Kudermetova (rank 150, peak 54)	bt	Guiomar Maristany Zuleta De Reales (rank 185, peak 165)	6-2 6-3	peak_diff 111
+20260119	Australian Open	R128	Hard	Priscilla Hon (rank 121, peak 94)	bt	Marina Stakusic (rank 127, peak 114)	1-6 6-4 5-3 RET	peak_diff 20
+20260119	Australian Open	R128	Hard	Quentin Halys (rank 83, peak 46)	bt	Alejandro Tabilo (rank 79, peak 19)	6-2 6-2 7-6(2)	peak_diff 27
+20260119	Australian Open	R128	Hard	Rafael Jodar (rank 150, peak 23)	bt	Rei Sakamoto (rank 203, peak 149)	7-6(6) 6-1 5-7 4-6 6-3	peak_diff 126
+20260119	Australian Open	R128	Hard	Reilly Opelka (rank 63, peak 17)	bt	Nicolai Budkov Kjaer (rank 135, peak 121)	6-4 6-3 6-4	peak_diff 104
+20260119	Australian Open	R128	Hard	Rinky Hijikata (rank 114, peak 62)	bt	Adrian Mannarino (rank 69, peak 17)	6-3 6-3 6-1	peak_diff 45
+20260119	Australian Open	R128	Hard	Sebastian Baez (rank 36, peak 18)	bt	Giovanni Mpetshi Perricard (rank 61, peak 29)	6-4 6-4 3-6 5-7 6-3	peak_diff 11
+20260119	Australian Open	R128	Hard	Sorana Cirstea (rank 41, peak 18)	bt	Eva Lys (rank 39, peak 39)	3-6 6-4 6-3	peak_diff 21
+20260119	Australian Open	R128	Hard	Stan Wawrinka (rank 139, peak 13)	bt	Laslo Djere (rank 92, peak 33)	5-7 6-3 6-4 7-6(4)	peak_diff 20
+20260119	Australian Open	R128	Hard	Stefanos Tsitsipas (rank 35, peak 3)	bt	Shintaro Mochizuki (rank 112, peak 92)	4-6 6-3 6-2 6-2	peak_diff 89
+20260119	Australian Open	R128	Hard	Storm Hunter (rank 367, peak 114)	bt	Jessica Bouzas Maneiro (rank 40, peak 40)	6-4 6-4	peak_diff 74
+20260119	Australian Open	R128	Hard	Talia Gibson (rank 119, peak 55)	bt	Anna Blinkova (rank 64, peak 35)	6-1 6-3	peak_diff 20
+20260119	Australian Open	R128	Hard	Taylah Preston (rank 161, peak 126)	bt	Shuai Zhang (rank 75, peak 22)	6-3 2-6 6-3	peak_diff 104
+20260119	Australian Open	R128	Hard	Taylor Fritz (rank 9, peak 4)	bt	Valentin Royer (rank 58, peak 54)	7-6(5) 5-7 6-1 6-3	peak_diff 50
+20260119	Australian Open	R128	Hard	Tereza Valentova (rank 54, peak 42)	bt	Maya Joint (rank 31, peak 28)	6-4 6-4	peak_diff 14
+20260119	Australian Open	R128	Hard	Thiago Agustin Tirante (rank 103, peak 52)	bt	Aleksandar Vukic (rank 78, peak 48)	7-5 6-2 6-2	peak_diff 4
+20260119	Australian Open	R128	Hard	Tomas Machac (rank 24, peak 20)	bt	Grigor Dimitrov (rank 45, peak 9)	6-4 6-4 6-3	peak_diff 11
+20260119	Australian Open	R128	Hard	Tomas Martin Etcheverry (rank 62, peak 25)	bt	Miomir Kecmanovic (rank 60, peak 27)	6-2 3-6 4-6 6-3 6-4	peak_diff 2
+20260119	Australian Open	R128	Hard	Tommy Paul (rank 20, peak 8)	bt	Aleksandar Kovacevic (rank 56, peak 54)	6-4 6-3 6-3	peak_diff 46
+20260119	Australian Open	R128	Hard	Valentin Vacherot (rank 31, peak 16)	bt	Martin Damm (rank 177, peak 42)	6-4 6-4 6-4	peak_diff 26
+20260119	Australian Open	R128	Hard	Varvara Gracheva (rank 77, peak 39)	bt	Viktorija Golubic (rank 83, peak 35)	6-1 2-6 6-1	peak_diff 4
+20260119	Australian Open	R128	Hard	Victoria Mboko (rank 16, peak 9)	bt	Emerson Jones (rank 153, peak 129)	6-4 6-1	peak_diff 120
+20260119	Australian Open	R128	Hard	Vit Kopriva (rank 101, peak 55)	bt	Jan Lennard Struff (rank 86, peak 21)	4-6 6-2 2-6 6-3 6-1	peak_diff 34
+20260119	Australian Open	R128	Hard	Xin Yu Wang (rank 46, peak 30)	bt	Anhelina Kalinina (rank 179, peak 25)	6-3 6-3	peak_diff 5
+20260119	Australian Open	R128	Hard	Yannick Hanfmann (rank 102, peak 45)	bt	Zachary Svajda (rank 143, peak 62)	7-5 4-6 6-4 7-6(3)	peak_diff 17
+20260119	Australian Open	R128	Hard	Yibing Wu (rank 168, peak 54)	bt	Luca Nardi (rank 108, peak 67)	7-5 4-6 6-4 6-2	peak_diff 13
+20260119	Australian Open	R128	Hard	Yulia Putintseva (rank 94, peak 20)	bt	Beatriz Haddad Maia (rank 61, peak 10)	3-6 7-5 6-3	peak_diff 10
+20260119	Australian Open	R128	Hard	Zeynep Sonmez (rank 112, peak 59)	bt	Ekaterina Alexandrova (rank 11, peak 10)	7-5 4-6 6-4	peak_diff 49
+20260119	Australian Open	R128	Hard	Zhuoxuan Bai (rank 702, peak 83)	bt	Anastasia Pavlyuchenkova (rank 47, peak 11)	6-4 2-6 7-6(10)	peak_diff 72
+20260119	Australian Open	R16	Hard	Alex De Minaur (rank 6, peak 6)	bt	Alexander Bublik (rank 10, peak 10)	6-4 6-1 6-1	peak_diff 4
+20260119	Australian Open	R16	Hard	Alexander Zverev (rank 3, peak 2)	bt	Francisco Cerundolo (rank 21, peak 18)	6-2 6-4 6-4	peak_diff 16
+20260119	Australian Open	R16	Hard	Amanda Anisimova (rank 4, peak 3)	bt	Xin Yu Wang (rank 46, peak 30)	7-6(4) 6-4	peak_diff 27
+20260119	Australian Open	R16	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Victoria Mboko (rank 16, peak 9)	6-1 7-6(1)	peak_diff 8
+20260119	Australian Open	R16	Hard	Ben Shelton (rank 7, peak 5)	bt	Casper Ruud (rank 13, peak 2)	3-6 6-4 6-3 6-4	peak_diff 3
+20260119	Australian Open	R16	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Tommy Paul (rank 20, peak 8)	7-6(6) 6-4 7-5	peak_diff 7
+20260119	Australian Open	R16	Hard	Coco Gauff (rank 3, peak 2)	bt	Karolina Muchova (rank 19, peak 8)	6-1 3-6 6-3	peak_diff 6
+20260119	Australian Open	R16	Hard	Elena Rybakina (rank 5, peak 2)	bt	Elise Mertens (rank 21, peak 12)	6-1 6-3	peak_diff 10
+20260119	Australian Open	R16	Hard	Elina Svitolina (rank 12, peak 3)	bt	Mirra Andreeva (rank 7, peak 5)	6-2 6-4	peak_diff 2
+20260119	Australian Open	R16	Hard	Iga Swiatek (rank 2, peak 1)	bt	Maddison Inglis (rank 168, peak 112)	6-0 6-3	peak_diff 111
+20260119	Australian Open	R16	Hard	Iva Jovic (rank 27, peak 16)	bt	Yulia Putintseva (rank 94, peak 20)	6-0 6-1	peak_diff 4
+20260119	Australian Open	R16	Hard	Jannik Sinner (rank 2, peak 1)	bt	Luciano Darderi (rank 25, peak 16)	6-1 6-3 7-6(2)	peak_diff 15
+20260119	Australian Open	R16	Hard	Jessica Pegula (rank 6, peak 3)	bt	Madison Keys (rank 9, peak 5)	6-3 6-4	peak_diff 2
+20260119	Australian Open	R16	Hard	Learner Tien (rank 29, peak 18)	bt	Daniil Medvedev (rank 12, peak 1)	6-4 6-0 6-3	peak_diff 17
+20260119	Australian Open	R16	Hard	Lorenzo Musetti (rank 5, peak 5)	bt	Taylor Fritz (rank 9, peak 4)	6-2 7-5 6-4	peak_diff 1
+20260119	Australian Open	R16	Hard	Novak Djokovic (rank 4, peak 1)	bt	Jakub Mensik (rank 17, peak 12)	W/O	peak_diff 11
+20260119	Australian Open	R32	Hard	Alex De Minaur (rank 6, peak 6)	bt	Frances Tiafoe (rank 34, peak 10)	6-3 6-4 7-5	peak_diff 4
+20260119	Australian Open	R32	Hard	Alexander Bublik (rank 10, peak 10)	bt	Tomas Martin Etcheverry (rank 62, peak 25)	7-6(4) 7-6(5) 6-4	peak_diff 15
+20260119	Australian Open	R32	Hard	Alexander Zverev (rank 3, peak 2)	bt	Cameron Norrie (rank 27, peak 8)	7-5 4-6 6-3 6-1	peak_diff 6
+20260119	Australian Open	R32	Hard	Amanda Anisimova (rank 4, peak 3)	bt	Peyton Stearns (rank 68, peak 28)	6-1 6-4	peak_diff 25
+20260119	Australian Open	R32	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Anastasia Potapova (rank 55, peak 21)	7-6(4) 7-6(7)	peak_diff 20
+20260119	Australian Open	R32	Hard	Ben Shelton (rank 7, peak 5)	bt	Valentin Vacherot (rank 31, peak 16)	6-4 6-4 7-6(5)	peak_diff 11
+20260119	Australian Open	R32	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Corentin Moutet (rank 37, peak 30)	6-2 6-4 6-1	peak_diff 29
+20260119	Australian Open	R32	Hard	Casper Ruud (rank 13, peak 2)	bt	Marin Cilic (rank 70, peak 13)	6-4 6-4 3-6 7-5	peak_diff 11
+20260119	Australian Open	R32	Hard	Coco Gauff (rank 3, peak 2)	bt	Hailey Baptiste (rank 70, peak 25)	3-6 6-0 6-3	peak_diff 23
+20260119	Australian Open	R32	Hard	Daniil Medvedev (rank 12, peak 1)	bt	Fabian Marozsan (rank 47, peak 36)	6-7(5) 4-6 7-5 6-0 6-3	peak_diff 35
+20260119	Australian Open	R32	Hard	Elena Rybakina (rank 5, peak 2)	bt	Tereza Valentova (rank 54, peak 42)	6-2 6-3	peak_diff 40
+20260119	Australian Open	R32	Hard	Elina Svitolina (rank 12, peak 3)	bt	Diana Shnaider (rank 22, peak 11)	7-6(4) 6-3	peak_diff 8
+20260119	Australian Open	R32	Hard	Elise Mertens (rank 21, peak 12)	bt	Nikola Bartunkova (rank 126, peak 61)	6-0 6-4	peak_diff 49
+20260119	Australian Open	R32	Hard	Francisco Cerundolo (rank 21, peak 18)	bt	Andrey Rublev (rank 15, peak 5)	6-3 7-6(4) 6-3	peak_diff 13
+20260119	Australian Open	R32	Hard	Iga Swiatek (rank 2, peak 1)	bt	Anna Kalinskaya (rank 33, peak 11)	6-1 1-6 6-1	peak_diff 10
+20260119	Australian Open	R32	Hard	Iva Jovic (rank 27, peak 16)	bt	Jasmine Paolini (rank 8, peak 4)	6-2 7-6(3)	peak_diff 12
+20260119	Australian Open	R32	Hard	Jakub Mensik (rank 17, peak 12)	bt	Ethan Quinn (rank 80, peak 48)	6-2 7-6(5) 7-6(5)	peak_diff 36
+20260119	Australian Open	R32	Hard	Jannik Sinner (rank 2, peak 1)	bt	Eliot Spizzirri (rank 85, peak 67)	4-6 6-3 6-4 6-4	peak_diff 66
+20260119	Australian Open	R32	Hard	Jessica Pegula (rank 6, peak 3)	bt	Oksana Selekhmeteva (rank 101, peak 71)	6-3 6-2	peak_diff 68
+20260119	Australian Open	R32	Hard	Karolina Muchova (rank 19, peak 8)	bt	Magda Linette (rank 50, peak 19)	6-1 6-1	peak_diff 11
+20260119	Australian Open	R32	Hard	Learner Tien (rank 29, peak 18)	bt	Nuno Borges (rank 46, peak 30)	7-6(9) 6-4 6-2	peak_diff 12
+20260119	Australian Open	R32	Hard	Lorenzo Musetti (rank 5, peak 5)	bt	Tomas Machac (rank 24, peak 20)	5-7 6-4 6-2 5-7 6-2	peak_diff 15
+20260119	Australian Open	R32	Hard	Luciano Darderi (rank 25, peak 16)	bt	Karen Khachanov (rank 18, peak 9)	7-6(5) 3-6 6-3 6-4	peak_diff 7
+20260119	Australian Open	R32	Hard	Maddison Inglis (rank 168, peak 112)	bt	Naomi Osaka (rank 17, peak 1)	W/O	peak_diff 111
+20260119	Australian Open	R32	Hard	Madison Keys (rank 9, peak 5)	bt	Karolina Pliskova (rank 1057, peak 1)	6-3 6-3	peak_diff 4
+20260119	Australian Open	R32	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Elena Gabriela Ruse (rank 79, peak 51)	6-3 6-4	peak_diff 46
+20260119	Australian Open	R32	Hard	Novak Djokovic (rank 4, peak 1)	bt	Botic Van De Zandschulp (rank 75, peak 22)	6-3 6-4 7-6(4)	peak_diff 21
+20260119	Australian Open	R32	Hard	Taylor Fritz (rank 9, peak 4)	bt	Stan Wawrinka (rank 139, peak 13)	7-6(5) 2-6 6-4 6-4	peak_diff 9
+20260119	Australian Open	R32	Hard	Tommy Paul (rank 20, peak 8)	bt	Alejandro Davidovich Fokina (rank 14, peak 14)	6-1 6-1 0-0 RET	peak_diff 6
+20260119	Australian Open	R32	Hard	Victoria Mboko (rank 16, peak 9)	bt	Clara Tauson (rank 14, peak 12)	7-6(5) 5-7 6-3	peak_diff 3
+20260119	Australian Open	R32	Hard	Xin Yu Wang (rank 46, peak 30)	bt	Linda Noskova (rank 13, peak 12)	7-5 6-4	peak_diff 18
+20260119	Australian Open	R32	Hard	Yulia Putintseva (rank 94, peak 20)	bt	Zeynep Sonmez (rank 112, peak 59)	6-3 6-7(3) 6-3	peak_diff 39
+20260119	Australian Open	R64	Hard	Alejandro Davidovich Fokina (rank 14, peak 14)	bt	Reilly Opelka (rank 63, peak 17)	6-3 7-6(3) 5-7 4-6 6-4	peak_diff 3
+20260119	Australian Open	R64	Hard	Alex De Minaur (rank 6, peak 6)	bt	Hamad Medjedovic (rank 90, peak 56)	6-7(5) 6-2 6-2 6-1	peak_diff 50
+20260119	Australian Open	R64	Hard	Alexander Bublik (rank 10, peak 10)	bt	Marton Fucsovics (rank 54, peak 35)	7-5 6-4 7-5	peak_diff 25
+20260119	Australian Open	R64	Hard	Alexander Zverev (rank 3, peak 2)	bt	Alexandre Muller (rank 52, peak 38)	6-3 4-6 6-3 6-4	peak_diff 36
+20260119	Australian Open	R64	Hard	Amanda Anisimova (rank 4, peak 3)	bt	Katerina Siniakova (rank 45, peak 27)	6-1 6-4	peak_diff 24
+20260119	Australian Open	R64	Hard	Anastasia Potapova (rank 55, peak 21)	bt	Emma Raducanu (rank 29, peak 10)	7-6(3) 6-2	peak_diff 11
+20260119	Australian Open	R64	Hard	Andrey Rublev (rank 15, peak 5)	bt	Jaime Faria (rank 151, peak 87)	6-4 6-3 4-6 7-5	peak_diff 82
+20260119	Australian Open	R64	Hard	Anna Kalinskaya (rank 33, peak 11)	bt	Julia Grabher (rank 95, peak 54)	6-3 6-3	peak_diff 43
+20260119	Australian Open	R64	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Zhuoxuan Bai (rank 702, peak 83)	6-3 6-1	peak_diff 82
+20260119	Australian Open	R64	Hard	Ben Shelton (rank 7, peak 5)	bt	Dane Sweeny (rank 182, peak 131)	6-3 6-2 6-2	peak_diff 126
+20260119	Australian Open	R64	Hard	Botic Van De Zandschulp (rank 75, peak 22)	bt	Juncheng Shang (rank 318, peak 47)	7-6(6) 6-2 6-3	peak_diff 25
+20260119	Australian Open	R64	Hard	Cameron Norrie (rank 27, peak 8)	bt	Emilio Nava (rank 89, peak 74)	6-1 7-6(3) 4-6 7-6(5)	peak_diff 66
+20260119	Australian Open	R64	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Yannick Hanfmann (rank 102, peak 45)	7-6(4) 6-3 6-2	peak_diff 44
+20260119	Australian Open	R64	Hard	Casper Ruud (rank 13, peak 2)	bt	Jaume Munar (rank 39, peak 33)	6-3 7-5 6-4	peak_diff 31
+20260119	Australian Open	R64	Hard	Clara Tauson (rank 14, peak 12)	bt	Polina Kudermetova (rank 150, peak 54)	6-3 3-6 7-5	peak_diff 42
+20260119	Australian Open	R64	Hard	Coco Gauff (rank 3, peak 2)	bt	Olga Danilovic (rank 69, peak 32)	6-2 6-2	peak_diff 30
+20260119	Australian Open	R64	Hard	Corentin Moutet (rank 37, peak 30)	bt	Michael Zheng (rank 174, peak 145)	3-6 6-1 6-3 2-0 RET	peak_diff 115
+20260119	Australian Open	R64	Hard	Daniil Medvedev (rank 12, peak 1)	bt	Quentin Halys (rank 83, peak 46)	6-7(9) 6-3 6-4 6-2	peak_diff 45
+20260119	Australian Open	R64	Hard	Diana Shnaider (rank 22, peak 11)	bt	Talia Gibson (rank 119, peak 55)	3-6 7-5 6-3	peak_diff 44
+20260119	Australian Open	R64	Hard	Elena Gabriela Ruse (rank 79, peak 51)	bt	Ajla Tomljanovic (rank 78, peak 32)	6-4 6-4	peak_diff 19
+20260119	Australian Open	R64	Hard	Elena Rybakina (rank 5, peak 2)	bt	Varvara Gracheva (rank 77, peak 39)	7-5 6-2	peak_diff 37
+20260119	Australian Open	R64	Hard	Elina Svitolina (rank 12, peak 3)	bt	Linda Klimovicova (rank 134, peak 129)	7-5 6-1	peak_diff 126
+20260119	Australian Open	R64	Hard	Eliot Spizzirri (rank 85, peak 67)	bt	Yibing Wu (rank 168, peak 54)	6-2 6-4 6-7(4) 4-6 6-3	peak_diff 13
+20260119	Australian Open	R64	Hard	Elise Mertens (rank 21, peak 12)	bt	Moyuka Uchijima (rank 88, peak 47)	6-3 6-1	peak_diff 35
+20260119	Australian Open	R64	Hard	Ethan Quinn (rank 80, peak 48)	bt	Hubert Hurkacz (rank 55, peak 6)	6-4 7-6(5) 6-1	peak_diff 42
+20260119	Australian Open	R64	Hard	Fabian Marozsan (rank 47, peak 36)	bt	Kamil Majchrzak (rank 59, peak 53)	6-3 6-4 7-6(5)	peak_diff 17
+20260119	Australian Open	R64	Hard	Frances Tiafoe (rank 34, peak 10)	bt	Francisco Comesana (rank 68, peak 54)	6-4 6-3 4-6 6-2	peak_diff 44
+20260119	Australian Open	R64	Hard	Francisco Cerundolo (rank 21, peak 18)	bt	Damir Dzumhur (rank 66, peak 54)	6-3 6-2 6-1	peak_diff 36
+20260119	Australian Open	R64	Hard	Hailey Baptiste (rank 70, peak 25)	bt	Storm Hunter (rank 367, peak 114)	6-2 6-1	peak_diff 89
+20260119	Australian Open	R64	Hard	Iga Swiatek (rank 2, peak 1)	bt	Marie Bouzkova (rank 44, peak 24)	6-2 6-3	peak_diff 23
+20260119	Australian Open	R64	Hard	Iva Jovic (rank 27, peak 16)	bt	Priscilla Hon (rank 121, peak 94)	6-1 6-2	peak_diff 78
+20260119	Australian Open	R64	Hard	Jakub Mensik (rank 17, peak 12)	bt	Rafael Jodar (rank 150, peak 23)	6-2 6-4 6-4	peak_diff 11
+20260119	Australian Open	R64	Hard	Jannik Sinner (rank 2, peak 1)	bt	James Duckworth (rank 88, peak 46)	6-1 6-4 6-2	peak_diff 45
+20260119	Australian Open	R64	Hard	Jasmine Paolini (rank 8, peak 4)	bt	Magdalena Frech (rank 57, peak 22)	6-2 6-3	peak_diff 18
+20260119	Australian Open	R64	Hard	Jessica Pegula (rank 6, peak 3)	bt	Mccartney Kessler (rank 37, peak 30)	6-0 6-2	peak_diff 27
+20260119	Australian Open	R64	Hard	Karen Khachanov (rank 18, peak 9)	bt	Nishesh Basavareddy (rank 242, peak 99)	6-1 6-4 6-3	peak_diff 90
+20260119	Australian Open	R64	Hard	Karolina Muchova (rank 19, peak 8)	bt	Alycia Parks (rank 99, peak 40)	4-6 6-4 6-4	peak_diff 32
+20260119	Australian Open	R64	Hard	Karolina Pliskova (rank 1057, peak 1)	bt	Janice Tjen (rank 59, peak 36)	6-4 6-4	peak_diff 35
+20260119	Australian Open	R64	Hard	Learner Tien (rank 29, peak 18)	bt	Alexander Shevchenko (rank 97, peak 45)	6-2 5-7 6-1 6-0	peak_diff 27
+20260119	Australian Open	R64	Hard	Linda Noskova (rank 13, peak 12)	bt	Taylah Preston (rank 161, peak 126)	6-2 4-6 6-2	peak_diff 114
+20260119	Australian Open	R64	Hard	Lorenzo Musetti (rank 5, peak 5)	bt	Lorenzo Sonego (rank 40, peak 21)	6-3 6-3 6-4	peak_diff 16
+20260119	Australian Open	R64	Hard	Luciano Darderi (rank 25, peak 16)	bt	Sebastian Baez (rank 36, peak 18)	6-3 1-6 6-4 6-3	peak_diff 2
+20260119	Australian Open	R64	Hard	Maddison Inglis (rank 168, peak 112)	bt	Laura Siegemund (rank 48, peak 27)	6-4 6-7(3) 7-6(7)	peak_diff 85
+20260119	Australian Open	R64	Hard	Madison Keys (rank 9, peak 5)	bt	Ashlyn Krueger (rank 62, peak 29)	6-1 7-5	peak_diff 24
+20260119	Australian Open	R64	Hard	Magda Linette (rank 50, peak 19)	bt	Ann Li (rank 38, peak 29)	6-3 6-3	peak_diff 10
+20260119	Australian Open	R64	Hard	Marin Cilic (rank 70, peak 13)	bt	Denis Shapovalov (rank 23, peak 10)	6-4 6-3 6-2	peak_diff 3
+20260119	Australian Open	R64	Hard	Mirra Andreeva (rank 7, peak 5)	bt	Maria Sakkari (rank 53, peak 3)	6-0 6-4	peak_diff 2
+20260119	Australian Open	R64	Hard	Naomi Osaka (rank 17, peak 1)	bt	Sorana Cirstea (rank 41, peak 18)	6-3 4-6 6-2	peak_diff 17
+20260119	Australian Open	R64	Hard	Nikola Bartunkova (rank 126, peak 61)	bt	Belinda Bencic (rank 10, peak 4)	6-3 0-6 6-4	peak_diff 57
+20260119	Australian Open	R64	Hard	Novak Djokovic (rank 4, peak 1)	bt	Francesco Maestrelli (rank 141, peak 108)	6-3 6-2 6-2	peak_diff 107
+20260119	Australian Open	R64	Hard	Nuno Borges (rank 46, peak 30)	bt	Jordan Thompson (rank 111, peak 26)	6-7(9) 6-3 6-2 6-4	peak_diff 4
+20260119	Australian Open	R64	Hard	Oksana Selekhmeteva (rank 101, peak 71)	bt	Paula Badosa (rank 26, peak 2)	6-4 6-4	peak_diff 69
+20260119	Australian Open	R64	Hard	Peyton Stearns (rank 68, peak 28)	bt	Petra Marcinko (rank 81, peak 50)	6-2 7-5	peak_diff 22
+20260119	Australian Open	R64	Hard	Stan Wawrinka (rank 139, peak 13)	bt	Arthur Gea (rank 198, peak 135)	4-6 6-3 3-6 7-5 7-6(3)	peak_diff 122
+20260119	Australian Open	R64	Hard	Taylor Fritz (rank 9, peak 4)	bt	Vit Kopriva (rank 101, peak 55)	6-1 6-4 7-6(4)	peak_diff 51
+20260119	Australian Open	R64	Hard	Tereza Valentova (rank 54, peak 42)	bt	Linda Fruhvirtova (rank 132, peak 49)	7-5 2-6 6-3	peak_diff 7
+20260119	Australian Open	R64	Hard	Tomas Machac (rank 24, peak 20)	bt	Stefanos Tsitsipas (rank 35, peak 3)	6-4 3-6 7-6(5) 7-6(5)	peak_diff 17
+20260119	Australian Open	R64	Hard	Tomas Martin Etcheverry (rank 62, peak 25)	bt	Arthur Fery (rank 186, peak 141)	7-6(4) 6-1 6-3	peak_diff 116
+20260119	Australian Open	R64	Hard	Tommy Paul (rank 20, peak 8)	bt	Thiago Agustin Tirante (rank 103, peak 52)	6-3 6-4 6-2	peak_diff 44
+20260119	Australian Open	R64	Hard	Valentin Vacherot (rank 31, peak 16)	bt	Rinky Hijikata (rank 114, peak 62)	6-1 6-3 4-6 6-2	peak_diff 46
+20260119	Australian Open	R64	Hard	Victoria Mboko (rank 16, peak 9)	bt	Caty Mcnally (rank 85, peak 54)	6-4 6-3	peak_diff 45
+20260119	Australian Open	R64	Hard	Xin Yu Wang (rank 46, peak 30)	bt	Jelena Ostapenko (rank 24, peak 5)	4-6 6-4 6-4	peak_diff 25
+20260119	Australian Open	R64	Hard	Yulia Putintseva (rank 94, peak 20)	bt	Elsa Jacquemot (rank 60, peak 53)	6-1 6-2	peak_diff 33
+20260119	Australian Open	R64	Hard	Zeynep Sonmez (rank 112, peak 59)	bt	Anna Bondar (rank 74, peak 50)	6-2 6-4	peak_diff 9
+20260119	Australian Open	SF	Hard	Aryna Sabalenka (rank 1, peak 1)	bt	Elina Svitolina (rank 12, peak 3)	6-2 6-3	peak_diff 2
+20260119	Australian Open	SF	Hard	Carlos Alcaraz (rank 1, peak 1)	bt	Alexander Zverev (rank 3, peak 2)	6-4 7-6(5) 6-7(3) 6-7(4) 7-5	peak_diff 1
+20260119	Australian Open	SF	Hard	Elena Rybakina (rank 5, peak 2)	bt	Jessica Pegula (rank 6, peak 3)	6-3 7-6(7)	peak_diff 1
+20260119	Australian Open	SF	Hard	Novak Djokovic (rank 4, peak 1)	bt	Jannik Sinner (rank 2, peak 1)	3-6 6-3 4-6 6-4 6-4	peak_diff 0
+20260525	Roland Garros	F	Clay	Alexander Zverev (rank 3, peak 2)	bt	Flavio Cobolli (rank 14, peak 10)	6-1 4-6 6-4 6-7(5) 6-1	peak_diff 8
+20260525	Roland Garros	F	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Maja Chwalinska (rank 114, peak 21)	6-3 6-2	peak_diff 16
+20260525	Roland Garros	QF	Clay	Alexander Zverev (rank 3, peak 2)	bt	Rafael Jodar (rank 29, peak 23)	7-6(3) 6-1 6-3	peak_diff 21
+20260525	Roland Garros	QF	Clay	Diana Shnaider (rank 23, peak 11)	bt	Aryna Sabalenka (rank 1, peak 1)	3-6 7-5 6-0	peak_diff 10
+20260525	Roland Garros	QF	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Felix Auger Aliassime (rank 6, peak 4)	4-6 6-4 6-4 6-4	peak_diff 6
+20260525	Roland Garros	QF	Clay	Jakub Mensik (rank 27, peak 12)	bt	Joao Fonseca (rank 30, peak 24)	6-4 6-3 7-6(3)	peak_diff 12
+20260525	Roland Garros	QF	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Anna Kalinskaya (rank 24, peak 11)	7-6(3) 6-3	peak_diff 10
+20260525	Roland Garros	QF	Clay	Marta Kostyuk (rank 15, peak 12)	bt	Elina Svitolina (rank 7, peak 3)	6-3 2-6 6-2	peak_diff 9
+20260525	Roland Garros	QF	Clay	Matteo Arnaldi (rank 104, peak 29)	bt	Matteo Berrettini (rank 105, peak 6)	7-5 5-2 RET	peak_diff 23
+20260525	Roland Garros	QF	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Sorana Cirstea (rank 18, peak 18)	6-0 6-3	peak_diff 13
+20260525	Roland Garros	R128	Clay	Adam Walton (rank 97, peak 74)	bt	Daniil Medvedev (rank 8, peak 1)	6-2 1-6 6-1 1-6 6-4	peak_diff 73
+20260525	Roland Garros	R128	Clay	Adolfo Daniel Vallejo (rank 71, peak 70)	bt	Cameron Norrie (rank 24, peak 8)	7-6(7) 2-0 RET	peak_diff 62
+20260525	Roland Garros	R128	Clay	Alejandro Davidovich Fokina (rank 23, peak 14)	bt	Damir Dzumhur (rank 87, peak 54)	6-7(3) 6-3 2-6 7-5 6-3	peak_diff 40
+20260525	Roland Garros	R128	Clay	Alejandro Tabilo (rank 36, peak 19)	bt	Kamil Majchrzak (rank 78, peak 53)	6-1 6-3 6-4	peak_diff 34
+20260525	Roland Garros	R128	Clay	Alex De Minaur (rank 7, peak 6)	bt	Toby Samuel (rank 159, peak 150)	6-4 6-4 6-2	peak_diff 144
+20260525	Roland Garros	R128	Clay	Alex Michelsen (rank 42, peak 30)	bt	Alexander Shevchenko (rank 88, peak 45)	6-2 6-4 6-2	peak_diff 15
+20260525	Roland Garros	R128	Clay	Alexander Blockx (rank 37, peak 36)	bt	Coleman Wong (rank 109, peak 108)	6-3 6-4 6-2	peak_diff 72
+20260525	Roland Garros	R128	Clay	Alexander Zverev (rank 3, peak 2)	bt	Benjamin Bonzi (rank 95, peak 42)	6-3 6-4 6-2	peak_diff 40
+20260525	Roland Garros	R128	Clay	Alina Korneeva (rank 117, peak 96)	bt	Elisabetta Cocciaretto (rank 38, peak 29)	6-3 6-3	peak_diff 67
+20260525	Roland Garros	R128	Clay	Alycia Parks (rank 79, peak 40)	bt	Leylah Fernandez (rank 22, peak 13)	6-4 6-4	peak_diff 27
+20260525	Roland Garros	R128	Clay	Amanda Anisimova (rank 6, peak 3)	bt	Tiantsoa Sarah Rakotomanga Rajaonah (rank 153, peak 116)	6-3 6-1	peak_diff 113
+20260525	Roland Garros	R128	Clay	Anastasia Potapova (rank 30, peak 21)	bt	Maya Joint (rank 52, peak 28)	6-1 6-2	peak_diff 7
+20260525	Roland Garros	R128	Clay	Andrey Rublev (rank 13, peak 5)	bt	Ignacio Buse (rank 31, peak 31)	6-3 6-7(6) 6-3 7-5	peak_diff 26
+20260525	Roland Garros	R128	Clay	Ann Li (rank 29, peak 29)	bt	Shuai Zhang (rank 61, peak 22)	6-4 6-2	peak_diff 7
+20260525	Roland Garros	R128	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Lois Boisson (rank 43, peak 34)	6-2 6-2	peak_diff 23
+20260525	Roland Garros	R128	Clay	Antonia Ruzic (rank 64, peak 51)	bt	Ashlyn Krueger (rank 120, peak 29)	3-6 6-2 6-2	peak_diff 22
+20260525	Roland Garros	R128	Clay	Arthur Rinderknech (rank 25, peak 24)	bt	Jurij Rodionov (rank 158, peak 87)	7-6(5) 6-2 6-3	peak_diff 63
+20260525	Roland Garros	R128	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Jessica Bouzas Maneiro (rank 50, peak 40)	6-4 6-2	peak_diff 39
+20260525	Roland Garros	R128	Clay	Belinda Bencic (rank 11, peak 4)	bt	Sinja Kraus (rank 98, peak 92)	6-2 6-3	peak_diff 88
+20260525	Roland Garros	R128	Clay	Ben Shelton (rank 5, peak 5)	bt	Daniel Merida Aguilar (rank 86, peak 82)	6-3 6-3 6-4	peak_diff 77
+20260525	Roland Garros	R128	Clay	Brandon Nakashima (rank 35, peak 29)	bt	Roberto Bautista Agut (rank 117, peak 9)	6-2 7-5 6-2	peak_diff 20
+20260525	Roland Garros	R128	Clay	Camila Osorio (rank 86, peak 33)	bt	Ekaterina Alexandrova (rank 14, peak 10)	6-2 6-4	peak_diff 23
+20260525	Roland Garros	R128	Clay	Camilo Ugo Carabelli (rank 59, peak 43)	bt	Emilio Nava (rank 94, peak 74)	7-6(10) 6-3 6-3	peak_diff 31
+20260525	Roland Garros	R128	Clay	Casper Ruud (rank 16, peak 2)	bt	Roman Safiullin (rank 141, peak 36)	6-2 7-6(5) 5-7 0-6 6-2	peak_diff 34
+20260525	Roland Garros	R128	Clay	Caty Mcnally (rank 63, peak 54)	bt	Ajla Tomljanovic (rank 100, peak 32)	3-6 7-6(5) 6-3	peak_diff 22
+20260525	Roland Garros	R128	Clay	Claire Liu (rank 182, peak 52)	bt	Moyuka Uchijima (rank 107, peak 47)	3-6 6-0 4-1 RET	peak_diff 5
+20260525	Roland Garros	R128	Clay	Coco Gauff (rank 4, peak 2)	bt	Taylor Townsend (rank 75, peak 46)	6-4 6-0	peak_diff 44
+20260525	Roland Garros	R128	Clay	Daria Kasatkina (rank 53, peak 8)	bt	Zeynep Sonmez (rank 66, peak 59)	6-4 6-4	peak_diff 51
+20260525	Roland Garros	R128	Clay	Daria Snigur (rank 93, peak 84)	bt	Clara Tauson (rank 20, peak 12)	3-6 7-5 6-2	peak_diff 72
+20260525	Roland Garros	R128	Clay	Diana Shnaider (rank 23, peak 11)	bt	Renata Zarazua (rank 74, peak 51)	6-4 6-1	peak_diff 40
+20260525	Roland Garros	R128	Clay	Diane Parry (rank 92, peak 48)	bt	Anhelina Kalinina (rank 60, peak 25)	0-6 6-2 6-4	peak_diff 23
+20260525	Roland Garros	R128	Clay	Dino Prizmic (rank 72, peak 70)	bt	Michael Zheng (rank 146, peak 145)	6-1 6-1 6-3	peak_diff 75
+20260525	Roland Garros	R128	Clay	Donna Vekic (rank 72, peak 17)	bt	Alice Tubello (rank 226, peak 219)	6-3 6-2	peak_diff 202
+20260525	Roland Garros	R128	Clay	Elena Rybakina (rank 2, peak 2)	bt	Veronika Erjavec (rank 84, peak 84)	6-2 6-2	peak_diff 82
+20260525	Roland Garros	R128	Clay	Elina Svitolina (rank 7, peak 3)	bt	Anna Bondar (rank 57, peak 50)	3-6 6-1 7-6(3)	peak_diff 47
+20260525	Roland Garros	R128	Clay	Elise Mertens (rank 21, peak 12)	bt	Tatjana Maria (rank 54, peak 36)	7-5 6-0	peak_diff 24
+20260525	Roland Garros	R128	Clay	Elsa Jacquemot (rank 67, peak 53)	bt	Linda Fruhvirtova (rank 149, peak 49)	6-4 6-3	peak_diff 4
+20260525	Roland Garros	R128	Clay	Emma Navarro (rank 25, peak 8)	bt	Janice Tjen (rank 40, peak 36)	6-4 6-3	peak_diff 28
+20260525	Roland Garros	R128	Clay	Eva Lys (rank 81, peak 39)	bt	Petra Marcinko (rank 51, peak 50)	6-3 6-0	peak_diff 11
+20260525	Roland Garros	R128	Clay	Facundo Diaz Acosta (rank 151, peak 47)	bt	Zhizhen Zhang (rank 224, peak 31)	6-1 6-4 6-3	peak_diff 16
+20260525	Roland Garros	R128	Clay	Federico Cina (rank 238, peak 183)	bt	Reilly Opelka (rank 76, peak 17)	3-6 6-4 6-2 6-7(6) 6-4	peak_diff 166
+20260525	Roland Garros	R128	Clay	Felix Auger Aliassime (rank 6, peak 4)	bt	Daniel Altmaier (rank 57, peak 44)	4-6 6-4 4-6 6-1 7-6(7)	peak_diff 40
+20260525	Roland Garros	R128	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Andrea Pellegrino (rank 124, peak 109)	6-4 7-6(4) 6-3	peak_diff 99
+20260525	Roland Garros	R128	Clay	Frances Tiafoe (rank 22, peak 10)	bt	Eliot Spizzirri (rank 91, peak 67)	6-3 6-7(5) 6-4 6-3	peak_diff 57
+20260525	Roland Garros	R128	Clay	Francesca Jones (rank 102, peak 65)	bt	Beatriz Haddad Maia (rank 105, peak 10)	1-6 7-6(4) 6-2	peak_diff 55
+20260525	Roland Garros	R128	Clay	Francisco Cerundolo (rank 26, peak 18)	bt	Botic Van De Zandschulp (rank 55, peak 22)	6-3 6-4 6-7(7) 6-4	peak_diff 4
+20260525	Roland Garros	R128	Clay	Francisco Comesana (rank 102, peak 54)	bt	Ethan Quinn (rank 50, peak 48)	6-4 7-6(8) 7-6(4)	peak_diff 6
+20260525	Roland Garros	R128	Clay	Hailey Baptiste (rank 26, peak 25)	bt	Barbora Krejcikova (rank 41, peak 2)	6-7(7) 7-6(6) 6-2	peak_diff 23
+20260525	Roland Garros	R128	Clay	Hamad Medjedovic (rank 58, peak 56)	bt	Yannick Hanfmann (rank 53, peak 45)	6-3 6-4 6-7(1) 6-4	peak_diff 11
+20260525	Roland Garros	R128	Clay	Hubert Hurkacz (rank 99, peak 6)	bt	Jaume Munar (rank 41, peak 33)	6-3 6-3 2-6 6-3	peak_diff 27
+20260525	Roland Garros	R128	Clay	Hugo Gaston (rank 118, peak 58)	bt	Gael Monfils (rank 218, peak 9)	6-2 6-3 3-6 2-6 6-0	peak_diff 49
+20260525	Roland Garros	R128	Clay	Iga Swiatek (rank 3, peak 1)	bt	Emerson Jones (rank 136, peak 129)	6-1 6-2	peak_diff 128
+20260525	Roland Garros	R128	Clay	Iva Jovic (rank 17, peak 16)	bt	Alexandra Eala (rank 37, peak 29)	6-4 6-2	peak_diff 13
+20260525	Roland Garros	R128	Clay	Jaime Faria (rank 115, peak 87)	bt	Denis Shapovalov (rank 39, peak 10)	6-4 7-5 6-4	peak_diff 77
+20260525	Roland Garros	R128	Clay	Jakub Mensik (rank 27, peak 12)	bt	Titouan Droguet (rank 107, peak 107)	6-3 6-2 6-4	peak_diff 95
+20260525	Roland Garros	R128	Clay	James Duckworth (rank 82, peak 46)	bt	Gabriel Diallo (rank 49, peak 33)	6-3 4-1 RET	peak_diff 13
+20260525	Roland Garros	R128	Clay	Jan Lennard Struff (rank 80, peak 21)	bt	Alexander Bublik (rank 10, peak 10)	7-5 6-7(6) 6-4 7-5	peak_diff 11
+20260525	Roland Garros	R128	Clay	Jannik Sinner (rank 1, peak 1)	bt	Clement Tabur (rank 171, peak 165)	6-1 6-3 6-4	peak_diff 164
+20260525	Roland Garros	R128	Clay	Jasmine Paolini (rank 13, peak 4)	bt	Dayana Yastremska (rank 45, peak 21)	7-5 6-3	peak_diff 17
+20260525	Roland Garros	R128	Clay	Jelena Ostapenko (rank 31, peak 5)	bt	Ella Seidel (rank 96, peak 78)	6-4 6-4	peak_diff 73
+20260525	Roland Garros	R128	Clay	Jesper De Jong (rank 106, peak 71)	bt	Stan Wawrinka (rank 113, peak 13)	6-3 3-6 6-3 6-4	peak_diff 58
+20260525	Roland Garros	R128	Clay	Jil Teichmann (rank 170, peak 21)	bt	Liudmila Samsonova (rank 27, peak 12)	6-4 6-4	peak_diff 9
+20260525	Roland Garros	R128	Clay	Joao Fonseca (rank 30, peak 24)	bt	Luka Pavlovic (rank 241, peak 184)	7-6(6) 6-4 6-2	peak_diff 160
+20260525	Roland Garros	R128	Clay	Juan Manuel Cerundolo (rank 56, peak 45)	bt	Jacob Fearnley (rank 125, peak 49)	6-2 7-6(0) 7-6(7)	peak_diff 4
+20260525	Roland Garros	R128	Clay	Julia Grabher (rank 121, peak 54)	bt	Rebecca Sramkova (rank 125, peak 33)	6-2 6-2	peak_diff 21
+20260525	Roland Garros	R128	Clay	Kaitlin Quevedo (rank 126, peak 107)	bt	Leolia Jeanjean (rank 122, peak 91)	7-6(5) 7-6(2)	peak_diff 16
+20260525	Roland Garros	R128	Clay	Kamilla Rakhimova (rank 89, peak 60)	bt	Jaqueline Cristian (rank 32, peak 28)	6-3 4-6 6-4	peak_diff 32
+20260525	Roland Garros	R128	Clay	Karen Khachanov (rank 15, peak 9)	bt	Arthur Gea (rank 135, peak 135)	6-3 7-6(3) 6-0	peak_diff 126
+20260525	Roland Garros	R128	Clay	Karolina Muchova (rank 10, peak 8)	bt	Anastasia Zakharova (rank 80, peak 65)	7-5 6-2	peak_diff 57
+20260525	Roland Garros	R128	Clay	Katerina Siniakova (rank 36, peak 27)	bt	Simona Waltert (rank 91, peak 81)	6-4 7-6(4)	peak_diff 54
+20260525	Roland Garros	R128	Clay	Katie Boulter (rank 71, peak 23)	bt	Akasha Urhobo (rank 185, peak 180)	6-4 4-6 6-4	peak_diff 157
+20260525	Roland Garros	R128	Clay	Katie Volynets (rank 108, peak 56)	bt	Clara Burel (rank 1486, peak 42)	6-3 6-1	peak_diff 14
+20260525	Roland Garros	R128	Clay	Kimberly Birrell (rank 83, peak 60)	bt	Jessica Pegula (rank 5, peak 3)	1-6 6-3 6-3	peak_diff 57
+20260525	Roland Garros	R128	Clay	Learner Tien (rank 18, peak 18)	bt	Cristian Garin (rank 114, peak 17)	6-0 2-6 6-0 6-2	peak_diff 1
+20260525	Roland Garros	R128	Clay	Lorenzo Sonego (rank 70, peak 21)	bt	Pierre Hugues Herbert (rank 220, peak 64)	7-6(3) 5-7 6-2 1-6 6-4	peak_diff 43
+20260525	Roland Garros	R128	Clay	Luca Van Assche (rank 100, peak 63)	bt	Vilius Gaubas (rank 133, peak 101)	6-4 6-2 2-6 7-5	peak_diff 38
+20260525	Roland Garros	R128	Clay	Luciano Darderi (rank 17, peak 16)	bt	Sebastian Ofner (rank 112, peak 37)	7-6(5) 6-2 6-3	peak_diff 21
+20260525	Roland Garros	R128	Clay	Madison Keys (rank 19, peak 5)	bt	Hanne Vandewinkel (rank 99, peak 92)	6-3 6-0	peak_diff 87
+20260525	Roland Garros	R128	Clay	Magda Linette (rank 73, peak 19)	bt	Tereza Valentova (rank 42, peak 42)	5-7 6-4 7-6(9)	peak_diff 23
+20260525	Roland Garros	R128	Clay	Magdalena Frech (rank 46, peak 22)	bt	Elena Gabriela Ruse (rank 77, peak 51)	7-6(5) 2-1 RET	peak_diff 29
+20260525	Roland Garros	R128	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Qinwen Zheng (rank 56, peak 4)	6-4 6-0	peak_diff 17
+20260525	Roland Garros	R128	Clay	Marco Trungelliti (rank 81, peak 76)	bt	Kyrian Jacquet (rank 147, peak 102)	6-4 6-2 6-2	peak_diff 26
+20260525	Roland Garros	R128	Clay	Maria Sakkari (rank 49, peak 3)	bt	Linda Noskova (rank 12, peak 12)	7-5 7-6(3)	peak_diff 9
+20260525	Roland Garros	R128	Clay	Mariano Navone (rank 38, peak 29)	bt	Jenson Brooksby (rank 63, peak 33)	6-4 6-4 6-4	peak_diff 4
+20260525	Roland Garros	R128	Clay	Marie Bouzkova (rank 28, peak 24)	bt	Lucia Bronzetti (rank 172, peak 46)	6-3 6-1	peak_diff 22
+20260525	Roland Garros	R128	Clay	Marina Bassols Ribera (rank 175, peak 105)	bt	Emiliana Arango (rank 94, peak 46)	6-3 6-4	peak_diff 59
+20260525	Roland Garros	R128	Clay	Marta Kostyuk (rank 15, peak 12)	bt	Oksana Selekhmeteva (rank 88, peak 71)	6-2 6-3	peak_diff 59
+20260525	Roland Garros	R128	Clay	Martin Landaluce (rank 69, peak 58)	bt	Juan Carlos Prado Angelo (rank 176, peak 161)	6-3 4-6 6-2 6-7(3) 6-4	peak_diff 103
+20260525	Roland Garros	R128	Clay	Matteo Arnaldi (rank 104, peak 29)	bt	Tallon Griekspoor (rank 33, peak 21)	6-7(9) 6-3 7-6(6) 6-3	peak_diff 8
+20260525	Roland Garros	R128	Clay	Matteo Berrettini (rank 105, peak 6)	bt	Marton Fucsovics (rank 65, peak 35)	6-7(2) 7-5 6-1 6-2	peak_diff 29
+20260525	Roland Garros	R128	Clay	Mayar Sherif (rank 129, peak 31)	bt	Dalma Galfi (rank 115, peak 79)	7-5 6-4	peak_diff 48
+20260525	Roland Garros	R128	Clay	Mccartney Kessler (rank 48, peak 30)	bt	Hanyu Guo (rank 166, peak 156)	4-6 7-6(1) 7-5	peak_diff 126
+20260525	Roland Garros	R128	Clay	Miomir Kecmanovic (rank 48, peak 27)	bt	Fabian Marozsan (rank 54, peak 36)	7-6(0) 6-3 6-4	peak_diff 9
+20260525	Roland Garros	R128	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Fiona Ferro (rank 181, peak 39)	6-3 6-3	peak_diff 34
+20260525	Roland Garros	R128	Clay	Moise Kouame (rank 318, peak 216)	bt	Marin Cilic (rank 46, peak 13)	7-6(4) 6-2 6-1	peak_diff 203
+20260525	Roland Garros	R128	Clay	Naomi Osaka (rank 16, peak 1)	bt	Laura Siegemund (rank 47, peak 27)	6-3 7-6(3)	peak_diff 26
+20260525	Roland Garros	R128	Clay	Nishesh Basavareddy (rank 148, peak 99)	bt	Taylor Fritz (rank 9, peak 4)	7-6(5) 7-6(5) 6-7(9) 6-1	peak_diff 95
+20260525	Roland Garros	R128	Clay	Novak Djokovic (rank 4, peak 1)	bt	Giovanni Mpetshi Perricard (rank 83, peak 29)	5-7 7-5 6-1 6-4	peak_diff 28
+20260525	Roland Garros	R128	Clay	Nuno Borges (rank 51, peak 30)	bt	Tomas Martin Etcheverry (rank 28, peak 25)	6-3 6-4 6-2	peak_diff 5
+20260525	Roland Garros	R128	Clay	Oleksandra Oliynykova (rank 65, peak 51)	bt	Elena Pridankina (rank 218, peak 168)	6-1 6-2	peak_diff 117
+20260525	Roland Garros	R128	Clay	Pablo Carreno Busta (rank 89, peak 11)	bt	Jiri Lehecka (rank 12, peak 12)	6-3 7-6(3) 6-3	peak_diff 1
+20260525	Roland Garros	R128	Clay	Peyton Stearns (rank 78, peak 28)	bt	Sofia Kenin (rank 87, peak 4)	6-3 6-3	peak_diff 24
+20260525	Roland Garros	R128	Clay	Quentin Halys (rank 90, peak 46)	bt	Mattia Bellucci (rank 73, peak 63)	6-3 7-6(4) 6-3	peak_diff 17
+20260525	Roland Garros	R128	Clay	Rafael Jodar (rank 29, peak 23)	bt	Aleksandar Kovacevic (rank 67, peak 54)	6-1 6-0 6-4	peak_diff 31
+20260525	Roland Garros	R128	Clay	Raphael Collignon (rank 62, peak 51)	bt	Aleksandar Vukic (rank 96, peak 48)	6-3 6-3 7-6(4)	peak_diff 3
+20260525	Roland Garros	R128	Clay	Roman Andres Burruchaga (rank 68, peak 56)	bt	Sebastian Baez (rank 64, peak 18)	2-6 7-5 6-2 2-0 RET	peak_diff 38
+20260525	Roland Garros	R128	Clay	Sara Bejlek (rank 35, peak 34)	bt	Sloane Stephens (rank 363, peak 3)	6-3 6-2	peak_diff 31
+20260525	Roland Garros	R128	Clay	Solana Sierra (rank 68, peak 56)	bt	Emma Raducanu (rank 39, peak 10)	6-0 7-6(4)	peak_diff 46
+20260525	Roland Garros	R128	Clay	Sorana Cirstea (rank 18, peak 18)	bt	Ksenia Efremova (rank 623, peak 575)	6-3 6-1	peak_diff 557
+20260525	Roland Garros	R128	Clay	Stefanos Tsitsipas (rank 79, peak 3)	bt	Alexandre Muller (rank 127, peak 38)	6-2 3-0 RET	peak_diff 35
+20260525	Roland Garros	R128	Clay	Susan Bandecchi (rank 215, peak 164)	bt	Cristina Bucsa (rank 33, peak 30)	6-4 2-6 6-4	peak_diff 134
+20260525	Roland Garros	R128	Clay	Tamara Korpatsch (rank 95, peak 71)	bt	Sara Sorribes Tormo (rank 304, peak 32)	6-4 6-2	peak_diff 39
+20260525	Roland Garros	R128	Clay	Thanasi Kokkinakis (rank 855, peak 65)	bt	Terence Atmane (rank 52, peak 41)	6-7(5) 6-2 4-6 6-3 7-5	peak_diff 24
+20260525	Roland Garros	R128	Clay	Thiago Agustin Tirante (rank 60, peak 52)	bt	Pablo Llamas Ruiz (rank 122, peak 120)	6-3 7-6(6) 6-7(5) 6-0	peak_diff 68
+20260525	Roland Garros	R128	Clay	Tomas Machac (rank 43, peak 20)	bt	Zizou Bergs (rank 40, peak 38)	6-4 6-4 6-3	peak_diff 18
+20260525	Roland Garros	R128	Clay	Tommy Paul (rank 21, peak 8)	bt	Rinky Hijikata (rank 98, peak 62)	4-6 6-3 7-5 6-4	peak_diff 54
+20260525	Roland Garros	R128	Clay	Ugo Humbert (rank 32, peak 13)	bt	Adrian Mannarino (rank 45, peak 17)	6-3 6-4 6-3	peak_diff 4
+20260525	Roland Garros	R128	Clay	Valentin Royer (rank 74, peak 54)	bt	Hugo Dellien (rank 144, peak 64)	6-4 6-2 6-2	peak_diff 10
+20260525	Roland Garros	R128	Clay	Valentin Vacherot (rank 19, peak 16)	bt	Thomas Faurel (rank 378, peak 318)	6-3 6-4 3-6 7-6(6)	peak_diff 302
+20260525	Roland Garros	R128	Clay	Victoria Mboko (rank 9, peak 9)	bt	Nikola Bartunkova (rank 69, peak 61)	6-1 6-2	peak_diff 52
+20260525	Roland Garros	R128	Clay	Viktorija Golubic (rank 82, peak 35)	bt	Panna Udvardy (rank 59, peak 59)	6-0 6-2	peak_diff 24
+20260525	Roland Garros	R128	Clay	Vit Kopriva (rank 66, peak 55)	bt	Corentin Moutet (rank 34, peak 30)	6-3 5-7 6-4 3-6 6-3	peak_diff 25
+20260525	Roland Garros	R128	Clay	Xin Yu Wang (rank 34, peak 30)	bt	Lilli Tagger (rank 90, peak 86)	6-3 3-6 6-4	peak_diff 56
+20260525	Roland Garros	R128	Clay	Xiyu Wang (rank 148, peak 49)	bt	Danka Kovinic (rank -, peak 46)	6-3 6-1	peak_diff 3
+20260525	Roland Garros	R128	Clay	Yibing Wu (rank 92, peak 54)	bt	Marcos Giron (rank 84, peak 37)	7-5 6-2 6-4	peak_diff 17
+20260525	Roland Garros	R128	Clay	Yulia Putintseva (rank 76, peak 20)	bt	Talia Gibson (rank 58, peak 55)	4-6 6-4 6-1	peak_diff 35
+20260525	Roland Garros	R128	Clay	Yuliia Starodubtseva (rank 55, peak 53)	bt	Anna Blinkova (rank 103, peak 35)	6-3 6-1	peak_diff 18
+20260525	Roland Garros	R128	Clay	Zachary Svajda (rank 85, peak 62)	bt	Alexei Popyrin (rank 61, peak 19)	3-6 6-3 7-6(3) 7-5	peak_diff 43
+20260525	Roland Garros	R16	Clay	Alexander Zverev (rank 3, peak 2)	bt	Jesper De Jong (rank 106, peak 71)	7-6(3) 6-4 6-1	peak_diff 69
+20260525	Roland Garros	R16	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Anastasia Potapova (rank 30, peak 21)	6-4 2-6 7-6(7)	peak_diff 10
+20260525	Roland Garros	R16	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Naomi Osaka (rank 16, peak 1)	7-5 6-3	peak_diff 0
+20260525	Roland Garros	R16	Clay	Diana Shnaider (rank 23, peak 11)	bt	Madison Keys (rank 19, peak 5)	6-3 3-6 6-0	peak_diff 6
+20260525	Roland Garros	R16	Clay	Elina Svitolina (rank 7, peak 3)	bt	Belinda Bencic (rank 11, peak 4)	4-6 6-4 6-0	peak_diff 1
+20260525	Roland Garros	R16	Clay	Felix Auger Aliassime (rank 6, peak 4)	bt	Alejandro Tabilo (rank 36, peak 19)	6-3 7-5 6-1	peak_diff 15
+20260525	Roland Garros	R16	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Zachary Svajda (rank 85, peak 62)	6-2 6-3 6-7(3) 7-6(5)	peak_diff 52
+20260525	Roland Garros	R16	Clay	Jakub Mensik (rank 27, peak 12)	bt	Andrey Rublev (rank 13, peak 5)	6-3 7-6(6) 4-6 2-6 6-3	peak_diff 7
+20260525	Roland Garros	R16	Clay	Joao Fonseca (rank 30, peak 24)	bt	Casper Ruud (rank 16, peak 2)	7-5 7-6(8) 5-7 6-2	peak_diff 22
+20260525	Roland Garros	R16	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Diane Parry (rank 92, peak 48)	6-3 6-2	peak_diff 27
+20260525	Roland Garros	R16	Clay	Marta Kostyuk (rank 15, peak 12)	bt	Iga Swiatek (rank 3, peak 1)	7-5 6-1	peak_diff 11
+20260525	Roland Garros	R16	Clay	Matteo Arnaldi (rank 104, peak 29)	bt	Frances Tiafoe (rank 22, peak 10)	7-6(5) 6-7(5) 3-6 7-6(3) 6-4	peak_diff 19
+20260525	Roland Garros	R16	Clay	Matteo Berrettini (rank 105, peak 6)	bt	Juan Manuel Cerundolo (rank 56, peak 45)	6-3 7-6(2) 7-6(6)	peak_diff 39
+20260525	Roland Garros	R16	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Jil Teichmann (rank 170, peak 21)	6-3 6-2	peak_diff 16
+20260525	Roland Garros	R16	Clay	Rafael Jodar (rank 29, peak 23)	bt	Pablo Carreno Busta (rank 89, peak 11)	4-6 4-6 6-1 6-2 6-2	peak_diff 12
+20260525	Roland Garros	R16	Clay	Sorana Cirstea (rank 18, peak 18)	bt	Xiyu Wang (rank 148, peak 49)	6-3 7-6(4)	peak_diff 31
+20260525	Roland Garros	R32	Clay	Alejandro Tabilo (rank 36, peak 19)	bt	Moise Kouame (rank 318, peak 216)	4-6 6-3 6-4 7-6(9)	peak_diff 197
+20260525	Roland Garros	R32	Clay	Alexander Zverev (rank 3, peak 2)	bt	Quentin Halys (rank 90, peak 46)	6-4 6-3 5-7 6-2	peak_diff 44
+20260525	Roland Garros	R32	Clay	Anastasia Potapova (rank 30, peak 21)	bt	Coco Gauff (rank 4, peak 2)	4-6 7-6(1) 6-4	peak_diff 19
+20260525	Roland Garros	R32	Clay	Andrey Rublev (rank 13, peak 5)	bt	Nuno Borges (rank 51, peak 30)	7-5 7-6(2) 7-6(2)	peak_diff 25
+20260525	Roland Garros	R32	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Camila Osorio (rank 86, peak 33)	6-3 0-6 6-2	peak_diff 22
+20260525	Roland Garros	R32	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Daria Kasatkina (rank 53, peak 8)	6-0 7-5	peak_diff 7
+20260525	Roland Garros	R32	Clay	Belinda Bencic (rank 11, peak 4)	bt	Peyton Stearns (rank 78, peak 28)	6-3 6-3	peak_diff 24
+20260525	Roland Garros	R32	Clay	Casper Ruud (rank 16, peak 2)	bt	Tommy Paul (rank 21, peak 8)	4-6 6-7(4) 6-4 7-6(4) 7-5	peak_diff 6
+20260525	Roland Garros	R32	Clay	Diana Shnaider (rank 23, peak 11)	bt	Oleksandra Oliynykova (rank 65, peak 51)	7-5 6-1	peak_diff 40
+20260525	Roland Garros	R32	Clay	Diane Parry (rank 92, peak 48)	bt	Amanda Anisimova (rank 6, peak 3)	6-3 4-6 7-6(3)	peak_diff 45
+20260525	Roland Garros	R32	Clay	Elina Svitolina (rank 7, peak 3)	bt	Tamara Korpatsch (rank 95, peak 71)	6-2 6-3	peak_diff 68
+20260525	Roland Garros	R32	Clay	Felix Auger Aliassime (rank 6, peak 4)	bt	Brandon Nakashima (rank 35, peak 29)	5-7 6-1 7-6(4) 7-6(1)	peak_diff 25
+20260525	Roland Garros	R32	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Learner Tien (rank 18, peak 18)	6-2 6-2 6-3	peak_diff 8
+20260525	Roland Garros	R32	Clay	Frances Tiafoe (rank 22, peak 10)	bt	Jaime Faria (rank 115, peak 87)	4-6 6-7(2) 7-6(4) 6-1 6-2	peak_diff 77
+20260525	Roland Garros	R32	Clay	Iga Swiatek (rank 3, peak 1)	bt	Magda Linette (rank 73, peak 19)	6-4 6-4	peak_diff 18
+20260525	Roland Garros	R32	Clay	Jakub Mensik (rank 27, peak 12)	bt	Alex De Minaur (rank 7, peak 6)	0-6 6-2 6-2 6-3	peak_diff 6
+20260525	Roland Garros	R32	Clay	Jesper De Jong (rank 106, peak 71)	bt	Karen Khachanov (rank 15, peak 9)	7-5 5-7 6-2 6-7(2) 6-2	peak_diff 62
+20260525	Roland Garros	R32	Clay	Jil Teichmann (rank 170, peak 21)	bt	Karolina Muchova (rank 10, peak 8)	6-1 7-5	peak_diff 13
+20260525	Roland Garros	R32	Clay	Joao Fonseca (rank 30, peak 24)	bt	Novak Djokovic (rank 4, peak 1)	4-6 4-6 6-3 7-5 7-5	peak_diff 23
+20260525	Roland Garros	R32	Clay	Juan Manuel Cerundolo (rank 56, peak 45)	bt	Martin Landaluce (rank 69, peak 58)	6-4 6-7(7) 7-6(4) 6-7(4) 7-6(8)	peak_diff 13
+20260525	Roland Garros	R32	Clay	Madison Keys (rank 19, peak 5)	bt	Victoria Mboko (rank 9, peak 9)	6-3 5-7 7-5	peak_diff 4
+20260525	Roland Garros	R32	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Maria Sakkari (rank 49, peak 3)	1-6 6-3 6-2	peak_diff 18
+20260525	Roland Garros	R32	Clay	Marta Kostyuk (rank 15, peak 12)	bt	Viktorija Golubic (rank 82, peak 35)	6-4 6-3	peak_diff 23
+20260525	Roland Garros	R32	Clay	Matteo Arnaldi (rank 104, peak 29)	bt	Raphael Collignon (rank 62, peak 51)	6-4 6-7(5) 5-7 6-4 7-6(4)	peak_diff 22
+20260525	Roland Garros	R32	Clay	Matteo Berrettini (rank 105, peak 6)	bt	Francisco Comesana (rank 102, peak 54)	7-6(3) 5-7 6-7(4) 6-4 7-6(13)	peak_diff 48
+20260525	Roland Garros	R32	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Marie Bouzkova (rank 28, peak 24)	6-4 6-2	peak_diff 19
+20260525	Roland Garros	R32	Clay	Naomi Osaka (rank 16, peak 1)	bt	Iva Jovic (rank 17, peak 16)	7-6(5) 6-7(3) 6-4	peak_diff 15
+20260525	Roland Garros	R32	Clay	Pablo Carreno Busta (rank 89, peak 11)	bt	Thiago Agustin Tirante (rank 60, peak 52)	7-6(0) 7-5 3-6 6-4	peak_diff 41
+20260525	Roland Garros	R32	Clay	Rafael Jodar (rank 29, peak 23)	bt	Alex Michelsen (rank 42, peak 30)	7-6(2) 6-7(5) 4-6 6-3 6-3	peak_diff 7
+20260525	Roland Garros	R32	Clay	Sorana Cirstea (rank 18, peak 18)	bt	Solana Sierra (rank 68, peak 56)	6-0 6-0	peak_diff 38
+20260525	Roland Garros	R32	Clay	Xiyu Wang (rank 148, peak 49)	bt	Yuliia Starodubtseva (rank 55, peak 53)	6-3 7-5	peak_diff 4
+20260525	Roland Garros	R32	Clay	Zachary Svajda (rank 85, peak 62)	bt	Francisco Cerundolo (rank 26, peak 18)	6-3 6-4 3-6 4-6 6-3	peak_diff 44
+20260525	Roland Garros	R64	Clay	Alejandro Tabilo (rank 36, peak 19)	bt	Valentin Vacherot (rank 19, peak 16)	W/O	peak_diff 3
+20260525	Roland Garros	R64	Clay	Alex De Minaur (rank 7, peak 6)	bt	Alexander Blockx (rank 37, peak 36)	W/O	peak_diff 30
+20260525	Roland Garros	R64	Clay	Alex Michelsen (rank 42, peak 30)	bt	Nishesh Basavareddy (rank 148, peak 99)	7-6(5) 6-3 3-6 6-3	peak_diff 69
+20260525	Roland Garros	R64	Clay	Alexander Zverev (rank 3, peak 2)	bt	Tomas Machac (rank 43, peak 20)	6-4 6-2 6-2	peak_diff 18
+20260525	Roland Garros	R64	Clay	Amanda Anisimova (rank 6, peak 3)	bt	Julia Grabher (rank 121, peak 54)	6-0 RET	peak_diff 51
+20260525	Roland Garros	R64	Clay	Anastasia Potapova (rank 30, peak 21)	bt	Katie Boulter (rank 71, peak 23)	5-7 6-4 6-2	peak_diff 2
+20260525	Roland Garros	R64	Clay	Andrey Rublev (rank 13, peak 5)	bt	Camilo Ugo Carabelli (rank 59, peak 43)	6-1 1-6 6-3 7-6(5)	peak_diff 38
+20260525	Roland Garros	R64	Clay	Anna Kalinskaya (rank 24, peak 11)	bt	Alina Korneeva (rank 117, peak 96)	7-6(2) 6-4	peak_diff 85
+20260525	Roland Garros	R64	Clay	Aryna Sabalenka (rank 1, peak 1)	bt	Elsa Jacquemot (rank 67, peak 53)	7-5 6-2	peak_diff 52
+20260525	Roland Garros	R64	Clay	Belinda Bencic (rank 11, peak 4)	bt	Caty Mcnally (rank 63, peak 54)	6-4 6-0	peak_diff 50
+20260525	Roland Garros	R64	Clay	Brandon Nakashima (rank 35, peak 29)	bt	Luca Van Assche (rank 100, peak 63)	6-7(5) 6-4 5-7 6-1 6-3	peak_diff 34
+20260525	Roland Garros	R64	Clay	Camila Osorio (rank 86, peak 33)	bt	Yulia Putintseva (rank 76, peak 20)	7-5 6-7(6) 7-5	peak_diff 13
+20260525	Roland Garros	R64	Clay	Casper Ruud (rank 16, peak 2)	bt	Hamad Medjedovic (rank 58, peak 56)	6-3 6-2 6-4	peak_diff 54
+20260525	Roland Garros	R64	Clay	Coco Gauff (rank 4, peak 2)	bt	Mayar Sherif (rank 129, peak 31)	6-3 6-2	peak_diff 29
+20260525	Roland Garros	R64	Clay	Daria Kasatkina (rank 53, peak 8)	bt	Susan Bandecchi (rank 215, peak 164)	7-5 7-6(11)	peak_diff 156
+20260525	Roland Garros	R64	Clay	Diana Shnaider (rank 23, peak 11)	bt	Mccartney Kessler (rank 48, peak 30)	7-6(3) 6-1	peak_diff 19
+20260525	Roland Garros	R64	Clay	Diane Parry (rank 92, peak 48)	bt	Ann Li (rank 29, peak 29)	6-3 6-4	peak_diff 19
+20260525	Roland Garros	R64	Clay	Elina Svitolina (rank 7, peak 3)	bt	Kaitlin Quevedo (rank 126, peak 107)	6-0 6-4	peak_diff 104
+20260525	Roland Garros	R64	Clay	Felix Auger Aliassime (rank 6, peak 4)	bt	Roman Andres Burruchaga (rank 68, peak 56)	4-6 6-0 7-5 6-1	peak_diff 52
+20260525	Roland Garros	R64	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Yibing Wu (rank 92, peak 54)	6-4 6-4 6-4	peak_diff 44
+20260525	Roland Garros	R64	Clay	Frances Tiafoe (rank 22, peak 10)	bt	Hubert Hurkacz (rank 99, peak 6)	6-7(5) 7-6(5) 6-4 6-7(1) 6-4	peak_diff 4
+20260525	Roland Garros	R64	Clay	Francisco Cerundolo (rank 26, peak 18)	bt	Hugo Gaston (rank 118, peak 58)	2-6 6-4 6-2 6-1	peak_diff 40
+20260525	Roland Garros	R64	Clay	Francisco Comesana (rank 102, peak 54)	bt	Luciano Darderi (rank 17, peak 16)	7-6(5) 4-6 6-4 2-6 6-4	peak_diff 38
+20260525	Roland Garros	R64	Clay	Iga Swiatek (rank 3, peak 1)	bt	Sara Bejlek (rank 35, peak 34)	6-2 6-3	peak_diff 33
+20260525	Roland Garros	R64	Clay	Iva Jovic (rank 17, peak 16)	bt	Emma Navarro (rank 25, peak 8)	6-0 6-3	peak_diff 8
+20260525	Roland Garros	R64	Clay	Jaime Faria (rank 115, peak 87)	bt	Jan Lennard Struff (rank 80, peak 21)	7-5 7-6(1) 6-2	peak_diff 66
+20260525	Roland Garros	R64	Clay	Jakub Mensik (rank 27, peak 12)	bt	Mariano Navone (rank 38, peak 29)	6-3 2-6 6-4 1-6 7-6(11)	peak_diff 17
+20260525	Roland Garros	R64	Clay	Jesper De Jong (rank 106, peak 71)	bt	Federico Cina (rank 238, peak 183)	6-3 6-1 6-3	peak_diff 112
+20260525	Roland Garros	R64	Clay	Jil Teichmann (rank 170, peak 21)	bt	Magdalena Frech (rank 46, peak 22)	7-5 6-4	peak_diff 1
+20260525	Roland Garros	R64	Clay	Joao Fonseca (rank 30, peak 24)	bt	Dino Prizmic (rank 72, peak 70)	3-6 4-6 6-3 6-1 6-2	peak_diff 46
+20260525	Roland Garros	R64	Clay	Juan Manuel Cerundolo (rank 56, peak 45)	bt	Jannik Sinner (rank 1, peak 1)	3-6 2-6 7-5 6-1 6-1	peak_diff 44
+20260525	Roland Garros	R64	Clay	Karen Khachanov (rank 15, peak 9)	bt	Marco Trungelliti (rank 81, peak 76)	7-6(5) 5-7 6-1 7-6(4)	peak_diff 67
+20260525	Roland Garros	R64	Clay	Karolina Muchova (rank 10, peak 8)	bt	Kamilla Rakhimova (rank 89, peak 60)	6-2 6-2	peak_diff 52
+20260525	Roland Garros	R64	Clay	Learner Tien (rank 18, peak 18)	bt	Facundo Diaz Acosta (rank 151, peak 47)	7-5 4-6 3-6 7-6(4) 6-3	peak_diff 29
+20260525	Roland Garros	R64	Clay	Madison Keys (rank 19, peak 5)	bt	Antonia Ruzic (rank 64, peak 51)	6-4 6-4	peak_diff 46
+20260525	Roland Garros	R64	Clay	Magda Linette (rank 73, peak 19)	bt	Jelena Ostapenko (rank 31, peak 5)	6-2 2-6 6-2	peak_diff 14
+20260525	Roland Garros	R64	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Elise Mertens (rank 21, peak 12)	6-4 6-0	peak_diff 9
+20260525	Roland Garros	R64	Clay	Maria Sakkari (rank 49, peak 3)	bt	Claire Liu (rank 182, peak 52)	6-7(7) 6-3 6-3	peak_diff 49
+20260525	Roland Garros	R64	Clay	Marie Bouzkova (rank 28, peak 24)	bt	Francesca Jones (rank 102, peak 65)	6-0 7-6(3)	peak_diff 41
+20260525	Roland Garros	R64	Clay	Marta Kostyuk (rank 15, peak 12)	bt	Katie Volynets (rank 108, peak 56)	6-7(4) 6-3 6-3	peak_diff 44
+20260525	Roland Garros	R64	Clay	Martin Landaluce (rank 69, peak 58)	bt	Vit Kopriva (rank 66, peak 55)	1-6 2-6 6-4 7-5 6-0	peak_diff 3
+20260525	Roland Garros	R64	Clay	Matteo Arnaldi (rank 104, peak 29)	bt	Stefanos Tsitsipas (rank 79, peak 3)	7-6(2) 5-7 6-3 6-2	peak_diff 26
+20260525	Roland Garros	R64	Clay	Matteo Berrettini (rank 105, peak 6)	bt	Arthur Rinderknech (rank 25, peak 24)	6-4 6-4 6-4	peak_diff 18
+20260525	Roland Garros	R64	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Marina Bassols Ribera (rank 175, peak 105)	3-6 6-1 6-1	peak_diff 100
+20260525	Roland Garros	R64	Clay	Moise Kouame (rank 318, peak 216)	bt	Adolfo Daniel Vallejo (rank 71, peak 70)	6-3 7-5 3-6 2-6 7-6(8)	peak_diff 146
+20260525	Roland Garros	R64	Clay	Naomi Osaka (rank 16, peak 1)	bt	Donna Vekic (rank 72, peak 17)	7-6(1) 6-4	peak_diff 16
+20260525	Roland Garros	R64	Clay	Novak Djokovic (rank 4, peak 1)	bt	Valentin Royer (rank 74, peak 54)	6-3 6-2 6-7(7) 6-3	peak_diff 53
+20260525	Roland Garros	R64	Clay	Nuno Borges (rank 51, peak 30)	bt	Miomir Kecmanovic (rank 48, peak 27)	3-6 6-2 6-1 6-2	peak_diff 3
+20260525	Roland Garros	R64	Clay	Oleksandra Oliynykova (rank 65, peak 51)	bt	Kimberly Birrell (rank 83, peak 60)	6-3 0-6 7-6(5)	peak_diff 9
+20260525	Roland Garros	R64	Clay	Pablo Carreno Busta (rank 89, peak 11)	bt	Thanasi Kokkinakis (rank 855, peak 65)	7-5 4-6 1-0 RET	peak_diff 54
+20260525	Roland Garros	R64	Clay	Peyton Stearns (rank 78, peak 28)	bt	Daria Snigur (rank 93, peak 84)	6-4 6-0	peak_diff 56
+20260525	Roland Garros	R64	Clay	Quentin Halys (rank 90, peak 46)	bt	Ugo Humbert (rank 32, peak 13)	6-4 7-6(4) 7-6(8)	peak_diff 33
+20260525	Roland Garros	R64	Clay	Rafael Jodar (rank 29, peak 23)	bt	James Duckworth (rank 82, peak 46)	6-1 6-7(5) 6-4 7-5	peak_diff 23
+20260525	Roland Garros	R64	Clay	Raphael Collignon (rank 62, peak 51)	bt	Ben Shelton (rank 5, peak 5)	6-4 7-5 6-4	peak_diff 46
+20260525	Roland Garros	R64	Clay	Solana Sierra (rank 68, peak 56)	bt	Jasmine Paolini (rank 13, peak 4)	3-6 6-4 6-3	peak_diff 52
+20260525	Roland Garros	R64	Clay	Sorana Cirstea (rank 18, peak 18)	bt	Eva Lys (rank 81, peak 39)	6-3 6-0	peak_diff 21
+20260525	Roland Garros	R64	Clay	Tamara Korpatsch (rank 95, peak 71)	bt	Xin Yu Wang (rank 34, peak 30)	6-2 2-6 6-3	peak_diff 41
+20260525	Roland Garros	R64	Clay	Thiago Agustin Tirante (rank 60, peak 52)	bt	Alejandro Davidovich Fokina (rank 23, peak 14)	4-6 7-6(4) 6-1 6-3	peak_diff 38
+20260525	Roland Garros	R64	Clay	Tommy Paul (rank 21, peak 8)	bt	Lorenzo Sonego (rank 70, peak 21)	6-3 6-2 6-4	peak_diff 13
+20260525	Roland Garros	R64	Clay	Victoria Mboko (rank 9, peak 9)	bt	Katerina Siniakova (rank 36, peak 27)	5-7 6-4 6-2	peak_diff 18
+20260525	Roland Garros	R64	Clay	Viktorija Golubic (rank 82, peak 35)	bt	Alycia Parks (rank 79, peak 40)	6-2 6-2	peak_diff 5
+20260525	Roland Garros	R64	Clay	Xiyu Wang (rank 148, peak 49)	bt	Hailey Baptiste (rank 26, peak 25)	5-4 RET	peak_diff 24
+20260525	Roland Garros	R64	Clay	Yuliia Starodubtseva (rank 55, peak 53)	bt	Elena Rybakina (rank 2, peak 2)	3-6 6-1 7-6(4)	peak_diff 51
+20260525	Roland Garros	R64	Clay	Zachary Svajda (rank 85, peak 62)	bt	Adam Walton (rank 97, peak 74)	6-3 6-4 6-7(4) 6-2	peak_diff 12
+20260525	Roland Garros	SF	Clay	Alexander Zverev (rank 3, peak 2)	bt	Jakub Mensik (rank 27, peak 12)	7-5 6-2 3-6 6-3	peak_diff 10
+20260525	Roland Garros	SF	Clay	Flavio Cobolli (rank 14, peak 10)	bt	Matteo Arnaldi (rank 104, peak 29)	W/O	peak_diff 19
+20260525	Roland Garros	SF	Clay	Maja Chwalinska (rank 114, peak 21)	bt	Diana Shnaider (rank 23, peak 11)	7-6(4) 6-4	peak_diff 10
+20260525	Roland Garros	SF	Clay	Mirra Andreeva (rank 8, peak 5)	bt	Marta Kostyuk (rank 15, peak 12)	6-1 6-3	peak_diff 7
+20260901	US Open	1R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Safiullin (rank -, peak 36)	6-4 6-4 6-4	[ATP]	peak_diff 35
+20260901	US Open	1R	Hard	Alexandrova (18) (rank -, peak 10)	bt	Kessler (rank -, peak 30)	6-2 6-2	[WTA]	peak_diff 20
+20260901	US Open	1R	Hard	Andreeva (5) (rank -, peak 5)	bt	Tjen (rank -, peak 36)	6-2 6-2	[WTA]	peak_diff 31
+20260901	US Open	1R	Hard	Anisimova (10) (rank -, peak 3)	bt	Krueger (rank -, peak 29)	6-1 6-3	[WTA]	peak_diff 26
+20260901	US Open	1R	Hard	Auger Aliassime (3) (rank -, peak 4)	bt	Hijikata (rank -, peak 62)	7-5 4-6 6-3 7-5	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Badosa (rank -, peak 2)	bt	Kasatkina (rank -, peak 8)	6-1 6-4	[WTA]	peak_diff 6
+20260901	US Open	1R	Hard	Bartunkova (rank -, peak 61)	bt	Sherif (rank -, peak 31)	6-1 6-2	[WTA]	peak_diff 30
+20260901	US Open	1R	Hard	Bellucci (rank -, peak 63)	bt	Piros (rank -, peak 106)	6-4 6-2 6-0	[ATP]	peak_diff 43
+20260901	US Open	1R	Hard	Bergs (31) (rank -, peak 38)	bt	Taberner (rank -, peak 83)	6-3 3-6 6-2 6-2	[ATP]	peak_diff 45
+20260901	US Open	1R	Hard	Berrettini (rank -, peak 6)	bt	Wawrinka (rank -, peak 13)	7-6(4) 7-6(3) 6-0	[ATP]	peak_diff 7
+20260901	US Open	1R	Hard	Birrell (rank -, peak 60)	bt	Marcinko (rank -, peak 50)	3-6 7-6(4) 6-3	[WTA]	peak_diff 10
+20260901	US Open	1R	Hard	Blockx (28) (rank -, peak 36)	bt	Barrios Vera (rank -, peak 93)	6-3 6-4 6-2	[ATP]	peak_diff 57
+20260901	US Open	1R	Hard	Bondar (rank -, peak 50)	bt	Havlickova (rank -, peak 196)	6-3 6-3	[WTA]	peak_diff 146
+20260901	US Open	1R	Hard	Bonzi (rank -, peak 42)	bt	Molcan (rank -, peak 38)	6-4 3-6 6-3 6-2	[ATP]	peak_diff 4
+20260901	US Open	1R	Hard	Boulter (rank -, peak 23)	bt	Lee (rank -, peak -)	6-4 3-6 6-0	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Bouzas Maneiro (rank -, peak 40)	bt	Vidmanova (rank -, peak 101)	6-3 6-4	[WTA]	peak_diff 61
+20260901	US Open	1R	Hard	Bouzkova (25) (rank -, peak 24)	bt	Jacquemot (rank -, peak 53)	6-2 6-2	[WTA]	peak_diff 29
+20260901	US Open	1R	Hard	Bublik (15) (rank -, peak 10)	bt	Wolf (rank -, peak -)	6-4 6-2 3-6 6-1	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Bucsa (rank -, peak 30)	bt	Bejlek (28) (rank -, peak 34)	7-5 4-6 6-1	[WTA]	peak_diff 4
+20260901	US Open	1R	Hard	Buse (32) (rank -, peak 31)	bt	Giron (rank -, peak 37)	3-6 6-3 6-3 6-7(6) 6-1	[ATP]	peak_diff 6
+20260901	US Open	1R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Misolic (rank -, peak 76)	6-4 6-3 7-5	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Cirstea (16) (rank -, peak 18)	bt	Grabher (rank -, peak 54)	6-3 6-0	[WTA]	peak_diff 36
+20260901	US Open	1R	Hard	Cobolli (5) (rank -, peak 10)	bt	Comesana (rank -, peak 54)	3-6 2-6 6-3 6-4 6-4	[ATP]	peak_diff 44
+20260901	US Open	1R	Hard	Darderi (21) (rank -, peak 16)	bt	Wendelken (rank -, peak -)	6-2 3-6 6-2 7-5	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Dart (rank -, peak 70)	bt	Stearns (rank -, peak 28)	3-6 6-3 6-2	[WTA]	peak_diff 42
+20260901	US Open	1R	Hard	De Jong (rank -, peak 71)	bt	Passaro (rank -, peak 89)	2-6 6-2 4-6 6-3 6-2	[ATP]	peak_diff 18
+20260901	US Open	1R	Hard	De Minaur (6) (rank -, peak 6)	bt	Guerrieri (rank -, peak -)	6-2 6-2 6-4	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Duckworth (rank -, peak 46)	bt	Arnaldi (30) (rank -, peak 29)	5-7 6-3 6-2 7-6(8)	[ATP]	peak_diff 17
+20260901	US Open	1R	Hard	Eala (17) (rank -, peak 29)	bt	Stoiana (rank -, peak 142)	6-1 6-2	[WTA]	peak_diff 113
+20260901	US Open	1R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Kopriva (rank -, peak 55)	6-3 6-4 6-0	[ATP]	peak_diff 30
+20260901	US Open	1R	Hard	Faria (rank -, peak 87)	bt	Brooksby (rank -, peak 33)	6-3 7-6(4) 4-6 1-6 6-2	[ATP]	peak_diff 54
+20260901	US Open	1R	Hard	Fearnley (rank -, peak 49)	bt	Landaluce (rank -, peak 58)	4-6 6-2 4-6 7-5 6-3	[ATP]	peak_diff 9
+20260901	US Open	1R	Hard	Fernandez (31) (rank -, peak 13)	bt	Zhang (rank -, peak 22)	6-3 6-2	[WTA]	peak_diff 9
+20260901	US Open	1R	Hard	Fritz (9) (rank -, peak 4)	bt	Blanch (rank -, peak 219)	6-3 6-2 6-4	[ATP]	peak_diff 215
+20260901	US Open	1R	Hard	Gauff (4) (rank -, peak 2)	bt	Sonmez (rank -, peak 59)	6-3 6-4	[WTA]	peak_diff 57
+20260901	US Open	1R	Hard	Gea (rank -, peak 135)	bt	Cerundolo (rank -, peak 18)	6-3 2-6 3-6 6-3 6-1	[ATP]	peak_diff 117
+20260901	US Open	1R	Hard	Gorzny (rank -, peak -)	bt	Collignon (rank -, peak 51)	3-6 6-3 3-6 6-3 7-6(9)	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Halys (rank -, peak 46)	bt	Diaz Acosta (rank -, peak 47)	6-4 7-5 6-7(7) 6-1	[ATP]	peak_diff 1
+20260901	US Open	1R	Hard	Harris (rank -, peak 101)	bt	Kennedy (rank -, peak -)	6-4 6-2 6-2	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Hurkacz (rank -, peak 6)	bt	Dzumhur (rank -, peak 54)	6-4 4-6 6-1 6-1	[ATP]	peak_diff 48
+20260901	US Open	1R	Hard	Iatcenko (rank -, peak -)	bt	Zarazua (rank -, peak 51)	4-6 6-4 7-6(7)	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Jeanjean (rank -, peak 91)	bt	Rus (rank -, peak -)	7-6(6) 6-2	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Joint (rank -, peak 28)	bt	Samsonova (rank -, peak 12)	3-6 6-2 6-2	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Jones (rank -, peak 65)	bt	Linette (rank -, peak 19)	6-4 1-6 6-3	[WTA]	peak_diff 46
+20260901	US Open	1R	Hard	Jovic (14) (rank -, peak 16)	bt	Frech (rank -, peak 22)	7-5 6-3	[WTA]	peak_diff 6
+20260901	US Open	1R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Blinkova (rank -, peak 35)	6-4 6-3	[WTA]	peak_diff 24
+20260901	US Open	1R	Hard	Kenin (rank -, peak 4)	bt	Williams (rank -, peak 1)	6-2 7-6(6)	[WTA]	peak_diff 3
+20260901	US Open	1R	Hard	Keys (22) (rank -, peak 5)	bt	Korneeva (rank -, peak 96)	7-5 6-4	[WTA]	peak_diff 91
+20260901	US Open	1R	Hard	Khachanov (rank -, peak 9)	bt	Burruchaga (rank -, peak 56)	6-3 6-0 6-1	[ATP]	peak_diff 47
+20260901	US Open	1R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Hunter (rank -, peak 114)	6-4 6-1	[WTA]	peak_diff 102
+20260901	US Open	1R	Hard	Lehecka (18) (rank -, peak 12)	bt	Carreno-Busta (rank -, peak -)	6-1 7-6(5) 4-6 6-2	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Li (29) (rank -, peak 29)	bt	Ruzic (rank -, peak 51)	7-5 6-1	[WTA]	peak_diff 22
+20260901	US Open	1R	Hard	Lys (rank -, peak 39)	bt	Knutson (rank -, peak 155)	6-3 6-3	[WTA]	peak_diff 116
+20260901	US Open	1R	Hard	Majchrzak (rank -, peak 53)	bt	Medjedovic (rank -, peak 56)	6-3 6-3 6-3	[ATP]	peak_diff 3
+20260901	US Open	1R	Hard	Mannarino (rank -, peak 17)	bt	Tirante (rank -, peak 52)	4-6 3-6 6-3 6-3 6-3	[ATP]	peak_diff 35
+20260901	US Open	1R	Hard	Maria (rank -, peak 36)	bt	Ostapenko (30) (rank -, peak 5)	4-6 6-1 6-2	[WTA]	peak_diff 31
+20260901	US Open	1R	Hard	McNally (rank -, peak 54)	bt	Koevermans (rank -, peak -)	7-5 6-1	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Medvedev (7) (rank -, peak 1)	bt	Gaston (rank -, peak 58)	6-4 6-2 6-4	[ATP]	peak_diff 57
+20260901	US Open	1R	Hard	Mensik (17) (rank -, peak 12)	bt	Mochizuki (rank -, peak 92)	6-1 6-4 7-5	[ATP]	peak_diff 80
+20260901	US Open	1R	Hard	Merida Aguilar (rank -, peak 82)	bt	Fucsovics (rank -, peak 35)	6-4 6-4 6-2	[ATP]	peak_diff 47
+20260901	US Open	1R	Hard	Mertens (23) (rank -, peak 12)	bt	Quevedo (rank -, peak 107)	6-4 6-4	[WTA]	peak_diff 95
+20260901	US Open	1R	Hard	Michelsen (rank -, peak 30)	bt	Cina (rank -, peak 183)	6-4 6-1 6-0	[ATP]	peak_diff 153
+20260901	US Open	1R	Hard	Monfils (rank -, peak 9)	bt	Vallejo (rank -, peak 70)	2-6 6-1 6-2 6-0	[ATP]	peak_diff 61
+20260901	US Open	1R	Hard	Muchova (7) (rank -, peak 8)	bt	Kraus (rank -, peak 92)	6-3 6-0	[WTA]	peak_diff 84
+20260901	US Open	1R	Hard	Munar (rank -, peak 33)	bt	Atmane (rank -, peak 41)	6-7(5) 3-6 6-1 7-6(4) 7-5	[ATP]	peak_diff 8
+20260901	US Open	1R	Hard	Musetti (13) (rank -, peak 5)	bt	Fery (rank -, peak 141)	6-3 6-3 7-5	[ATP]	peak_diff 136
+20260901	US Open	1R	Hard	Nakashima (16) (rank -, peak 29)	bt	Baez (rank -, peak 18)	6-2 6-1 6-0	[ATP]	peak_diff 11
+20260901	US Open	1R	Hard	Navarro (26) (rank -, peak 8)	bt	Boisson (rank -, peak 34)	7-6(6) 6-7(1) 6-3	[WTA]	peak_diff 26
+20260901	US Open	1R	Hard	Navone (rank -, peak 29)	bt	Djokovic (4) (rank -, peak 1)	7-6(5) 5-7 4-6 6-2 6-1	[ATP]	peak_diff 28
+20260901	US Open	1R	Hard	Noskova (6) (rank -, peak 12)	bt	Volynets (rank -, peak 56)	7-5 6-1	[WTA]	peak_diff 44
+20260901	US Open	1R	Hard	Oliynykova (rank -, peak 51)	bt	Brantmeier (rank -, peak -)	6-4 6-4	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Osaka (13) (rank -, peak 1)	bt	Zakharova (rank -, peak 65)	7-6(6) 7-6(3)	[WTA]	peak_diff 64
+20260901	US Open	1R	Hard	Paolini (19) (rank -, peak 4)	bt	Erjavec (rank -, peak 84)	6-3 3-6 6-4	[WTA]	peak_diff 80
+20260901	US Open	1R	Hard	Parry (rank -, peak 48)	bt	Golubic (rank -, peak 35)	7-5 6-4	[WTA]	peak_diff 13
+20260901	US Open	1R	Hard	Paul (20) (rank -, peak 8)	bt	Wong (rank -, peak 108)	6-7(3) 6-1 6-3 6-3	[ATP]	peak_diff 100
+20260901	US Open	1R	Hard	Pegula (3) (rank -, peak 3)	bt	Ruse (rank -, peak 51)	6-3 6-2	[WTA]	peak_diff 48
+20260901	US Open	1R	Hard	Pliskova (rank -, peak 1)	bt	Vandewinkel (rank -, peak 92)	2-6 7-5 6-3	[WTA]	peak_diff 91
+20260901	US Open	1R	Hard	Podoroska (rank -, peak -)	bt	Waltert (rank -, peak 81)	4-6 7-6(5) 6-3	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Popyrin (rank -, peak 19)	bt	Dimitrov (rank -, peak 9)	3-6 6-3 6-2 6-4	[ATP]	peak_diff 10
+20260901	US Open	1R	Hard	Potapova (24) (rank -, peak 21)	bt	Semenistaja (rank -, peak 87)	6-2 6-2	[WTA]	peak_diff 66
+20260901	US Open	1R	Hard	Preston (rank -, peak 126)	bt	Parks (rank -, peak 40)	6-3 6-3	[WTA]	peak_diff 86
+20260901	US Open	1R	Hard	Prizmic (rank -, peak 70)	bt	Shevchenko (rank -, peak 45)	2-6 6-3 6-3 5-7 7-5	[ATP]	peak_diff 25
+20260901	US Open	1R	Hard	Putintseva (rank -, peak 20)	bt	Bencic (12) (rank -, peak 4)	4-6 7-5 6-3	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Rakhimova (rank -, peak 60)	bt	Krejcikova (27) (rank -, peak 2)	7-6(4) 6-2	[WTA]	peak_diff 58
+20260901	US Open	1R	Hard	Rinderknech (26) (rank -, peak 24)	bt	Shimabukuro (rank -, peak 103)	6-7(4) 6-2 7-6(4) 6-2	[ATP]	peak_diff 79
+20260901	US Open	1R	Hard	Rodionov (rank -, peak 87)	bt	Mpetshi Perricard (rank -, peak 29)	7-6(2) 6-0 7-6(4)	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Rublev (23) (rank -, peak 5)	bt	Virtanen (rank -, peak 91)	6-7(5) 6-7(0) 6-0 6-2 7-6(5)	[ATP]	peak_diff 86
+20260901	US Open	1R	Hard	Rybakina (2) (rank -, peak 2)	bt	Frodin (rank -, peak -)	6-3 6-2	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Osorio (rank -, peak 33)	6-2 6-4	[WTA]	peak_diff 32
+20260901	US Open	1R	Hard	Sakamoto (rank -, peak 149)	bt	Vukic (rank -, peak 48)	6-4 6-7(5) 6-4 3-6 6-4	[ATP]	peak_diff 101
+20260901	US Open	1R	Hard	Sakatsume (rank -, peak 127)	bt	Kalinina (rank -, peak 25)	6-3 6-3	[WTA]	peak_diff 102
+20260901	US Open	1R	Hard	Sakkari (32) (rank -, peak 3)	bt	Montgomery (rank -, peak 95)	2-6 7-5 6-2	[WTA]	peak_diff 92
+20260901	US Open	1R	Hard	Samuel (rank -, peak 150)	bt	Machac (rank -, peak 20)	6-2 6-3 6-2	[ATP]	peak_diff 130
+20260901	US Open	1R	Hard	Sawangkaew (rank -, peak 100)	bt	Udvardy (rank -, peak 59)	6-4 6-3	[WTA]	peak_diff 41
+20260901	US Open	1R	Hard	Schoolkate (rank -, peak 95)	bt	Basavareddy (rank -, peak 99)	7-6(4) 3-6 6-3 6-4	[ATP]	peak_diff 4
+20260901	US Open	1R	Hard	Selekhmeteva (rank -, peak 71)	bt	Ito (rank -, peak -)	6-2 6-4	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Shapovalov (rank -, peak 10)	bt	Kecmanovic (rank -, peak 27)	6-4 4-6 6-4 6-1	[ATP]	peak_diff 17
+20260901	US Open	1R	Hard	Shelton (8) (rank -, peak 5)	bt	Griekspoor (rank -, peak 21)	1-6 6-1 7-6(3) 6-2	[ATP]	peak_diff 16
+20260901	US Open	1R	Hard	Shnaider (15) (rank -, peak 11)	bt	Snigur (rank -, peak 84)	6-0 6-4	[WTA]	peak_diff 73
+20260901	US Open	1R	Hard	Siniakova (rank -, peak 27)	bt	Cocciaretto (rank -, peak 29)	6-3 6-2	[WTA]	peak_diff 2
+20260901	US Open	1R	Hard	Starodubtseva (rank -, peak 53)	bt	Seidel (rank -, peak 78)	6-2 6-2	[WTA]	peak_diff 25
+20260901	US Open	1R	Hard	Stefanini (rank -, peak 100)	bt	Yastremska (rank -, peak 21)	6-3 4-6 6-1	[WTA]	peak_diff 79
+20260901	US Open	1R	Hard	Stephens (rank -, peak 3)	bt	Tauson (rank -, peak 12)	6-4 6-1	[WTA]	peak_diff 9
+20260901	US Open	1R	Hard	Struff (rank -, peak 21)	bt	Ugo Carabelli (rank -, peak 43)	6-4 6-3 6-3	[ATP]	peak_diff 22
+20260901	US Open	1R	Hard	Svajda (rank -, peak 62)	bt	Altmaier (rank -, peak 44)	6-3 6-1 6-7(5) 6-2	[ATP]	peak_diff 18
+20260901	US Open	1R	Hard	Svitolina (9) (rank -, peak 3)	bt	Sierra (rank -, peak 56)	6-1 6-2	[WTA]	peak_diff 53
+20260901	US Open	1R	Hard	Svrcina (rank -, peak 86)	bt	Royer (rank -, peak 54)	6-4 6-3 5-7 5-7 6-2	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	Sweeny (rank -, peak 131)	bt	Moutet (rank -, peak 30)	7-6(4) 6-4 3-0	[ATP]	peak_diff 101
+20260901	US Open	1R	Hard	Swiatek (8) (rank -, peak 1)	bt	Wang (rank -, peak 30)	6-2 6-3	[WTA]	peak_diff 29
+20260901	US Open	1R	Hard	Tabilo (25) (rank -, peak 19)	bt	Hanfmann (rank -, peak 45)	6-3 6-2 6-7(7) 6-3	[ATP]	peak_diff 26
+20260901	US Open	1R	Hard	Tagger (rank -, peak 86)	bt	Korpatsch (rank -, peak 71)	6-0 7-6(4)	[WTA]	peak_diff 15
+20260901	US Open	1R	Hard	Tararudee (rank -, peak 94)	bt	Kalieva (rank -, peak 134)	6-3 6-7(4) 6-2	[WTA]	peak_diff 40
+20260901	US Open	1R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Damm (rank -, peak 42)	6-4 4-6 3-6 6-3 6-4	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	Tien (14) (rank -, peak 18)	bt	Borges (rank -, peak 30)	6-4 6-1 6-2	[ATP]	peak_diff 12
+20260901	US Open	1R	Hard	Timofeeva (rank -, peak 93)	bt	Zidansek (rank -, peak 22)	6-3 7-5	[WTA]	peak_diff 71
+20260901	US Open	1R	Hard	Townsend (rank -, peak 46)	bt	Chwalinska (20) (rank -, peak 21)	6-2 6-3	[WTA]	peak_diff 25
+20260901	US Open	1R	Hard	Trungelliti (rank -, peak 76)	bt	Shang (rank -, peak 47)	0-6 7-6(5) 1-6 6-3 6-4	[ATP]	peak_diff 29
+20260901	US Open	1R	Hard	Tsitsipas (rank -, peak 3)	bt	Fils (10) (rank -, peak 14)	4-6 7-6(3) 6-1 6-4	[ATP]	peak_diff 11
+20260901	US Open	1R	Hard	Vacherot (22) (rank -, peak 16)	bt	Kovacevic (rank -, peak 54)	6-2 6-3 7-5	[ATP]	peak_diff 38
+20260901	US Open	1R	Hard	Van Assche (rank -, peak 63)	bt	Norrie (29) (rank -, peak 8)	6-7(6) 6-2 6-2 6-3	[ATP]	peak_diff 55
+20260901	US Open	1R	Hard	Van De Zandschulp (rank -, peak 22)	bt	Choinski (rank -, peak 101)	6-3 6-1 7-6(5)	[ATP]	peak_diff 79
+20260901	US Open	1R	Hard	Vekic (rank -, peak 17)	bt	Gibson (rank -, peak 55)	6-2 4-6 6-3	[WTA]	peak_diff 38
+20260901	US Open	1R	Hard	Wang (rank -, peak 30)	bt	Arango (rank -, peak 46)	6-4 6-2	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Wu (rank -, peak 54)	bt	Walton (rank -, peak 74)	7-6(2) 6-2 7-5	[ATP]	peak_diff 20
+20260901	US Open	1R	Hard	Yunchaokete (rank -, peak 64)	bt	Jodar (12) (rank -, peak 23)	6-2 6-1 6-1	[ATP]	peak_diff 41
+20260901	US Open	1R	Hard	Zheng (rank -, peak 4)	bt	Liutova (rank -, peak -)	4-6 6-3 6-1	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Zheng (rank -, peak 4)	bt	Marozsan (rank -, peak 36)	6-4 6-4 6-2	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	Zverev (1) (rank -, peak 2)	bt	Sonego (rank -, peak 21)	6-4 3-6 6-7(7) 7-5 6-4	[ATP]	peak_diff 19
+20260901	US Open	2R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Faria (rank -, peak 87)	4-6 6-0 6-3 6-2	[ATP]	peak_diff 86
+20260901	US Open	2R	Hard	Alexandrova (18) (rank -, peak 10)	bt	Birrell (rank -, peak 60)	6-1 2-6 6-3	[WTA]	peak_diff 50
+20260901	US Open	2R	Hard	Andreeva (5) (rank -, peak 5)	bt	Lys (rank -, peak 39)	6-0 6-2	[WTA]	peak_diff 34
+20260901	US Open	2R	Hard	Anisimova (10) (rank -, peak 3)	bt	Tagger (rank -, peak 86)	6-3 3-6 6-1	[WTA]	peak_diff 83
+20260901	US Open	2R	Hard	Bartunkova (rank -, peak 61)	bt	Maria (rank -, peak 36)	6-7(5) 6-2 6-3	[WTA]	peak_diff 25
+20260901	US Open	2R	Hard	Bergs (31) (rank -, peak 38)	bt	De Jong (rank -, peak 71)	7-5 1-6 6-2 7-6(2)	[ATP]	peak_diff 33
+20260901	US Open	2R	Hard	Blockx (28) (rank -, peak 36)	bt	Trungelliti (rank -, peak 76)	6-3 6-2 3-6 6-1	[ATP]	peak_diff 40
+20260901	US Open	2R	Hard	Bonzi (rank -, peak 42)	bt	Buse (32) (rank -, peak 31)	6-2 7-6(4) 6-0	[ATP]	peak_diff 11
+20260901	US Open	2R	Hard	Bouzkova (25) (rank -, peak 24)	bt	Dart (rank -, peak 70)	6-2 6-2	[WTA]	peak_diff 46
+20260901	US Open	2R	Hard	Bublik (15) (rank -, peak 10)	bt	Mannarino (rank -, peak 17)	6-3 6-1 6-1	[ATP]	peak_diff 7
+20260901	US Open	2R	Hard	Bucsa (rank -, peak 30)	bt	Sakatsume (rank -, peak 127)	7-6(6) 6-7(0) 7-6(6)	[WTA]	peak_diff 97
+20260901	US Open	2R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Struff (rank -, peak 21)	5-7 7-5 4-6 6-2 6-3	[ATP]	peak_diff 3
+20260901	US Open	2R	Hard	Cirstea (16) (rank -, peak 18)	bt	Parry (rank -, peak 48)	6-2 7-5	[WTA]	peak_diff 30
+20260901	US Open	2R	Hard	Cobolli (5) (rank -, peak 10)	bt	Schoolkate (rank -, peak 95)	3-6 6-3 6-4 7-5	[ATP]	peak_diff 85
+20260901	US Open	2R	Hard	Darderi (21) (rank -, peak 16)	bt	Svrcina (rank -, peak 86)	6-3 6-7(5) 6-4 6-4	[ATP]	peak_diff 70
+20260901	US Open	2R	Hard	Eala (17) (rank -, peak 29)	bt	Oliynykova (rank -, peak 51)	6-1 6-4	[WTA]	peak_diff 22
+20260901	US Open	2R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Fearnley (rank -, peak 49)	6-3 6-3 3-6 6-3	[ATP]	peak_diff 24
+20260901	US Open	2R	Hard	Fernandez (31) (rank -, peak 13)	bt	Sawangkaew (rank -, peak 100)	6-4 6-1	[WTA]	peak_diff 87
+20260901	US Open	2R	Hard	Fritz (9) (rank -, peak 4)	bt	Bellucci (rank -, peak 63)	6-0 6-1 6-1	[ATP]	peak_diff 59
+20260901	US Open	2R	Hard	Gauff (4) (rank -, peak 2)	bt	Badosa (rank -, peak 2)	6-4 7-6(5)	[WTA]	peak_diff 0
+20260901	US Open	2R	Hard	Gea (rank -, peak 135)	bt	Svajda (rank -, peak 62)	5-7 6-3 6-2 6-2	[ATP]	peak_diff 73
+20260901	US Open	2R	Hard	Jovic (14) (rank -, peak 16)	bt	Jones (rank -, peak 65)	6-4 6-4	[WTA]	peak_diff 49
+20260901	US Open	2R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Wang (rank -, peak 30)	7-5 2-6 6-3	[WTA]	peak_diff 19
+20260901	US Open	2R	Hard	Keys (22) (rank -, peak 5)	bt	Bondar (rank -, peak 50)	5-7 6-4 7-6(5)	[WTA]	peak_diff 45
+20260901	US Open	2R	Hard	Khachanov (rank -, peak 9)	bt	Auger Aliassime (3) (rank -, peak 4)	6-7(5) 6-3 6-2 6-2	[ATP]	peak_diff 5
+20260901	US Open	2R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Stephens (rank -, peak 3)	6-1 7-5	[WTA]	peak_diff 9
+20260901	US Open	2R	Hard	Lehecka (18) (rank -, peak 12)	bt	Samuel (rank -, peak 150)	6-4 6-2 6-4	[ATP]	peak_diff 138
+20260901	US Open	2R	Hard	Li (29) (rank -, peak 29)	bt	Vekic (rank -, peak 17)	5-7 7-6(4) 6-4	[WTA]	peak_diff 12
+20260901	US Open	2R	Hard	Medvedev (7) (rank -, peak 1)	bt	Gorzny (rank -, peak -)	6-1 6-3 7-5	[ATP]	peak_diff -
+20260901	US Open	2R	Hard	Mensik (17) (rank -, peak 12)	bt	Rodionov (rank -, peak 87)	6-3 3-6 6-2 6-3	[ATP]	peak_diff 75
+20260901	US Open	2R	Hard	Merida Aguilar (rank -, peak 82)	bt	Rublev (23) (rank -, peak 5)	6-7(3) 6-2 6-4 6-4	[ATP]	peak_diff 77
+20260901	US Open	2R	Hard	Mertens (23) (rank -, peak 12)	bt	Timofeeva (rank -, peak 93)	6-2 7-6(5)	[WTA]	peak_diff 81
+20260901	US Open	2R	Hard	Michelsen (rank -, peak 30)	bt	Nakashima (16) (rank -, peak 29)	6-3 6-4 6-4	[ATP]	peak_diff 1
+20260901	US Open	2R	Hard	Muchova (7) (rank -, peak 8)	bt	Boulter (rank -, peak 23)	6-1 6-0	[WTA]	peak_diff 15
+20260901	US Open	2R	Hard	Navarro (26) (rank -, peak 8)	bt	McNally (rank -, peak 54)	3-6 6-2 6-3	[WTA]	peak_diff 46
+20260901	US Open	2R	Hard	Navone (rank -, peak 29)	bt	Berrettini (rank -, peak 6)	3-6 6-3 6-4 7-6(4)	[ATP]	peak_diff 23
+20260901	US Open	2R	Hard	Noskova (6) (rank -, peak 12)	bt	Tararudee (rank -, peak 94)	6-4 6-2	[WTA]	peak_diff 82
+20260901	US Open	2R	Hard	Osaka (13) (rank -, peak 1)	bt	Siniakova (rank -, peak 27)	6-2 5-7 6-1	[WTA]	peak_diff 26
+20260901	US Open	2R	Hard	Paolini (19) (rank -, peak 4)	bt	Stefanini (rank -, peak 100)	6-4 6-1	[WTA]	peak_diff 96
+20260901	US Open	2R	Hard	Paul (20) (rank -, peak 8)	bt	Prizmic (rank -, peak 70)	6-2 6-3 5-7 6-4	[ATP]	peak_diff 62
+20260901	US Open	2R	Hard	Pegula (3) (rank -, peak 3)	bt	Kenin (rank -, peak 4)	6-3 6-1	[WTA]	peak_diff 1
+20260901	US Open	2R	Hard	Potapova (24) (rank -, peak 21)	bt	Jeanjean (rank -, peak 91)	6-4 2-6 6-3	[WTA]	peak_diff 70
+20260901	US Open	2R	Hard	Rakhimova (rank -, peak 60)	bt	Selekhmeteva (rank -, peak 71)	6-3 6-0	[WTA]	peak_diff 11
+20260901	US Open	2R	Hard	Rinderknech (26) (rank -, peak 24)	bt	Munar (rank -, peak 33)	7-6(4) 6-2 7-5	[ATP]	peak_diff 9
+20260901	US Open	2R	Hard	Rybakina (2) (rank -, peak 2)	bt	Bouzas Maneiro (rank -, peak 40)	6-2 6-4	[WTA]	peak_diff 38
+20260901	US Open	2R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Iatcenko (rank -, peak -)	6-1 6-1	[WTA]	peak_diff -
+20260901	US Open	2R	Hard	Shapovalov (rank -, peak 10)	bt	Van Assche (rank -, peak 63)	6-0 6-4 7-6(7)	[ATP]	peak_diff 53
+20260901	US Open	2R	Hard	Shelton (8) (rank -, peak 5)	bt	Hurkacz (rank -, peak 6)	6-3 5-7 7-6(3) 7-5	[ATP]	peak_diff 1
+20260901	US Open	2R	Hard	Shnaider (15) (rank -, peak 11)	bt	Pliskova (rank -, peak 1)	6-1 7-6(4)	[WTA]	peak_diff 10
+20260901	US Open	2R	Hard	Starodubtseva (rank -, peak 53)	bt	Sakkari (32) (rank -, peak 3)	1-6 7-6(4) 6-2	[WTA]	peak_diff 50
+20260901	US Open	2R	Hard	Svitolina (9) (rank -, peak 3)	bt	Joint (rank -, peak 28)	6-2 6-7(6) 6-4	[WTA]	peak_diff 25
+20260901	US Open	2R	Hard	Sweeny (rank -, peak 131)	bt	Musetti (13) (rank -, peak 5)	3-6 6-1 6-2 6-2	[ATP]	peak_diff 126
+20260901	US Open	2R	Hard	Swiatek (8) (rank -, peak 1)	bt	Podoroska (rank -, peak -)	6-3 6-2	[WTA]	peak_diff -
+20260901	US Open	2R	Hard	Tabilo (25) (rank -, peak 19)	bt	Popyrin (rank -, peak 19)	2-6 7-6(4) 7-6(3) 6-2	[ATP]	peak_diff 0
+20260901	US Open	2R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Sakamoto (rank -, peak 149)	6-3 7-6(2) 7-5	[ATP]	peak_diff 139
+20260901	US Open	2R	Hard	Tien (14) (rank -, peak 18)	bt	Monfils (rank -, peak 9)	6-3 6-4 6-3	[ATP]	peak_diff 9
+20260901	US Open	2R	Hard	Townsend (rank -, peak 46)	bt	Preston (rank -, peak 126)	6-1 6-1	[WTA]	peak_diff 80
+20260901	US Open	2R	Hard	Tsitsipas (rank -, peak 3)	bt	Harris (rank -, peak 101)	6-7(1) 6-3 7-6(4) 6-4	[ATP]	peak_diff 98
+20260901	US Open	2R	Hard	Vacherot (22) (rank -, peak 16)	bt	Majchrzak (rank -, peak 53)	6-4 4-6 7-6(3) 6-2	[ATP]	peak_diff 37
+20260901	US Open	2R	Hard	Van De Zandschulp (rank -, peak 22)	bt	De Minaur (6) (rank -, peak 6)	6-4 7-5 6-2	[ATP]	peak_diff 16
+20260901	US Open	2R	Hard	Wu (rank -, peak 54)	bt	Duckworth (rank -, peak 46)	7-5 6-3 6-1	[ATP]	peak_diff 8
+20260901	US Open	2R	Hard	Zheng (rank -, peak 4)	bt	Putintseva (rank -, peak 20)	6-4 2-6 6-1	[WTA]	peak_diff 16
+20260901	US Open	2R	Hard	Zheng (rank -, peak 4)	bt	Yunchaokete (rank -, peak 64)	6-3 2-6 6-2 6-3	[ATP]	peak_diff 60
+20260901	US Open	2R	Hard	Zverev (1) (rank -, peak 2)	bt	Halys (rank -, peak 46)	6-4 4-6 7-6(3) 6-7(3) 6-3	[ATP]	peak_diff 44
+20260901	US Open	3R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Wu (rank -, peak 54)	6-3 6-4 6-1	[ATP]	peak_diff 53
+20260901	US Open	3R	Hard	Andreeva (5) (rank -, peak 5)	bt	Bartunkova (rank -, peak 61)	6-2 7-6(5)	[WTA]	peak_diff 56
+20260901	US Open	3R	Hard	Blockx (28) (rank -, peak 36)	bt	Cobolli (5) (rank -, peak 10)	6-7(4) 6-3 6-0 6-3	[ATP]	peak_diff 26
+20260901	US Open	3R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Fritz (9) (rank -, peak 4)	3-6 4-6 6-3 6-4 6-4	[ATP]	peak_diff 14
+20260901	US Open	3R	Hard	Cirstea (16) (rank -, peak 18)	bt	Paolini (19) (rank -, peak 4)	6-3 6-3	[WTA]	peak_diff 14
+20260901	US Open	3R	Hard	Darderi (21) (rank -, peak 16)	bt	Sweeny (rank -, peak 131)	6-4 6-3 6-3	[ATP]	peak_diff 115
+20260901	US Open	3R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Navone (rank -, peak 29)	6-4 6-4 6-3	[ATP]	peak_diff 4
+20260901	US Open	3R	Hard	Gauff (4) (rank -, peak 2)	bt	Bucsa (rank -, peak 30)	6-3 6-4	[WTA]	peak_diff 28
+20260901	US Open	3R	Hard	Gea (rank -, peak 135)	bt	Zheng (rank -, peak 4)	7-6(7) 3-6 4-6 6-3 6-2	[ATP]	peak_diff 131
+20260901	US Open	3R	Hard	Jovic (14) (rank -, peak 16)	bt	Eala (17) (rank -, peak 29)	7-5 3-6 7-5	[WTA]	peak_diff 13
+20260901	US Open	3R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Svitolina (9) (rank -, peak 3)	6-3 2-6 6-3	[WTA]	peak_diff 8
+20260901	US Open	3R	Hard	Khachanov (rank -, peak 9)	bt	Bonzi (rank -, peak 42)	6-3 6-2 6-4	[ATP]	peak_diff 33
+20260901	US Open	3R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Alexandrova (18) (rank -, peak 10)	6-3 6-2	[WTA]	peak_diff 2
+20260901	US Open	3R	Hard	Medvedev (7) (rank -, peak 1)	bt	Rinderknech (26) (rank -, peak 24)	6-4 6-4 6-4	[ATP]	peak_diff 23
+20260901	US Open	3R	Hard	Michelsen (rank -, peak 30)	bt	Merida Aguilar (rank -, peak 82)	7-6(5) 6-4 6-3	[ATP]	peak_diff 52
+20260901	US Open	3R	Hard	Navarro (26) (rank -, peak 8)	bt	Muchova (7) (rank -, peak 8)	6-3 7-5	[WTA]	peak_diff 0
+20260901	US Open	3R	Hard	Noskova (6) (rank -, peak 12)	bt	Li (29) (rank -, peak 29)	6-2 6-7(6) 6-2	[WTA]	peak_diff 17
+20260901	US Open	3R	Hard	Osaka (13) (rank -, peak 1)	bt	Mertens (23) (rank -, peak 12)	6-3 3-6 7-5	[WTA]	peak_diff 11
+20260901	US Open	3R	Hard	Paul (20) (rank -, peak 8)	bt	Bublik (15) (rank -, peak 10)	6-4 3-6 6-7(4) 6-1 6-3	[ATP]	peak_diff 2
+20260901	US Open	3R	Hard	Pegula (3) (rank -, peak 3)	bt	Fernandez (31) (rank -, peak 13)	1-6 6-4 6-3	[WTA]	peak_diff 10
+20260901	US Open	3R	Hard	Potapova (24) (rank -, peak 21)	bt	Anisimova (10) (rank -, peak 3)	6-2 7-5	[WTA]	peak_diff 18
+20260901	US Open	3R	Hard	Rybakina (2) (rank -, peak 2)	bt	Starodubtseva (rank -, peak 53)	7-6(6) 6-3	[WTA]	peak_diff 51
+20260901	US Open	3R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Rakhimova (rank -, peak 60)	6-3 6-4	[WTA]	peak_diff 59
+20260901	US Open	3R	Hard	Shelton (8) (rank -, peak 5)	bt	Shapovalov (rank -, peak 10)	7-6(3) 6-7(5) 6-3 6-4	[ATP]	peak_diff 5
+20260901	US Open	3R	Hard	Swiatek (8) (rank -, peak 1)	bt	Bouzkova (25) (rank -, peak 24)	7-6(3) 7-6(3)	[WTA]	peak_diff 23
+20260901	US Open	3R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Vacherot (22) (rank -, peak 16)	6-4 6-2 6-4	[ATP]	peak_diff 6
+20260901	US Open	3R	Hard	Tien (14) (rank -, peak 18)	bt	Mensik (17) (rank -, peak 12)	6-3 1-6 6-7(2) 6-3 6-4	[ATP]	peak_diff 6
+20260901	US Open	3R	Hard	Townsend (rank -, peak 46)	bt	Shnaider (15) (rank -, peak 11)	6-2 6-7(3) 6-3	[WTA]	peak_diff 35
+20260901	US Open	3R	Hard	Tsitsipas (rank -, peak 3)	bt	Lehecka (18) (rank -, peak 12)	2-6 6-1 7-6(3) 6-1	[ATP]	peak_diff 9
+20260901	US Open	3R	Hard	Van De Zandschulp (rank -, peak 22)	bt	Bergs (31) (rank -, peak 38)	3-6 7-6(3) 4-6 7-6(6) 6-3	[ATP]	peak_diff 16
+20260901	US Open	3R	Hard	Zheng (rank -, peak 4)	bt	Keys (22) (rank -, peak 5)	1-6 7-6(3) 7-5	[WTA]	peak_diff 1
+20260901	US Open	3R	Hard	Zverev (1) (rank -, peak 2)	bt	Tabilo (25) (rank -, peak 19)	6-2 7-6(2) 6-2	[ATP]	peak_diff 17
+20260901	US Open	QF	Hard	Gauff (4) (rank -, peak 2)	bt	Andreeva (5) (rank -, peak 5)	2-6 7-6(7) 6-2	[WTA]	peak_diff 3
+20260901	US Open	QF	Hard	Khachanov (rank -, peak 9)	bt	Blockx (28) (rank -, peak 36)	6-2 7-5 3-2	[ATP]	peak_diff 27
+20260901	US Open	QF	Hard	Pegula (3) (rank -, peak 3)	bt	Navarro (26) (rank -, peak 8)	3-6 6-4 6-3	[WTA]	peak_diff 5
+20260901	US Open	QF	Hard	Rybakina (2) (rank -, peak 2)	bt	Zheng (rank -, peak 4)	3-6 6-1 6-4	[WTA]	peak_diff 2
+20260901	US Open	QF	Hard	Sabalenka (1) (rank -, peak 1)	bt	Noskova (6) (rank -, peak 12)	7-6(1) 3-6 7-6(7)	[WTA]	peak_diff 11
+20260901	US Open	QF	Hard	Shelton (8) (rank -, peak 5)	bt	Alcaraz (2) (rank -, peak 1)	6-7(5) 6-1 6-3 1-6 7-6(7)	[ATP]	peak_diff 4
+20260901	US Open	QF	Hard	Tiafoe (11) (rank -, peak 10)	bt	Michelsen (rank -, peak 30)	5-7 3-6 7-5 6-3 7-6(6)	[ATP]	peak_diff 20
+20260901	US Open	QF	Hard	Zverev (1) (rank -, peak 2)	bt	Van De Zandschulp (rank -, peak 22)	6-2 7-5 6-1	[ATP]	peak_diff 20
+20260901	US Open	R16	Hard	Alcaraz (2) (rank -, peak 1)	bt	Paul (20) (rank -, peak 8)	6-4 6-3 6-4	[ATP]	peak_diff 7
+20260901	US Open	R16	Hard	Andreeva (5) (rank -, peak 5)	bt	Potapova (24) (rank -, peak 21)	5-7 6-4 6-3	[WTA]	peak_diff 16
+20260901	US Open	R16	Hard	Blockx (28) (rank -, peak 36)	bt	Cerundolo (24) (rank -, peak 18)	6-3 4-6 7-5 7-5	[ATP]	peak_diff 18
+20260901	US Open	R16	Hard	Gauff (4) (rank -, peak 2)	bt	Jovic (14) (rank -, peak 16)	6-1 6-4	[WTA]	peak_diff 14
+20260901	US Open	R16	Hard	Khachanov (rank -, peak 9)	bt	Tien (14) (rank -, peak 18)	7-5 4-6 6-7(6) 6-1 6-4	[ATP]	peak_diff 9
+20260901	US Open	R16	Hard	Michelsen (rank -, peak 30)	bt	Etcheverry (27) (rank -, peak 25)	7-6(6) 6-4 6-4	[ATP]	peak_diff 5
+20260901	US Open	R16	Hard	Navarro (26) (rank -, peak 8)	bt	Kalinskaya (21) (rank -, peak 11)	6-4 6-2	[WTA]	peak_diff 3
+20260901	US Open	R16	Hard	Noskova (6) (rank -, peak 12)	bt	Kostyuk (11) (rank -, peak 12)	7-5 5-7 6-4	[WTA]	peak_diff 0
+20260901	US Open	R16	Hard	Pegula (3) (rank -, peak 3)	bt	Cirstea (16) (rank -, peak 18)	6-3 6-4	[WTA]	peak_diff 15
+20260901	US Open	R16	Hard	Rybakina (2) (rank -, peak 2)	bt	Osaka (13) (rank -, peak 1)	6-1 6-4	[WTA]	peak_diff 1
+20260901	US Open	R16	Hard	Sabalenka (1) (rank -, peak 1)	bt	Townsend (rank -, peak 46)	6-4 6-3	[WTA]	peak_diff 45
+20260901	US Open	R16	Hard	Shelton (8) (rank -, peak 5)	bt	Tsitsipas (rank -, peak 3)	6-2 6-3 6-4	[ATP]	peak_diff 2
+20260901	US Open	R16	Hard	Tiafoe (11) (rank -, peak 10)	bt	Medvedev (7) (rank -, peak 1)	7-6(1) 6-4 7-6(6)	[ATP]	peak_diff 9
+20260901	US Open	R16	Hard	Van De Zandschulp (rank -, peak 22)	bt	Gea (rank -, peak 135)	3-6 6-7(0) 7-6(7) 7-6(3) 6-4	[ATP]	peak_diff 113
+20260901	US Open	R16	Hard	Zheng (rank -, peak 4)	bt	Swiatek (8) (rank -, peak 1)	7-5 6-3	[WTA]	peak_diff 3
+20260901	US Open	R16	Hard	Zverev (1) (rank -, peak 2)	bt	Darderi (21) (rank -, peak 16)	6-2 6-2 7-6(3)	[ATP]	peak_diff 14

@@ -1,5 +1,5 @@
 /**
- * 条件引擎：按桶 enabled + 多组 OR（组内 AND）筛 matches
+ * 条件引擎：桶开关 + 产品挂载条件组（AND/OR）筛 matches
  */
 function currentRank(player, rankingsByPlayer = {}) {
   const id = player?.id ?? player?.teamId;
@@ -72,6 +72,76 @@ function isLimited(v) {
   return v != null && v !== '' && v !== 'all';
 }
 
+function scoreSide(m, side) {
+  return side === 'home'
+    ? (m.homeScore || m.home_score || m.score?.home || {})
+    : (m.awayScore || m.away_score || m.score?.away || {});
+}
+
+function periodScore(block, i) {
+  if (block == null || typeof block !== 'object') return null;
+  const n = Number(
+    block[`period${i}`]
+    ?? block[`set${i}`]
+    ?? (Array.isArray(block.periods) ? block.periods[i - 1] : null),
+  );
+  return Number.isFinite(n) ? n : null;
+}
+
+function isSetComplete(a, b) {
+  if (a == null || b == null) return false;
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  if (hi >= 6 && hi - lo >= 2) return true;
+  if (hi >= 7 && lo >= 5) return true;
+  return false;
+}
+
+function pickStrongSide(m, rankingsByPlayer = {}) {
+  const metrics = rankMetrics(m, rankingsByPlayer);
+  if (!metrics.ready) return null;
+  const home = m?.homePlayer || { name: m?.home };
+  const away = m?.awayPlayer || { name: m?.away };
+  const homeR = currentRank(home, rankingsByPlayer);
+  const awayR = currentRank(away, rankingsByPlayer);
+  if (homeR == null || awayR == null) return null;
+  return homeR < awayR ? 'home' : 'away';
+}
+
+function strongWonFirstSet(m, side) {
+  const hs = scoreSide(m, 'home');
+  const as = scoreSide(m, 'away');
+  const h1 = periodScore(hs, 1);
+  const a1 = periodScore(as, 1);
+  if (h1 == null || a1 == null || h1 === a1) return false;
+  if (!isSetComplete(h1, a1)) return false;
+  const homeWon = h1 > a1;
+  return side === 'home' ? homeWon : !homeWon;
+}
+
+function parseGameScorePair(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const m = s.match(/^(\d+)\s*[:\-–／/]\s*(\d+)$/);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return { hi: Math.max(a, b), lo: Math.min(a, b) };
+}
+
+/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
+function firstSetMatchesExcludeScore(m, excludeRaw) {
+  const pair = parseGameScorePair(excludeRaw);
+  if (!pair) return false;
+  const hs = scoreSide(m, 'home');
+  const as = scoreSide(m, 'away');
+  const h1 = periodScore(hs, 1);
+  const a1 = periodScore(as, 1);
+  if (h1 == null || a1 == null) return false;
+  return Math.max(h1, a1) === pair.hi && Math.min(h1, a1) === pair.lo;
+}
+
 /** 单组：字段全部 AND */
 function passGroup(m, group, bundle) {
   const rules = group || {};
@@ -82,6 +152,13 @@ function passGroup(m, group, bundle) {
   const metrics = rankMetrics(m, rankings);
   if (isLimited(rules.strongRankMax)) {
     if (!metrics.ready || metrics.strongRank > Number(rules.strongRankMax)) return false;
+  }
+  // 开区间：如 0 < x < 10、9 < x < 21
+  if (isLimited(rules.strongRankGt)) {
+    if (!metrics.ready || !(metrics.strongRank > Number(rules.strongRankGt))) return false;
+  }
+  if (isLimited(rules.strongRankLt)) {
+    if (!metrics.ready || !(metrics.strongRank < Number(rules.strongRankLt))) return false;
   }
   if (isLimited(rules.gapMin)) {
     if (!metrics.ready || metrics.gap < Number(rules.gapMin)) return false;
@@ -94,6 +171,16 @@ function passGroup(m, group, bundle) {
   }
   if (rules.gapMode === 'tier') {
     if (!metrics.ready || metrics.gap < requiredTierGap(metrics.strongRank)) return false;
+  }
+  if (rules.requireWonFirstSet) {
+    const side = pickStrongSide(m, rankings);
+    if (!side || !strongWonFirstSet(m, side)) return false;
+    if (rules.firstSetExcludeEnabled) {
+      const excludeRaw = rules.firstSetExcludeScore != null
+        ? String(rules.firstSetExcludeScore).trim()
+        : '7:5';
+      if (excludeRaw && firstSetMatchesExcludeScore(m, excludeRaw || '7:5')) return false;
+    }
   }
   return true;
 }
@@ -154,24 +241,96 @@ function applyToInplayBundle(bundle, bucket) {
   };
 }
 
-async function maybeApplyCondition(product, bundle) {
+/**
+ * 条件引擎：桶开关 + 产品管理挂载的条件组（AND/OR）筛 matches
+ * 条件组定义在引擎库；joinPrev 来自产品 condition_select
+ */
+
+function resolveGroupsFromProductSelect(libraryGroups, selectRows) {
+  const lib = Array.isArray(libraryGroups) ? libraryGroups : [];
+  const byId = new Map(lib.filter((g) => g?.id != null).map((g) => [String(g.id), g]));
+  const rows = Array.isArray(selectRows) ? selectRows : [];
+  const out = [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const id = row?.id != null ? String(row.id) : '';
+    const def = byId.get(id);
+    if (!def) continue;
+    const join = String(row.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or';
+    out.push({
+      ...def,
+      joinPrev: i === 0 ? 'or' : join,
+    });
+  }
+  return out;
+}
+
+async function resolveBucketFilterGroups(bucketKey) {
   const tennisEngines = require('./tennisEngines');
+  const productService = require('./product');
   const cfg = await tennisEngines.getConfig();
-  const bucket = cfg.condition?.buckets?.[product];
-  // 桶级单独打开；兼容旧全局 enabled：全局关则全部不套用
+  const bucket = cfg.condition?.buckets?.[bucketKey];
   if (!cfg.condition?.enabled) {
-    return { ...bundle, condition_enabled: false };
+    return { ok: false, reason: 'master_off', cfg, bucket, groups: [] };
   }
   if (!bucket?.enabled) {
-    return { ...bundle, condition_enabled: false, condition_bucket: product };
+    return { ok: false, reason: 'bucket_off', cfg, bucket, groups: [] };
   }
+  const product = await productService.findOnlineProductForBucket(bucketKey);
+  const library = bucket.groups || [];
+  if (product && Array.isArray(product.conditionSelect) && product.conditionSelect.length) {
+    const groups = resolveGroupsFromProductSelect(library, product.conditionSelect);
+    return {
+      ok: true,
+      cfg,
+      bucket,
+      product,
+      groups,
+      source: 'product_condition_select',
+    };
+  }
+  // 产品未配置选择：不过滤
+  return {
+    ok: true,
+    cfg,
+    bucket,
+    product,
+    groups: [],
+    source: 'no_product_select',
+  };
+}
+
+async function maybeApplyCondition(product, bundle) {
+  const resolved = await resolveBucketFilterGroups(product);
+  if (!resolved.ok) {
+    return {
+      ...bundle,
+      condition_enabled: false,
+      condition_bucket: product,
+      condition_skip: resolved.reason,
+    };
+  }
+  const filterBucket = { enabled: true, groups: resolved.groups };
   let next = bundle;
-  if (product === 'prematch') next = applyToPrematchBundle(bundle, bucket);
-  else if (product === 'inplay' || product === 'settled') next = applyToInplayBundle(bundle, bucket);
+  if (!resolved.groups.length) {
+    return {
+      ...bundle,
+      condition_enabled: true,
+      condition_bucket: product,
+      condition_source: resolved.source,
+      condition_applied: false,
+      admin_condition_rules: filterBucket,
+    };
+  }
+  if (product === 'prematch') next = applyToPrematchBundle(bundle, filterBucket);
+  else if (product === 'inplay' || product === 'settled') next = applyToInplayBundle(bundle, filterBucket);
   return {
     ...next,
     condition_enabled: true,
-    admin_condition_rules: bucket,
+    condition_bucket: product,
+    condition_source: resolved.source,
+    condition_product_id: resolved.product?.id || null,
+    admin_condition_rules: filterBucket,
   };
 }
 
@@ -183,4 +342,6 @@ module.exports = {
   passGroup,
   evalGroupsChain,
   rankMetrics,
+  resolveGroupsFromProductSelect,
+  resolveBucketFilterGroups,
 };

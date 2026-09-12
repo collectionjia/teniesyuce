@@ -1,0 +1,103 @@
+{
+  "days": [
+    {
+      "date": "2026-01-04",
+      "ymd": "20260104",
+      "matchCount": 47,
+      "tournaments": [
+        "Brisbane"
+      ]
+    },
+    {
+      "date": "2026-01-12",
+      "ymd": "20260112",
+      "matchCount": 29,
+      "tournaments": [
+        "Adelaide"
+      ]
+    },
+    {
+      "date": "2026-02-01",
+      "ymd": "20260201",
+      "matchCount": 27,
+      "tournaments": [
+        "Abu Dhabi"
+      ]
+    },
+    {
+      "date": "2026-02-09",
+      "ymd": "20260209",
+      "matchCount": 62,
+      "tournaments": [
+        "Dallas",
+        "Rotterdam"
+      ]
+    },
+    {
+      "date": "2026-02-16",
+      "ymd": "20260216",
+      "matchCount": 62,
+      "tournaments": [
+        "Doha",
+        "Rio de Janeiro"
+      ]
+    },
+    {
+      "date": "2026-02-23",
+      "ymd": "20260223",
+      "matchCount": 89,
+      "tournaments": [
+        "Acapulco",
+        "Dubai",
+        "Merida"
+      ]
+    },
+    {
+      "date": "2026-03-30",
+      "ymd": "20260330",
+      "matchCount": 47,
+      "tournaments": [
+        "Charleston"
+      ]
+    },
+    {
+      "date": "2026-04-06",
+      "ymd": "20260406",
+      "matchCount": 27,
+      "tournaments": [
+        "Linz"
+      ]
+    },
+    {
+      "date": "2026-04-13",
+      "ymd": "20260413",
+      "matchCount": 89,
+      "tournaments": [
+        "Barcelona",
+        "Munich",
+        "Stuttgart"
+      ]
+    },
+    {
+      "date": "2026-05-17",
+      "ymd": "20260517",
+      "matchCount": 58,
+      "tournaments": [
+        "Hamburg",
+        "Strasbourg"
+      ]
+    },
+    {
+      "date": "2026-09-11",
+      "ymd": "20260911",
+      "matchCount": 60,
+      "tournaments": [
+        "Barcelona",
+        "Munich",
+        "Stuttgart"
+      ],
+      "synthetic": true
+    }
+  ],
+  "generated_at": "2026-09-11T05:23:06.173Z"
+}

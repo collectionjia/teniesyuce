@@ -104,6 +104,77 @@ const adminModal = reactive({
   open: false, type: '', mode: 'create', id: null, saving: false,
   form: {},
 })
+/** 产品弹窗：当前桶可用的条件组库 */
+const productEngineGroups = ref([])
+const productEngineGroupsLoading = ref(false)
+
+function productFormBucket(form) {
+  const tag = String(form?.tag || '').toLowerCase()
+  const name = String(form?.name || '')
+  if (tag === 'tennis-prematch' || /盘前网球/.test(name)) return 'prematch'
+  if (tag === 'tennis-settled' || /盘后网球/.test(name)) return 'settled'
+  if (tag === 'tennis-inplay' || (/盘中采集|盘中网球/.test(name) && !/盘前|盘后/.test(name))) return 'inplay'
+  return null
+}
+
+function isEngineLinkedProductForm(form) {
+  return !!productFormBucket(form)
+}
+
+function conditionGroupLabel(g, index) {
+  const n = String(g?.name || '').trim()
+  return n || `条件组 ${index + 1}`
+}
+
+function normalizeSelectRows(rows) {
+  if (!Array.isArray(rows)) return []
+  return rows
+    .map((r, i) => {
+      const id = r?.id != null ? String(r.id).trim() : ''
+      if (!id) return null
+      const join = String(r?.joinPrev || 'or').toLowerCase()
+      return { id, joinPrev: i === 0 ? 'or' : (join === 'and' ? 'and' : 'or') }
+    })
+    .filter(Boolean)
+}
+
+async function loadProductEngineGroups(bucket) {
+  productEngineGroups.value = []
+  if (!bucket) return
+  productEngineGroupsLoading.value = true
+  try {
+    const data = await api.fetchTennisEngines()
+    const groups = data?.condition?.buckets?.[bucket]?.groups || []
+    productEngineGroups.value = Array.isArray(groups) ? groups : []
+  } catch {
+    productEngineGroups.value = []
+  } finally {
+    productEngineGroupsLoading.value = false
+  }
+}
+
+function addProductSelectRow(field) {
+  const list = Array.isArray(adminModal.form[field]) ? [...adminModal.form[field]] : []
+  const firstUnused = productEngineGroups.value.find((g) => !list.some((r) => String(r.id) === String(g.id)))
+  const id = firstUnused?.id || productEngineGroups.value[0]?.id || ''
+  if (!id) return showToast('请先在条件引擎创建条件组', 'error')
+  list.push({ id: String(id), joinPrev: list.length ? 'or' : 'or' })
+  adminModal.form[field] = list
+}
+
+function removeProductSelectRow(field, index) {
+  const list = Array.isArray(adminModal.form[field]) ? [...adminModal.form[field]] : []
+  list.splice(index, 1)
+  if (list[0]) list[0] = { ...list[0], joinPrev: 'or' }
+  adminModal.form[field] = list
+}
+
+function setProductSelectField(field, index, key, value) {
+  const list = Array.isArray(adminModal.form[field]) ? [...adminModal.form[field]] : []
+  if (!list[index]) return
+  list[index] = { ...list[index], [key]: value }
+  adminModal.form[field] = list
+}
 
 const userSubModal = reactive({
   open: false,
@@ -174,7 +245,20 @@ const filteredProducts = computed(() => {
 const filteredShopProducts = computed(() => {
   let list = products.value
   if (role.value !== 'admin') list = list.filter((p) => !p.adminOnly)
-  return filterBySearch(list, listSearch.shop, ['name', 'desc', 'tag'])
+  list = filterBySearch(list, listSearch.shop, ['name', 'desc', 'tag'])
+  const bucketRank = (p) => {
+    const b = productFormBucket(p)
+    if (b === 'prematch') return 0
+    if (b === 'inplay') return 1
+    if (b === 'settled') return 2
+    return 10
+  }
+  return [...list].sort((a, b) => {
+    const ra = bucketRank(a)
+    const rb = bucketRank(b)
+    if (ra !== rb) return ra - rb
+    return (Number(a.id) || 0) - (Number(b.id) || 0)
+  })
 })
 const filteredMineSubs = computed(() =>
   filterBySearch(mySubs.value, listSearch.mine, ['name', 'desc', 'tag'])
@@ -788,8 +872,10 @@ function setUser(u) {
 }
 
 async function loadPaymentSettings() {
+  // 仅管理员走 /admin/settings/payment；公开 /settings/payment 已下线
+  if (role.value !== 'admin') return
   try {
-    const data = await api.fetchPaymentSettings()
+    const data = await api.fetchAdminPaymentSettings()
     paymentSettings.defaultPlan = data.defaultPlan || 'month'
     paymentSettings.redeemPurchaseUrl = data.redeemPurchaseUrl || EXTERNAL_SUBSCRIBE_URL_DEFAULT
     siteSettingsForm.redeemPurchaseUrl = paymentSettings.redeemPurchaseUrl
@@ -933,7 +1019,23 @@ function fmtMoney(n) {
 }
 
 function emptyForm(type) {
-  if (type === 'product') return { name: '', tag: 'chart', gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)', url: '', desc: '', priceMonth: 39, priceWeek: 12, priceDay: 3, defaultPlan: paymentSettings.defaultPlan || 'month', online: true, adminOnly: false }
+  if (type === 'product') {
+    return {
+      name: '',
+      tag: 'chart',
+      gradient: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+      url: '',
+      desc: '',
+      priceMonth: 39,
+      priceWeek: 12,
+      priceDay: 3,
+      defaultPlan: paymentSettings.defaultPlan || 'month',
+      online: true,
+      adminOnly: false,
+      conditionSelect: [],
+      bettingSelect: [],
+    }
+  }
   if (type === 'agent') return { account: '', password: '', name: '', rate: 25, agentStatus: 'approved' }
   if (type === 'order') return { userId: '', productId: '', plan: 'month', amount: '' }
   if (type === 'user') return { account: '', password: '', name: '', role: 'user', balance: 0, tennisFilterEnabled: false, btcSimEnabled: false }
@@ -947,6 +1049,9 @@ function setProductDefaultPlan(plan) {
 function selectProductIcon(option) {
   adminModal.form.tag = option.key
   adminModal.form.gradient = option.gradient
+  if (adminModal.type === 'product') {
+    loadProductEngineGroups(productFormBucket(adminModal.form))
+  }
 }
 
 async function openAdminModal(type, mode, item) {
@@ -957,12 +1062,20 @@ async function openAdminModal(type, mode, item) {
     ...item,
     defaultPlan: item.defaultPlan || paymentSettings.defaultPlan || 'month',
     password: '',
+    conditionSelect: normalizeSelectRows(item.conditionSelect),
+    bettingSelect: normalizeSelectRows(item.bettingSelect),
   }
   if (type === 'order' && mode === 'create') {
     if (!admin.users.length) admin.users = await api.fetchAdminUsers()
     if (!adminProducts.value.length) adminProducts.value = await api.fetchAdminProducts()
     adminModal.form.userId = admin.users.find(x => x.role === 'user')?.id || ''
     adminModal.form.productId = adminProducts.value[0]?.id || ''
+  }
+  if (type === 'product') {
+    const bucket = productFormBucket(adminModal.form)
+    await loadProductEngineGroups(bucket)
+  } else {
+    productEngineGroups.value = []
   }
   adminModal.open = true
 }
@@ -991,6 +1104,8 @@ async function saveAdminModal() {
         defaultPlan: form.defaultPlan,
         online: !!form.online,
         adminOnly: !!form.adminOnly,
+        conditionSelect: normalizeSelectRows(form.conditionSelect),
+        bettingSelect: normalizeSelectRows(form.bettingSelect),
       }
       if (mode === 'create') await api.createProduct(payload)
       else await api.updateProduct(id, payload)
@@ -1894,7 +2009,6 @@ watch(listSearch, () => {
 }, { deep: true })
 
 onMounted(async () => {
-  await loadPaymentSettings()
   await initSession()
   if (!authed.value) applyInviteFromUrl()
   await handlePaymentReturn()
@@ -3984,6 +4098,86 @@ function productEmbedUrl(product) {
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                   <input type="checkbox" v-model="adminModal.form.adminOnly" class="accent-primary-600"/> 仅管理员可见
                 </label>
+
+                <div v-if="isEngineLinkedProductForm(adminModal.form)" class="space-y-3 pt-2 border-t border-slate-100">
+                  <div class="text-xs font-semibold text-slate-600">条件组挂载（来自条件引擎 · {{ productFormBucket(adminModal.form) }}）</div>
+                  <div v-if="productEngineGroupsLoading" class="text-xs text-slate-400">加载条件组…</div>
+                  <div v-else-if="!productEngineGroups.length" class="text-xs text-amber-600">该桶暂无条件组，请先到条件引擎创建</div>
+                  <template v-else>
+                    <div>
+                      <div class="flex items-center justify-between mb-1.5">
+                        <div class="text-xs text-slate-500">列表筛选条件（多选 + AND/OR）</div>
+                        <button type="button" class="text-xs text-primary-600" @click="addProductSelectRow('conditionSelect')">添加</button>
+                      </div>
+                      <div v-if="!(adminModal.form.conditionSelect || []).length" class="text-[11px] text-slate-400">未选择则不按产品条件筛选</div>
+                      <div
+                        v-for="(row, ri) in (adminModal.form.conditionSelect || [])"
+                        :key="'cs-' + ri"
+                        class="space-y-1 mb-2"
+                      >
+                        <select
+                          v-if="ri > 0"
+                          :value="row.joinPrev || 'or'"
+                          class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs"
+                          @change="setProductSelectField('conditionSelect', ri, 'joinPrev', $event.target.value)"
+                        >
+                          <option value="or">或 OR</option>
+                          <option value="and">且 AND</option>
+                        </select>
+                        <div class="flex gap-2">
+                          <select
+                            :value="row.id"
+                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
+                            @change="setProductSelectField('conditionSelect', ri, 'id', $event.target.value)"
+                          >
+                            <option
+                              v-for="(g, gi) in productEngineGroups"
+                              :key="g.id || gi"
+                              :value="g.id"
+                            >{{ conditionGroupLabel(g, gi) }}</option>
+                          </select>
+                          <button type="button" class="text-xs text-rose-500 px-2" @click="removeProductSelectRow('conditionSelect', ri)">删</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="flex items-center justify-between mb-1.5">
+                        <div class="text-xs text-slate-500">投注买入条件（多选 + AND/OR）</div>
+                        <button type="button" class="text-xs text-primary-600" @click="addProductSelectRow('bettingSelect')">添加</button>
+                      </div>
+                      <div v-if="!(adminModal.form.bettingSelect || []).length" class="text-[11px] text-slate-400">未选择则投注引擎不按产品买入条件入场</div>
+                      <div
+                        v-for="(row, ri) in (adminModal.form.bettingSelect || [])"
+                        :key="'bs-' + ri"
+                        class="space-y-1 mb-2"
+                      >
+                        <select
+                          v-if="ri > 0"
+                          :value="row.joinPrev || 'or'"
+                          class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs"
+                          @change="setProductSelectField('bettingSelect', ri, 'joinPrev', $event.target.value)"
+                        >
+                          <option value="or">或 OR</option>
+                          <option value="and">且 AND</option>
+                        </select>
+                        <div class="flex gap-2">
+                          <select
+                            :value="row.id"
+                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
+                            @change="setProductSelectField('bettingSelect', ri, 'id', $event.target.value)"
+                          >
+                            <option
+                              v-for="(g, gi) in productEngineGroups"
+                              :key="'b-' + (g.id || gi)"
+                              :value="g.id"
+                            >{{ conditionGroupLabel(g, gi) }}</option>
+                          </select>
+                          <button type="button" class="text-xs text-rose-500 px-2" @click="removeProductSelectRow('bettingSelect', ri)">删</button>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
               </div>
 
               <!-- 代理表单 -->

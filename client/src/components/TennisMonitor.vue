@@ -37,31 +37,29 @@ const BETTING_TABS = [
 
 function emptyConditionGroup() {
   return {
+    id: `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
-    joinPrev: 'or',
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
     rankDiffMin: 'all',
     rankDiffMax: 'all',
     strongRankMax: 'all',
+    strongRankGt: 'all',
+    strongRankLt: 'all',
     gapMode: 'all',
+    requireWonFirstSet: false,
+    firstSetExcludeEnabled: false,
+    firstSetExcludeScore: '7:5',
   }
 }
 
 function emptyBettingGroup(kind = 'inplay') {
   const isInplay = kind === 'inplay'
   return {
+    id: `bg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
     joinPrev: 'or',
-    tour: 'all',
-    pm: 'yes',
-    gapMin: 'all',
-    rankDiffMin: 'all',
-    rankDiffMax: 'all',
-    strongRankMax: 'all',
-    pmMaxCents: 91,
-    requireWonFirstSet: isInplay,
     stopEnabled: isInplay,
     stopRules: isInplay ? [emptyStopRule()] : [],
   }
@@ -91,7 +89,8 @@ function stopRuleDisplayName(r, index) {
 }
 
 function ensureStopRules(g) {
-  if (Array.isArray(g?.stopRules) && g.stopRules.length) return g.stopRules
+  // 显式空数组表示无止损，不要回填默认条
+  if (Array.isArray(g?.stopRules)) return g.stopRules
   return [emptyStopRule()]
 }
 
@@ -102,7 +101,7 @@ function cloneConditionBuckets(src) {
     const b = src?.[k]
     out[k] = {
       enabled: !!b?.enabled,
-      groups: Array.isArray(b?.groups) && b.groups.length
+      groups: Array.isArray(b?.groups)
         ? b.groups.map((g) => ({ ...emptyConditionGroup(), ...g }))
         : [emptyConditionGroup()],
     }
@@ -116,7 +115,7 @@ function cloneBettingBuckets(src) {
     const b = src?.[k]
     out[k] = {
       enabled: !!b?.enabled,
-      groups: Array.isArray(b?.groups) && b.groups.length
+      groups: Array.isArray(b?.groups)
         ? b.groups.map((g) => {
           const base = { ...emptyBettingGroup(k), ...g }
           base.stopRules = ensureStopRules(base).map((r) => ({ ...emptyStopRule(), ...r }))
@@ -138,24 +137,37 @@ function groupCollapseKey(tab, index) {
   return `${tab}:${index}`
 }
 function isConditionGroupCollapsed(gi) {
-  return !!conditionGroupCollapsed.value[groupCollapseKey(conditionTab.value, gi)]
+  const k = groupCollapseKey(conditionTab.value, gi)
+  // 未点过展开时默认折叠
+  if (!(k in conditionGroupCollapsed.value)) return true
+  return !!conditionGroupCollapsed.value[k]
 }
 function toggleConditionGroup(gi) {
   const k = groupCollapseKey(conditionTab.value, gi)
   conditionGroupCollapsed.value = {
     ...conditionGroupCollapsed.value,
-    [k]: !conditionGroupCollapsed.value[k],
+    [k]: !isConditionGroupCollapsed(gi),
   }
 }
 function isBettingGroupCollapsed(gi) {
-  return !!bettingGroupCollapsed.value[groupCollapseKey(bettingTab.value, gi)]
+  const k = groupCollapseKey(bettingTab.value, gi)
+  if (!(k in bettingGroupCollapsed.value)) return true
+  return !!bettingGroupCollapsed.value[k]
 }
 function toggleBettingGroup(gi) {
   const k = groupCollapseKey(bettingTab.value, gi)
   bettingGroupCollapsed.value = {
     ...bettingGroupCollapsed.value,
-    [k]: !bettingGroupCollapsed.value[k],
+    [k]: !isBettingGroupCollapsed(gi),
   }
+}
+
+/** 分组浅色底：按序号轮换 */
+const GROUP_TINT_COUNT = 6
+function groupTintClass(gi) {
+  const n = Number(gi)
+  const i = Number.isFinite(n) && n >= 0 ? Math.floor(n) % GROUP_TINT_COUNT : 0
+  return `group-tint-${i}`
 }
 
 const activeConditionBucket = computed(() => conditionDraft.value?.[conditionTab.value] || {
@@ -279,7 +291,10 @@ const livePollIntervalLabel = computed(() => {
 const livePollAutoEnabled = computed(() => livePollIntervalSec.value > 0)
 const LIVE_UI_REFRESH_MS = 60000
 const tennisDataSource = computed(() => dataSource.value?.source || 'ipwo')
+const isVirtualSource = computed(() => tennisDataSource.value === 'docks500')
+const lastRealSource = ref('ipwo')
 const tennisDataSourceLabel = computed(() => {
+  if (tennisDataSource.value === 'docks500') return '虚拟(txt)'
   if (tennisDataSource.value === 'api') return 'AllSports API'
   return 'IPWO'
 })
@@ -304,7 +319,7 @@ const pageSub = computed(() => {
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
       : `${master} · 各桶均未打开 · 账号 ${account || '未设'}`
   }
-  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · Top100 ${collectIntervalLabel.value} · 盘中 ${livePollIntervalLabel.value} · Redis ${tennisDataSourceLabel.value}`
+  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · Top100 ${collectIntervalLabel.value} · Redis ${tennisDataSourceLabel.value}`
 })
 
 watch(
@@ -328,6 +343,7 @@ const redisUpstreamLabel = computed(() => {
   if (!up) return '—'
   if (String(up).includes('allsports')) return 'AllSports API'
   if (String(up).includes('ipwo')) return 'IPWO'
+  if (String(up).includes('docks500') || String(up).includes('docks')) return '500回放'
   return up
 })
 const collectRequests = computed(() => (
@@ -629,6 +645,9 @@ async function loadSchedule() {
 
 async function loadDataSource() {
   dataSource.value = await api.fetchTennisMonitorDataSource()
+  if (dataSource.value?.source === 'ipwo' || dataSource.value?.source === 'api') {
+    lastRealSource.value = dataSource.value.source
+  }
 }
 
 async function loadEngines() {
@@ -887,6 +906,11 @@ function onBettingUserAccountChange(ev) {
   const account = String(ev?.target?.value || '').trim()
   patchEngines({ betting: { userAccount: account || null } })
 }
+function onBettingAmountUsdChange(ev) {
+  const n = Number(ev?.target?.value)
+  if (!Number.isFinite(n) || n <= 0) return
+  patchEngines({ betting: { amountUsd: Math.round(n * 100) / 100 } })
+}
 
 function parseConditionNum(raw) {
   if (raw === 'all' || raw === '' || raw == null) return 'all'
@@ -898,12 +922,16 @@ function setGroupField(groupIndex, key, raw) {
   const tab = conditionTab.value
   const groups = [...(conditionDraft.value[tab].groups || [])]
   const g = { ...groups[groupIndex] }
-  if (['gapMin', 'rankDiffMin', 'rankDiffMax', 'strongRankMax'].includes(key)) {
+  if (['gapMin', 'rankDiffMin', 'rankDiffMax', 'strongRankMax', 'strongRankGt', 'strongRankLt'].includes(key)) {
     g[key] = parseConditionNum(raw)
   } else if (key === 'joinPrev') {
     g[key] = raw === 'and' ? 'and' : 'or'
   } else if (key === 'name') {
     g[key] = String(raw || '').slice(0, 40)
+  } else if (['requireWonFirstSet', 'firstSetExcludeEnabled'].includes(key)) {
+    g[key] = !!raw
+  } else if (key === 'firstSetExcludeScore') {
+    g[key] = String(raw || '').trim().slice(0, 12) || '7:5'
   } else {
     g[key] = raw
   }
@@ -933,16 +961,14 @@ function addConditionGroup() {
 
 function removeConditionGroup(index) {
   const tab = conditionTab.value
-  let groups = [...(conditionDraft.value[tab].groups || [])]
-  if (groups.length <= 1) {
-    groups = [emptyConditionGroup()]
-  } else {
-    groups.splice(index, 1)
-  }
+  const groups = [...(conditionDraft.value[tab].groups || [])]
+  groups.splice(index, 1)
   conditionDraft.value = {
     ...conditionDraft.value,
     [tab]: { ...conditionDraft.value[tab], groups },
   }
+  // 立即落库，避免刷新后又从 Redis 读回
+  saveConditionBucketAndEnable()
 }
 
 async function saveConditionBucketAndEnable() {
@@ -954,7 +980,12 @@ async function saveConditionBucketAndEnable() {
       buckets: {
         [tab]: {
           enabled: !!bucket.enabled,
-          groups: (bucket.groups || []).map((g) => ({ ...emptyConditionGroup(), ...g })),
+          groups: (bucket.groups || []).map((g) => ({
+            ...emptyConditionGroup(),
+            ...g,
+            // 与投注一致：只用开区间强现> / 强现<，清掉旧 strongRankMax
+            strongRankMax: 'all',
+          })),
         },
       },
     },
@@ -965,13 +996,15 @@ function setBettingGroupField(groupIndex, key, raw) {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || [])]
   const g = { ...groups[groupIndex] }
-  if (['gapMin', 'rankDiffMin', 'rankDiffMax', 'strongRankMax'].includes(key)) {
+  if (['gapMin', 'rankDiffMin', 'rankDiffMax', 'strongRankMax', 'strongRankGt', 'strongRankLt'].includes(key)) {
     g[key] = parseConditionNum(raw)
   } else if (key === 'pmMaxCents') {
     const n = Number(raw)
     g[key] = Number.isFinite(n) ? n : 91
-  } else if (['requireWonFirstSet', 'stopEnabled'].includes(key)) {
+  } else if (['requireWonFirstSet', 'stopEnabled', 'firstSetExcludeEnabled'].includes(key)) {
     g[key] = !!raw
+  } else if (key === 'firstSetExcludeScore') {
+    g[key] = String(raw || '').trim().slice(0, 16)
   } else if (key === 'joinPrev') {
     g[key] = raw === 'and' ? 'and' : 'or'
   } else if (key === 'name') {
@@ -1031,15 +1064,15 @@ function removeStopRule(groupIndex, ruleIndex) {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || [])]
   const g = { ...groups[groupIndex] }
-  let rules = [...ensureStopRules(g)]
-  if (rules.length <= 1) rules = [emptyStopRule()]
-  else rules.splice(ruleIndex, 1)
+  const rules = [...ensureStopRules(g)]
+  rules.splice(ruleIndex, 1)
   g.stopRules = rules
   groups[groupIndex] = g
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
   }
+  saveBettingBucketAndEnable()
 }
 
 function setBettingBucketEnabled(ev) {
@@ -1061,16 +1094,14 @@ function addBettingGroup() {
 
 function removeBettingGroup(index) {
   const tab = bettingTab.value
-  let groups = [...(bettingDraft.value[tab].groups || [])]
-  if (groups.length <= 1) {
-    groups = [emptyBettingGroup(tab)]
-  } else {
-    groups.splice(index, 1)
-  }
+  const groups = [...(bettingDraft.value[tab].groups || [])]
+  groups.splice(index, 1)
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
   }
+  // 立即落库，避免刷新后又从 Redis 读回
+  saveBettingBucketAndEnable()
 }
 
 async function saveBettingBucketAndEnable() {
@@ -1085,6 +1116,8 @@ async function saveBettingBucketAndEnable() {
           groups: (bucket.groups || []).map((g) => ({
             ...emptyBettingGroup(tab),
             ...g,
+            // 投注引擎只用开区间强现> / 强现<，避免旧 strongRankMax 暗中生效
+            strongRankMax: 'all',
             stopRules: ensureStopRules(g).map((r) => ({ ...emptyStopRule(), ...r })),
           })),
         },
@@ -1121,25 +1154,57 @@ async function onRunTick() {
   }
 }
 
-async function onDataSourceChange(next) {
-  if (next === tennisDataSource.value || dataSourceSaving.value) return
+async function onDataSourceChange(next, date) {
+  if (dataSourceSaving.value) return
+  if (next === tennisDataSource.value && !date) return
   if (next === 'api' && !dataSource.value?.api_available) {
     error.value = 'AllSports API 未配置（需 RAPIDAPI_KEY）'
     return
+  }
+  if (next === 'docks500' && dataSource.value?.docks500_available === false) {
+    error.value = '虚拟数据不可用（检查 docks/2026_500.txt）'
+    return
+  }
+  // 切到虚拟前记住真实源，方便关虚拟时还原
+  if (next === 'docks500' && (tennisDataSource.value === 'ipwo' || tennisDataSource.value === 'api')) {
+    lastRealSource.value = tennisDataSource.value
+  }
+  if (next === 'ipwo' || next === 'api') {
+    lastRealSource.value = next
   }
   dataSourceSaving.value = true
   error.value = ''
   notice.value = ''
   try {
-    const data = await api.updateTennisMonitorDataSource(next)
+    const payload = { source: next }
+    if (next === 'docks500' && date) payload.date = date
+    const data = await api.updateTennisMonitorDataSource(payload)
     dataSource.value = { ...(dataSource.value || {}), ...data }
-    showNotice(data.message || `已切换为 ${data.label || next}，正在写入 Redis`)
+    showNotice(data.message || `已切换为 ${data.label || next}`)
     api.refreshTennisCache().catch(() => {})
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '切换数据源失败')
   } finally {
     dataSourceSaving.value = false
   }
+}
+
+async function onVirtualToggle(ev) {
+  const on = !!ev?.target?.checked
+  if (on) {
+    await onDataSourceChange('docks500')
+  } else {
+    const real = lastRealSource.value === 'api' && dataSource.value?.api_available
+      ? 'api'
+      : 'ipwo'
+    await onDataSourceChange(real)
+  }
+}
+
+async function onDocks500DateChange(ev) {
+  const date = ev?.target?.value
+  if (!date) return
+  await onDataSourceChange('docks500', date)
 }
 
 async function refreshTop100() {
@@ -1270,9 +1335,6 @@ onUnmounted(() => {
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
         <template v-if="isCollectPage">
-          <button type="button" class="btn ghost" :disabled="liveCollecting || liveRunning || !collectEnabled" @click="triggerLiveCollect">
-            {{ liveRunning ? '盘中采集中…' : liveCollecting ? '触发中…' : '采集盘中' }}
-          </button>
           <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect">
             {{ running ? 'Top100 采集中…' : collecting ? '触发中…' : '立即采集 Top100' }}
           </button>
@@ -1307,8 +1369,23 @@ onUnmounted(() => {
             >
             <span class="toggle-state" :class="{ off: engines && engines.collect?.inplay_tick_enabled === false }">{{ engines && engines.collect?.inplay_tick_enabled === false ? '已关闭' : '已开启' }}</span>
           </label>
-          <div class="source-group" role="radiogroup" aria-label="网球页 Redis 写入源">
-            <span class="source-label">数据源</span>
+          <label class="collect-toggle">
+            <span>虚拟</span>
+            <input
+              type="checkbox"
+              :checked="isVirtualSource"
+              :disabled="dataSourceSaving || loading || (dataSource && dataSource.docks500_available === false)"
+              @change="onVirtualToggle"
+            >
+            <span class="toggle-state" :class="{ off: !isVirtualSource }">{{ isVirtualSource ? '虚拟·txt' : '真实采集' }}</span>
+          </label>
+          <div
+            v-if="!isVirtualSource"
+            class="source-group"
+            role="radiogroup"
+            aria-label="真实采集数据源"
+          >
+            <span class="source-label">真实源</span>
             <label class="source-opt" :class="{ on: tennisDataSource === 'ipwo' }">
               <input
                 type="radio"
@@ -1332,6 +1409,25 @@ onUnmounted(() => {
               API
             </label>
           </div>
+          <label
+            v-if="isVirtualSource"
+            class="interval-select"
+          >
+            <span>虚拟日</span>
+            <select
+              :value="dataSource?.docks500?.date || ''"
+              :disabled="dataSourceSaving || loading || !(dataSource?.docks500?.days?.length)"
+              @change="onDocks500DateChange"
+            >
+              <option
+                v-for="d in (dataSource?.docks500?.days || [])"
+                :key="d.date"
+                :value="d.date"
+              >
+                {{ d.date }} · {{ d.matchCount }}场 · {{ (d.tournaments || []).slice(0, 2).join('/') }}
+              </option>
+            </select>
+          </label>
           <label class="interval-select">
             <span>Top100 频度</span>
             <select
@@ -1340,18 +1436,6 @@ onUnmounted(() => {
               @change="onIntervalChange"
             >
               <option v-for="opt in INTERVAL_OPTIONS" :key="opt.hours" :value="opt.hours">
-                {{ opt.label }}
-              </option>
-            </select>
-          </label>
-          <label class="interval-select">
-            <span>盘中采集</span>
-            <select
-              :value="livePollIntervalSec"
-              :disabled="scheduleSaving || loading || !collectEnabled"
-              @change="onLivePollIntervalChange"
-            >
-              <option v-for="opt in LIVE_POLL_OPTIONS" :key="opt.sec" :value="opt.sec">
                 {{ opt.label }}
               </option>
             </select>
@@ -1387,7 +1471,7 @@ onUnmounted(() => {
             >
             <span class="toggle-state" :class="{ off: !engines.condition?.enabled }">{{ engines.condition?.enabled ? '已开启' : '已关闭' }}</span>
           </label>
-          <span class="engines-note" style="margin:0">总开关关闭时，各桶均不强制筛；组内「且」，组间用 AND/OR 连接</span>
+          <span class="engines-note" style="margin:0">总开关关闭时不强制筛；此处维护条件组库，组间 AND/OR 在产品管理配置</span>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -1424,20 +1508,10 @@ onUnmounted(() => {
 
           <div
             v-for="(g, gi) in activeConditionBucket.groups"
-            :key="conditionTab + '-' + gi"
+            :key="(g.id || conditionTab) + '-' + gi"
             class="condition-group-wrap"
           >
-            <div v-if="gi > 0" class="condition-join">
-              <select
-                :value="g.joinPrev || 'or'"
-                :disabled="enginesSaving"
-                @change="setGroupField(gi, 'joinPrev', $event.target.value)"
-              >
-                <option value="or">或 OR</option>
-                <option value="and">且 AND</option>
-              </select>
-            </div>
-            <div class="condition-group-card" :class="{ collapsed: isConditionGroupCollapsed(gi) }">
+            <div class="condition-group-card" :class="[groupTintClass(gi), { collapsed: isConditionGroupCollapsed(gi) }]">
             <div class="condition-group-head">
               <button
                 type="button"
@@ -1455,75 +1529,137 @@ onUnmounted(() => {
                 :disabled="enginesSaving"
                 @change="setGroupField(gi, 'name', $event.target.value)"
               >
-              <span class="muted">组内字段「且」</span>
+              <span class="muted">组内字段「且」· 组间组合在产品管理</span>
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving || activeConditionBucket.groups.length <= 1"
+                :disabled="enginesSaving"
                 @click="removeConditionGroup(gi)"
               >删除</button>
             </div>
             <div v-show="!isConditionGroupCollapsed(gi)" class="condition-group-body">
-            <div class="condition-group-fields">
-              <label>巡回
+            <div class="betting-buy-fields">
+              <label class="bf-field">
+                <span>巡回</span>
                 <select :value="g.tour || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'tour', $event.target.value)">
                   <option value="all">全部</option>
                   <option value="ATP">男</option>
                   <option value="WTA">女</option>
                 </select>
               </label>
-              <label>PM
+              <label class="bf-field">
+                <span>PM</span>
                 <select :value="g.pm || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'pm', $event.target.value)">
                   <option value="all">全部</option>
                   <option value="yes">有外链</option>
                   <option value="no">无外链</option>
                 </select>
               </label>
-              <label>现差≥
+              <label class="bf-field">
+                <span>现差≥</span>
                 <input
                   type="number"
                   :value="g.gapMin === 'all' || g.gapMin == null ? '' : g.gapMin"
-                  placeholder="不限"
+                  placeholder="—"
                   :disabled="enginesSaving"
                   @change="setGroupField(gi, 'gapMin', $event.target.value)"
                 >
               </label>
-              <label>排差≥
-                <input
-                  type="number"
-                  :value="g.rankDiffMin === 'all' || g.rankDiffMin == null ? '' : g.rankDiffMin"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setGroupField(gi, 'rankDiffMin', $event.target.value)"
-                >
-              </label>
-              <label>排差≤
-                <input
-                  type="number"
-                  :value="g.rankDiffMax === 'all' || g.rankDiffMax == null ? '' : g.rankDiffMax"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setGroupField(gi, 'rankDiffMax', $event.target.value)"
-                >
-              </label>
-              <label>强现≤
-                <input
-                  type="number"
-                  :value="g.strongRankMax === 'all' || g.strongRankMax == null ? '' : g.strongRankMax"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setGroupField(gi, 'strongRankMax', $event.target.value)"
-                >
-              </label>
-              <label v-if="conditionTab === 'inplay'">现差分档
+              <div class="bf-pair" title="排差区间：≥ 下限 且 ≤ 上限">
+                <label class="bf-inline">
+                  <span>排差≥</span>
+                  <input
+                    type="number"
+                    :value="g.rankDiffMin === 'all' || g.rankDiffMin == null ? '' : g.rankDiffMin"
+                    placeholder="—"
+                    :disabled="enginesSaving"
+                    @change="setGroupField(gi, 'rankDiffMin', $event.target.value)"
+                  >
+                </label>
+                <label class="bf-inline">
+                  <span>≤</span>
+                  <input
+                    type="number"
+                    :value="g.rankDiffMax === 'all' || g.rankDiffMax == null ? '' : g.rankDiffMax"
+                    placeholder="—"
+                    :disabled="enginesSaving"
+                    @change="setGroupField(gi, 'rankDiffMax', $event.target.value)"
+                  >
+                </label>
+              </div>
+              <div class="bf-pair" title="开区间：如 0 &lt; x &lt; 10">
+                <label class="bf-inline">
+                  <span>强现</span>
+                  <input
+                    type="number"
+                    :value="g.strongRankGt === 'all' || g.strongRankGt == null ? '' : g.strongRankGt"
+                    placeholder="—"
+                    :disabled="enginesSaving"
+                    @change="setGroupField(gi, 'strongRankGt', $event.target.value)"
+                  >
+                </label>
+                <span class="bf-mid">&lt;x&lt;</span>
+                <label class="bf-inline">
+                  <span class="sr-only">强现上限</span>
+                  <input
+                    type="number"
+                    :value="g.strongRankLt === 'all' || g.strongRankLt == null ? '' : g.strongRankLt"
+                    placeholder="—"
+                    :disabled="enginesSaving"
+                    @change="setGroupField(gi, 'strongRankLt', $event.target.value)"
+                  >
+                </label>
+              </div>
+              <label v-if="conditionTab === 'inplay'" class="bf-field">
+                <span>现差分档</span>
                 <select :value="g.gapMode || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'gapMode', $event.target.value)">
                   <option value="all">不限</option>
                   <option value="tier">分档达标</option>
                 </select>
               </label>
+              <label
+                v-if="conditionTab === 'inplay' || conditionTab === 'settled'"
+                class="bf-check"
+                title="强者须已赢下第一盘"
+              >
+                <input
+                  type="checkbox"
+                  :checked="!!g.requireWonFirstSet"
+                  :disabled="enginesSaving"
+                  @change="setGroupField(gi, 'requireWonFirstSet', $event.target.checked)"
+                >
+                <span>赢首盘</span>
+              </label>
+              <label
+                v-if="(conditionTab === 'inplay' || conditionTab === 'settled') && g.requireWonFirstSet"
+                class="bf-check"
+                title="首盘局分为该比分时不入选（顺序无关，默认 7:5）"
+              >
+                <input
+                  type="checkbox"
+                  :checked="!!g.firstSetExcludeEnabled"
+                  :disabled="enginesSaving"
+                  @change="setGroupField(gi, 'firstSetExcludeEnabled', $event.target.checked)"
+                >
+                <span>排除首盘</span>
+              </label>
+              <label
+                v-if="(conditionTab === 'inplay' || conditionTab === 'settled') && g.requireWonFirstSet && g.firstSetExcludeEnabled"
+                class="bf-field"
+                title="仅排除第一盘该局分，如 7:5 / 7-5"
+              >
+                <span>局分</span>
+                <input
+                  type="text"
+                  :value="g.firstSetExcludeScore || '7:5'"
+                  placeholder="7:5"
+                  :disabled="enginesSaving"
+                  @change="setGroupField(gi, 'firstSetExcludeScore', $event.target.value)"
+                >
+              </label>
             </div>
             <p class="condition-group-hint">
-              组内字段为「且」；组与组之间用上方的「且 AND / 或 OR」连接（左结合）。
+              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可勾「赢首盘」并排除首盘局分（默认 7:5）。请到产品管理多选条件组并配置 AND/OR。
             </p>
             </div>
             </div>
@@ -1534,7 +1670,7 @@ onUnmounted(() => {
       <section v-if="isBettingPage && engines" class="engine-panel" id="engine-betting">
         <div class="engine-panel-head">
           <h3>投注引擎</h3>
-          <span class="engine-panel-tag">盘前/盘中 · 多组买入与止损</span>
+          <span class="engine-panel-tag">盘前/盘中 · 止损组</span>
         </div>
         <div class="settings-row engines-row">
           <label class="collect-toggle">
@@ -1558,7 +1694,19 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <span class="engines-note" style="margin:0">组间可选且/或 · 组内买入「且」· 止损按启用组链式求值</span>
+          <label class="interval-select">
+            <span>投注金额 (USD)</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              style="width: 6.5rem"
+              :value="engines.betting?.amountUsd ?? 1"
+              :disabled="enginesSaving"
+              @change="onBettingAmountUsdChange"
+            >
+          </label>
+          <span class="engines-note" style="margin:0">买入条件在产品管理选择条件组；此处仅配止损</span>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -1595,7 +1743,7 @@ onUnmounted(() => {
 
           <div
             v-for="(g, gi) in activeBettingBucket.groups"
-            :key="'bet-' + bettingTab + '-' + gi"
+            :key="'bet-' + (g.id || bettingTab) + '-' + gi"
             class="condition-group-wrap"
           >
             <div v-if="gi > 0" class="condition-join">
@@ -1608,7 +1756,7 @@ onUnmounted(() => {
                 <option value="and">且 AND</option>
               </select>
             </div>
-            <div class="condition-group-card" :class="{ collapsed: isBettingGroupCollapsed(gi) }">
+            <div class="condition-group-card" :class="[groupTintClass(gi), { collapsed: isBettingGroupCollapsed(gi) }]">
             <div class="condition-group-head">
               <button
                 type="button"
@@ -1626,86 +1774,15 @@ onUnmounted(() => {
                 :disabled="enginesSaving"
                 @change="setBettingGroupField(gi, 'name', $event.target.value)"
               >
-              <span class="muted">组内买入「且」</span>
+              <span class="muted">止损组</span>
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving || activeBettingBucket.groups.length <= 1"
+                :disabled="enginesSaving"
                 @click="removeBettingGroup(gi)"
               >删除</button>
             </div>
             <div v-show="!isBettingGroupCollapsed(gi)" class="condition-group-body">
-
-            <div class="condition-group-section">买入条件</div>
-            <div class="condition-group-fields">
-              <label>巡回
-                <select :value="g.tour || 'all'" :disabled="enginesSaving" @change="setBettingGroupField(gi, 'tour', $event.target.value)">
-                  <option value="all">全部</option>
-                  <option value="ATP">男</option>
-                  <option value="WTA">女</option>
-                </select>
-              </label>
-              <label>PM
-                <select :value="g.pm || 'all'" :disabled="enginesSaving" @change="setBettingGroupField(gi, 'pm', $event.target.value)">
-                  <option value="all">全部</option>
-                  <option value="yes">有外链</option>
-                  <option value="no">无外链</option>
-                </select>
-              </label>
-              <label>现差≥
-                <input
-                  type="number"
-                  :value="g.gapMin === 'all' || g.gapMin == null ? '' : g.gapMin"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'gapMin', $event.target.value)"
-                >
-              </label>
-              <label>排差≥
-                <input
-                  type="number"
-                  :value="g.rankDiffMin === 'all' || g.rankDiffMin == null ? '' : g.rankDiffMin"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'rankDiffMin', $event.target.value)"
-                >
-              </label>
-              <label>排差≤
-                <input
-                  type="number"
-                  :value="g.rankDiffMax === 'all' || g.rankDiffMax == null ? '' : g.rankDiffMax"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'rankDiffMax', $event.target.value)"
-                >
-              </label>
-              <label>强现≤
-                <input
-                  type="number"
-                  :value="g.strongRankMax === 'all' || g.strongRankMax == null ? '' : g.strongRankMax"
-                  placeholder="不限"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'strongRankMax', $event.target.value)"
-                >
-              </label>
-              <label>PM&lt;¢
-                <input
-                  type="number"
-                  :value="g.pmMaxCents ?? 91"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'pmMaxCents', $event.target.value)"
-                >
-              </label>
-              <label class="check-inline">
-                <span>需赢首盘</span>
-                <input
-                  type="checkbox"
-                  :checked="!!g.requireWonFirstSet"
-                  :disabled="enginesSaving"
-                  @change="setBettingGroupField(gi, 'requireWonFirstSet', $event.target.checked)"
-                >
-              </label>
-            </div>
 
             <div class="condition-group-section stop-section-head">
               <span>止损条件</span>
@@ -1826,7 +1903,7 @@ onUnmounted(() => {
               </div>
             </div>
             <p class="condition-group-hint">
-              组内可加多条止损，条间选且/或；与买入条件组之间的且/或独立。
+              组内可加多条止损，条间选且/或；买入条件请在产品管理中选择条件组。
             </p>
             </div>
             </div>
@@ -2297,6 +2374,30 @@ onUnmounted(() => {
   padding: 0.55rem 0.65rem;
   background: #f8fafc;
 }
+.condition-group-card.group-tint-0 {
+  background: #f0f7ff;
+  border-color: #dbeafe;
+}
+.condition-group-card.group-tint-1 {
+  background: #f3faf3;
+  border-color: #dcfce7;
+}
+.condition-group-card.group-tint-2 {
+  background: #fff8f0;
+  border-color: #ffedd5;
+}
+.condition-group-card.group-tint-3 {
+  background: #f8f4ff;
+  border-color: #ede9fe;
+}
+.condition-group-card.group-tint-4 {
+  background: #fff5f7;
+  border-color: #ffe4e6;
+}
+.condition-group-card.group-tint-5 {
+  background: #f0fafa;
+  border-color: #ccfbf1;
+}
 .condition-group-wrap {
   display: flex;
   flex-direction: column;
@@ -2428,6 +2529,152 @@ onUnmounted(() => {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+}
+.condition-group-fields .first-set-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+.condition-group-fields .first-set-row .check-inline {
+  flex: 0 0 auto;
+  justify-content: flex-start;
+  gap: 0.4rem;
+}
+.condition-group-fields .first-set-row .first-set-score {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+}
+.condition-group-fields .first-set-row .first-set-score input {
+  width: 4.5rem;
+}
+.condition-group-fields .strong-rank-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+.condition-group-fields .rank-diff-row {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+.condition-group-fields .rank-diff-row .rank-diff-inline {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+.condition-group-fields .rank-diff-row .rank-diff-inline input {
+  width: 4.5rem;
+}
+.condition-group-fields .strong-rank-row .strong-rank-inline {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+}
+.condition-group-fields .strong-rank-row .strong-rank-inline input {
+  width: 4.5rem;
+}
+.condition-group-fields .strong-rank-row .strong-rank-and {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+.condition-group-fields .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+/* 投注引擎买入条件：紧凑横排 */
+.betting-buy-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+}
+.betting-buy-fields .bf-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.betting-buy-fields .bf-field select,
+.betting-buy-fields .bf-field input,
+.betting-buy-fields .bf-inline input,
+.betting-buy-fields .bf-score {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  background: #fff;
+  width: 4.25rem;
+}
+.betting-buy-fields .bf-field select {
+  width: 5rem;
+}
+.betting-buy-fields .bf-pair {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: nowrap;
+}
+.betting-buy-fields .bf-inline {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.betting-buy-fields .bf-mid {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+.betting-buy-fields .bf-checks {
+  gap: 0.55rem;
+}
+.betting-buy-fields .bf-check {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+.betting-buy-fields .bf-score {
+  width: 4.5rem;
 }
 .btn.sm {
   padding: 4px 8px;

@@ -93,7 +93,12 @@ function groupScheduled(events) {
 
 function baseShell(bundle, { source, matches, liveOnly = false }) {
   const rankings = bundle.rankingsByPlayer || {};
-  const filtered = matches.filter((m) => passesTop100(m, rankings));
+  const skipTop = bundle?.upstream === 'docks500'
+    || bundle?.dataSource === 'docks500'
+    || bundle?.source === 'docks500'
+    || !!bundle?.virtualSim
+    || String(source || '').includes('docks');
+  const filtered = skipTop ? [...matches] : matches.filter((m) => passesTop100(m, rankings));
   const live = liveOnly ? filtered : filtered.filter(isLive);
   const scheduled = liveOnly ? [] : filtered.filter(isNotStarted);
   const ended = filtered.filter(isEnded);
@@ -157,7 +162,12 @@ async function splitFullToThreeBuckets(fullBundle) {
   if (!bundle) return { ok: false, error: 'no full bundle' };
   const all = flattenMatches(bundle);
   const rankings = bundle.rankingsByPlayer || {};
-  const top = all.filter((m) => passesTop100(m, rankings));
+  // 虚拟 txt 回放已按相位造好盘前/盘中/盘后，不再用 Top100 滤光
+  const skipTop = bundle?.upstream === 'docks500'
+    || bundle?.dataSource === 'docks500'
+    || bundle?.source === 'docks500'
+    || !!bundle?.virtualSim;
+  const top = skipTop ? all : all.filter((m) => passesTop100(m, rankings));
 
   const prematchMatches = top.filter(isNotStarted);
   const inplayMatches = top.filter(isLive);

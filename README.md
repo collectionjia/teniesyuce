@@ -19,6 +19,7 @@
 - [调度中心与 API 对外中心 · 设计](docs/调度中心与API对外中心-设计.md)
 - [引擎 API 对外中心 · 接口文档](docs/引擎API对外中心-接口文档.md)
 - [服务器部署说明](docs/deploy-server.md)
+- [网站测试用例](docs/测试用例.md)
 
 ## 本地 / Docker
 

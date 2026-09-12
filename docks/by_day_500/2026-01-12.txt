@@ -1,0 +1,30 @@
+# 2026-01-12 · 29 matches · Adelaide
+2026-01-12	Adelaide	F	Hard	Mirra Andreeva	bt	Victoria Mboko	6-3 6-1	peak_diff 4
+2026-01-12	Adelaide	QF	Hard	Diana Shnaider	bt	Emma Navarro	6-3 6-3	peak_diff 3
+2026-01-12	Adelaide	QF	Hard	Kimberly Birrell	bt	Jaqueline Cristian	5-7 6-1 7-5	peak_diff 32
+2026-01-12	Adelaide	QF	Hard	Mirra Andreeva	bt	Maya Joint	6-2 6-0	peak_diff 23
+2026-01-12	Adelaide	QF	Hard	Victoria Mboko	bt	Madison Keys	6-4 4-6 6-2	peak_diff 4
+2026-01-12	Adelaide	R16	Hard	Diana Shnaider	bt	Katerina Siniakova	6-1 2-6 7-5	peak_diff 16
+2026-01-12	Adelaide	R16	Hard	Emma Navarro	bt	Yulia Putintseva	6-1 6-4	peak_diff 12
+2026-01-12	Adelaide	R16	Hard	Jaqueline Cristian	bt	Daria Kasatkina	6-4 6-0	peak_diff 20
+2026-01-12	Adelaide	R16	Hard	Kimberly Birrell	bt	Marketa Vondrousova	W/O	peak_diff 54
+2026-01-12	Adelaide	R16	Hard	Madison Keys	bt	Tereza Valentova	6-4 6-1	peak_diff 37
+2026-01-12	Adelaide	R16	Hard	Maya Joint	bt	Ajla Tomljanovic	0-2 RET	peak_diff 4
+2026-01-12	Adelaide	R16	Hard	Mirra Andreeva	bt	Marie Bouzkova	6-3 6-1	peak_diff 19
+2026-01-12	Adelaide	R16	Hard	Victoria Mboko	bt	Anna Kalinskaya	6-2 3-6 7-6(6)	peak_diff 2
+2026-01-12	Adelaide	R32	Hard	Ajla Tomljanovic	bt	Clara Tauson	7-6(5) 0-0 RET	peak_diff 20
+2026-01-12	Adelaide	R32	Hard	Anna Kalinskaya	bt	Elena Gabriela Ruse	6-0 6-3	peak_diff 40
+2026-01-12	Adelaide	R32	Hard	Daria Kasatkina	bt	Maria Sakkari	7-6(2) 6-4	peak_diff 5
+2026-01-12	Adelaide	R32	Hard	Diana Shnaider	bt	Leylah Fernandez	7-5 6-3	peak_diff 2
+2026-01-12	Adelaide	R32	Hard	Emma Navarro	bt	Emerson Jones	6-3 6-3	peak_diff 121
+2026-01-12	Adelaide	R32	Hard	Jaqueline Cristian	bt	Ekaterina Alexandrova	6-4 6-4	peak_diff 18
+2026-01-12	Adelaide	R32	Hard	Katerina Siniakova	bt	Dayana Yastremska	6-0 6-1	peak_diff 6
+2026-01-12	Adelaide	R32	Hard	Kimberly Birrell	bt	Anastasia Potapova	6-4 6-4	peak_diff 39
+2026-01-12	Adelaide	R32	Hard	Marie Bouzkova	bt	Paula Badosa	3-6 6-3 6-4	peak_diff 22
+2026-01-12	Adelaide	R32	Hard	Marketa Vondrousova	bt	Liudmila Samsonova	6-1 4-6 6-2	peak_diff 6
+2026-01-12	Adelaide	R32	Hard	Maya Joint	bt	Sofia Kenin	7-6(3) 6-4	peak_diff 24
+2026-01-12	Adelaide	R32	Hard	Tereza Valentova	bt	Jelena Ostapenko	7-5 3-2 RET	peak_diff 37
+2026-01-12	Adelaide	R32	Hard	Victoria Mboko	bt	Beatriz Haddad Maia	5-7 6-3 6-2	peak_diff 1
+2026-01-12	Adelaide	R32	Hard	Yulia Putintseva	bt	Dalma Galfi	6-4 6-4	peak_diff 59
+2026-01-12	Adelaide	SF	Hard	Mirra Andreeva	bt	Diana Shnaider	6-3 6-2	peak_diff 6
+2026-01-12	Adelaide	SF	Hard	Victoria Mboko	bt	Kimberly Birrell	6-2 6-1	peak_diff 51

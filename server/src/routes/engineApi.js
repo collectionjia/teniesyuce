@@ -270,23 +270,30 @@ router.put('/condition/rules/:bucket/groups/:index', async (req, res) => {
   }
 });
 
-/** 删除条件组（至少保留 1 个空组） */
-router.delete('/condition/rules/:bucket/groups/:index', async (req, res) => {
+async function handleConditionGroupDelete(req, res) {
   try {
     const bucket = String(req.params.bucket || '');
     const index = req.params.index;
     await tennisEngines.deleteConditionGroup(bucket, index);
     const c = await tennisEngines.getCondition();
+    const groups = c.buckets[bucket]?.groups || [];
     ok(res, req, {
       open: c.open,
       bucket,
-      groups: c.buckets[bucket]?.groups || [],
+      deletedIndex: Number(index),
+      deleted: true,
+      groups,
       enabled: !!c.buckets[bucket]?.enabled,
     });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'CONDITION_GROUP_DELETE_FAILED');
   }
-});
+}
+
+/** 删除条件组（允许删到 0 组；空桶视为不过滤） */
+router.delete('/condition/rules/:bucket/groups/:index', handleConditionGroupDelete);
+/** 兼容部分客户端/代理对 DELETE 支持差 */
+router.post('/condition/rules/:bucket/groups/:index/delete', handleConditionGroupDelete);
 
 // —— 投注 ——
 router.get('/betting/status', async (req, res) => {
@@ -302,7 +309,7 @@ router.get('/betting/status', async (req, res) => {
     }
     ok(res, req, {
       open: !!cfg.betting?.enabled,
-      amountUsd: cfg.betting?.amountUsd,
+      amountUsd: cfg.betting?.amountUsd != null ? Number(cfg.betting.amountUsd) : 1,
       buckets,
       lastScanRun: last,
     });
@@ -313,15 +320,20 @@ router.get('/betting/status', async (req, res) => {
 
 router.get('/betting/rules', async (req, res) => {
   try {
-    const cfg = await tennisEngines.getConfig();
-    ok(res, req, {
-      open: !!cfg.betting?.enabled,
-      amountUsd: cfg.betting?.amountUsd,
-      buckets: cfg.betting?.buckets || {},
-      rules: cfg.betting?.rules || {},
-    });
+    ok(res, req, await tennisEngines.getBetting());
   } catch (e) {
     fail(res, req, 500, e.message, 'BETTING_RULES_FAILED');
+  }
+});
+
+/** 设置默认投注金额（USD）：{ amountUsd: number } */
+router.put('/betting/amount', async (req, res) => {
+  try {
+    const raw = req.body?.amountUsd ?? req.body?.amount;
+    await tennisEngines.setBettingAmountUsd(raw);
+    ok(res, req, await tennisEngines.getBetting());
+  } catch (e) {
+    fail(res, req, e.status || 500, e.message, 'BETTING_AMOUNT_PUT_FAILED');
   }
 });
 

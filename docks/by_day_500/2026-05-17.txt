@@ -1,0 +1,59 @@
+# 2026-05-17 · 58 matches · Hamburg, Strasbourg
+2026-05-17	Hamburg	F	Clay	Ignacio Buse	bt	Tommy Paul	7-6(6) 4-6 6-3	peak_diff 23
+2026-05-17	Hamburg	QF	Clay	Aleksandar Kovacevic	bt	Camilo Ugo Carabelli	6-4 6-7(10) 6-2	peak_diff 11
+2026-05-17	Hamburg	QF	Clay	Alex De Minaur	bt	Luciano Darderi	6-0 6-3	peak_diff 10
+2026-05-17	Hamburg	QF	Clay	Ignacio Buse	bt	Ugo Humbert	6-3 5-7 6-3	peak_diff 18
+2026-05-17	Hamburg	QF	Clay	Tommy Paul	bt	Daniel Altmaier	6-2 7-5	peak_diff 36
+2026-05-17	Hamburg	R16	Clay	Aleksandar Kovacevic	bt	Felix Auger Aliassime	4-6 7-5 6-4	peak_diff 50
+2026-05-17	Hamburg	R16	Clay	Alex De Minaur	bt	Alejandro Davidovich Fokina	6-2 4-6 6-4	peak_diff 8
+2026-05-17	Hamburg	R16	Clay	Camilo Ugo Carabelli	bt	Frances Tiafoe	7-6(3) 7-6(4)	peak_diff 33
+2026-05-17	Hamburg	R16	Clay	Daniel Altmaier	bt	Ben Shelton	4-6 7-6(4) 6-4	peak_diff 39
+2026-05-17	Hamburg	R16	Clay	Ignacio Buse	bt	Jakub Mensik	6-0 6-3	peak_diff 19
+2026-05-17	Hamburg	R16	Clay	Luciano Darderi	bt	Yannick Hanfmann	7-6(7) 7-5	peak_diff 29
+2026-05-17	Hamburg	R16	Clay	Tommy Paul	bt	Tomas Martin Etcheverry	6-7(5) 7-6(5) 7-6(7)	peak_diff 17
+2026-05-17	Hamburg	R16	Clay	Ugo Humbert	bt	Karen Khachanov	6-3 3-6 7-6(3)	peak_diff 4
+2026-05-17	Hamburg	R32	Clay	Alejandro Davidovich Fokina	bt	Corentin Moutet	6-4 6-4	peak_diff 16
+2026-05-17	Hamburg	R32	Clay	Aleksandar Kovacevic	bt	Arthur Gea	6-2 7-6(3)	peak_diff 81
+2026-05-17	Hamburg	R32	Clay	Alex De Minaur	bt	Francisco Cerundolo	3-6 6-4 6-3	peak_diff 12
+2026-05-17	Hamburg	R32	Clay	Ben Shelton	bt	Marcos Giron	6-3 4-6 7-6(3)	peak_diff 32
+2026-05-17	Hamburg	R32	Clay	Camilo Ugo Carabelli	bt	Kamil Majchrzak	1-6 6-2 6-3	peak_diff 10
+2026-05-17	Hamburg	R32	Clay	Daniel Altmaier	bt	Rinky Hijikata	7-5 6-2	peak_diff 18
+2026-05-17	Hamburg	R32	Clay	Felix Auger Aliassime	bt	Vit Kopriva	7-5 6-1	peak_diff 51
+2026-05-17	Hamburg	R32	Clay	Frances Tiafoe	bt	Diego Dedura Palomero	6-4 6-4	peak_diff 248
+2026-05-17	Hamburg	R32	Clay	Ignacio Buse	bt	Flavio Cobolli	6-2 7-5	peak_diff 21
+2026-05-17	Hamburg	R32	Clay	Jakub Mensik	bt	Jan Lennard Struff	7-6(3) 6-2	peak_diff 9
+2026-05-17	Hamburg	R32	Clay	Karen Khachanov	bt	Hugo Gaston	3-6 6-3 7-6(4)	peak_diff 49
+2026-05-17	Hamburg	R32	Clay	Luciano Darderi	bt	Roman Andres Burruchaga	6-3 7-6(4)	peak_diff 40
+2026-05-17	Hamburg	R32	Clay	Tomas Martin Etcheverry	bt	Terence Atmane	6-2 7-6(4)	peak_diff 16
+2026-05-17	Hamburg	R32	Clay	Tommy Paul	bt	Ethan Quinn	6-1 6-3	peak_diff 40
+2026-05-17	Hamburg	R32	Clay	Ugo Humbert	bt	Justin Engel	6-3 3-6 7-6(2)	peak_diff 167
+2026-05-17	Hamburg	R32	Clay	Yannick Hanfmann	bt	Max Schoenhaus	6-3 6-7(4) 6-4	peak_diff 287
+2026-05-17	Hamburg	SF	Clay	Ignacio Buse	bt	Aleksandar Kovacevic	6-1 6-4	peak_diff 23
+2026-05-17	Hamburg	SF	Clay	Tommy Paul	bt	Alex De Minaur	2-6 6-3 6-3	peak_diff 2
+2026-05-17	Strasbourg	F	Clay	Emma Navarro	bt	Victoria Mboko	6-0 5-7 6-2	peak_diff 1
+2026-05-17	Strasbourg	QF	Clay	Ann Li	bt	Marie Bouzkova	6-3 7-5	peak_diff 5
+2026-05-17	Strasbourg	QF	Clay	Emma Navarro	bt	Shuai Zhang	2-6 7-6(5) 6-2	peak_diff 14
+2026-05-17	Strasbourg	QF	Clay	Jaqueline Cristian	bt	Daria Kasatkina	7-6(3) 3-6 6-2	peak_diff 20
+2026-05-17	Strasbourg	QF	Clay	Victoria Mboko	bt	Leylah Fernandez	6-4 6-4	peak_diff 4
+2026-05-17	Strasbourg	R16	Clay	Ann Li	bt	Ekaterina Alexandrova	4-6 6-4 6-3	peak_diff 19
+2026-05-17	Strasbourg	R16	Clay	Daria Kasatkina	bt	Peyton Stearns	6-1 6-3	peak_diff 20
+2026-05-17	Strasbourg	R16	Clay	Emma Navarro	bt	Iva Jovic	6-4 4-6 6-1	peak_diff 8
+2026-05-17	Strasbourg	R16	Clay	Jaqueline Cristian	bt	Clara Tauson	6-1 7-5	peak_diff 16
+2026-05-17	Strasbourg	R16	Clay	Leylah Fernandez	bt	Magdalena Frech	6-4 3-6 6-4	peak_diff 9
+2026-05-17	Strasbourg	R16	Clay	Marie Bouzkova	bt	Oleksandra Oliynykova	3-1 RET	peak_diff 27
+2026-05-17	Strasbourg	R16	Clay	Shuai Zhang	bt	Diane Parry	6-2 7-5	peak_diff 26
+2026-05-17	Strasbourg	R16	Clay	Victoria Mboko	bt	Lois Boisson	6-4 6-3	peak_diff 25
+2026-05-17	Strasbourg	R32	Clay	Ann Li	bt	Maya Joint	6-1 6-2	peak_diff 1
+2026-05-17	Strasbourg	R32	Clay	Daria Kasatkina	bt	Liudmila Samsonova	7-5 6-3	peak_diff 4
+2026-05-17	Strasbourg	R32	Clay	Diane Parry	bt	Emma Raducanu	6-4 7-6(4)	peak_diff 38
+2026-05-17	Strasbourg	R32	Clay	Emma Navarro	bt	Sara Bejlek	6-1 6-4	peak_diff 26
+2026-05-17	Strasbourg	R32	Clay	Jaqueline Cristian	bt	Mccartney Kessler	6-1 6-1	peak_diff 2
+2026-05-17	Strasbourg	R32	Clay	Leylah Fernandez	bt	Leolia Jeanjean	6-1 7-5	peak_diff 78
+2026-05-17	Strasbourg	R32	Clay	Lois Boisson	bt	Xin Yu Wang	6-3 7-6(4)	peak_diff 4
+2026-05-17	Strasbourg	R32	Clay	Magdalena Frech	bt	Talia Gibson	7-6(0) 6-3	peak_diff 33
+2026-05-17	Strasbourg	R32	Clay	Marie Bouzkova	bt	Katerina Siniakova	7-6(3) 6-3	peak_diff 3
+2026-05-17	Strasbourg	R32	Clay	Oleksandra Oliynykova	bt	Alexandra Eala	3-6 7-5 6-3	peak_diff 22
+2026-05-17	Strasbourg	R32	Clay	Peyton Stearns	bt	Maria Sakkari	6-3 6-1	peak_diff 25
+2026-05-17	Strasbourg	R32	Clay	Shuai Zhang	bt	Cristina Bucsa	2-6 7-6(7) 7-5	peak_diff 8
+2026-05-17	Strasbourg	SF	Clay	Emma Navarro	bt	Ann Li	6-1 6-3	peak_diff 21
+2026-05-17	Strasbourg	SF	Clay	Victoria Mboko	bt	Jaqueline Cristian	7-6(3) 3-6 6-2	peak_diff 19

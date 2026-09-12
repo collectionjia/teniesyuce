@@ -141,6 +141,25 @@ async function loadRuns() {
   }
 }
 
+async function clearRuns() {
+  if (!selectedJobId.value) {
+    err.value = '请先选择任务'
+    return
+  }
+  const job = jobs.value.find((j) => j.id === selectedJobId.value)
+  const name = job?.name || selectedJobId.value
+  if (!confirm(`确认清空任务「${name}」的全部运行日志？`)) return
+  msg.value = ''
+  err.value = ''
+  try {
+    const r = await api.clearSchedulerRuns(selectedJobId.value)
+    runs.value = []
+    msg.value = `已清空日志（${r.deleted ?? 0} 条）`
+  } catch (e) {
+    err.value = e?.response?.data?.error || e.message || '清空失败'
+  }
+}
+
 async function createJob() {
   msg.value = ''
   err.value = ''
@@ -396,16 +415,26 @@ onMounted(refresh)
     </div>
 
     <div class="bg-white rounded-2xl p-4 shadow-sm space-y-2">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
         <div class="font-semibold text-sm">运行日志</div>
-        <select
-          v-model="selectedJobId"
-          class="text-xs border border-slate-200 rounded-lg px-2 py-1"
-          @change="loadRuns"
-        >
-          <option value="">选择任务</option>
-          <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.name }}</option>
-        </select>
+        <div class="flex items-center gap-2">
+          <select
+            v-model="selectedJobId"
+            class="text-xs border border-slate-200 rounded-lg px-2 py-1"
+            @change="loadRuns"
+          >
+            <option value="">选择任务</option>
+            <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.name }}</option>
+          </select>
+          <button
+            type="button"
+            class="text-xs px-2.5 py-1 rounded-lg text-rose-600 border border-rose-100 disabled:opacity-40"
+            :disabled="!selectedJobId || !runs.length"
+            @click="clearRuns"
+          >
+            清空日志
+          </button>
+        </div>
       </div>
       <div v-if="!runs.length" class="text-xs text-slate-400">暂无记录</div>
       <div class="overflow-x-auto">

@@ -1,0 +1,257 @@
+# US Open 2026
+# sackmann_rows + tennisexplorer supplement (live / in-progress)
+# rank=当场; peak=生涯最高; peak_diff=|双方peak差|
+#
+# --- from Sackmann archive ---
+
+# --- from TennisExplorer ---
+# source: https://www.tennisexplorer.com/us-open/2026/atp-men/ (124 matches parsed)
+20260901	US Open	QF	Hard	Zverev (1) (rank -, peak 2)	bt	Van De Zandschulp (rank -, peak 22)	6-2 7-5 6-1	[ATP]	peak_diff 20
+20260901	US Open	QF	Hard	Khachanov (rank -, peak 9)	bt	Blockx (28) (rank -, peak 36)	6-2 7-5 3-2	[ATP]	peak_diff 27
+20260901	US Open	QF	Hard	Shelton (8) (rank -, peak 5)	bt	Alcaraz (2) (rank -, peak 1)	6-7(5) 6-1 6-3 1-6 7-6(7)	[ATP]	peak_diff 4
+20260901	US Open	QF	Hard	Tiafoe (11) (rank -, peak 10)	bt	Michelsen (rank -, peak 30)	5-7 3-6 7-5 6-3 7-6(6)	[ATP]	peak_diff 20
+20260901	US Open	R16	Hard	Zverev (1) (rank -, peak 2)	bt	Darderi (21) (rank -, peak 16)	6-2 6-2 7-6(3)	[ATP]	peak_diff 14
+20260901	US Open	R16	Hard	Khachanov (rank -, peak 9)	bt	Tien (14) (rank -, peak 18)	7-5 4-6 6-7(6) 6-1 6-4	[ATP]	peak_diff 9
+20260901	US Open	R16	Hard	Van De Zandschulp (rank -, peak 22)	bt	Gea (rank -, peak 135)	3-6 6-7(0) 7-6(7) 7-6(3) 6-4	[ATP]	peak_diff 113
+20260901	US Open	R16	Hard	Blockx (28) (rank -, peak 36)	bt	Cerundolo (24) (rank -, peak 18)	6-3 4-6 7-5 7-5	[ATP]	peak_diff 18
+20260901	US Open	R16	Hard	Shelton (8) (rank -, peak 5)	bt	Tsitsipas (rank -, peak 3)	6-2 6-3 6-4	[ATP]	peak_diff 2
+20260901	US Open	R16	Hard	Tiafoe (11) (rank -, peak 10)	bt	Medvedev (7) (rank -, peak 1)	7-6(1) 6-4 7-6(6)	[ATP]	peak_diff 9
+20260901	US Open	R16	Hard	Michelsen (rank -, peak 30)	bt	Etcheverry (27) (rank -, peak 25)	7-6(6) 6-4 6-4	[ATP]	peak_diff 5
+20260901	US Open	R16	Hard	Alcaraz (2) (rank -, peak 1)	bt	Paul (20) (rank -, peak 8)	6-4 6-3 6-4	[ATP]	peak_diff 7
+20260901	US Open	3R	Hard	Zverev (1) (rank -, peak 2)	bt	Tabilo (25) (rank -, peak 19)	6-2 7-6(2) 6-2	[ATP]	peak_diff 17
+20260901	US Open	3R	Hard	Tien (14) (rank -, peak 18)	bt	Mensik (17) (rank -, peak 12)	6-3 1-6 6-7(2) 6-3 6-4	[ATP]	peak_diff 6
+20260901	US Open	3R	Hard	Van De Zandschulp (rank -, peak 22)	bt	Bergs (31) (rank -, peak 38)	3-6 7-6(3) 4-6 7-6(6) 6-3	[ATP]	peak_diff 16
+20260901	US Open	3R	Hard	Gea (rank -, peak 135)	bt	Zheng (rank -, peak 4)	7-6(7) 3-6 4-6 6-3 6-2	[ATP]	peak_diff 131
+20260901	US Open	3R	Hard	Darderi (21) (rank -, peak 16)	bt	Sweeny (rank -, peak 131)	6-4 6-3 6-3	[ATP]	peak_diff 115
+20260901	US Open	3R	Hard	Khachanov (rank -, peak 9)	bt	Bonzi (rank -, peak 42)	6-3 6-2 6-4	[ATP]	peak_diff 33
+20260901	US Open	3R	Hard	Blockx (28) (rank -, peak 36)	bt	Cobolli (5) (rank -, peak 10)	6-7(4) 6-3 6-0 6-3	[ATP]	peak_diff 26
+20260901	US Open	3R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Fritz (9) (rank -, peak 4)	3-6 4-6 6-3 6-4 6-4	[ATP]	peak_diff 14
+20260901	US Open	3R	Hard	Shelton (8) (rank -, peak 5)	bt	Shapovalov (rank -, peak 10)	7-6(3) 6-7(5) 6-3 6-4	[ATP]	peak_diff 5
+20260901	US Open	3R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Vacherot (22) (rank -, peak 16)	6-4 6-2 6-4	[ATP]	peak_diff 6
+20260901	US Open	3R	Hard	Michelsen (rank -, peak 30)	bt	Merida Aguilar (rank -, peak 82)	7-6(5) 6-4 6-3	[ATP]	peak_diff 52
+20260901	US Open	3R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Navone (rank -, peak 29)	6-4 6-4 6-3	[ATP]	peak_diff 4
+20260901	US Open	3R	Hard	Tsitsipas (rank -, peak 3)	bt	Lehecka (18) (rank -, peak 12)	2-6 6-1 7-6(3) 6-1	[ATP]	peak_diff 9
+20260901	US Open	3R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Wu (rank -, peak 54)	6-3 6-4 6-1	[ATP]	peak_diff 53
+20260901	US Open	3R	Hard	Paul (20) (rank -, peak 8)	bt	Bublik (15) (rank -, peak 10)	6-4 3-6 6-7(4) 6-1 6-3	[ATP]	peak_diff 2
+20260901	US Open	3R	Hard	Medvedev (7) (rank -, peak 1)	bt	Rinderknech (26) (rank -, peak 24)	6-4 6-4 6-4	[ATP]	peak_diff 23
+20260901	US Open	2R	Hard	Zverev (1) (rank -, peak 2)	bt	Halys (rank -, peak 46)	6-4 4-6 7-6(3) 6-7(3) 6-3	[ATP]	peak_diff 44
+20260901	US Open	2R	Hard	Zheng (rank -, peak 4)	bt	Yunchaokete (rank -, peak 64)	6-3 2-6 6-2 6-3	[ATP]	peak_diff 60
+20260901	US Open	2R	Hard	Tien (14) (rank -, peak 18)	bt	Monfils (rank -, peak 9)	6-3 6-4 6-3	[ATP]	peak_diff 9
+20260901	US Open	2R	Hard	Gea (rank -, peak 135)	bt	Svajda (rank -, peak 62)	5-7 6-3 6-2 6-2	[ATP]	peak_diff 73
+20260901	US Open	2R	Hard	Bergs (31) (rank -, peak 38)	bt	De Jong (rank -, peak 71)	7-5 1-6 6-2 7-6(2)	[ATP]	peak_diff 33
+20260901	US Open	2R	Hard	Van De Zandschulp (rank -, peak 22)	bt	De Minaur (6) (rank -, peak 6)	6-4 7-5 6-2	[ATP]	peak_diff 16
+20260901	US Open	2R	Hard	Bonzi (rank -, peak 42)	bt	Buse (32) (rank -, peak 31)	6-2 7-6(4) 6-0	[ATP]	peak_diff 11
+20260901	US Open	2R	Hard	Blockx (28) (rank -, peak 36)	bt	Trungelliti (rank -, peak 76)	6-3 6-2 3-6 6-1	[ATP]	peak_diff 40
+20260901	US Open	2R	Hard	Cobolli (5) (rank -, peak 10)	bt	Schoolkate (rank -, peak 95)	3-6 6-3 6-4 7-5	[ATP]	peak_diff 85
+20260901	US Open	2R	Hard	Tabilo (25) (rank -, peak 19)	bt	Popyrin (rank -, peak 19)	2-6 7-6(4) 7-6(3) 6-2	[ATP]	peak_diff 0
+20260901	US Open	2R	Hard	Mensik (17) (rank -, peak 12)	bt	Rodionov (rank -, peak 87)	6-3 3-6 6-2 6-3	[ATP]	peak_diff 75
+20260901	US Open	2R	Hard	Sweeny (rank -, peak 131)	bt	Musetti (13) (rank -, peak 5)	3-6 6-1 6-2 6-2	[ATP]	peak_diff 126
+20260901	US Open	2R	Hard	Fritz (9) (rank -, peak 4)	bt	Bellucci (rank -, peak 63)	6-0 6-1 6-1	[ATP]	peak_diff 59
+20260901	US Open	2R	Hard	Darderi (21) (rank -, peak 16)	bt	Svrcina (rank -, peak 86)	6-3 6-7(5) 6-4 6-4	[ATP]	peak_diff 70
+20260901	US Open	2R	Hard	Khachanov (rank -, peak 9)	bt	Auger Aliassime (3) (rank -, peak 4)	6-7(5) 6-3 6-2 6-2	[ATP]	peak_diff 5
+20260901	US Open	2R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Struff (rank -, peak 21)	5-7 7-5 4-6 6-2 6-3	[ATP]	peak_diff 3
+20260901	US Open	2R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Faria (rank -, peak 87)	4-6 6-0 6-3 6-2	[ATP]	peak_diff 86
+20260901	US Open	2R	Hard	Paul (20) (rank -, peak 8)	bt	Prizmic (rank -, peak 70)	6-2 6-3 5-7 6-4	[ATP]	peak_diff 62
+20260901	US Open	2R	Hard	Bublik (15) (rank -, peak 10)	bt	Mannarino (rank -, peak 17)	6-3 6-1 6-1	[ATP]	peak_diff 7
+20260901	US Open	2R	Hard	Vacherot (22) (rank -, peak 16)	bt	Majchrzak (rank -, peak 53)	6-4 4-6 7-6(3) 6-2	[ATP]	peak_diff 37
+20260901	US Open	2R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Sakamoto (rank -, peak 149)	6-3 7-6(2) 7-5	[ATP]	peak_diff 139
+20260901	US Open	2R	Hard	Navone (rank -, peak 29)	bt	Berrettini (rank -, peak 6)	3-6 6-3 6-4 7-6(4)	[ATP]	peak_diff 23
+20260901	US Open	2R	Hard	Wu (rank -, peak 54)	bt	Duckworth (rank -, peak 46)	7-5 6-3 6-1	[ATP]	peak_diff 8
+20260901	US Open	2R	Hard	Lehecka (18) (rank -, peak 12)	bt	Samuel (rank -, peak 150)	6-4 6-2 6-4	[ATP]	peak_diff 138
+20260901	US Open	2R	Hard	Tsitsipas (rank -, peak 3)	bt	Harris (rank -, peak 101)	6-7(1) 6-3 7-6(4) 6-4	[ATP]	peak_diff 98
+20260901	US Open	2R	Hard	Shapovalov (rank -, peak 10)	bt	Van Assche (rank -, peak 63)	6-0 6-4 7-6(7)	[ATP]	peak_diff 53
+20260901	US Open	2R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Fearnley (rank -, peak 49)	6-3 6-3 3-6 6-3	[ATP]	peak_diff 24
+20260901	US Open	2R	Hard	Shelton (8) (rank -, peak 5)	bt	Hurkacz (rank -, peak 6)	6-3 5-7 7-6(3) 7-5	[ATP]	peak_diff 1
+20260901	US Open	2R	Hard	Rinderknech (26) (rank -, peak 24)	bt	Munar (rank -, peak 33)	7-6(4) 6-2 7-5	[ATP]	peak_diff 9
+20260901	US Open	2R	Hard	Merida Aguilar (rank -, peak 82)	bt	Rublev (23) (rank -, peak 5)	6-7(3) 6-2 6-4 6-4	[ATP]	peak_diff 77
+20260901	US Open	2R	Hard	Medvedev (7) (rank -, peak 1)	bt	Gorzny (rank -, peak -)	6-1 6-3 7-5	[ATP]	peak_diff -
+20260901	US Open	2R	Hard	Michelsen (rank -, peak 30)	bt	Nakashima (16) (rank -, peak 29)	6-3 6-4 6-4	[ATP]	peak_diff 1
+20260901	US Open	1R	Hard	Bergs (31) (rank -, peak 38)	bt	Taberner (rank -, peak 83)	6-3 3-6 6-2 6-2	[ATP]	peak_diff 45
+20260901	US Open	1R	Hard	De Jong (rank -, peak 71)	bt	Passaro (rank -, peak 89)	2-6 6-2 4-6 6-3 6-2	[ATP]	peak_diff 18
+20260901	US Open	1R	Hard	Zheng (rank -, peak 4)	bt	Marozsan (rank -, peak 36)	6-4 6-4 6-2	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	De Minaur (6) (rank -, peak 6)	bt	Guerrieri (rank -, peak -)	6-2 6-2 6-4	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Yunchaokete (rank -, peak 64)	bt	Jodar (12) (rank -, peak 23)	6-2 6-1 6-1	[ATP]	peak_diff 41
+20260901	US Open	1R	Hard	Buse (32) (rank -, peak 31)	bt	Giron (rank -, peak 37)	3-6 6-3 6-3 6-7(6) 6-1	[ATP]	peak_diff 6
+20260901	US Open	1R	Hard	Svajda (rank -, peak 62)	bt	Altmaier (rank -, peak 44)	6-3 6-1 6-7(5) 6-2	[ATP]	peak_diff 18
+20260901	US Open	1R	Hard	Van De Zandschulp (rank -, peak 22)	bt	Choinski (rank -, peak 101)	6-3 6-1 7-6(5)	[ATP]	peak_diff 79
+20260901	US Open	1R	Hard	Bonzi (rank -, peak 42)	bt	Molcan (rank -, peak 38)	6-4 3-6 6-3 6-2	[ATP]	peak_diff 4
+20260901	US Open	1R	Hard	Zverev (1) (rank -, peak 2)	bt	Sonego (rank -, peak 21)	6-4 3-6 6-7(7) 7-5 6-4	[ATP]	peak_diff 19
+20260901	US Open	1R	Hard	Monfils (rank -, peak 9)	bt	Vallejo (rank -, peak 70)	2-6 6-1 6-2 6-0	[ATP]	peak_diff 61
+20260901	US Open	1R	Hard	Musetti (13) (rank -, peak 5)	bt	Fery (rank -, peak 141)	6-3 6-3 7-5	[ATP]	peak_diff 136
+20260901	US Open	1R	Hard	Gea (rank -, peak 135)	bt	Cerundolo (rank -, peak 18)	6-3 2-6 3-6 6-3 6-1	[ATP]	peak_diff 117
+20260901	US Open	1R	Hard	Struff (rank -, peak 21)	bt	Ugo Carabelli (rank -, peak 43)	6-4 6-3 6-3	[ATP]	peak_diff 22
+20260901	US Open	1R	Hard	Bellucci (rank -, peak 63)	bt	Piros (rank -, peak 106)	6-4 6-2 6-0	[ATP]	peak_diff 43
+20260901	US Open	1R	Hard	Sweeny (rank -, peak 131)	bt	Moutet (rank -, peak 30)	7-6(4) 6-4 3-0	[ATP]	peak_diff 101
+20260901	US Open	1R	Hard	Cerundolo (24) (rank -, peak 18)	bt	Misolic (rank -, peak 76)	6-4 6-3 7-5	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Schoolkate (rank -, peak 95)	bt	Basavareddy (rank -, peak 99)	7-6(4) 3-6 6-3 6-4	[ATP]	peak_diff 4
+20260901	US Open	1R	Hard	Fritz (9) (rank -, peak 4)	bt	Blanch (rank -, peak 219)	6-3 6-2 6-4	[ATP]	peak_diff 215
+20260901	US Open	1R	Hard	Cobolli (5) (rank -, peak 10)	bt	Comesana (rank -, peak 54)	3-6 2-6 6-3 6-4 6-4	[ATP]	peak_diff 44
+20260901	US Open	1R	Hard	Tiafoe (11) (rank -, peak 10)	bt	Damm (rank -, peak 42)	6-4 4-6 3-6 6-3 6-4	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	Mensik (17) (rank -, peak 12)	bt	Mochizuki (rank -, peak 92)	6-1 6-4 7-5	[ATP]	peak_diff 80
+20260901	US Open	1R	Hard	Shelton (8) (rank -, peak 5)	bt	Griekspoor (rank -, peak 21)	1-6 6-1 7-6(3) 6-2	[ATP]	peak_diff 16
+20260901	US Open	1R	Hard	Popyrin (rank -, peak 19)	bt	Dimitrov (rank -, peak 9)	3-6 6-3 6-2 6-4	[ATP]	peak_diff 10
+20260901	US Open	1R	Hard	Auger Aliassime (3) (rank -, peak 4)	bt	Hijikata (rank -, peak 62)	7-5 4-6 6-3 7-5	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Tien (14) (rank -, peak 18)	bt	Borges (rank -, peak 30)	6-4 6-1 6-2	[ATP]	peak_diff 12
+20260901	US Open	1R	Hard	Halys (rank -, peak 46)	bt	Diaz Acosta (rank -, peak 47)	6-4 7-5 6-7(7) 6-1	[ATP]	peak_diff 1
+20260901	US Open	1R	Hard	Khachanov (rank -, peak 9)	bt	Burruchaga (rank -, peak 56)	6-3 6-0 6-1	[ATP]	peak_diff 47
+20260901	US Open	1R	Hard	Trungelliti (rank -, peak 76)	bt	Shang (rank -, peak 47)	0-6 7-6(5) 1-6 6-3 6-4	[ATP]	peak_diff 29
+20260901	US Open	1R	Hard	Blockx (28) (rank -, peak 36)	bt	Barrios Vera (rank -, peak 93)	6-3 6-4 6-2	[ATP]	peak_diff 57
+20260901	US Open	1R	Hard	Tabilo (25) (rank -, peak 19)	bt	Hanfmann (rank -, peak 45)	6-3 6-2 6-7(7) 6-3	[ATP]	peak_diff 26
+20260901	US Open	1R	Hard	Berrettini (rank -, peak 6)	bt	Wawrinka (rank -, peak 13)	7-6(4) 7-6(3) 6-0	[ATP]	peak_diff 7
+20260901	US Open	1R	Hard	Nakashima (16) (rank -, peak 29)	bt	Baez (rank -, peak 18)	6-2 6-1 6-0	[ATP]	peak_diff 11
+20260901	US Open	1R	Hard	Darderi (21) (rank -, peak 16)	bt	Wendelken (rank -, peak -)	6-2 3-6 6-2 7-5	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Sakamoto (rank -, peak 149)	bt	Vukic (rank -, peak 48)	6-4 6-7(5) 6-4 3-6 6-4	[ATP]	peak_diff 101
+20260901	US Open	1R	Hard	Hurkacz (rank -, peak 6)	bt	Dzumhur (rank -, peak 54)	6-4 4-6 6-1 6-1	[ATP]	peak_diff 48
+20260901	US Open	1R	Hard	Svrcina (rank -, peak 86)	bt	Royer (rank -, peak 54)	6-4 6-3 5-7 5-7 6-2	[ATP]	peak_diff 32
+20260901	US Open	1R	Hard	Michelsen (rank -, peak 30)	bt	Cina (rank -, peak 183)	6-4 6-1 6-0	[ATP]	peak_diff 153
+20260901	US Open	1R	Hard	Fearnley (rank -, peak 49)	bt	Landaluce (rank -, peak 58)	4-6 6-2 4-6 7-5 6-3	[ATP]	peak_diff 9
+20260901	US Open	1R	Hard	Alcaraz (2) (rank -, peak 1)	bt	Safiullin (rank -, peak 36)	6-4 6-4 6-4	[ATP]	peak_diff 35
+20260901	US Open	1R	Hard	Rodionov (rank -, peak 87)	bt	Mpetshi Perricard (rank -, peak 29)	7-6(2) 6-0 7-6(4)	[ATP]	peak_diff 58
+20260901	US Open	1R	Hard	Gorzny (rank -, peak -)	bt	Collignon (rank -, peak 51)	3-6 6-3 3-6 6-3 7-6(9)	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Duckworth (rank -, peak 46)	bt	Arnaldi (30) (rank -, peak 29)	5-7 6-3 6-2 7-6(8)	[ATP]	peak_diff 17
+20260901	US Open	1R	Hard	Mannarino (rank -, peak 17)	bt	Tirante (rank -, peak 52)	4-6 3-6 6-3 6-3 6-3	[ATP]	peak_diff 35
+20260901	US Open	1R	Hard	Tsitsipas (rank -, peak 3)	bt	Fils (10) (rank -, peak 14)	4-6 7-6(3) 6-1 6-4	[ATP]	peak_diff 11
+20260901	US Open	1R	Hard	Rublev (23) (rank -, peak 5)	bt	Virtanen (rank -, peak 91)	6-7(5) 6-7(0) 6-0 6-2 7-6(5)	[ATP]	peak_diff 86
+20260901	US Open	1R	Hard	Vacherot (22) (rank -, peak 16)	bt	Kovacevic (rank -, peak 54)	6-2 6-3 7-5	[ATP]	peak_diff 38
+20260901	US Open	1R	Hard	Bublik (15) (rank -, peak 10)	bt	Wolf (rank -, peak -)	6-4 6-2 3-6 6-1	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Navone (rank -, peak 29)	bt	Djokovic (4) (rank -, peak 1)	7-6(5) 5-7 4-6 6-2 6-1	[ATP]	peak_diff 28
+20260901	US Open	1R	Hard	Etcheverry (27) (rank -, peak 25)	bt	Kopriva (rank -, peak 55)	6-3 6-4 6-0	[ATP]	peak_diff 30
+20260901	US Open	1R	Hard	Shapovalov (rank -, peak 10)	bt	Kecmanovic (rank -, peak 27)	6-4 4-6 6-4 6-1	[ATP]	peak_diff 17
+20260901	US Open	1R	Hard	Samuel (rank -, peak 150)	bt	Machac (rank -, peak 20)	6-2 6-3 6-2	[ATP]	peak_diff 130
+20260901	US Open	1R	Hard	Faria (rank -, peak 87)	bt	Brooksby (rank -, peak 33)	6-3 7-6(4) 4-6 1-6 6-2	[ATP]	peak_diff 54
+20260901	US Open	1R	Hard	Medvedev (7) (rank -, peak 1)	bt	Gaston (rank -, peak 58)	6-4 6-2 6-4	[ATP]	peak_diff 57
+20260901	US Open	1R	Hard	Van Assche (rank -, peak 63)	bt	Norrie (29) (rank -, peak 8)	6-7(6) 6-2 6-2 6-3	[ATP]	peak_diff 55
+20260901	US Open	1R	Hard	Paul (20) (rank -, peak 8)	bt	Wong (rank -, peak 108)	6-7(3) 6-1 6-3 6-3	[ATP]	peak_diff 100
+20260901	US Open	1R	Hard	Munar (rank -, peak 33)	bt	Atmane (rank -, peak 41)	6-7(5) 3-6 6-1 7-6(4) 7-5	[ATP]	peak_diff 8
+20260901	US Open	1R	Hard	Harris (rank -, peak 101)	bt	Kennedy (rank -, peak -)	6-4 6-2 6-2	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Merida Aguilar (rank -, peak 82)	bt	Fucsovics (rank -, peak 35)	6-4 6-4 6-2	[ATP]	peak_diff 47
+20260901	US Open	1R	Hard	Lehecka (18) (rank -, peak 12)	bt	Carreno-Busta (rank -, peak -)	6-1 7-6(5) 4-6 6-2	[ATP]	peak_diff -
+20260901	US Open	1R	Hard	Prizmic (rank -, peak 70)	bt	Shevchenko (rank -, peak 45)	2-6 6-3 6-3 5-7 7-5	[ATP]	peak_diff 25
+20260901	US Open	1R	Hard	Rinderknech (26) (rank -, peak 24)	bt	Shimabukuro (rank -, peak 103)	6-7(4) 6-2 7-6(4) 6-2	[ATP]	peak_diff 79
+20260901	US Open	1R	Hard	Majchrzak (rank -, peak 53)	bt	Medjedovic (rank -, peak 56)	6-3 6-3 6-3	[ATP]	peak_diff 3
+20260901	US Open	1R	Hard	Wu (rank -, peak 54)	bt	Walton (rank -, peak 74)	7-6(2) 6-2 7-5	[ATP]	peak_diff 20
+# source: https://www.tennisexplorer.com/us-open/2026/wta-women/ (124 matches parsed)
+20260901	US Open	QF	Hard	Gauff (4) (rank -, peak 2)	bt	Andreeva (5) (rank -, peak 5)	2-6 7-6(7) 6-2	[WTA]	peak_diff 3
+20260901	US Open	QF	Hard	Rybakina (2) (rank -, peak 2)	bt	Zheng (rank -, peak 4)	3-6 6-1 6-4	[WTA]	peak_diff 2
+20260901	US Open	QF	Hard	Pegula (3) (rank -, peak 3)	bt	Navarro (26) (rank -, peak 8)	3-6 6-4 6-3	[WTA]	peak_diff 5
+20260901	US Open	QF	Hard	Sabalenka (1) (rank -, peak 1)	bt	Noskova (6) (rank -, peak 12)	7-6(1) 3-6 7-6(7)	[WTA]	peak_diff 11
+20260901	US Open	R16	Hard	Gauff (4) (rank -, peak 2)	bt	Jovic (14) (rank -, peak 16)	6-1 6-4	[WTA]	peak_diff 14
+20260901	US Open	R16	Hard	Rybakina (2) (rank -, peak 2)	bt	Osaka (13) (rank -, peak 1)	6-1 6-4	[WTA]	peak_diff 1
+20260901	US Open	R16	Hard	Zheng (rank -, peak 4)	bt	Swiatek (8) (rank -, peak 1)	7-5 6-3	[WTA]	peak_diff 3
+20260901	US Open	R16	Hard	Andreeva (5) (rank -, peak 5)	bt	Potapova (24) (rank -, peak 21)	5-7 6-4 6-3	[WTA]	peak_diff 16
+20260901	US Open	R16	Hard	Navarro (26) (rank -, peak 8)	bt	Kalinskaya (21) (rank -, peak 11)	6-4 6-2	[WTA]	peak_diff 3
+20260901	US Open	R16	Hard	Pegula (3) (rank -, peak 3)	bt	Cirstea (16) (rank -, peak 18)	6-3 6-4	[WTA]	peak_diff 15
+20260901	US Open	R16	Hard	Noskova (6) (rank -, peak 12)	bt	Kostyuk (11) (rank -, peak 12)	7-5 5-7 6-4	[WTA]	peak_diff 0
+20260901	US Open	R16	Hard	Sabalenka (1) (rank -, peak 1)	bt	Townsend (rank -, peak 46)	6-4 6-3	[WTA]	peak_diff 45
+20260901	US Open	3R	Hard	Rybakina (2) (rank -, peak 2)	bt	Starodubtseva (rank -, peak 53)	7-6(6) 6-3	[WTA]	peak_diff 51
+20260901	US Open	3R	Hard	Jovic (14) (rank -, peak 16)	bt	Eala (17) (rank -, peak 29)	7-5 3-6 7-5	[WTA]	peak_diff 13
+20260901	US Open	3R	Hard	Osaka (13) (rank -, peak 1)	bt	Mertens (23) (rank -, peak 12)	6-3 3-6 7-5	[WTA]	peak_diff 11
+20260901	US Open	3R	Hard	Gauff (4) (rank -, peak 2)	bt	Bucsa (rank -, peak 30)	6-3 6-4	[WTA]	peak_diff 28
+20260901	US Open	3R	Hard	Swiatek (8) (rank -, peak 1)	bt	Bouzkova (25) (rank -, peak 24)	7-6(3) 7-6(3)	[WTA]	peak_diff 23
+20260901	US Open	3R	Hard	Andreeva (5) (rank -, peak 5)	bt	Bartunkova (rank -, peak 61)	6-2 7-6(5)	[WTA]	peak_diff 56
+20260901	US Open	3R	Hard	Potapova (24) (rank -, peak 21)	bt	Anisimova (10) (rank -, peak 3)	6-2 7-5	[WTA]	peak_diff 18
+20260901	US Open	3R	Hard	Zheng (rank -, peak 4)	bt	Keys (22) (rank -, peak 5)	1-6 7-6(3) 7-5	[WTA]	peak_diff 1
+20260901	US Open	3R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Svitolina (9) (rank -, peak 3)	6-3 2-6 6-3	[WTA]	peak_diff 8
+20260901	US Open	3R	Hard	Noskova (6) (rank -, peak 12)	bt	Li (29) (rank -, peak 29)	6-2 6-7(6) 6-2	[WTA]	peak_diff 17
+20260901	US Open	3R	Hard	Navarro (26) (rank -, peak 8)	bt	Muchova (7) (rank -, peak 8)	6-3 7-5	[WTA]	peak_diff 0
+20260901	US Open	3R	Hard	Townsend (rank -, peak 46)	bt	Shnaider (15) (rank -, peak 11)	6-2 6-7(3) 6-3	[WTA]	peak_diff 35
+20260901	US Open	3R	Hard	Pegula (3) (rank -, peak 3)	bt	Fernandez (31) (rank -, peak 13)	1-6 6-4 6-3	[WTA]	peak_diff 10
+20260901	US Open	3R	Hard	Cirstea (16) (rank -, peak 18)	bt	Paolini (19) (rank -, peak 4)	6-3 6-3	[WTA]	peak_diff 14
+20260901	US Open	3R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Alexandrova (18) (rank -, peak 10)	6-3 6-2	[WTA]	peak_diff 2
+20260901	US Open	3R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Rakhimova (rank -, peak 60)	6-3 6-4	[WTA]	peak_diff 59
+20260901	US Open	2R	Hard	Rybakina (2) (rank -, peak 2)	bt	Bouzas Maneiro (rank -, peak 40)	6-2 6-4	[WTA]	peak_diff 38
+20260901	US Open	2R	Hard	Gauff (4) (rank -, peak 2)	bt	Badosa (rank -, peak 2)	6-4 7-6(5)	[WTA]	peak_diff 0
+20260901	US Open	2R	Hard	Jovic (14) (rank -, peak 16)	bt	Jones (rank -, peak 65)	6-4 6-4	[WTA]	peak_diff 49
+20260901	US Open	2R	Hard	Starodubtseva (rank -, peak 53)	bt	Sakkari (32) (rank -, peak 3)	1-6 7-6(4) 6-2	[WTA]	peak_diff 50
+20260901	US Open	2R	Hard	Andreeva (5) (rank -, peak 5)	bt	Lys (rank -, peak 39)	6-0 6-2	[WTA]	peak_diff 34
+20260901	US Open	2R	Hard	Bucsa (rank -, peak 30)	bt	Sakatsume (rank -, peak 127)	7-6(6) 6-7(0) 7-6(6)	[WTA]	peak_diff 97
+20260901	US Open	2R	Hard	Zheng (rank -, peak 4)	bt	Putintseva (rank -, peak 20)	6-4 2-6 6-1	[WTA]	peak_diff 16
+20260901	US Open	2R	Hard	Eala (17) (rank -, peak 29)	bt	Oliynykova (rank -, peak 51)	6-1 6-4	[WTA]	peak_diff 22
+20260901	US Open	2R	Hard	Bartunkova (rank -, peak 61)	bt	Maria (rank -, peak 36)	6-7(5) 6-2 6-3	[WTA]	peak_diff 25
+20260901	US Open	2R	Hard	Bouzkova (25) (rank -, peak 24)	bt	Dart (rank -, peak 70)	6-2 6-2	[WTA]	peak_diff 46
+20260901	US Open	2R	Hard	Anisimova (10) (rank -, peak 3)	bt	Tagger (rank -, peak 86)	6-3 3-6 6-1	[WTA]	peak_diff 83
+20260901	US Open	2R	Hard	Osaka (13) (rank -, peak 1)	bt	Siniakova (rank -, peak 27)	6-2 5-7 6-1	[WTA]	peak_diff 26
+20260901	US Open	2R	Hard	Swiatek (8) (rank -, peak 1)	bt	Podoroska (rank -, peak -)	6-3 6-2	[WTA]	peak_diff -
+20260901	US Open	2R	Hard	Keys (22) (rank -, peak 5)	bt	Bondar (rank -, peak 50)	5-7 6-4 7-6(5)	[WTA]	peak_diff 45
+20260901	US Open	2R	Hard	Mertens (23) (rank -, peak 12)	bt	Timofeeva (rank -, peak 93)	6-2 7-6(5)	[WTA]	peak_diff 81
+20260901	US Open	2R	Hard	Potapova (24) (rank -, peak 21)	bt	Jeanjean (rank -, peak 91)	6-4 2-6 6-3	[WTA]	peak_diff 70
+20260901	US Open	2R	Hard	Noskova (6) (rank -, peak 12)	bt	Tararudee (rank -, peak 94)	6-4 6-2	[WTA]	peak_diff 82
+20260901	US Open	2R	Hard	Svitolina (9) (rank -, peak 3)	bt	Joint (rank -, peak 28)	6-2 6-7(6) 6-4	[WTA]	peak_diff 25
+20260901	US Open	2R	Hard	Li (29) (rank -, peak 29)	bt	Vekic (rank -, peak 17)	5-7 7-6(4) 6-4	[WTA]	peak_diff 12
+20260901	US Open	2R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Iatcenko (rank -, peak -)	6-1 6-1	[WTA]	peak_diff -
+20260901	US Open	2R	Hard	Alexandrova (18) (rank -, peak 10)	bt	Birrell (rank -, peak 60)	6-1 2-6 6-3	[WTA]	peak_diff 50
+20260901	US Open	2R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Wang (rank -, peak 30)	7-5 2-6 6-3	[WTA]	peak_diff 19
+20260901	US Open	2R	Hard	Muchova (7) (rank -, peak 8)	bt	Boulter (rank -, peak 23)	6-1 6-0	[WTA]	peak_diff 15
+20260901	US Open	2R	Hard	Rakhimova (rank -, peak 60)	bt	Selekhmeteva (rank -, peak 71)	6-3 6-0	[WTA]	peak_diff 11
+20260901	US Open	2R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Stephens (rank -, peak 3)	6-1 7-5	[WTA]	peak_diff 9
+20260901	US Open	2R	Hard	Navarro (26) (rank -, peak 8)	bt	McNally (rank -, peak 54)	3-6 6-2 6-3	[WTA]	peak_diff 46
+20260901	US Open	2R	Hard	Pegula (3) (rank -, peak 3)	bt	Kenin (rank -, peak 4)	6-3 6-1	[WTA]	peak_diff 1
+20260901	US Open	2R	Hard	Paolini (19) (rank -, peak 4)	bt	Stefanini (rank -, peak 100)	6-4 6-1	[WTA]	peak_diff 96
+20260901	US Open	2R	Hard	Townsend (rank -, peak 46)	bt	Preston (rank -, peak 126)	6-1 6-1	[WTA]	peak_diff 80
+20260901	US Open	2R	Hard	Cirstea (16) (rank -, peak 18)	bt	Parry (rank -, peak 48)	6-2 7-5	[WTA]	peak_diff 30
+20260901	US Open	2R	Hard	Fernandez (31) (rank -, peak 13)	bt	Sawangkaew (rank -, peak 100)	6-4 6-1	[WTA]	peak_diff 87
+20260901	US Open	2R	Hard	Shnaider (15) (rank -, peak 11)	bt	Pliskova (rank -, peak 1)	6-1 7-6(4)	[WTA]	peak_diff 10
+20260901	US Open	1R	Hard	Jovic (14) (rank -, peak 16)	bt	Frech (rank -, peak 22)	7-5 6-3	[WTA]	peak_diff 6
+20260901	US Open	1R	Hard	Maria (rank -, peak 36)	bt	Ostapenko (30) (rank -, peak 5)	4-6 6-1 6-2	[WTA]	peak_diff 31
+20260901	US Open	1R	Hard	Jones (rank -, peak 65)	bt	Linette (rank -, peak 19)	6-4 1-6 6-3	[WTA]	peak_diff 46
+20260901	US Open	1R	Hard	Bartunkova (rank -, peak 61)	bt	Sherif (rank -, peak 31)	6-1 6-2	[WTA]	peak_diff 30
+20260901	US Open	1R	Hard	Badosa (rank -, peak 2)	bt	Kasatkina (rank -, peak 8)	6-1 6-4	[WTA]	peak_diff 6
+20260901	US Open	1R	Hard	Eala (17) (rank -, peak 29)	bt	Stoiana (rank -, peak 142)	6-1 6-2	[WTA]	peak_diff 113
+20260901	US Open	1R	Hard	Gauff (4) (rank -, peak 2)	bt	Sonmez (rank -, peak 59)	6-3 6-4	[WTA]	peak_diff 57
+20260901	US Open	1R	Hard	Jeanjean (rank -, peak 91)	bt	Rus (rank -, peak -)	7-6(6) 6-2	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Bouzas Maneiro (rank -, peak 40)	bt	Vidmanova (rank -, peak 101)	6-3 6-4	[WTA]	peak_diff 61
+20260901	US Open	1R	Hard	Potapova (24) (rank -, peak 21)	bt	Semenistaja (rank -, peak 87)	6-2 6-2	[WTA]	peak_diff 66
+20260901	US Open	1R	Hard	Oliynykova (rank -, peak 51)	bt	Brantmeier (rank -, peak -)	6-4 6-4	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Mertens (23) (rank -, peak 12)	bt	Quevedo (rank -, peak 107)	6-4 6-4	[WTA]	peak_diff 95
+20260901	US Open	1R	Hard	Andreeva (5) (rank -, peak 5)	bt	Tjen (rank -, peak 36)	6-2 6-2	[WTA]	peak_diff 31
+20260901	US Open	1R	Hard	Putintseva (rank -, peak 20)	bt	Bencic (12) (rank -, peak 4)	4-6 7-5 6-3	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Starodubtseva (rank -, peak 53)	bt	Seidel (rank -, peak 78)	6-2 6-2	[WTA]	peak_diff 25
+20260901	US Open	1R	Hard	Rybakina (2) (rank -, peak 2)	bt	Frodin (rank -, peak -)	6-3 6-2	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Lys (rank -, peak 39)	bt	Knutson (rank -, peak 155)	6-3 6-3	[WTA]	peak_diff 116
+20260901	US Open	1R	Hard	Bondar (rank -, peak 50)	bt	Havlickova (rank -, peak 196)	6-3 6-3	[WTA]	peak_diff 146
+20260901	US Open	1R	Hard	Sakkari (32) (rank -, peak 3)	bt	Montgomery (rank -, peak 95)	2-6 7-5 6-2	[WTA]	peak_diff 92
+20260901	US Open	1R	Hard	Keys (22) (rank -, peak 5)	bt	Korneeva (rank -, peak 96)	7-5 6-4	[WTA]	peak_diff 91
+20260901	US Open	1R	Hard	Osaka (13) (rank -, peak 1)	bt	Zakharova (rank -, peak 65)	7-6(6) 7-6(3)	[WTA]	peak_diff 64
+20260901	US Open	1R	Hard	Swiatek (8) (rank -, peak 1)	bt	Wang (rank -, peak 30)	6-2 6-3	[WTA]	peak_diff 29
+20260901	US Open	1R	Hard	Siniakova (rank -, peak 27)	bt	Cocciaretto (rank -, peak 29)	6-3 6-2	[WTA]	peak_diff 2
+20260901	US Open	1R	Hard	Li (29) (rank -, peak 29)	bt	Ruzic (rank -, peak 51)	7-5 6-1	[WTA]	peak_diff 22
+20260901	US Open	1R	Hard	Joint (rank -, peak 28)	bt	Samsonova (rank -, peak 12)	3-6 6-2 6-2	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Stephens (rank -, peak 3)	bt	Tauson (rank -, peak 12)	6-4 6-1	[WTA]	peak_diff 9
+20260901	US Open	1R	Hard	Cirstea (16) (rank -, peak 18)	bt	Grabher (rank -, peak 54)	6-3 6-0	[WTA]	peak_diff 36
+20260901	US Open	1R	Hard	Noskova (6) (rank -, peak 12)	bt	Volynets (rank -, peak 56)	7-5 6-1	[WTA]	peak_diff 44
+20260901	US Open	1R	Hard	McNally (rank -, peak 54)	bt	Koevermans (rank -, peak -)	7-5 6-1	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Shnaider (15) (rank -, peak 11)	bt	Snigur (rank -, peak 84)	6-0 6-4	[WTA]	peak_diff 73
+20260901	US Open	1R	Hard	Parry (rank -, peak 48)	bt	Golubic (rank -, peak 35)	7-5 6-4	[WTA]	peak_diff 13
+20260901	US Open	1R	Hard	Podoroska (rank -, peak -)	bt	Waltert (rank -, peak 81)	4-6 7-6(5) 6-3	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Anisimova (10) (rank -, peak 3)	bt	Krueger (rank -, peak 29)	6-1 6-3	[WTA]	peak_diff 26
+20260901	US Open	1R	Hard	Townsend (rank -, peak 46)	bt	Chwalinska (20) (rank -, peak 21)	6-2 6-3	[WTA]	peak_diff 25
+20260901	US Open	1R	Hard	Birrell (rank -, peak 60)	bt	Marcinko (rank -, peak 50)	3-6 7-6(4) 6-3	[WTA]	peak_diff 10
+20260901	US Open	1R	Hard	Kalinskaya (21) (rank -, peak 11)	bt	Blinkova (rank -, peak 35)	6-4 6-3	[WTA]	peak_diff 24
+20260901	US Open	1R	Hard	Timofeeva (rank -, peak 93)	bt	Zidansek (rank -, peak 22)	6-3 7-5	[WTA]	peak_diff 71
+20260901	US Open	1R	Hard	Selekhmeteva (rank -, peak 71)	bt	Ito (rank -, peak -)	6-2 6-4	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Navarro (26) (rank -, peak 8)	bt	Boisson (rank -, peak 34)	7-6(6) 6-7(1) 6-3	[WTA]	peak_diff 26
+20260901	US Open	1R	Hard	Sabalenka (1) (rank -, peak 1)	bt	Osorio (rank -, peak 33)	6-2 6-4	[WTA]	peak_diff 32
+20260901	US Open	1R	Hard	Bouzkova (25) (rank -, peak 24)	bt	Jacquemot (rank -, peak 53)	6-2 6-2	[WTA]	peak_diff 29
+20260901	US Open	1R	Hard	Sawangkaew (rank -, peak 100)	bt	Udvardy (rank -, peak 59)	6-4 6-3	[WTA]	peak_diff 41
+20260901	US Open	1R	Hard	Muchova (7) (rank -, peak 8)	bt	Kraus (rank -, peak 92)	6-3 6-0	[WTA]	peak_diff 84
+20260901	US Open	1R	Hard	Tagger (rank -, peak 86)	bt	Korpatsch (rank -, peak 71)	6-0 7-6(4)	[WTA]	peak_diff 15
+20260901	US Open	1R	Hard	Sakatsume (rank -, peak 127)	bt	Kalinina (rank -, peak 25)	6-3 6-3	[WTA]	peak_diff 102
+20260901	US Open	1R	Hard	Dart (rank -, peak 70)	bt	Stearns (rank -, peak 28)	3-6 6-3 6-2	[WTA]	peak_diff 42
+20260901	US Open	1R	Hard	Zheng (rank -, peak 4)	bt	Liutova (rank -, peak -)	4-6 6-3 6-1	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Bucsa (rank -, peak 30)	bt	Bejlek (28) (rank -, peak 34)	7-5 4-6 6-1	[WTA]	peak_diff 4
+20260901	US Open	1R	Hard	Kenin (rank -, peak 4)	bt	Williams (rank -, peak 1)	6-2 7-6(6)	[WTA]	peak_diff 3
+20260901	US Open	1R	Hard	Svitolina (9) (rank -, peak 3)	bt	Sierra (rank -, peak 56)	6-1 6-2	[WTA]	peak_diff 53
+20260901	US Open	1R	Hard	Preston (rank -, peak 126)	bt	Parks (rank -, peak 40)	6-3 6-3	[WTA]	peak_diff 86
+20260901	US Open	1R	Hard	Boulter (rank -, peak 23)	bt	Lee (rank -, peak -)	6-4 3-6 6-0	[WTA]	peak_diff -
+20260901	US Open	1R	Hard	Alexandrova (18) (rank -, peak 10)	bt	Kessler (rank -, peak 30)	6-2 6-2	[WTA]	peak_diff 20
+20260901	US Open	1R	Hard	Pliskova (rank -, peak 1)	bt	Vandewinkel (rank -, peak 92)	2-6 7-5 6-3	[WTA]	peak_diff 91
+20260901	US Open	1R	Hard	Wang (rank -, peak 30)	bt	Arango (rank -, peak 46)	6-4 6-2	[WTA]	peak_diff 16
+20260901	US Open	1R	Hard	Kostyuk (11) (rank -, peak 12)	bt	Hunter (rank -, peak 114)	6-4 6-1	[WTA]	peak_diff 102
+20260901	US Open	1R	Hard	Stefanini (rank -, peak 100)	bt	Yastremska (rank -, peak 21)	6-3 4-6 6-1	[WTA]	peak_diff 79
+20260901	US Open	1R	Hard	Tararudee (rank -, peak 94)	bt	Kalieva (rank -, peak 134)	6-3 6-7(4) 6-2	[WTA]	peak_diff 40
+20260901	US Open	1R	Hard	Fernandez (31) (rank -, peak 13)	bt	Zhang (rank -, peak 22)	6-3 6-2	[WTA]	peak_diff 9
+20260901	US Open	1R	Hard	Pegula (3) (rank -, peak 3)	bt	Ruse (rank -, peak 51)	6-3 6-2	[WTA]	peak_diff 48
+20260901	US Open	1R	Hard	Rakhimova (rank -, peak 60)	bt	Krejcikova (27) (rank -, peak 2)	7-6(4) 6-2	[WTA]	peak_diff 58
+20260901	US Open	1R	Hard	Vekic (rank -, peak 17)	bt	Gibson (rank -, peak 55)	6-2 4-6 6-3	[WTA]	peak_diff 38
+20260901	US Open	1R	Hard	Paolini (19) (rank -, peak 4)	bt	Erjavec (rank -, peak 84)	6-3 3-6 6-4	[WTA]	peak_diff 80
+20260901	US Open	1R	Hard	Iatcenko (rank -, peak -)	bt	Zarazua (rank -, peak 51)	4-6 6-4 7-6(7)	[WTA]	peak_diff -

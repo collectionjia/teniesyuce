@@ -1,0 +1,28 @@
+# 2026-04-06 · 27 matches · Linz
+2026-04-06	Linz	F	Clay	Mirra Andreeva	bt	Anastasia Potapova	1-6 6-4 6-3	peak_diff 16
+2026-04-06	Linz	QF	Clay	Anastasia Potapova	bt	Lilli Tagger	7-6(7) 6-0	peak_diff 65
+2026-04-06	Linz	QF	Clay	Donna Vekic	bt	Karolina Pliskova	7-5 6-4	peak_diff 16
+2026-04-06	Linz	QF	Clay	Elena Gabriela Ruse	bt	Jelena Ostapenko	4-6 6-4 6-1	peak_diff 46
+2026-04-06	Linz	QF	Clay	Mirra Andreeva	bt	Sorana Cirstea	7-6(4) 4-6 6-2	peak_diff 13
+2026-04-06	Linz	R16	Clay	Anastasia Potapova	bt	Tamara Korpatsch	6-2 6-1	peak_diff 50
+2026-04-06	Linz	R16	Clay	Donna Vekic	bt	Anhelina Kalinina	W/O	peak_diff 8
+2026-04-06	Linz	R16	Clay	Elena Gabriela Ruse	bt	Dayana Yastremska	4-6 6-4 6-4	peak_diff 30
+2026-04-06	Linz	R16	Clay	Jelena Ostapenko	bt	Alexandra Eala	6-4 7-5	peak_diff 24
+2026-04-06	Linz	R16	Clay	Karolina Pliskova	bt	Ekaterina Alexandrova	6-1 6-3	peak_diff 9
+2026-04-06	Linz	R16	Clay	Lilli Tagger	bt	Liudmila Samsonova	6-2 7-6(11)	peak_diff 74
+2026-04-06	Linz	R16	Clay	Mirra Andreeva	bt	Sloane Stephens	6-4 6-2	peak_diff 2
+2026-04-06	Linz	R16	Clay	Sorana Cirstea	bt	Dalma Galfi	5-0 RET	peak_diff 61
+2026-04-06	Linz	R32	Clay	Alexandra Eala	bt	Julia Grabher	6-4 6-3	peak_diff 25
+2026-04-06	Linz	R32	Clay	Anastasia Potapova	bt	Shuai Zhang	6-4 6-4	peak_diff 1
+2026-04-06	Linz	R32	Clay	Anhelina Kalinina	bt	Panna Udvardy	5-7 6-1 6-0	peak_diff 34
+2026-04-06	Linz	R32	Clay	Dalma Galfi	bt	Alycia Parks	6-3 6-3	peak_diff 39
+2026-04-06	Linz	R32	Clay	Dayana Yastremska	bt	Ann Li	7-5 4-6 6-3	peak_diff 8
+2026-04-06	Linz	R32	Clay	Donna Vekic	bt	Katie Volynets	6-3 3-6 6-4	peak_diff 39
+2026-04-06	Linz	R32	Clay	Elena Gabriela Ruse	bt	Katie Boulter	7-6(3) 7-6(2)	peak_diff 28
+2026-04-06	Linz	R32	Clay	Karolina Pliskova	bt	Aliaksandra Sasnovich	6-4 6-4	peak_diff 28
+2026-04-06	Linz	R32	Clay	Lilli Tagger	bt	Paula Badosa	6-4 7-6(5)	peak_diff 84
+2026-04-06	Linz	R32	Clay	Sloane Stephens	bt	Tatjana Maria	1-6 7-6(5) 6-4	peak_diff 33
+2026-04-06	Linz	R32	Clay	Sorana Cirstea	bt	Sinja Kraus	6-3 6-3	peak_diff 74
+2026-04-06	Linz	R32	Clay	Tamara Korpatsch	bt	Jaqueline Cristian	4-6 6-1 6-4	peak_diff 43
+2026-04-06	Linz	SF	Clay	Anastasia Potapova	bt	Donna Vekic	6-4 6-2	peak_diff 4
+2026-04-06	Linz	SF	Clay	Mirra Andreeva	bt	Elena Gabriela Ruse	6-4 6-1	peak_diff 46

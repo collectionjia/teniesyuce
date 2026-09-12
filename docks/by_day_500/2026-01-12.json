@@ -1,0 +1,5415 @@
+{
+  "meta": {
+    "date": "2026-01-12",
+    "ymd": "20260112",
+    "matchCount": 29,
+    "tournaments": [
+      "Adelaide"
+    ]
+  },
+  "bundle": {
+    "sport": "tennis",
+    "date": "2026-01-12",
+    "fetched_at": "2026-09-10T10:19:46.498Z",
+    "source": "docks500",
+    "upstream": "docks500",
+    "dataSource": "docks500",
+    "filter": "atp-wta-500-replay",
+    "top_rank_max": 999,
+    "exclude_ended": false,
+    "update": {
+      "message": "docks/2026_500 · 2026-01-12 · 29 场",
+      "at": "2026-09-10T10:19:46.498Z"
+    },
+    "scheduled": {
+      "tournaments": [
+        {
+          "name": "Adelaide",
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "events": [
+            {
+              "id": 1855876602,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Victoria Mboko",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Final",
+                "round": 1
+              },
+              "roundLabel": "F",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1039181491,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Emma Navarro",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 3,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 214443288,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Jaqueline Cristian",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 6-1 7-5",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 32,
+              "rankings": {
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 186601352,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Maya Joint",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-0",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 23,
+              "rankings": {
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 478173843,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Madison Keys",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1350476701,
+                "name": "Madison Keys",
+                "shortName": "Madison Keys",
+                "ranking": 9,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-4 4-6 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1350476701": {
+                  "current": 9,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1487893721,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Katerina Siniakova",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1662805930,
+                "name": "Katerina Siniakova",
+                "shortName": "Katerina Siniakova",
+                "ranking": 46,
+                "bestRank": 27,
+                "best": 27,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-1 2-6 7-5",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 16,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1662805930": {
+                  "current": 46,
+                  "best": 27,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1486355823,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Emma Navarro",
+              "away": "Yulia Putintseva",
+              "homePlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1488570409,
+                "name": "Yulia Putintseva",
+                "shortName": "Yulia Putintseva",
+                "ranking": 105,
+                "bestRank": 20,
+                "best": 20,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-1 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 12,
+              "rankings": {
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1488570409": {
+                  "current": 105,
+                  "best": 20,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1029095913,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jaqueline Cristian",
+              "away": "Daria Kasatkina",
+              "homePlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 48,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-0",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 20,
+              "rankings": {
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 48,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 320365200,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Marketa Vondrousova",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 565574025,
+                "name": "Marketa Vondrousova",
+                "shortName": "Marketa Vondrousova",
+                "ranking": 34,
+                "bestRank": 6,
+                "best": 6,
+                "gender": "F"
+              },
+              "homeScore": 0,
+              "awayScore": 0,
+              "scoreText": "W/O",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 54,
+              "rankings": {
+                "565574025": {
+                  "current": 34,
+                  "best": 6,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 350871900,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Madison Keys",
+              "away": "Tereza Valentova",
+              "homePlayer": {
+                "id": 1350476701,
+                "name": "Madison Keys",
+                "shortName": "Madison Keys",
+                "ranking": 9,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1705917160,
+                "name": "Tereza Valentova",
+                "shortName": "Tereza Valentova",
+                "ranking": 60,
+                "bestRank": 42,
+                "best": 42,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 37,
+              "rankings": {
+                "1350476701": {
+                  "current": 9,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1705917160": {
+                  "current": 60,
+                  "best": 42,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 686604264,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Maya Joint",
+              "away": "Ajla Tomljanovic",
+              "homePlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 726812673,
+                "name": "Ajla Tomljanovic",
+                "shortName": "Ajla Tomljanovic",
+                "ranking": 76,
+                "bestRank": 32,
+                "best": 32,
+                "gender": "F"
+              },
+              "homeScore": 0,
+              "awayScore": 1,
+              "scoreText": "0-2 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "726812673": {
+                  "current": 76,
+                  "best": 32,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 601474116,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Marie Bouzkova",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 147605860,
+                "name": "Marie Bouzkova",
+                "shortName": "Marie Bouzkova",
+                "ranking": 45,
+                "bestRank": 24,
+                "best": 24,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "147605860": {
+                  "current": 45,
+                  "best": 24,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 988138180,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Anna Kalinskaya",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 802230904,
+                "name": "Anna Kalinskaya",
+                "shortName": "Anna Kalinskaya",
+                "ranking": 33,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-2 3-6 7-6(6)",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 2,
+              "rankings": {
+                "802230904": {
+                  "current": 33,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 202702001,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ajla Tomljanovic",
+              "away": "Clara Tauson",
+              "homePlayer": {
+                "id": 726812673,
+                "name": "Ajla Tomljanovic",
+                "shortName": "Ajla Tomljanovic",
+                "ranking": 76,
+                "bestRank": 32,
+                "best": 32,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 14,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 1,
+              "awayScore": 0,
+              "scoreText": "7-6(5) 0-0 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 20,
+              "rankings": {
+                "322125920": {
+                  "current": 14,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "726812673": {
+                  "current": 76,
+                  "best": 32,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1686492577,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Anna Kalinskaya",
+              "away": "Elena Gabriela Ruse",
+              "homePlayer": {
+                "id": 802230904,
+                "name": "Anna Kalinskaya",
+                "shortName": "Anna Kalinskaya",
+                "ranking": 33,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 294162223,
+                "name": "Elena Gabriela Ruse",
+                "shortName": "Elena Gabriela Ruse",
+                "ranking": 79,
+                "bestRank": 51,
+                "best": 51,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 40,
+              "rankings": {
+                "294162223": {
+                  "current": 79,
+                  "best": 51,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "802230904": {
+                  "current": 33,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 498226415,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Daria Kasatkina",
+              "away": "Maria Sakkari",
+              "homePlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 48,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 208588970,
+                "name": "Maria Sakkari",
+                "shortName": "Maria Sakkari",
+                "ranking": 52,
+                "bestRank": 3,
+                "best": 3,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(2) 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 5,
+              "rankings": {
+                "208588970": {
+                  "current": 52,
+                  "best": 3,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 48,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 709633011,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Leylah Fernandez",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 22,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-5 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 2,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "518120166": {
+                  "current": 22,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 588321768,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Emma Navarro",
+              "away": "Emerson Jones",
+              "homePlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 402854296,
+                "name": "Emerson Jones",
+                "shortName": "Emerson Jones",
+                "ranking": 155,
+                "bestRank": 129,
+                "best": 129,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 121,
+              "rankings": {
+                "402854296": {
+                  "current": 155,
+                  "best": 129,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1633304548,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jaqueline Cristian",
+              "away": "Ekaterina Alexandrova",
+              "homePlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 18,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 157716153,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Katerina Siniakova",
+              "away": "Dayana Yastremska",
+              "homePlayer": {
+                "id": 1662805930,
+                "name": "Katerina Siniakova",
+                "shortName": "Katerina Siniakova",
+                "ranking": 46,
+                "bestRank": 27,
+                "best": 27,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 27,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "1021917783": {
+                  "current": 27,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1662805930": {
+                  "current": 46,
+                  "best": 27,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1930011971,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Anastasia Potapova",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 912887536,
+                "name": "Anastasia Potapova",
+                "shortName": "Anastasia Potapova",
+                "ranking": 54,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 39,
+              "rankings": {
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "912887536": {
+                  "current": 54,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1802841697,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Marie Bouzkova",
+              "away": "Paula Badosa",
+              "homePlayer": {
+                "id": 147605860,
+                "name": "Marie Bouzkova",
+                "shortName": "Marie Bouzkova",
+                "ranking": 45,
+                "bestRank": 24,
+                "best": 24,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 623570761,
+                "name": "Paula Badosa",
+                "shortName": "Paula Badosa",
+                "ranking": 26,
+                "bestRank": 2,
+                "best": 2,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "3-6 6-3 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 22,
+              "rankings": {
+                "147605860": {
+                  "current": 45,
+                  "best": 24,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "623570761": {
+                  "current": 26,
+                  "best": 2,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1285335768,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Marketa Vondrousova",
+              "away": "Liudmila Samsonova",
+              "homePlayer": {
+                "id": 565574025,
+                "name": "Marketa Vondrousova",
+                "shortName": "Marketa Vondrousova",
+                "ranking": 34,
+                "bestRank": 6,
+                "best": 6,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-1 4-6 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "565574025": {
+                  "current": 34,
+                  "best": 6,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1048514928,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Maya Joint",
+              "away": "Sofia Kenin",
+              "homePlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1806625288,
+                "name": "Sofia Kenin",
+                "shortName": "Sofia Kenin",
+                "ranking": 28,
+                "bestRank": 4,
+                "best": 4,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(3) 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1806625288": {
+                  "current": 28,
+                  "best": 4,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 61509613,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Tereza Valentova",
+              "away": "Jelena Ostapenko",
+              "homePlayer": {
+                "id": 1705917160,
+                "name": "Tereza Valentova",
+                "shortName": "Tereza Valentova",
+                "ranking": 60,
+                "bestRank": 42,
+                "best": 42,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-5 3-2 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 37,
+              "rankings": {
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1705917160": {
+                  "current": 60,
+                  "best": 42,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1712669157,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Beatriz Haddad Maia",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 757950081,
+                "name": "Beatriz Haddad Maia",
+                "shortName": "Beatriz Haddad Maia",
+                "ranking": 59,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 6-3 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 1,
+              "rankings": {
+                "757950081": {
+                  "current": 59,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1881838074,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Yulia Putintseva",
+              "away": "Dalma Galfi",
+              "homePlayer": {
+                "id": 1488570409,
+                "name": "Yulia Putintseva",
+                "shortName": "Yulia Putintseva",
+                "ranking": 105,
+                "bestRank": 20,
+                "best": 20,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 604417013,
+                "name": "Dalma Galfi",
+                "shortName": "Dalma Galfi",
+                "ranking": 93,
+                "bestRank": 79,
+                "best": 79,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 59,
+              "rankings": {
+                "604417013": {
+                  "current": 93,
+                  "best": 79,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1488570409": {
+                  "current": 105,
+                  "best": 20,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 618066146,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Diana Shnaider",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1931926721,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Kimberly Birrell",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 51,
+              "rankings": {
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "tournamentCount": 1,
+      "eventCount": 29
+    },
+    "live": {
+      "tournaments": [],
+      "matches": [],
+      "tournamentCount": 0,
+      "eventCount": 0
+    },
+    "settled": {
+      "tournaments": [
+        {
+          "name": "Adelaide",
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "events": [
+            {
+              "id": 1855876602,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Victoria Mboko",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Final",
+                "round": 1
+              },
+              "roundLabel": "F",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1039181491,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Emma Navarro",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 3,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 214443288,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Jaqueline Cristian",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 6-1 7-5",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 32,
+              "rankings": {
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 186601352,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Maya Joint",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-0",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 23,
+              "rankings": {
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 478173843,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Madison Keys",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1350476701,
+                "name": "Madison Keys",
+                "shortName": "Madison Keys",
+                "ranking": 9,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-4 4-6 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Quarterfinals",
+                "round": 8
+              },
+              "roundLabel": "QF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1350476701": {
+                  "current": 9,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1487893721,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Katerina Siniakova",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1662805930,
+                "name": "Katerina Siniakova",
+                "shortName": "Katerina Siniakova",
+                "ranking": 46,
+                "bestRank": 27,
+                "best": 27,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-1 2-6 7-5",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 16,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1662805930": {
+                  "current": 46,
+                  "best": 27,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1486355823,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Emma Navarro",
+              "away": "Yulia Putintseva",
+              "homePlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1488570409,
+                "name": "Yulia Putintseva",
+                "shortName": "Yulia Putintseva",
+                "ranking": 105,
+                "bestRank": 20,
+                "best": 20,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-1 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 12,
+              "rankings": {
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1488570409": {
+                  "current": 105,
+                  "best": 20,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1029095913,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jaqueline Cristian",
+              "away": "Daria Kasatkina",
+              "homePlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 48,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-0",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 20,
+              "rankings": {
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 48,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 320365200,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Marketa Vondrousova",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 565574025,
+                "name": "Marketa Vondrousova",
+                "shortName": "Marketa Vondrousova",
+                "ranking": 34,
+                "bestRank": 6,
+                "best": 6,
+                "gender": "F"
+              },
+              "homeScore": 0,
+              "awayScore": 0,
+              "scoreText": "W/O",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 54,
+              "rankings": {
+                "565574025": {
+                  "current": 34,
+                  "best": 6,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 350871900,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Madison Keys",
+              "away": "Tereza Valentova",
+              "homePlayer": {
+                "id": 1350476701,
+                "name": "Madison Keys",
+                "shortName": "Madison Keys",
+                "ranking": 9,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1705917160,
+                "name": "Tereza Valentova",
+                "shortName": "Tereza Valentova",
+                "ranking": 60,
+                "bestRank": 42,
+                "best": 42,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 37,
+              "rankings": {
+                "1350476701": {
+                  "current": 9,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1705917160": {
+                  "current": 60,
+                  "best": 42,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 686604264,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Maya Joint",
+              "away": "Ajla Tomljanovic",
+              "homePlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 726812673,
+                "name": "Ajla Tomljanovic",
+                "shortName": "Ajla Tomljanovic",
+                "ranking": 76,
+                "bestRank": 32,
+                "best": 32,
+                "gender": "F"
+              },
+              "homeScore": 0,
+              "awayScore": 1,
+              "scoreText": "0-2 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 4,
+              "rankings": {
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "726812673": {
+                  "current": 76,
+                  "best": 32,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 601474116,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Marie Bouzkova",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 147605860,
+                "name": "Marie Bouzkova",
+                "shortName": "Marie Bouzkova",
+                "ranking": 45,
+                "bestRank": 24,
+                "best": 24,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 19,
+              "rankings": {
+                "147605860": {
+                  "current": 45,
+                  "best": 24,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 988138180,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Anna Kalinskaya",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 802230904,
+                "name": "Anna Kalinskaya",
+                "shortName": "Anna Kalinskaya",
+                "ranking": 33,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-2 3-6 7-6(6)",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 16",
+                "round": 16
+              },
+              "roundLabel": "R16",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 2,
+              "rankings": {
+                "802230904": {
+                  "current": 33,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 202702001,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Ajla Tomljanovic",
+              "away": "Clara Tauson",
+              "homePlayer": {
+                "id": 726812673,
+                "name": "Ajla Tomljanovic",
+                "shortName": "Ajla Tomljanovic",
+                "ranking": 76,
+                "bestRank": 32,
+                "best": 32,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 322125920,
+                "name": "Clara Tauson",
+                "shortName": "Clara Tauson",
+                "ranking": 14,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 1,
+              "awayScore": 0,
+              "scoreText": "7-6(5) 0-0 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 20,
+              "rankings": {
+                "322125920": {
+                  "current": 14,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "726812673": {
+                  "current": 76,
+                  "best": 32,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1686492577,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Anna Kalinskaya",
+              "away": "Elena Gabriela Ruse",
+              "homePlayer": {
+                "id": 802230904,
+                "name": "Anna Kalinskaya",
+                "shortName": "Anna Kalinskaya",
+                "ranking": 33,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 294162223,
+                "name": "Elena Gabriela Ruse",
+                "shortName": "Elena Gabriela Ruse",
+                "ranking": 79,
+                "bestRank": 51,
+                "best": 51,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 40,
+              "rankings": {
+                "294162223": {
+                  "current": 79,
+                  "best": 51,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "802230904": {
+                  "current": 33,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 498226415,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Daria Kasatkina",
+              "away": "Maria Sakkari",
+              "homePlayer": {
+                "id": 942276140,
+                "name": "Daria Kasatkina",
+                "shortName": "Daria Kasatkina",
+                "ranking": 48,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 208588970,
+                "name": "Maria Sakkari",
+                "shortName": "Maria Sakkari",
+                "ranking": 52,
+                "bestRank": 3,
+                "best": 3,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(2) 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 5,
+              "rankings": {
+                "208588970": {
+                  "current": 52,
+                  "best": 3,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "942276140": {
+                  "current": 48,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 709633011,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Diana Shnaider",
+              "away": "Leylah Fernandez",
+              "homePlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 518120166,
+                "name": "Leylah Fernandez",
+                "shortName": "Leylah Fernandez",
+                "ranking": 22,
+                "bestRank": 13,
+                "best": 13,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-5 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 2,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "518120166": {
+                  "current": 22,
+                  "best": 13,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 588321768,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Emma Navarro",
+              "away": "Emerson Jones",
+              "homePlayer": {
+                "id": 707499274,
+                "name": "Emma Navarro",
+                "shortName": "Emma Navarro",
+                "ranking": 15,
+                "bestRank": 8,
+                "best": 8,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 402854296,
+                "name": "Emerson Jones",
+                "shortName": "Emerson Jones",
+                "ranking": 155,
+                "bestRank": 129,
+                "best": 129,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-3",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 121,
+              "rankings": {
+                "402854296": {
+                  "current": 155,
+                  "best": 129,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "707499274": {
+                  "current": 15,
+                  "best": 8,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1633304548,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Jaqueline Cristian",
+              "away": "Ekaterina Alexandrova",
+              "homePlayer": {
+                "id": 791188043,
+                "name": "Jaqueline Cristian",
+                "shortName": "Jaqueline Cristian",
+                "ranking": 37,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 19114058,
+                "name": "Ekaterina Alexandrova",
+                "shortName": "Ekaterina Alexandrova",
+                "ranking": 11,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 18,
+              "rankings": {
+                "19114058": {
+                  "current": 11,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "791188043": {
+                  "current": 37,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 157716153,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Katerina Siniakova",
+              "away": "Dayana Yastremska",
+              "homePlayer": {
+                "id": 1662805930,
+                "name": "Katerina Siniakova",
+                "shortName": "Katerina Siniakova",
+                "ranking": 46,
+                "bestRank": 27,
+                "best": 27,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1021917783,
+                "name": "Dayana Yastremska",
+                "shortName": "Dayana Yastremska",
+                "ranking": 27,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-0 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "1021917783": {
+                  "current": 27,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1662805930": {
+                  "current": 46,
+                  "best": 27,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1930011971,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Kimberly Birrell",
+              "away": "Anastasia Potapova",
+              "homePlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 912887536,
+                "name": "Anastasia Potapova",
+                "shortName": "Anastasia Potapova",
+                "ranking": 54,
+                "bestRank": 21,
+                "best": 21,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 39,
+              "rankings": {
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "912887536": {
+                  "current": 54,
+                  "best": 21,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1802841697,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Marie Bouzkova",
+              "away": "Paula Badosa",
+              "homePlayer": {
+                "id": 147605860,
+                "name": "Marie Bouzkova",
+                "shortName": "Marie Bouzkova",
+                "ranking": 45,
+                "bestRank": 24,
+                "best": 24,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 623570761,
+                "name": "Paula Badosa",
+                "shortName": "Paula Badosa",
+                "ranking": 26,
+                "bestRank": 2,
+                "best": 2,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "3-6 6-3 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 22,
+              "rankings": {
+                "147605860": {
+                  "current": 45,
+                  "best": 24,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "623570761": {
+                  "current": 26,
+                  "best": 2,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1285335768,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Marketa Vondrousova",
+              "away": "Liudmila Samsonova",
+              "homePlayer": {
+                "id": 565574025,
+                "name": "Marketa Vondrousova",
+                "shortName": "Marketa Vondrousova",
+                "ranking": 34,
+                "bestRank": 6,
+                "best": 6,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 659913289,
+                "name": "Liudmila Samsonova",
+                "shortName": "Liudmila Samsonova",
+                "ranking": 18,
+                "bestRank": 12,
+                "best": 12,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "6-1 4-6 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "565574025": {
+                  "current": 34,
+                  "best": 6,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "659913289": {
+                  "current": 18,
+                  "best": 12,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1048514928,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Maya Joint",
+              "away": "Sofia Kenin",
+              "homePlayer": {
+                "id": 616435211,
+                "name": "Maya Joint",
+                "shortName": "Maya Joint",
+                "ranking": 32,
+                "bestRank": 28,
+                "best": 28,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1806625288,
+                "name": "Sofia Kenin",
+                "shortName": "Sofia Kenin",
+                "ranking": 28,
+                "bestRank": 4,
+                "best": 4,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-6(3) 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 24,
+              "rankings": {
+                "616435211": {
+                  "current": 32,
+                  "best": 28,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1806625288": {
+                  "current": 28,
+                  "best": 4,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 61509613,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Tereza Valentova",
+              "away": "Jelena Ostapenko",
+              "homePlayer": {
+                "id": 1705917160,
+                "name": "Tereza Valentova",
+                "shortName": "Tereza Valentova",
+                "ranking": 60,
+                "bestRank": 42,
+                "best": 42,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 1691462359,
+                "name": "Jelena Ostapenko",
+                "shortName": "Jelena Ostapenko",
+                "ranking": 24,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "7-5 3-2 RET",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 37,
+              "rankings": {
+                "1691462359": {
+                  "current": 24,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1705917160": {
+                  "current": 60,
+                  "best": 42,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1712669157,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Beatriz Haddad Maia",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 757950081,
+                "name": "Beatriz Haddad Maia",
+                "shortName": "Beatriz Haddad Maia",
+                "ranking": 59,
+                "bestRank": 10,
+                "best": 10,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 1,
+              "scoreText": "5-7 6-3 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 1,
+              "rankings": {
+                "757950081": {
+                  "current": 59,
+                  "best": 10,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1881838074,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Yulia Putintseva",
+              "away": "Dalma Galfi",
+              "homePlayer": {
+                "id": 1488570409,
+                "name": "Yulia Putintseva",
+                "shortName": "Yulia Putintseva",
+                "ranking": 105,
+                "bestRank": 20,
+                "best": 20,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 604417013,
+                "name": "Dalma Galfi",
+                "shortName": "Dalma Galfi",
+                "ranking": 93,
+                "bestRank": 79,
+                "best": 79,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-4 6-4",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Round of 32",
+                "round": 32
+              },
+              "roundLabel": "R32",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 59,
+              "rankings": {
+                "604417013": {
+                  "current": 93,
+                  "best": 79,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1488570409": {
+                  "current": 105,
+                  "best": 20,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 618066146,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Mirra Andreeva",
+              "away": "Diana Shnaider",
+              "homePlayer": {
+                "id": 560025191,
+                "name": "Mirra Andreeva",
+                "shortName": "Mirra Andreeva",
+                "ranking": 8,
+                "bestRank": 5,
+                "best": 5,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 239955250,
+                "name": "Diana Shnaider",
+                "shortName": "Diana Shnaider",
+                "ranking": 23,
+                "bestRank": 11,
+                "best": 11,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-3 6-2",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 6,
+              "rankings": {
+                "239955250": {
+                  "current": 23,
+                  "best": 11,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "560025191": {
+                  "current": 8,
+                  "best": 5,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            },
+            {
+              "id": 1931926721,
+              "level": "WTA 500",
+              "tour": "WTA",
+              "tennisPoints": 500,
+              "tournament": "Adelaide",
+              "tournamentShort": "Adelaide",
+              "status": "Ended",
+              "statusType": "ended",
+              "home": "Victoria Mboko",
+              "away": "Kimberly Birrell",
+              "homePlayer": {
+                "id": 1235818576,
+                "name": "Victoria Mboko",
+                "shortName": "Victoria Mboko",
+                "ranking": 17,
+                "bestRank": 9,
+                "best": 9,
+                "gender": "F"
+              },
+              "awayPlayer": {
+                "id": 849322012,
+                "name": "Kimberly Birrell",
+                "shortName": "Kimberly Birrell",
+                "ranking": 107,
+                "bestRank": 60,
+                "best": 60,
+                "gender": "F"
+              },
+              "homeScore": 2,
+              "awayScore": 0,
+              "scoreText": "6-2 6-1",
+              "startTimestamp": 1768219200,
+              "roundInfo": {
+                "name": "Semifinals",
+                "round": 4
+              },
+              "roundLabel": "SF",
+              "groundType": "Hard",
+              "groundLabel": "Hard",
+              "gender": "F",
+              "peakDiff": 51,
+              "rankings": {
+                "849322012": {
+                  "current": 107,
+                  "best": 60,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                },
+                "1235818576": {
+                  "current": 17,
+                  "best": 9,
+                  "previous": null,
+                  "live": null,
+                  "utr": null
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "tournamentCount": 1,
+      "eventCount": 29,
+      "matches": [
+        {
+          "id": 1855876602,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mirra Andreeva",
+          "away": "Victoria Mboko",
+          "homePlayer": {
+            "id": 560025191,
+            "name": "Mirra Andreeva",
+            "shortName": "Mirra Andreeva",
+            "ranking": 8,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1235818576,
+            "name": "Victoria Mboko",
+            "shortName": "Victoria Mboko",
+            "ranking": 17,
+            "bestRank": 9,
+            "best": 9,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-1",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Final",
+            "round": 1
+          },
+          "roundLabel": "F",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 4,
+          "rankings": {
+            "560025191": {
+              "current": 8,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1235818576": {
+              "current": 17,
+              "best": 9,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1039181491,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Diana Shnaider",
+          "away": "Emma Navarro",
+          "homePlayer": {
+            "id": 239955250,
+            "name": "Diana Shnaider",
+            "shortName": "Diana Shnaider",
+            "ranking": 23,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 707499274,
+            "name": "Emma Navarro",
+            "shortName": "Emma Navarro",
+            "ranking": 15,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-3",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 3,
+          "rankings": {
+            "239955250": {
+              "current": 23,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "707499274": {
+              "current": 15,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 214443288,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Kimberly Birrell",
+          "away": "Jaqueline Cristian",
+          "homePlayer": {
+            "id": 849322012,
+            "name": "Kimberly Birrell",
+            "shortName": "Kimberly Birrell",
+            "ranking": 107,
+            "bestRank": 60,
+            "best": 60,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 791188043,
+            "name": "Jaqueline Cristian",
+            "shortName": "Jaqueline Cristian",
+            "ranking": 37,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "5-7 6-1 7-5",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 32,
+          "rankings": {
+            "791188043": {
+              "current": 37,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "849322012": {
+              "current": 107,
+              "best": 60,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 186601352,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mirra Andreeva",
+          "away": "Maya Joint",
+          "homePlayer": {
+            "id": 560025191,
+            "name": "Mirra Andreeva",
+            "shortName": "Mirra Andreeva",
+            "ranking": 8,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 616435211,
+            "name": "Maya Joint",
+            "shortName": "Maya Joint",
+            "ranking": 32,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-2 6-0",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 23,
+          "rankings": {
+            "560025191": {
+              "current": 8,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "616435211": {
+              "current": 32,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 478173843,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Victoria Mboko",
+          "away": "Madison Keys",
+          "homePlayer": {
+            "id": 1235818576,
+            "name": "Victoria Mboko",
+            "shortName": "Victoria Mboko",
+            "ranking": 17,
+            "bestRank": 9,
+            "best": 9,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1350476701,
+            "name": "Madison Keys",
+            "shortName": "Madison Keys",
+            "ranking": 9,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-4 4-6 6-2",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Quarterfinals",
+            "round": 8
+          },
+          "roundLabel": "QF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 4,
+          "rankings": {
+            "1235818576": {
+              "current": 17,
+              "best": 9,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1350476701": {
+              "current": 9,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1487893721,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Diana Shnaider",
+          "away": "Katerina Siniakova",
+          "homePlayer": {
+            "id": 239955250,
+            "name": "Diana Shnaider",
+            "shortName": "Diana Shnaider",
+            "ranking": 23,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1662805930,
+            "name": "Katerina Siniakova",
+            "shortName": "Katerina Siniakova",
+            "ranking": 46,
+            "bestRank": 27,
+            "best": 27,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-1 2-6 7-5",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 16,
+          "rankings": {
+            "239955250": {
+              "current": 23,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1662805930": {
+              "current": 46,
+              "best": 27,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1486355823,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Emma Navarro",
+          "away": "Yulia Putintseva",
+          "homePlayer": {
+            "id": 707499274,
+            "name": "Emma Navarro",
+            "shortName": "Emma Navarro",
+            "ranking": 15,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1488570409,
+            "name": "Yulia Putintseva",
+            "shortName": "Yulia Putintseva",
+            "ranking": 105,
+            "bestRank": 20,
+            "best": 20,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-1 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 12,
+          "rankings": {
+            "707499274": {
+              "current": 15,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1488570409": {
+              "current": 105,
+              "best": 20,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1029095913,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Jaqueline Cristian",
+          "away": "Daria Kasatkina",
+          "homePlayer": {
+            "id": 791188043,
+            "name": "Jaqueline Cristian",
+            "shortName": "Jaqueline Cristian",
+            "ranking": 37,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 942276140,
+            "name": "Daria Kasatkina",
+            "shortName": "Daria Kasatkina",
+            "ranking": 48,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-0",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 20,
+          "rankings": {
+            "791188043": {
+              "current": 37,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "942276140": {
+              "current": 48,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 320365200,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Kimberly Birrell",
+          "away": "Marketa Vondrousova",
+          "homePlayer": {
+            "id": 849322012,
+            "name": "Kimberly Birrell",
+            "shortName": "Kimberly Birrell",
+            "ranking": 107,
+            "bestRank": 60,
+            "best": 60,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 565574025,
+            "name": "Marketa Vondrousova",
+            "shortName": "Marketa Vondrousova",
+            "ranking": 34,
+            "bestRank": 6,
+            "best": 6,
+            "gender": "F"
+          },
+          "homeScore": 0,
+          "awayScore": 0,
+          "scoreText": "W/O",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 54,
+          "rankings": {
+            "565574025": {
+              "current": 34,
+              "best": 6,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "849322012": {
+              "current": 107,
+              "best": 60,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 350871900,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Madison Keys",
+          "away": "Tereza Valentova",
+          "homePlayer": {
+            "id": 1350476701,
+            "name": "Madison Keys",
+            "shortName": "Madison Keys",
+            "ranking": 9,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1705917160,
+            "name": "Tereza Valentova",
+            "shortName": "Tereza Valentova",
+            "ranking": 60,
+            "bestRank": 42,
+            "best": 42,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-1",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 37,
+          "rankings": {
+            "1350476701": {
+              "current": 9,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1705917160": {
+              "current": 60,
+              "best": 42,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 686604264,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Maya Joint",
+          "away": "Ajla Tomljanovic",
+          "homePlayer": {
+            "id": 616435211,
+            "name": "Maya Joint",
+            "shortName": "Maya Joint",
+            "ranking": 32,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 726812673,
+            "name": "Ajla Tomljanovic",
+            "shortName": "Ajla Tomljanovic",
+            "ranking": 76,
+            "bestRank": 32,
+            "best": 32,
+            "gender": "F"
+          },
+          "homeScore": 0,
+          "awayScore": 1,
+          "scoreText": "0-2 RET",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 4,
+          "rankings": {
+            "616435211": {
+              "current": 32,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "726812673": {
+              "current": 76,
+              "best": 32,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 601474116,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mirra Andreeva",
+          "away": "Marie Bouzkova",
+          "homePlayer": {
+            "id": 560025191,
+            "name": "Mirra Andreeva",
+            "shortName": "Mirra Andreeva",
+            "ranking": 8,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 147605860,
+            "name": "Marie Bouzkova",
+            "shortName": "Marie Bouzkova",
+            "ranking": 45,
+            "bestRank": 24,
+            "best": 24,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-1",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 19,
+          "rankings": {
+            "147605860": {
+              "current": 45,
+              "best": 24,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "560025191": {
+              "current": 8,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 988138180,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Victoria Mboko",
+          "away": "Anna Kalinskaya",
+          "homePlayer": {
+            "id": 1235818576,
+            "name": "Victoria Mboko",
+            "shortName": "Victoria Mboko",
+            "ranking": 17,
+            "bestRank": 9,
+            "best": 9,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 802230904,
+            "name": "Anna Kalinskaya",
+            "shortName": "Anna Kalinskaya",
+            "ranking": 33,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-2 3-6 7-6(6)",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 16",
+            "round": 16
+          },
+          "roundLabel": "R16",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 2,
+          "rankings": {
+            "802230904": {
+              "current": 33,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1235818576": {
+              "current": 17,
+              "best": 9,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 202702001,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Ajla Tomljanovic",
+          "away": "Clara Tauson",
+          "homePlayer": {
+            "id": 726812673,
+            "name": "Ajla Tomljanovic",
+            "shortName": "Ajla Tomljanovic",
+            "ranking": 76,
+            "bestRank": 32,
+            "best": 32,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 322125920,
+            "name": "Clara Tauson",
+            "shortName": "Clara Tauson",
+            "ranking": 14,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "homeScore": 1,
+          "awayScore": 0,
+          "scoreText": "7-6(5) 0-0 RET",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 20,
+          "rankings": {
+            "322125920": {
+              "current": 14,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "726812673": {
+              "current": 76,
+              "best": 32,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1686492577,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Anna Kalinskaya",
+          "away": "Elena Gabriela Ruse",
+          "homePlayer": {
+            "id": 802230904,
+            "name": "Anna Kalinskaya",
+            "shortName": "Anna Kalinskaya",
+            "ranking": 33,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 294162223,
+            "name": "Elena Gabriela Ruse",
+            "shortName": "Elena Gabriela Ruse",
+            "ranking": 79,
+            "bestRank": 51,
+            "best": 51,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-0 6-3",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 40,
+          "rankings": {
+            "294162223": {
+              "current": 79,
+              "best": 51,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "802230904": {
+              "current": 33,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 498226415,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Daria Kasatkina",
+          "away": "Maria Sakkari",
+          "homePlayer": {
+            "id": 942276140,
+            "name": "Daria Kasatkina",
+            "shortName": "Daria Kasatkina",
+            "ranking": 48,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 208588970,
+            "name": "Maria Sakkari",
+            "shortName": "Maria Sakkari",
+            "ranking": 52,
+            "bestRank": 3,
+            "best": 3,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "7-6(2) 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 5,
+          "rankings": {
+            "208588970": {
+              "current": 52,
+              "best": 3,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "942276140": {
+              "current": 48,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 709633011,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Diana Shnaider",
+          "away": "Leylah Fernandez",
+          "homePlayer": {
+            "id": 239955250,
+            "name": "Diana Shnaider",
+            "shortName": "Diana Shnaider",
+            "ranking": 23,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 518120166,
+            "name": "Leylah Fernandez",
+            "shortName": "Leylah Fernandez",
+            "ranking": 22,
+            "bestRank": 13,
+            "best": 13,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "7-5 6-3",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 2,
+          "rankings": {
+            "239955250": {
+              "current": 23,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "518120166": {
+              "current": 22,
+              "best": 13,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 588321768,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Emma Navarro",
+          "away": "Emerson Jones",
+          "homePlayer": {
+            "id": 707499274,
+            "name": "Emma Navarro",
+            "shortName": "Emma Navarro",
+            "ranking": 15,
+            "bestRank": 8,
+            "best": 8,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 402854296,
+            "name": "Emerson Jones",
+            "shortName": "Emerson Jones",
+            "ranking": 155,
+            "bestRank": 129,
+            "best": 129,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-3",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 121,
+          "rankings": {
+            "402854296": {
+              "current": 155,
+              "best": 129,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "707499274": {
+              "current": 15,
+              "best": 8,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1633304548,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Jaqueline Cristian",
+          "away": "Ekaterina Alexandrova",
+          "homePlayer": {
+            "id": 791188043,
+            "name": "Jaqueline Cristian",
+            "shortName": "Jaqueline Cristian",
+            "ranking": 37,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 19114058,
+            "name": "Ekaterina Alexandrova",
+            "shortName": "Ekaterina Alexandrova",
+            "ranking": 11,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 18,
+          "rankings": {
+            "19114058": {
+              "current": 11,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "791188043": {
+              "current": 37,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 157716153,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Katerina Siniakova",
+          "away": "Dayana Yastremska",
+          "homePlayer": {
+            "id": 1662805930,
+            "name": "Katerina Siniakova",
+            "shortName": "Katerina Siniakova",
+            "ranking": 46,
+            "bestRank": 27,
+            "best": 27,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1021917783,
+            "name": "Dayana Yastremska",
+            "shortName": "Dayana Yastremska",
+            "ranking": 27,
+            "bestRank": 21,
+            "best": 21,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-0 6-1",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 6,
+          "rankings": {
+            "1021917783": {
+              "current": 27,
+              "best": 21,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1662805930": {
+              "current": 46,
+              "best": 27,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1930011971,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Kimberly Birrell",
+          "away": "Anastasia Potapova",
+          "homePlayer": {
+            "id": 849322012,
+            "name": "Kimberly Birrell",
+            "shortName": "Kimberly Birrell",
+            "ranking": 107,
+            "bestRank": 60,
+            "best": 60,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 912887536,
+            "name": "Anastasia Potapova",
+            "shortName": "Anastasia Potapova",
+            "ranking": 54,
+            "bestRank": 21,
+            "best": 21,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 39,
+          "rankings": {
+            "849322012": {
+              "current": 107,
+              "best": 60,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "912887536": {
+              "current": 54,
+              "best": 21,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1802841697,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Marie Bouzkova",
+          "away": "Paula Badosa",
+          "homePlayer": {
+            "id": 147605860,
+            "name": "Marie Bouzkova",
+            "shortName": "Marie Bouzkova",
+            "ranking": 45,
+            "bestRank": 24,
+            "best": 24,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 623570761,
+            "name": "Paula Badosa",
+            "shortName": "Paula Badosa",
+            "ranking": 26,
+            "bestRank": 2,
+            "best": 2,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "3-6 6-3 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 22,
+          "rankings": {
+            "147605860": {
+              "current": 45,
+              "best": 24,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "623570761": {
+              "current": 26,
+              "best": 2,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1285335768,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Marketa Vondrousova",
+          "away": "Liudmila Samsonova",
+          "homePlayer": {
+            "id": 565574025,
+            "name": "Marketa Vondrousova",
+            "shortName": "Marketa Vondrousova",
+            "ranking": 34,
+            "bestRank": 6,
+            "best": 6,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 659913289,
+            "name": "Liudmila Samsonova",
+            "shortName": "Liudmila Samsonova",
+            "ranking": 18,
+            "bestRank": 12,
+            "best": 12,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "6-1 4-6 6-2",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 6,
+          "rankings": {
+            "565574025": {
+              "current": 34,
+              "best": 6,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "659913289": {
+              "current": 18,
+              "best": 12,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1048514928,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Maya Joint",
+          "away": "Sofia Kenin",
+          "homePlayer": {
+            "id": 616435211,
+            "name": "Maya Joint",
+            "shortName": "Maya Joint",
+            "ranking": 32,
+            "bestRank": 28,
+            "best": 28,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1806625288,
+            "name": "Sofia Kenin",
+            "shortName": "Sofia Kenin",
+            "ranking": 28,
+            "bestRank": 4,
+            "best": 4,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "7-6(3) 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 24,
+          "rankings": {
+            "616435211": {
+              "current": 32,
+              "best": 28,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1806625288": {
+              "current": 28,
+              "best": 4,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 61509613,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Tereza Valentova",
+          "away": "Jelena Ostapenko",
+          "homePlayer": {
+            "id": 1705917160,
+            "name": "Tereza Valentova",
+            "shortName": "Tereza Valentova",
+            "ranking": 60,
+            "bestRank": 42,
+            "best": 42,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 1691462359,
+            "name": "Jelena Ostapenko",
+            "shortName": "Jelena Ostapenko",
+            "ranking": 24,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "7-5 3-2 RET",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 37,
+          "rankings": {
+            "1691462359": {
+              "current": 24,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1705917160": {
+              "current": 60,
+              "best": 42,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1712669157,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Victoria Mboko",
+          "away": "Beatriz Haddad Maia",
+          "homePlayer": {
+            "id": 1235818576,
+            "name": "Victoria Mboko",
+            "shortName": "Victoria Mboko",
+            "ranking": 17,
+            "bestRank": 9,
+            "best": 9,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 757950081,
+            "name": "Beatriz Haddad Maia",
+            "shortName": "Beatriz Haddad Maia",
+            "ranking": 59,
+            "bestRank": 10,
+            "best": 10,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 1,
+          "scoreText": "5-7 6-3 6-2",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 1,
+          "rankings": {
+            "757950081": {
+              "current": 59,
+              "best": 10,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1235818576": {
+              "current": 17,
+              "best": 9,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1881838074,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Yulia Putintseva",
+          "away": "Dalma Galfi",
+          "homePlayer": {
+            "id": 1488570409,
+            "name": "Yulia Putintseva",
+            "shortName": "Yulia Putintseva",
+            "ranking": 105,
+            "bestRank": 20,
+            "best": 20,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 604417013,
+            "name": "Dalma Galfi",
+            "shortName": "Dalma Galfi",
+            "ranking": 93,
+            "bestRank": 79,
+            "best": 79,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-4 6-4",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Round of 32",
+            "round": 32
+          },
+          "roundLabel": "R32",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 59,
+          "rankings": {
+            "604417013": {
+              "current": 93,
+              "best": 79,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1488570409": {
+              "current": 105,
+              "best": 20,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 618066146,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Mirra Andreeva",
+          "away": "Diana Shnaider",
+          "homePlayer": {
+            "id": 560025191,
+            "name": "Mirra Andreeva",
+            "shortName": "Mirra Andreeva",
+            "ranking": 8,
+            "bestRank": 5,
+            "best": 5,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 239955250,
+            "name": "Diana Shnaider",
+            "shortName": "Diana Shnaider",
+            "ranking": 23,
+            "bestRank": 11,
+            "best": 11,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-3 6-2",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Semifinals",
+            "round": 4
+          },
+          "roundLabel": "SF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 6,
+          "rankings": {
+            "239955250": {
+              "current": 23,
+              "best": 11,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "560025191": {
+              "current": 8,
+              "best": 5,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        },
+        {
+          "id": 1931926721,
+          "level": "WTA 500",
+          "tour": "WTA",
+          "tennisPoints": 500,
+          "tournament": "Adelaide",
+          "tournamentShort": "Adelaide",
+          "status": "Ended",
+          "statusType": "ended",
+          "home": "Victoria Mboko",
+          "away": "Kimberly Birrell",
+          "homePlayer": {
+            "id": 1235818576,
+            "name": "Victoria Mboko",
+            "shortName": "Victoria Mboko",
+            "ranking": 17,
+            "bestRank": 9,
+            "best": 9,
+            "gender": "F"
+          },
+          "awayPlayer": {
+            "id": 849322012,
+            "name": "Kimberly Birrell",
+            "shortName": "Kimberly Birrell",
+            "ranking": 107,
+            "bestRank": 60,
+            "best": 60,
+            "gender": "F"
+          },
+          "homeScore": 2,
+          "awayScore": 0,
+          "scoreText": "6-2 6-1",
+          "startTimestamp": 1768219200,
+          "roundInfo": {
+            "name": "Semifinals",
+            "round": 4
+          },
+          "roundLabel": "SF",
+          "groundType": "Hard",
+          "groundLabel": "Hard",
+          "gender": "F",
+          "peakDiff": 51,
+          "rankings": {
+            "849322012": {
+              "current": 107,
+              "best": 60,
+              "previous": null,
+              "live": null,
+              "utr": null
+            },
+            "1235818576": {
+              "current": 17,
+              "best": 9,
+              "previous": null,
+              "live": null,
+              "utr": null
+            }
+          }
+        }
+      ]
+    },
+    "rankingsByPlayer": {
+      "19114058": {
+        "current": 11,
+        "best": 10,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "147605860": {
+        "current": 45,
+        "best": 24,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "208588970": {
+        "current": 52,
+        "best": 3,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "239955250": {
+        "current": 23,
+        "best": 11,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "294162223": {
+        "current": 79,
+        "best": 51,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "322125920": {
+        "current": 14,
+        "best": 12,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "402854296": {
+        "current": 155,
+        "best": 129,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "518120166": {
+        "current": 22,
+        "best": 13,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "560025191": {
+        "current": 8,
+        "best": 5,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "565574025": {
+        "current": 34,
+        "best": 6,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "604417013": {
+        "current": 93,
+        "best": 79,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "616435211": {
+        "current": 32,
+        "best": 28,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "623570761": {
+        "current": 26,
+        "best": 2,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "659913289": {
+        "current": 18,
+        "best": 12,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "707499274": {
+        "current": 15,
+        "best": 8,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "726812673": {
+        "current": 76,
+        "best": 32,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "757950081": {
+        "current": 59,
+        "best": 10,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "791188043": {
+        "current": 37,
+        "best": 28,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "802230904": {
+        "current": 33,
+        "best": 11,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "849322012": {
+        "current": 107,
+        "best": 60,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "912887536": {
+        "current": 54,
+        "best": 21,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "942276140": {
+        "current": 48,
+        "best": 8,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1021917783": {
+        "current": 27,
+        "best": 21,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1235818576": {
+        "current": 17,
+        "best": 9,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1350476701": {
+        "current": 9,
+        "best": 5,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1488570409": {
+        "current": 105,
+        "best": 20,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1662805930": {
+        "current": 46,
+        "best": 27,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1691462359": {
+        "current": 24,
+        "best": 5,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1705917160": {
+        "current": 60,
+        "best": 42,
+        "previous": null,
+        "live": null,
+        "utr": null
+      },
+      "1806625288": {
+        "current": 28,
+        "best": 4,
+        "previous": null,
+        "live": null,
+        "utr": null
+      }
+    },
+    "oddsByEvent": {},
+    "eloByEvent": {},
+    "polymarketByEvent": {},
+    "theOddsApiByEvent": {},
+    "birthYearByPlayer": {},
+    "ok": true,
+    "member": true,
+    "events": 29,
+    "message": "docks500 · 2026-01-12 · 29 events"
+  }
+}

@@ -1,0 +1,90 @@
+# 2026-04-13 · 89 matches · Barcelona, Munich, Stuttgart
+2026-04-13	Barcelona	F	Clay	Arthur Fils	bt	Andrey Rublev	6-2 7-6(2)	peak_diff 9
+2026-04-13	Barcelona	QF	Clay	Andrey Rublev	bt	Tomas Machac	6-4 6-3	peak_diff 15
+2026-04-13	Barcelona	QF	Clay	Arthur Fils	bt	Lorenzo Musetti	6-3 6-4	peak_diff 9
+2026-04-13	Barcelona	QF	Clay	Hamad Medjedovic	bt	Nuno Borges	7-6(6) 6-2	peak_diff 26
+2026-04-13	Barcelona	QF	Clay	Rafael Jodar	bt	Cameron Norrie	6-3 6-2	peak_diff 15
+2026-04-13	Barcelona	R16	Clay	Andrey Rublev	bt	Lorenzo Sonego	6-2 6-3	peak_diff 16
+2026-04-13	Barcelona	R16	Clay	Arthur Fils	bt	Brandon Nakashima	6-2 6-3	peak_diff 15
+2026-04-13	Barcelona	R16	Clay	Cameron Norrie	bt	Ethan Quinn	6-3 4-6 6-4	peak_diff 40
+2026-04-13	Barcelona	R16	Clay	Hamad Medjedovic	bt	Alex De Minaur	6-3 6-4	peak_diff 50
+2026-04-13	Barcelona	R16	Clay	Lorenzo Musetti	bt	Corentin Moutet	6-3 6-4	peak_diff 25
+2026-04-13	Barcelona	R16	Clay	Nuno Borges	bt	Tomas Martin Etcheverry	6-3 7-6(4)	peak_diff 5
+2026-04-13	Barcelona	R16	Clay	Rafael Jodar	bt	Camilo Ugo Carabelli	6-3 6-3	peak_diff 20
+2026-04-13	Barcelona	R16	Clay	Tomas Machac	bt	Carlos Alcaraz	W/O	peak_diff 19
+2026-04-13	Barcelona	R32	Clay	Alex De Minaur	bt	Sebastian Ofner	7-6(7) 6-4	peak_diff 31
+2026-04-13	Barcelona	R32	Clay	Andrey Rublev	bt	Mariano Navone	6-4 7-5	peak_diff 24
+2026-04-13	Barcelona	R32	Clay	Arthur Fils	bt	Terence Atmane	4-6 6-4 7-6(7)	peak_diff 27
+2026-04-13	Barcelona	R32	Clay	Brandon Nakashima	bt	Juan Manuel Cerundolo	6-3 7-5	peak_diff 16
+2026-04-13	Barcelona	R32	Clay	Cameron Norrie	bt	Stan Wawrinka	6-4 6-7(5) 6-4	peak_diff 5
+2026-04-13	Barcelona	R32	Clay	Camilo Ugo Carabelli	bt	Karen Khachanov	6-3 6-4	peak_diff 34
+2026-04-13	Barcelona	R32	Clay	Carlos Alcaraz	bt	Otto Virtanen	6-4 6-2	peak_diff 90
+2026-04-13	Barcelona	R32	Clay	Corentin Moutet	bt	Ignacio Buse	6-4 6-4	peak_diff 1
+2026-04-13	Barcelona	R32	Clay	Ethan Quinn	bt	Reilly Opelka	7-5 7-6(7)	peak_diff 31
+2026-04-13	Barcelona	R32	Clay	Hamad Medjedovic	bt	Marco Trungelliti	7-5 6-4	peak_diff 20
+2026-04-13	Barcelona	R32	Clay	Lorenzo Musetti	bt	Martin Landaluce	7-5 6-2	peak_diff 53
+2026-04-13	Barcelona	R32	Clay	Lorenzo Sonego	bt	Pedro Martinez	6-2 2-6 6-4	peak_diff 15
+2026-04-13	Barcelona	R32	Clay	Nuno Borges	bt	Adrian Mannarino	6-3 6-4	peak_diff 13
+2026-04-13	Barcelona	R32	Clay	Rafael Jodar	bt	Jaume Munar	6-1 6-2	peak_diff 10
+2026-04-13	Barcelona	R32	Clay	Tomas Machac	bt	Sebastian Baez	2-6 6-4 6-1	peak_diff 2
+2026-04-13	Barcelona	R32	Clay	Tomas Martin Etcheverry	bt	Jack Draper	3-6 6-3 4-1 RET	peak_diff 21
+2026-04-13	Barcelona	SF	Clay	Andrey Rublev	bt	Hamad Medjedovic	3-6 6-2 6-2	peak_diff 51
+2026-04-13	Barcelona	SF	Clay	Arthur Fils	bt	Rafael Jodar	3-6 6-3 6-2	peak_diff 9
+2026-04-13	Munich	F	Clay	Ben Shelton	bt	Flavio Cobolli	6-2 7-5	peak_diff 5
+2026-04-13	Munich	QF	Clay	Alex Molcan	bt	Denis Shapovalov	6-4 6-4	peak_diff 28
+2026-04-13	Munich	QF	Clay	Alexander Zverev	bt	Francisco Cerundolo	5-7 6-0 6-2	peak_diff 16
+2026-04-13	Munich	QF	Clay	Ben Shelton	bt	Joao Fonseca	6-3 3-6 6-3	peak_diff 19
+2026-04-13	Munich	QF	Clay	Flavio Cobolli	bt	Vit Kopriva	6-3 6-2	peak_diff 45
+2026-04-13	Munich	R16	Clay	Alex Molcan	bt	Daniel Altmaier	6-4 7-6(10)	peak_diff 6
+2026-04-13	Munich	R16	Clay	Alexander Zverev	bt	Gabriel Diallo	6-1 6-2	peak_diff 31
+2026-04-13	Munich	R16	Clay	Ben Shelton	bt	Alexander Blockx	6-4 7-6(8)	peak_diff 31
+2026-04-13	Munich	R16	Clay	Denis Shapovalov	bt	Fabian Marozsan	7-6(4) 6-2	peak_diff 26
+2026-04-13	Munich	R16	Clay	Flavio Cobolli	bt	Zizou Bergs	6-2 6-3	peak_diff 28
+2026-04-13	Munich	R16	Clay	Francisco Cerundolo	bt	Botic Van De Zandschulp	6-3 6-0	peak_diff 4
+2026-04-13	Munich	R16	Clay	Joao Fonseca	bt	Arthur Rinderknech	6-3 6-2	peak_diff 0
+2026-04-13	Munich	R16	Clay	Vit Kopriva	bt	Luciano Darderi	2-6 6-4 6-1	peak_diff 39
+2026-04-13	Munich	R32	Clay	Alex Molcan	bt	Alexander Bublik	6-4 6-2	peak_diff 28
+2026-04-13	Munich	R32	Clay	Alexander Blockx	bt	Yannick Hanfmann	7-6(2) 6-2	peak_diff 9
+2026-04-13	Munich	R32	Clay	Alexander Zverev	bt	Miomir Kecmanovic	6-3 3-6 7-6(2)	peak_diff 25
+2026-04-13	Munich	R32	Clay	Arthur Rinderknech	bt	Alex Michelsen	6-3 6-3	peak_diff 6
+2026-04-13	Munich	R32	Clay	Ben Shelton	bt	Emilio Nava	7-6(4) 3-6 6-3	peak_diff 69
+2026-04-13	Munich	R32	Clay	Botic Van De Zandschulp	bt	Marc Andrea Huesler	7-6(7) 6-3	peak_diff 25
+2026-04-13	Munich	R32	Clay	Daniel Altmaier	bt	Marin Cilic	6-2 6-3	peak_diff 31
+2026-04-13	Munich	R32	Clay	Denis Shapovalov	bt	Tallon Griekspoor	6-4 3-6 6-2	peak_diff 11
+2026-04-13	Munich	R32	Clay	Fabian Marozsan	bt	Stefanos Tsitsipas	3-6 7-6(5) 6-4	peak_diff 33
+2026-04-13	Munich	R32	Clay	Flavio Cobolli	bt	Diego Dedura Palomero	6-4 7-5	peak_diff 248
+2026-04-13	Munich	R32	Clay	Francisco Cerundolo	bt	Sumit Nagal	6-2 6-2	peak_diff 50
+2026-04-13	Munich	R32	Clay	Gabriel Diallo	bt	Vitaliy Sachko	6-1 6-2	peak_diff 123
+2026-04-13	Munich	R32	Clay	Joao Fonseca	bt	Alejandro Tabilo	7-6(1) 6-3	peak_diff 5
+2026-04-13	Munich	R32	Clay	Luciano Darderi	bt	Zhizhen Zhang	7-6(5) 3-6 6-1	peak_diff 15
+2026-04-13	Munich	R32	Clay	Vit Kopriva	bt	Justin Engel	6-3 5-7 6-2	peak_diff 125
+2026-04-13	Munich	R32	Clay	Zizou Bergs	bt	Marko Topo	6-1 6-4	peak_diff 197
+2026-04-13	Munich	SF	Clay	Ben Shelton	bt	Alex Molcan	6-3 6-4	peak_diff 33
+2026-04-13	Munich	SF	Clay	Flavio Cobolli	bt	Alexander Zverev	6-3 6-3	peak_diff 8
+2026-04-13	Stuttgart	F	Clay	Elena Rybakina	bt	Karolina Muchova	7-5 6-1	peak_diff 6
+2026-04-13	Stuttgart	QF	Clay	Elena Rybakina	bt	Leylah Fernandez	6-7(5) 6-4 7-6(6)	peak_diff 11
+2026-04-13	Stuttgart	QF	Clay	Elina Svitolina	bt	Linda Noskova	7-6(2) 7-5	peak_diff 9
+2026-04-13	Stuttgart	QF	Clay	Karolina Muchova	bt	Coco Gauff	6-3 5-7 6-3	peak_diff 6
+2026-04-13	Stuttgart	QF	Clay	Mirra Andreeva	bt	Iga Swiatek	3-6 6-4 6-3	peak_diff 4
+2026-04-13	Stuttgart	R16	Clay	Coco Gauff	bt	Liudmila Samsonova	7-5 6-1	peak_diff 10
+2026-04-13	Stuttgart	R16	Clay	Elena Rybakina	bt	Diana Shnaider	6-3 6-4	peak_diff 9
+2026-04-13	Stuttgart	R16	Clay	Elina Svitolina	bt	Eva Lys	6-1 6-0	peak_diff 36
+2026-04-13	Stuttgart	R16	Clay	Iga Swiatek	bt	Laura Siegemund	6-2 6-3	peak_diff 26
+2026-04-13	Stuttgart	R16	Clay	Karolina Muchova	bt	Elise Mertens	1-6 6-3 6-0	peak_diff 4
+2026-04-13	Stuttgart	R16	Clay	Leylah Fernandez	bt	Zeynep Sonmez	6-7(2) 6-1 7-6(5)	peak_diff 46
+2026-04-13	Stuttgart	R16	Clay	Linda Noskova	bt	Ekaterina Alexandrova	6-1 6-1	peak_diff 2
+2026-04-13	Stuttgart	R16	Clay	Mirra Andreeva	bt	Alycia Parks	7-6(3) 6-3	peak_diff 35
+2026-04-13	Stuttgart	R32	Clay	Alycia Parks	bt	Noma Noha Akugue	6-4 6-2	peak_diff 102
+2026-04-13	Stuttgart	R32	Clay	Diana Shnaider	bt	Tamara Korpatsch	6-3 6-1	peak_diff 60
+2026-04-13	Stuttgart	R32	Clay	Ekaterina Alexandrova	bt	Gabriela Andrea Knutson	6-2 6-2	peak_diff 145
+2026-04-13	Stuttgart	R32	Clay	Elise Mertens	bt	Ella Seidel	6-3 6-4	peak_diff 66
+2026-04-13	Stuttgart	R32	Clay	Eva Lys	bt	Paula Badosa	2-6 7-5 6-4	peak_diff 37
+2026-04-13	Stuttgart	R32	Clay	Karolina Muchova	bt	Aliaksandra Sasnovich	6-2 6-4	peak_diff 21
+2026-04-13	Stuttgart	R32	Clay	Laura Siegemund	bt	Viktoriya Tomova	4-6 7-6(4) 6-1	peak_diff 19
+2026-04-13	Stuttgart	R32	Clay	Leylah Fernandez	bt	Alexandra Eala	6-1 6-4	peak_diff 16
+2026-04-13	Stuttgart	R32	Clay	Linda Noskova	bt	Shuai Zhang	5-7 6-1 6-4	peak_diff 10
+2026-04-13	Stuttgart	R32	Clay	Liudmila Samsonova	bt	Antonia Ruzic	6-0 6-4	peak_diff 39
+2026-04-13	Stuttgart	R32	Clay	Mirra Andreeva	bt	Jelena Ostapenko	5-7 6-2 6-4	peak_diff 0
+2026-04-13	Stuttgart	R32	Clay	Zeynep Sonmez	bt	Jasmine Paolini	6-2 6-2	peak_diff 55
+2026-04-13	Stuttgart	SF	Clay	Elena Rybakina	bt	Mirra Andreeva	7-5 6-1	peak_diff 3
+2026-04-13	Stuttgart	SF	Clay	Karolina Muchova	bt	Elina Svitolina	6-4 2-6 6-4	peak_diff 5

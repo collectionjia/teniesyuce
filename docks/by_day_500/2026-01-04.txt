@@ -1,0 +1,48 @@
+# 2026-01-04 · 47 matches · Brisbane
+2026-01-04	Brisbane	F	Hard	Aryna Sabalenka	bt	Marta Kostyuk	6-4 6-3	peak_diff 11
+2026-01-04	Brisbane	QF	Hard	Aryna Sabalenka	bt	Madison Keys	6-3 6-3	peak_diff 4
+2026-01-04	Brisbane	QF	Hard	Jessica Pegula	bt	Liudmila Samsonova	6-3 7-6(3)	peak_diff 9
+2026-01-04	Brisbane	QF	Hard	Karolina Muchova	bt	Elena Rybakina	6-2 2-6 6-4	peak_diff 6
+2026-01-04	Brisbane	QF	Hard	Marta Kostyuk	bt	Mirra Andreeva	7-6(7) 6-3	peak_diff 7
+2026-01-04	Brisbane	R16	Hard	Aryna Sabalenka	bt	Sorana Cirstea	6-3 6-3	peak_diff 17
+2026-01-04	Brisbane	R16	Hard	Elena Rybakina	bt	Paula Badosa	6-3 6-2	peak_diff 0
+2026-01-04	Brisbane	R16	Hard	Jessica Pegula	bt	Dayana Yastremska	5-7 6-2 6-3	peak_diff 18
+2026-01-04	Brisbane	R16	Hard	Karolina Muchova	bt	Ekaterina Alexandrova	6-4 7-5	peak_diff 2
+2026-01-04	Brisbane	R16	Hard	Liudmila Samsonova	bt	Aliaksandra Sasnovich	6-4 6-4	peak_diff 17
+2026-01-04	Brisbane	R16	Hard	Madison Keys	bt	Diana Shnaider	6-7(5) 7-6(5) 7-6(4)	peak_diff 6
+2026-01-04	Brisbane	R16	Hard	Marta Kostyuk	bt	Amanda Anisimova	6-4 6-3	peak_diff 9
+2026-01-04	Brisbane	R16	Hard	Mirra Andreeva	bt	Linda Noskova	5-7 6-4 7-5	peak_diff 7
+2026-01-04	Brisbane	R32	Hard	Aliaksandra Sasnovich	bt	Clara Tauson	6-2 6-3	peak_diff 17
+2026-01-04	Brisbane	R32	Hard	Amanda Anisimova	bt	Kimberly Birrell	6-1 6-3	peak_diff 57
+2026-01-04	Brisbane	R32	Hard	Aryna Sabalenka	bt	Cristina Bucsa	6-0 6-1	peak_diff 29
+2026-01-04	Brisbane	R32	Hard	Dayana Yastremska	bt	Leylah Fernandez	6-1 6-2	peak_diff 8
+2026-01-04	Brisbane	R32	Hard	Diana Shnaider	bt	Anastasia Potapova	6-1 6-3	peak_diff 10
+2026-01-04	Brisbane	R32	Hard	Ekaterina Alexandrova	bt	Sofia Kenin	7-6(2) 6-3	peak_diff 6
+2026-01-04	Brisbane	R32	Hard	Elena Rybakina	bt	Shuai Zhang	6-3 7-5	peak_diff 20
+2026-01-04	Brisbane	R32	Hard	Jessica Pegula	bt	Anna Kalinskaya	6-2 2-6 6-4	peak_diff 8
+2026-01-04	Brisbane	R32	Hard	Karolina Muchova	bt	Ajla Tomljanovic	4-6 6-1 7-6(5)	peak_diff 24
+2026-01-04	Brisbane	R32	Hard	Linda Noskova	bt	Magdalena Frech	6-7(5) 6-4 6-4	peak_diff 10
+2026-01-04	Brisbane	R32	Hard	Liudmila Samsonova	bt	Emerson Jones	6-4 6-1	peak_diff 117
+2026-01-04	Brisbane	R32	Hard	Madison Keys	bt	Mccartney Kessler	6-4 6-3	peak_diff 25
+2026-01-04	Brisbane	R32	Hard	Marta Kostyuk	bt	Yulia Putintseva	6-7(5) 6-1 6-0	peak_diff 8
+2026-01-04	Brisbane	R32	Hard	Mirra Andreeva	bt	Olivia Gadecki	4-6 6-1 6-2	peak_diff 78
+2026-01-04	Brisbane	R32	Hard	Paula Badosa	bt	Marie Bouzkova	6-7(4) 6-4 6-2	peak_diff 22
+2026-01-04	Brisbane	R32	Hard	Sorana Cirstea	bt	Jelena Ostapenko	6-2 7-6(5)	peak_diff 13
+2026-01-04	Brisbane	R64	Hard	Ajla Tomljanovic	bt	Elsa Jacquemot	6-1 6-3	peak_diff 21
+2026-01-04	Brisbane	R64	Hard	Aliaksandra Sasnovich	bt	Anna Blinkova	7-5 6-1	peak_diff 6
+2026-01-04	Brisbane	R64	Hard	Anastasia Potapova	bt	Daria Kasatkina	7-5 4-6 6-4	peak_diff 13
+2026-01-04	Brisbane	R64	Hard	Anna Kalinskaya	bt	Tereza Valentova	6-4 6-4	peak_diff 31
+2026-01-04	Brisbane	R64	Hard	Cristina Bucsa	bt	Anna Bondar	4-6 7-6(4) 6-2	peak_diff 20
+2026-01-04	Brisbane	R64	Hard	Dayana Yastremska	bt	Talia Gibson	7-6(3) 7-6(4)	peak_diff 34
+2026-01-04	Brisbane	R64	Hard	Emerson Jones	bt	Tatjana Maria	6-3 6-3	peak_diff 93
+2026-01-04	Brisbane	R64	Hard	Kimberly Birrell	bt	Rebecca Sramkova	6-4 3-6 6-3	peak_diff 27
+2026-01-04	Brisbane	R64	Hard	Magdalena Frech	bt	Marketa Vondrousova	7-5 6-7(3) 7-6(0)	peak_diff 16
+2026-01-04	Brisbane	R64	Hard	Marie Bouzkova	bt	Jaqueline Cristian	6-4 6-3	peak_diff 4
+2026-01-04	Brisbane	R64	Hard	Mccartney Kessler	bt	Emiliana Arango	6-1 6-3	peak_diff 16
+2026-01-04	Brisbane	R64	Hard	Olivia Gadecki	bt	Ann Li	6-4 6-4	peak_diff 54
+2026-01-04	Brisbane	R64	Hard	Shuai Zhang	bt	Ashlyn Krueger	6-4 5-7 6-4	peak_diff 7
+2026-01-04	Brisbane	R64	Hard	Sofia Kenin	bt	Elena Gabriela Ruse	6-4 4-6 6-3	peak_diff 47
+2026-01-04	Brisbane	R64	Hard	Sorana Cirstea	bt	Anastasia Pavlyuchenkova	6-3 6-1	peak_diff 7
+2026-01-04	Brisbane	R64	Hard	Yulia Putintseva	bt	Hailey Baptiste	6-2 6-4	peak_diff 5
+2026-01-04	Brisbane	SF	Hard	Aryna Sabalenka	bt	Karolina Muchova	6-3 6-4	peak_diff 7
+2026-01-04	Brisbane	SF	Hard	Marta Kostyuk	bt	Jessica Pegula	6-0 6-3	peak_diff 9
