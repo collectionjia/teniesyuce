@@ -12,28 +12,42 @@ const JOB_TYPE_DEFS = {
     engine: 'collect',
     requireEngineOn: 'collect',
     defaultTimeout: 300,
-    label: '采集 · 全量拆三桶',
+    label: '采集引擎 · 全量拆三桶',
+    category: 'collect',
+  },
+  'collect.top100': {
+    engine: 'collect',
+    requireEngineOn: 'collect',
+    defaultTimeout: 900,
+    label: '采集引擎 · Top100 collect.py',
     category: 'collect',
   },
   'collect.inplay_tick': {
     engine: 'collect',
     requireEngineOn: 'collect',
     defaultTimeout: 60,
-    label: '采集 · 盘中 tick',
+    label: '采集引擎 · 盘中 tick',
     category: 'collect',
   },
   'condition.query': {
     engine: 'condition',
     requireEngineOn: 'condition',
     defaultTimeout: 60,
-    label: '条件 · 查询筛选',
+    label: '条件引擎 · 查询筛选',
     category: 'condition',
   },
   'bet.scan': {
     engine: 'bet',
     requireEngineOn: 'betting',
     defaultTimeout: 120,
-    label: '投注 · 扫描下单',
+    label: '投注引擎 · 扫描下单',
+    category: 'betting',
+  },
+  'bet.stop_loss': {
+    engine: 'bet',
+    requireEngineOn: 'betting',
+    defaultTimeout: 120,
+    label: '投注引擎 · 止损检查',
     category: 'betting',
   },
 };
@@ -63,6 +77,19 @@ const PRESET_JOBS = [
     mutex_key: 'job_collect_inplay_tick',
     skip_if_running: 1,
     require_engine_on: 'collect',
+    timeout_sec: 60,
+  },
+  {
+    id: 'job_condition_query',
+    name: '条件查询筛选',
+    job_type: 'condition.query',
+    engine: 'condition',
+    enabled: 0,
+    schedule_mode: 'interval',
+    interval_sec: 60,
+    mutex_key: 'job_condition_query',
+    skip_if_running: 1,
+    require_engine_on: 'condition',
     timeout_sec: 60,
   },
   {
@@ -152,6 +179,30 @@ async function ensureTables() {
           j.skip_if_running,
           j.require_engine_on,
           j.timeout_sec,
+        ]
+      );
+    }
+  } else {
+    // 已有库：仅补齐「条件引擎」预置（不存在才插入，不恢复用户已删任务）
+    const cond = PRESET_JOBS.find((j) => j.id === 'job_condition_query');
+    if (cond) {
+      await pool.query(
+        `INSERT IGNORE INTO scheduler_jobs
+          (id, name, job_type, engine, enabled, schedule_mode, interval_sec,
+           mutex_key, skip_if_running, require_engine_on, timeout_sec)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          cond.id,
+          cond.name,
+          cond.job_type,
+          cond.engine,
+          cond.enabled,
+          cond.schedule_mode,
+          cond.interval_sec,
+          cond.mutex_key,
+          cond.skip_if_running,
+          cond.require_engine_on,
+          cond.timeout_sec,
         ]
       );
     }
@@ -262,6 +313,19 @@ async function createJob(input = {}) {
     }
   }
   const id = input.id && String(input.id).startsWith('job_') ? String(input.id) : newJobId();
+  const existing = await getJob(id);
+  if (existing) {
+    // 已有任务：按修改处理，避免重复新增
+    return updateJob(id, {
+      name: input.name,
+      enabled: input.enabled,
+      scheduleMode: input.scheduleMode,
+      intervalSec: input.intervalSec,
+      dailyTime: input.dailyTime || input.cronExpr,
+      timeoutSec: input.timeoutSec,
+      params: input.params,
+    });
+  }
   const name = String(input.name || def.label).slice(0, 128);
   const timeoutSec = Number(input.timeoutSec) > 0 ? Number(input.timeoutSec) : def.defaultTimeout;
   const enabled = input.enabled === false || input.enabled === 0 ? 0 : 1;

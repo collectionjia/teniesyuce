@@ -1,6 +1,7 @@
 /**
- * 将 docks/2026_500.txt 按 tourney_date 拆成按日 bundle，供「数据源 = docks500」回放。
- * 注意：Sackmann 的 date 多为赛事周起始日，同一天会含该站多轮次。
+ * 虚拟采集：用 docks 目录已下载的 txt 比赛数据按日回放，并虚拟拆盘前/盘中/盘后。
+ * 优先 `2026_all_gs_1000_500.txt`（GS+1000+500），否则 `2026_500.txt`。
+ * 数据源 = docks500。
  */
 const fs = require('fs');
 const path = require('path');
@@ -9,12 +10,40 @@ const crypto = require('crypto');
 const DOCKS_ROOT = process.env.DOCKS_DIR
   ? path.resolve(process.env.DOCKS_DIR)
   : path.resolve(__dirname, '../../../docks');
-const TXT_PATH = path.join(DOCKS_ROOT, '2026_500.txt');
+
+const TXT_CANDIDATES = [
+  '2026_500.txt',
+  '2026_all_gs_1000_500.txt',
+  '2026_grand_slam.txt',
+  '2026_masters_1000.txt',
+];
+
+function resolveTxtPath(preferredName) {
+  if (process.env.DOCKS_TXT) {
+    const p = path.resolve(process.env.DOCKS_TXT);
+    if (fs.existsSync(p)) return p;
+  }
+  const prefer = preferredName || process.env.DOCKS_TXT_NAME || '2026_500.txt';
+  const preferPath = path.join(DOCKS_ROOT, prefer);
+  if (fs.existsSync(preferPath)) return preferPath;
+  for (const name of TXT_CANDIDATES) {
+    const p = path.join(DOCKS_ROOT, name);
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(DOCKS_ROOT, '2026_500.txt');
+}
+
+/** @deprecated 使用 resolveTxtPath()；保留变量名兼容旧引用 */
+function getTxtPath() {
+  return resolveTxtPath();
+}
+
 /** 按日 JSON 可写目录（容器内默认 /tmp，避免 docks 只读挂载） */
 const BY_DAY_DIR = process.env.DOCKS_BY_DAY_DIR
   ? path.resolve(process.env.DOCKS_BY_DAY_DIR)
   : path.join(DOCKS_ROOT, 'by_day_500');
 const DATE_KEY = 'tennis:data_source:docks500_date';
+const TXT_SOURCE_META = path.join(BY_DAY_DIR, '_txt_source.json');
 
 const WTA_TOURNEYS = new Set([
   'Abu Dhabi',
@@ -249,6 +278,7 @@ function virtualOdds(ev) {
 /** 把完赛场次改成赛前 / 赛中 / 盘后，便于虚拟联调 */
 function applyVirtualPhases(bundle, opts = {}) {
   if (!bundle?.scheduled?.tournaments) return bundle;
+  if (bundle.phasesLocked || bundle.meta?.phasesLocked) return bundle;
   const now = Math.floor(Date.now() / 1000);
   const all = [];
   for (const t of bundle.scheduled.tournaments) {
@@ -489,15 +519,60 @@ function buildBundleForRows(iso, rows) {
 }
 
 function ensureParsed() {
-  if (!fs.existsSync(TXT_PATH)) {
-    throw Object.assign(new Error(`找不到 ${TXT_PATH}`), { status: 404 });
+  const txtPath = resolveTxtPath();
+  if (!fs.existsSync(txtPath)) {
+    throw Object.assign(
+      new Error(`找不到 docks txt（试过 ${TXT_CANDIDATES.join(' / ')}）`),
+      { status: 404 }
+    );
   }
-  const text = fs.readFileSync(TXT_PATH, 'utf8');
+  const text = fs.readFileSync(txtPath, 'utf8');
   return parseTxt(text);
 }
 
-function splitByDay(rows = null) {
-  const all = rows || ensureParsed();
+function readTxtSourceMeta() {
+  try {
+    if (!fs.existsSync(TXT_SOURCE_META)) return null;
+    return JSON.parse(fs.readFileSync(TXT_SOURCE_META, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/** txt 变更或尚未拆日时，从当前 txt 重建 by_day */
+function ensureByDayFromTxt({ force = false, txtName = null } = {}) {
+  const txtPath = resolveTxtPath(txtName);
+  if (!fs.existsSync(txtPath)) {
+    throw Object.assign(
+      new Error(`找不到 docks txt（需要 docks/2026_500.txt）`),
+      { status: 404 }
+    );
+  }
+  const st = fs.statSync(txtPath);
+  const meta = readTxtSourceMeta();
+  const indexPath = path.join(BY_DAY_DIR, 'index.json');
+  const need =
+    force
+    || !fs.existsSync(indexPath)
+    || !meta
+    || meta.path !== txtPath
+    || Number(meta.mtimeMs) !== Number(st.mtimeMs)
+    || Number(meta.size) !== Number(st.size);
+  if (!need) {
+    return { rebuilt: false, txtPath, days: listDays() };
+  }
+  const result = splitByDay(null, txtName);
+  return { rebuilt: true, txtPath, ...result };
+}
+
+function splitByDay(rows = null, txtName = null) {
+  const txtPath = resolveTxtPath(txtName);
+  const all = rows || (() => {
+    if (!fs.existsSync(txtPath)) {
+      throw Object.assign(new Error(`找不到 ${txtPath}`), { status: 404 });
+    }
+    return parseTxt(fs.readFileSync(txtPath, 'utf8'));
+  })();
   const byDay = new Map();
   for (const row of all) {
     if (!byDay.has(row.iso)) byDay.set(row.iso, []);
@@ -513,12 +588,12 @@ function splitByDay(rows = null) {
       ymd: ymdFromIso(iso),
       matchCount: dayRows.length,
       tournaments: tours,
+      txtSource: path.basename(txtPath),
     };
     const outPath = path.join(BY_DAY_DIR, `${iso}.json`);
     fs.writeFileSync(outPath, JSON.stringify({ meta, bundle }, null, 2), 'utf8');
-    // 另存可读 txt
     const txtLines = [
-      `# ${iso} · ${dayRows.length} matches · ${tours.join(', ')}`,
+      `# ${iso} · ${dayRows.length} matches · ${tours.join(', ')} · from ${path.basename(txtPath)}`,
       ...dayRows.map(
         (r) =>
           `${r.iso}\t${r.tournament}\t${r.round}\t${r.surface}\t${r.winner.name}\tbt\t${r.loser.name}\t${r.score}\tpeak_diff ${r.peakDiff ?? '-'}`,
@@ -527,8 +602,30 @@ function splitByDay(rows = null) {
     fs.writeFileSync(path.join(BY_DAY_DIR, `${iso}.txt`), `${txtLines.join('\n')}\n`, 'utf8');
     days.push(meta);
   }
-  fs.writeFileSync(path.join(BY_DAY_DIR, 'index.json'), JSON.stringify({ days, generated_at: new Date().toISOString() }, null, 2), 'utf8');
-  return { days, dir: BY_DAY_DIR, total: all.length };
+  fs.writeFileSync(
+    path.join(BY_DAY_DIR, 'index.json'),
+    JSON.stringify({ days, generated_at: new Date().toISOString(), txtSource: path.basename(txtPath) }, null, 2),
+    'utf8'
+  );
+  try {
+    const st = fs.statSync(txtPath);
+    fs.writeFileSync(
+      TXT_SOURCE_META,
+      JSON.stringify({
+        path: txtPath,
+        name: path.basename(txtPath),
+        mtimeMs: st.mtimeMs,
+        size: st.size,
+        days: days.length,
+        total: all.length,
+        at: new Date().toISOString(),
+      }, null, 2),
+      'utf8'
+    );
+  } catch (_) {
+    /* ignore */
+  }
+  return { days, dir: BY_DAY_DIR, total: all.length, txtPath };
 }
 
 function listDays() {
@@ -770,20 +867,26 @@ function loadDayBundle(iso, { simulate = true } = {}) {
   }
   const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
   const bundle = raw.bundle || raw;
+  if (raw.meta?.phasesLocked || bundle.phasesLocked) {
+    bundle.phasesLocked = true;
+  }
   if (simulate) applyVirtualPhases(bundle);
   return bundle;
 }
 
 async function loadSelectedBundle() {
+  // 虚拟采集固定用 docks/2026_500.txt
+  ensureByDayFromTxt({ txtName: '2026_500.txt' });
   let date = await getSelectedDate();
   const days = listDays();
   if (!date && days.length) date = days[0].date;
-  if (!date) throw Object.assign(new Error('docks500 无可用日期'), { status: 404 });
+  if (!date) throw Object.assign(new Error('docks/2026_500.txt 无可用日期'), { status: 404 });
   const bundle = loadDayBundle(date, { simulate: true });
   bundle.date = date;
   bundle.dataSource = 'docks500';
   bundle.upstream = 'docks500';
   bundle.source = 'docks500';
+  bundle.txtSource = '2026_500.txt';
   return bundle;
 }
 
@@ -819,12 +922,736 @@ async function setSelectedDate(iso) {
   return date;
 }
 
+function assertIsoDate(iso) {
+  const date = String(iso || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw Object.assign(new Error('日期格式应为 YYYY-MM-DD'), { status: 400 });
+  }
+  return date;
+}
+
+function phaseOfEvent(ev) {
+  const t = String(ev?.statusType || ev?.virtualPhase || '').toLowerCase();
+  if (t === 'notstarted' || t === 'prematch' || t === 'scheduled') return 'prematch';
+  if (t === 'inprogress' || t === 'inplay' || t === 'live') return 'inplay';
+  if (ev?.virtualPhase === 'prematch') return 'prematch';
+  if (ev?.virtualPhase === 'inplay') return 'inplay';
+  return 'settled';
+}
+
+function collectScheduledEvents(bundle) {
+  const out = [];
+  for (const t of bundle?.scheduled?.tournaments || []) {
+    for (const e of t.events || []) out.push(e);
+  }
+  return out;
+}
+
+function fillLiveScoreFromText(ev, scoreRaw) {
+  const finalScore = ev.finalScoreText || scoreRaw || '';
+  const pairs = parseSetPairs(scoreRaw || finalScore);
+  if (pairs.length >= 2) {
+    const s1 = pairs[0];
+    const homeSets = s1.home > s1.away ? 1 : 0;
+    const awaySets = s1.away > s1.home ? 1 : 0;
+    let curHome = Number(pairs[1].home);
+    let curAway = Number(pairs[1].away);
+    if (!Number.isFinite(curHome) || !Number.isFinite(curAway)) {
+      curHome = 3;
+      curAway = 2;
+    }
+    curHome = Math.max(0, Math.min(5, curHome));
+    curAway = Math.max(0, Math.min(5, curAway));
+    if (curHome === curAway) curAway = Math.max(0, curHome - 1);
+    ev.scoreText = `${s1.home}-${s1.away} ${curHome}-${curAway}`;
+    ev.homeScore = {
+      current: homeSets,
+      display: homeSets,
+      period1: s1.home,
+      period2: curHome,
+      point: '30',
+    };
+    ev.awayScore = {
+      current: awaySets,
+      display: awaySets,
+      period1: s1.away,
+      period2: curAway,
+      point: '15',
+    };
+    return;
+  }
+  if (pairs.length === 1) {
+    const s1 = pairs[0];
+    let curHome = Math.min(5, Math.max(0, s1.home));
+    let curAway = Math.min(5, Math.max(0, s1.away));
+    if (curHome >= 6 || curAway >= 6) {
+      curHome = Math.min(5, curHome);
+      curAway = Math.min(4, curAway);
+    }
+    ev.scoreText = `${curHome}-${curAway}`;
+    ev.homeScore = { current: 0, display: 0, period1: curHome, point: '40' };
+    ev.awayScore = { current: 0, display: 0, period1: curAway, point: '30' };
+    return;
+  }
+  ev.scoreText = scoreRaw || '3-2';
+  const fallback = parseSetPairs(ev.scoreText);
+  const h = fallback[0]?.home ?? 3;
+  const a = fallback[0]?.away ?? 2;
+  ev.homeScore = { current: 0, display: 0, period1: h, point: '15' };
+  ev.awayScore = { current: 0, display: 0, period1: a, point: '30' };
+}
+
+function setEventPhase(ev, phase) {
+  const now = Math.floor(Date.now() / 1000);
+  const p = String(phase || '').toLowerCase();
+  const finalScore = ev.finalScoreText || ev.scoreText || '';
+  if (!ev.finalScoreText && finalScore) ev.finalScoreText = finalScore;
+
+  if (p === 'prematch') {
+    ev.status = 'Not started';
+    ev.statusType = 'notstarted';
+    ev.virtualPhase = 'prematch';
+    ev.homeScore = null;
+    ev.awayScore = null;
+    ev.scoreText = '';
+    if (!Number.isFinite(Number(ev.startTimestamp)) || Number(ev.startTimestamp) <= now) {
+      ev.startTimestamp = now + 7200 + (Math.abs(Number(ev.id) % 6) * 3600);
+    }
+    return;
+  }
+  if (p === 'inplay') {
+    ev.status = 'In progress';
+    ev.statusType = 'inprogress';
+    ev.virtualPhase = 'inplay';
+    if (!Number.isFinite(Number(ev.startTimestamp)) || Number(ev.startTimestamp) > now) {
+      ev.startTimestamp = now - 1800 - (Math.abs(Number(ev.id) % 4) * 600);
+    }
+    fillLiveScoreFromText(ev, ev.scoreText || finalScore);
+    return;
+  }
+  ev.status = 'Ended';
+  ev.statusType = 'ended';
+  ev.virtualPhase = 'settled';
+  ev.scoreText = finalScore || ev.scoreText || '';
+  ev.finalScoreText = finalScore || ev.finalScoreText || ev.scoreText;
+  if (!Number.isFinite(Number(ev.startTimestamp)) || Number(ev.startTimestamp) > now - 3600) {
+    ev.startTimestamp = now - 86400 - (Math.abs(Number(ev.id) % 12) * 3600);
+  }
+  const pairs = parseSetPairs(ev.scoreText);
+  if (pairs.length) {
+    let hs = 0;
+    let as = 0;
+    for (const s of pairs) {
+      if (s.home > s.away) hs += 1;
+      else if (s.away > s.home) as += 1;
+    }
+    const homeScore = { current: hs, display: hs };
+    const awayScore = { current: as, display: as };
+    pairs.forEach((s, i) => {
+      homeScore[`period${i + 1}`] = s.home;
+      awayScore[`period${i + 1}`] = s.away;
+    });
+    ev.homeScore = homeScore;
+    ev.awayScore = awayScore;
+  }
+}
+
+function syncPlayerRankings(ev) {
+  const rankings = {};
+  if (ev.homePlayer?.id != null) {
+    rankings[String(ev.homePlayer.id)] = {
+      current: ev.homePlayer.ranking ?? null,
+      best: ev.homePlayer.bestRank ?? ev.homePlayer.best ?? null,
+      previous: null,
+      live: null,
+      utr: null,
+    };
+  }
+  if (ev.awayPlayer?.id != null) {
+    rankings[String(ev.awayPlayer.id)] = {
+      current: ev.awayPlayer.ranking ?? null,
+      best: ev.awayPlayer.bestRank ?? ev.awayPlayer.best ?? null,
+      previous: null,
+      live: null,
+      utr: null,
+    };
+  }
+  ev.rankings = rankings;
+}
+
+function rebuildBundleFromEvents(bundle, events) {
+  const now = Math.floor(Date.now() / 1000);
+  const liveMatches = events.filter((e) => phaseOfEvent(e) === 'inplay');
+  const tournaments = groupTournaments(events);
+  const liveGroup = groupTournaments(liveMatches);
+  const settledMatches = events.filter((e) => phaseOfEvent(e) === 'settled');
+  const settledGroup = groupTournaments(settledMatches);
+  const polymarketByEvent = { ...(bundle.polymarketByEvent || {}) };
+  const oddsByEvent = { ...(bundle.oddsByEvent || {}) };
+  for (const ev of events) {
+    const id = String(ev.id);
+    if (ev.polymarketUrl) {
+      const homeStrong = strongNow(ev) === Number(ev.homePlayer?.ranking);
+      polymarketByEvent[id] = {
+        ...(polymarketByEvent[id] || {}),
+        url: ev.polymarketUrl,
+        slug: polymarketByEvent[id]?.slug || `virtual-${id}`,
+        moneyline: polymarketByEvent[id]?.moneyline || {
+          prices: { home: homeStrong ? 0.62 : 0.38, away: homeStrong ? 0.38 : 0.62 },
+        },
+        prices: polymarketByEvent[id]?.prices || {
+          home: homeStrong ? 62 : 38,
+          away: homeStrong ? 38 : 62,
+        },
+        source: polymarketByEvent[id]?.source || 'virtual-edit',
+      };
+    } else if (polymarketByEvent[id]) {
+      // 已有报价但事件上丢失 URL：补虚拟链，避免 rebuild 把 PM 抹掉
+      const prev = polymarketByEvent[id];
+      const url = String(prev.url || '').trim() || `https://polymarket.com/event/virtual-${id}`;
+      ev.polymarketUrl = url;
+      polymarketByEvent[id] = { ...prev, url };
+    } else {
+      delete polymarketByEvent[id];
+    }
+    if (!oddsByEvent[id]) oddsByEvent[id] = virtualOdds(ev);
+  }
+  bundle.scheduled = {
+    tournaments,
+    tournamentCount: tournaments.length,
+    eventCount: events.length,
+  };
+  bundle.live = {
+    tournaments: liveGroup,
+    matches: liveMatches,
+    tournamentCount: liveGroup.length,
+    eventCount: liveMatches.length,
+  };
+  bundle.settled = {
+    tournaments: settledGroup,
+    tournamentCount: settledGroup.length,
+    eventCount: settledMatches.length,
+    matches: settledMatches,
+  };
+  bundle.rankingsByPlayer = buildRankings(events);
+  bundle.polymarketByEvent = polymarketByEvent;
+  bundle.oddsByEvent = oddsByEvent;
+  bundle.events = events.length;
+  bundle.fetched_at = new Date().toISOString();
+  const pre = events.filter((e) => phaseOfEvent(e) === 'prematch').length;
+  const inp = liveMatches.length;
+  const setn = settledMatches.length;
+  bundle.virtualSim = {
+    prematch: pre,
+    inplay: inp,
+    settled: setn,
+    prematchIds: events.filter((e) => phaseOfEvent(e) === 'prematch').map((e) => String(e.id)),
+    inplayIds: liveMatches.map((e) => String(e.id)),
+  };
+  bundle.update = {
+    message: `虚拟编辑 · 盘前${pre} · 盘中${inp} · 盘后${setn} · ${new Date(now * 1000).toISOString()}`,
+    at: new Date().toISOString(),
+  };
+  bundle.message = bundle.update.message;
+  return bundle;
+}
+
+function readDayPayload(iso) {
+  const date = assertIsoDate(iso);
+  const jsonPath = path.join(BY_DAY_DIR, `${date}.json`);
+  if (!fs.existsSync(jsonPath)) {
+    loadDayBundle(date, { simulate: false });
+  }
+  if (!fs.existsSync(jsonPath)) {
+    throw Object.assign(new Error(`没有 ${date} 的赛程数据`), { status: 404 });
+  }
+  const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  const meta = raw.meta && typeof raw.meta === 'object' ? { ...raw.meta } : { date };
+  const bundle = raw.bundle || raw;
+  return { meta, bundle, path: jsonPath };
+}
+
+function writeDayPayload(iso, payload) {
+  const date = assertIsoDate(iso);
+  fs.mkdirSync(BY_DAY_DIR, { recursive: true });
+  const events = collectScheduledEvents(payload.bundle);
+  const tours = [...new Set(events.map((e) => e.tournament).filter(Boolean))].sort();
+  const meta = {
+    ...(payload.meta || {}),
+    date,
+    ymd: ymdFromIso(date),
+    matchCount: events.length,
+    tournaments: tours,
+  };
+  const bundle = payload.bundle || {};
+  bundle.date = date;
+  bundle.phasesLocked = !!meta.phasesLocked;
+  const out = { meta, bundle };
+  const jsonPath = path.join(BY_DAY_DIR, `${date}.json`);
+  fs.writeFileSync(jsonPath, JSON.stringify(out, null, 2), 'utf8');
+  fs.writeFileSync(
+    path.join(BY_DAY_DIR, `${date}.txt`),
+    [
+      `# ${date} · ${meta.phasesLocked ? 'manual' : 'auto'} · ${events.length} matches`,
+      ...events.map(
+        (e) =>
+          `${date}\t${e.tournament || '-'}\t${e.roundLabel || '-'}\t${e.groundType || '-'}\t${e.home}\tbt\t${e.away}\t${e.scoreText || e.finalScoreText || '-'}\t${phaseOfEvent(e)}`,
+      ),
+    ].join('\n') + '\n',
+    'utf8',
+  );
+  const indexPath = path.join(BY_DAY_DIR, 'index.json');
+  let days = listDays().filter((d) => d.date !== date);
+  days.push({
+    date,
+    ymd: meta.ymd,
+    matchCount: events.length,
+    tournaments: tours,
+    synthetic: !!meta.synthetic,
+    phasesLocked: !!meta.phasesLocked,
+  });
+  days.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  fs.writeFileSync(
+    indexPath,
+    JSON.stringify({ generated_at: new Date().toISOString(), days, total: days.length }, null, 2),
+    'utf8',
+  );
+  return out;
+}
+
+/** 从 polymarketByEvent 行解析主/客 PM 美分价 */
+function pmCentsFromPoly(polyRow) {
+  if (!polyRow || typeof polyRow !== 'object') return { home: null, away: null };
+  let prices = polyRow.prices;
+  if ((!prices || typeof prices !== 'object') && polyRow.moneyline?.prices) {
+    prices = polyRow.moneyline.prices;
+  }
+  if (!prices || typeof prices !== 'object') return { home: null, away: null };
+  let h;
+  let a;
+  if (Array.isArray(prices)) {
+    h = Number(prices[0]);
+    a = Number(prices[1]);
+  } else {
+    h = Number(prices.home);
+    a = Number(prices.away);
+  }
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return { home: null, away: null };
+  if (h <= 1 && a <= 1) {
+    h = Math.round(h * 100);
+    a = Math.round(a * 100);
+  } else {
+    h = Math.round(h);
+    a = Math.round(a);
+  }
+  return { home: h, away: a };
+}
+
+function parsePmCentInput(raw) {
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(1, Math.min(99, Math.round(n)));
+}
+
+/** 写入双方 PM ¢；若尚无外链则补虚拟 URL。只改一侧时另一侧用原值或 100−对侧 */
+function applyPmCentsToBundle(bundle, ev, pmHome, pmAway) {
+  const id = String(ev.id);
+  const map = { ...(bundle.polymarketByEvent || {}) };
+  const prev = map[id] || {};
+  const cur = pmCentsFromPoly(prev);
+  let home = pmHome != null ? pmHome : cur.home;
+  let away = pmAway != null ? pmAway : cur.away;
+  if (Number.isFinite(home) && !Number.isFinite(away)) {
+    away = Math.max(1, Math.min(99, 100 - home));
+  }
+  if (Number.isFinite(away) && !Number.isFinite(home)) {
+    home = Math.max(1, Math.min(99, 100 - away));
+  }
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return false;
+
+  let url = String(ev.polymarketUrl || prev.url || '').trim();
+  if (!url) {
+    url = `https://polymarket.com/event/virtual-${id}`;
+    ev.polymarketUrl = url;
+  }
+  map[id] = {
+    ...prev,
+    url,
+    slug: prev.slug || `virtual-${id}`,
+    home_price: home / 100,
+    away_price: away / 100,
+    moneyline: {
+      ...(prev.moneyline || {}),
+      prices: { home: home / 100, away: away / 100 },
+    },
+    prices: { home, away },
+    source: prev.source || 'virtual-edit',
+  };
+  bundle.polymarketByEvent = map;
+  return true;
+}
+
+function flattenEvents(payload) {
+  const bundle = payload?.bundle || payload;
+  const poly = bundle.polymarketByEvent || {};
+  return collectScheduledEvents(bundle).map((ev) => {
+    const id = String(ev.id);
+    const polyRow = poly[id];
+    const pm = pmCentsFromPoly(polyRow);
+    return {
+      id,
+      phase: phaseOfEvent(ev),
+      home: ev.home || ev.homePlayer?.name || '',
+      away: ev.away || ev.awayPlayer?.name || '',
+      homeRank: ev.homePlayer?.ranking ?? null,
+      awayRank: ev.awayPlayer?.ranking ?? null,
+      homeBest: ev.homePlayer?.bestRank ?? ev.homePlayer?.best ?? null,
+      awayBest: ev.awayPlayer?.bestRank ?? ev.awayPlayer?.best ?? null,
+      scoreText: ev.scoreText || '',
+      finalScoreText: ev.finalScoreText || '',
+      startTimestamp: ev.startTimestamp ?? null,
+      polymarketUrl: ev.polymarketUrl || polyRow?.url || '',
+      pmHome: pm.home,
+      pmAway: pm.away,
+      tournament: ev.tournament || '',
+      tour: ev.tour || '',
+      statusType: ev.statusType || '',
+      virtualPhase: ev.virtualPhase || '',
+    };
+  });
+}
+
+function ensurePhasedPayload(payload) {
+  const meta = payload.meta || {};
+  const bundle = payload.bundle;
+  if (meta.phasesLocked || bundle.phasesLocked) {
+    return payload;
+  }
+  applyVirtualPhases(bundle);
+  return payload;
+}
+
+function applyEventPatch(iso, eventId, patch = {}) {
+  const date = assertIsoDate(iso);
+  const payload = readDayPayload(date);
+  ensurePhasedPayload(payload);
+  const events = collectScheduledEvents(payload.bundle);
+  const ev = events.find((e) => String(e.id) === String(eventId));
+  if (!ev) {
+    throw Object.assign(new Error(`场次 ${eventId} 不存在`), { status: 404 });
+  }
+
+  if (patch.home != null) {
+    const name = String(patch.home).trim();
+    ev.home = name;
+    if (ev.homePlayer) ev.homePlayer = { ...ev.homePlayer, name, shortName: name };
+  }
+  if (patch.away != null) {
+    const name = String(patch.away).trim();
+    ev.away = name;
+    if (ev.awayPlayer) ev.awayPlayer = { ...ev.awayPlayer, name, shortName: name };
+  }
+  if (patch.homeRank != null && patch.homeRank !== '') {
+    const n = Number(patch.homeRank);
+    if (Number.isFinite(n) && ev.homePlayer) {
+      ev.homePlayer.ranking = n;
+    }
+  }
+  if (patch.awayRank != null && patch.awayRank !== '') {
+    const n = Number(patch.awayRank);
+    if (Number.isFinite(n) && ev.awayPlayer) {
+      ev.awayPlayer.ranking = n;
+    }
+  }
+  if (patch.homeBest != null && patch.homeBest !== '') {
+    const n = Number(patch.homeBest);
+    if (Number.isFinite(n) && ev.homePlayer) {
+      ev.homePlayer.bestRank = n;
+      ev.homePlayer.best = n;
+    }
+  }
+  if (patch.awayBest != null && patch.awayBest !== '') {
+    const n = Number(patch.awayBest);
+    if (Number.isFinite(n) && ev.awayPlayer) {
+      ev.awayPlayer.bestRank = n;
+      ev.awayPlayer.best = n;
+    }
+  }
+  if (patch.tournament != null) {
+    ev.tournament = String(patch.tournament).trim() || ev.tournament;
+    ev.tournamentShort = ev.tournament;
+  }
+  if (patch.tour != null) {
+    const tour = String(patch.tour).trim().toUpperCase();
+    if (tour === 'ATP' || tour === 'WTA') {
+      ev.tour = tour;
+      ev.gender = tour === 'WTA' ? 'F' : 'M';
+      if (ev.homePlayer) ev.homePlayer.gender = ev.gender;
+      if (ev.awayPlayer) ev.awayPlayer.gender = ev.gender;
+    }
+  }
+  if (patch.finalScoreText != null) {
+    ev.finalScoreText = String(patch.finalScoreText).trim();
+  }
+  if (patch.scoreText != null) {
+    ev.scoreText = String(patch.scoreText).trim();
+  }
+  if (patch.startTimestamp != null && patch.startTimestamp !== '') {
+    const ts = Number(patch.startTimestamp);
+    if (Number.isFinite(ts)) ev.startTimestamp = Math.floor(ts);
+  }
+
+  const hasPmHome = Object.prototype.hasOwnProperty.call(patch, 'pmHome');
+  const hasPmAway = Object.prototype.hasOwnProperty.call(patch, 'pmAway');
+  const patchingPm = (hasPmHome || hasPmAway)
+    && (parsePmCentInput(hasPmHome ? patch.pmHome : null) != null
+      || parsePmCentInput(hasPmAway ? patch.pmAway : null) != null);
+
+  // 先写 PM（会补虚拟 URL），再处理外链；避免空 URL 先删掉报价导致存不进去
+  if (patchingPm) {
+    const pmHome = hasPmHome ? parsePmCentInput(patch.pmHome) : null;
+    const pmAway = hasPmAway ? parsePmCentInput(patch.pmAway) : null;
+    applyPmCentsToBundle(payload.bundle, ev, pmHome, pmAway);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'polymarketUrl')) {
+    const url = String(patch.polymarketUrl || '').trim();
+    if (url) {
+      ev.polymarketUrl = url;
+      const map = payload.bundle.polymarketByEvent || {};
+      if (map[String(ev.id)]) {
+        map[String(ev.id)] = { ...map[String(ev.id)], url };
+        payload.bundle.polymarketByEvent = map;
+      }
+    } else if (!patchingPm) {
+      // 明确清空外链且未同时改 PM ¢ 时才删除报价
+      delete ev.polymarketUrl;
+      if (payload.bundle.polymarketByEvent) {
+        delete payload.bundle.polymarketByEvent[String(ev.id)];
+      }
+    }
+  }
+
+  syncPlayerRankings(ev);
+
+  if (patch.phase != null && String(patch.phase).trim()) {
+    setEventPhase(ev, patch.phase);
+  } else if (phaseOfEvent(ev) === 'inplay' && (patch.scoreText != null || patch.finalScoreText != null)) {
+    fillLiveScoreFromText(ev, ev.scoreText || ev.finalScoreText);
+  } else if (phaseOfEvent(ev) === 'settled' && (patch.scoreText != null || patch.finalScoreText != null)) {
+    setEventPhase(ev, 'settled');
+  }
+
+  rebuildBundleFromEvents(payload.bundle, events);
+  payload.meta = {
+    ...(payload.meta || {}),
+    date,
+    phasesLocked: true,
+    synthetic: payload.meta?.synthetic !== false,
+  };
+  payload.bundle.phasesLocked = true;
+  payload.bundle.meta = { ...(payload.bundle.meta || {}), phasesLocked: true };
+  return writeDayPayload(date, payload);
+}
+
+/** 清空某虚拟日全部场次（保留日期文件，锁定为手动） */
+function clearDayEvents(iso) {
+  const date = assertIsoDate(iso);
+  const payload = readDayPayload(date);
+  rebuildBundleFromEvents(payload.bundle, []);
+  payload.meta = {
+    ...(payload.meta || {}),
+    date,
+    phasesLocked: true,
+    synthetic: true,
+    matchCount: 0,
+    tournaments: [],
+  };
+  payload.bundle.phasesLocked = true;
+  payload.bundle.meta = { ...(payload.bundle.meta || {}), phasesLocked: true };
+  return writeDayPayload(date, payload);
+}
+
+/** 手动新增一场 */
+function addDayEvent(iso, body = {}) {
+  const date = assertIsoDate(iso);
+  const payload = readDayPayload(date);
+  ensurePhasedPayload(payload);
+  const events = collectScheduledEvents(payload.bundle);
+
+  const homeName = String(body.home || '').trim();
+  const awayName = String(body.away || '').trim();
+  if (!homeName || !awayName) {
+    throw Object.assign(new Error('请填写主客球员'), { status: 400 });
+  }
+  const tournament = String(body.tournament || '自定义赛事').trim() || '自定义赛事';
+  const tour = String(body.tour || 'ATP').trim().toUpperCase() === 'WTA' ? 'WTA' : 'ATP';
+  const gender = tour === 'WTA' ? 'F' : 'M';
+  const homeRank = Number(body.homeRank);
+  const awayRank = Number(body.awayRank);
+  const homeBest = Number(body.homeBest);
+  const awayBest = Number(body.awayBest);
+  const hr = Number.isFinite(homeRank) && homeRank > 0 ? homeRank : 50;
+  const ar = Number.isFinite(awayRank) && awayRank > 0 ? awayRank : 50;
+  const hb = Number.isFinite(homeBest) && homeBest > 0 ? homeBest : hr;
+  const ab = Number.isFinite(awayBest) && awayBest > 0 ? awayBest : ar;
+
+  const uid = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const homeId = stableId(['p', tour, homeName, uid]);
+  const awayId = stableId(['p', tour, awayName, uid]);
+  const eventId = stableId(['manual', date, tournament, homeName, awayName, uid]);
+
+  const home = {
+    id: homeId,
+    name: homeName,
+    shortName: homeName,
+    ranking: hr,
+    bestRank: hb,
+    best: hb,
+    gender,
+  };
+  const away = {
+    id: awayId,
+    name: awayName,
+    shortName: awayName,
+    ranking: ar,
+    bestRank: ab,
+    best: ab,
+    gender,
+  };
+
+  const scoreText = String(body.scoreText || '').trim();
+  const finalScoreText = String(body.finalScoreText || scoreText || '').trim();
+  const phase = String(body.phase || 'prematch').toLowerCase();
+
+  const ev = {
+    id: eventId,
+    level: `${tour} 500`,
+    tour,
+    tennisPoints: 500,
+    tournament,
+    tournamentShort: tournament,
+    status: 'Not started',
+    statusType: 'notstarted',
+    home: homeName,
+    away: awayName,
+    homePlayer: home,
+    awayPlayer: away,
+    homeScore: null,
+    awayScore: null,
+    scoreText: scoreText || finalScoreText,
+    finalScoreText: finalScoreText || scoreText,
+    startTimestamp: Number.isFinite(Number(body.startTimestamp))
+      ? Math.floor(Number(body.startTimestamp))
+      : Math.floor(new Date(`${date}T12:00:00Z`).getTime() / 1000),
+    roundInfo: { name: 'Round of 32', round: 32 },
+    roundLabel: String(body.roundLabel || 'R32').trim() || 'R32',
+    groundType: String(body.groundType || 'Hard').trim() || 'Hard',
+    groundLabel: String(body.groundType || 'Hard').trim() || 'Hard',
+    gender,
+    rankings: {
+      [String(homeId)]: { current: hr, best: hb, previous: null, live: null, utr: null },
+      [String(awayId)]: { current: ar, best: ab, previous: null, live: null, utr: null },
+    },
+  };
+
+  if (body.polymarketUrl != null && String(body.polymarketUrl).trim()) {
+    ev.polymarketUrl = String(body.polymarketUrl).trim();
+  }
+
+  setEventPhase(ev, phase === 'inplay' || phase === 'settled' ? phase : 'prematch');
+  events.push(ev);
+  const addPmHome = parsePmCentInput(body.pmHome);
+  const addPmAway = parsePmCentInput(body.pmAway);
+  if (addPmHome != null || addPmAway != null) {
+    applyPmCentsToBundle(
+      payload.bundle,
+      ev,
+      addPmHome != null ? addPmHome : 50,
+      addPmAway != null ? addPmAway : 50,
+    );
+  }
+  rebuildBundleFromEvents(payload.bundle, events);
+  payload.meta = {
+    ...(payload.meta || {}),
+    date,
+    phasesLocked: true,
+    synthetic: true,
+  };
+  payload.bundle.phasesLocked = true;
+  payload.bundle.meta = { ...(payload.bundle.meta || {}), phasesLocked: true };
+  const saved = writeDayPayload(date, payload);
+  return { saved, eventId: String(eventId) };
+}
+
+function unlockAndResimDay(iso, opts = {}) {
+  const date = assertIsoDate(iso);
+  const payload = readDayPayload(date);
+  payload.meta = { ...(payload.meta || {}), date, phasesLocked: false };
+  payload.bundle.phasesLocked = false;
+  if (payload.bundle.meta) payload.bundle.meta.phasesLocked = false;
+  // 恢复完赛比分再拆桶，避免盘前空比分被当成最终比分
+  for (const ev of collectScheduledEvents(payload.bundle)) {
+    if (ev.finalScoreText) ev.scoreText = ev.finalScoreText;
+    delete ev.virtualPhase;
+  }
+  applyVirtualPhases(payload.bundle, opts);
+  payload.meta.phasesLocked = false;
+  payload.bundle.phasesLocked = false;
+  return writeDayPayload(date, payload);
+}
+
+function getDayEditorView(iso) {
+  const date = assertIsoDate(iso);
+  const payload = readDayPayload(date);
+  const locked = !!(payload.meta?.phasesLocked || payload.bundle?.phasesLocked);
+  if (locked) {
+    return {
+      date,
+      phasesLocked: true,
+      meta: payload.meta,
+      virtualSim: payload.bundle.virtualSim || null,
+      matches: flattenEvents(payload),
+    };
+  }
+  const events = collectScheduledEvents(payload.bundle);
+  const hasPhases = events.some((e) => {
+    const t = String(e.statusType || '').toLowerCase();
+    return e.virtualPhase || t === 'notstarted' || t === 'inprogress';
+  });
+  if (hasPhases) {
+    return {
+      date,
+      phasesLocked: false,
+      meta: payload.meta,
+      virtualSim: payload.bundle.virtualSim || null,
+      matches: flattenEvents(payload),
+    };
+  }
+  // 预览自动拆桶结果，不写盘
+  const clone = JSON.parse(JSON.stringify(payload));
+  applyVirtualPhases(clone.bundle);
+  return {
+    date,
+    phasesLocked: false,
+    meta: clone.meta,
+    virtualSim: clone.bundle.virtualSim || null,
+    matches: flattenEvents(clone),
+  };
+}
+
 module.exports = {
-  TXT_PATH,
+  get TXT_PATH() {
+    return resolveTxtPath();
+  },
+  resolveTxtPath,
+  TXT_CANDIDATES,
   BY_DAY_DIR,
   DATE_KEY,
   parseTxt,
   splitByDay,
+  ensureByDayFromTxt,
   listDays,
   loadDayBundle,
   getSelectedDate,
@@ -832,4 +1659,14 @@ module.exports = {
   loadSelectedBundle,
   applyVirtualPhases,
   synthesizeDay,
+  readDayPayload,
+  writeDayPayload,
+  flattenEvents,
+  applyEventPatch,
+  clearDayEvents,
+  addDayEvent,
+  unlockAndResimDay,
+  getDayEditorView,
+  setEventPhase,
+  phaseOfEvent,
 };

@@ -23,6 +23,36 @@
 
 ## 本地 / Docker
 
+### 本机调试前端 + API（推荐，Windows）
+
+不要用 WSL 访问 `/mnt/d/...` 跑 Vite（会很慢）。在 **PowerShell / Cursor 终端** 里：
+
+```powershell
+# 一次性：确保 client 代理指向本机 API
+# client/.env.local 内容应为：
+# VITE_API_PROXY_TARGET=http://127.0.0.1:3001
+
+# 开两个窗口（API :3001 + Vite :5279）
+powershell -ExecutionPolicy Bypass -File scripts/dev-local.ps1
+```
+
+或手动：
+
+```powershell
+# 窗口1
+cd server; npm run dev
+
+# 窗口2
+cd client; npm run dev
+```
+
+浏览器打开 http://localhost:5279/  
+`server/.env` 里的 MySQL / Redis 可继续指向 215（数据共用）；前端请求走本机 API，不再绕远端代理。
+
+联调 215 整站时改 `client/.env.local` 为 `VITE_API_PROXY_TARGET=http://46.250.163.215:9018`，或直接打开 http://46.250.163.215:9018/ 。
+
+### Docker 发版
+
 ```bash
 # 复制并填写环境变量（勿提交）
 cp server/.env.example server/.env

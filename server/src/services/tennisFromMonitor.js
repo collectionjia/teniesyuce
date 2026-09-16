@@ -12,6 +12,7 @@ let refreshPromise = null;
 let lastRefreshAt = 0;
 let timer = null;
 let lastRedisRefresh = {};
+let refreshGeneration = 0;
 
 async function monitorGet(pathname, timeoutMs = 15000) {
   const res = await fetch(`${MONITOR_BASE}${pathname}`, {
@@ -116,6 +117,8 @@ function normalizeBundle(raw) {
     polyMatch: raw.polyMatch || null,
     redisRefresh: raw.redisRefresh || null,
     virtualSim: raw.virtualSim || null,
+    top100: raw.top100 || raw.rankingsBoard || null,
+    rankingsBoard: raw.rankingsBoard || raw.top100 || null,
     ok: true,
     member: true,
     events: eventCount,
@@ -131,8 +134,15 @@ function normalizeBundle(raw) {
  * 不写 MySQL。
  */
 async function refreshRedisFromMonitor({ includeLive = true } = {}) {
-  if (refreshPromise) return refreshPromise;
-  refreshPromise = (async () => {
+  const myGen = ++refreshGeneration;
+  const prev = refreshPromise;
+  const run = (async () => {
+    if (prev) {
+      try { await prev; } catch (_) { /* ignore prior */ }
+    }
+    // 仅最新一代写入，避免切虚拟时被进行中的真实刷新盖掉
+    if (myGen !== refreshGeneration) return null;
+
     const redisStarted = Date.now();
     const pref = await tennisDataSource.get();
     const useAllsports = pref === 'api';
@@ -158,6 +168,7 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       bundle = normalizeBundle(body);
     }
     if (!bundle) throw new Error('invalid monitor bundle');
+    if (myGen !== refreshGeneration) return null;
 
     bundle.dataSource = pref;
     bundle.upstream = useDocks500 ? 'docks500' : useAllsports ? 'allsportsapi2' : 'ipwo';
@@ -172,7 +183,6 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     if (includeLive && !useAllsports && !useDocks500) {
       try {
         let liveState = await tennisLive.fetchMonitorLiveOverlayState();
-        // 快照不可靠（idle/过期/采集中）时强制拉一次，否则无法把完赛场次从「进行中」收口
         if (!liveState || !liveState.closeDropouts) {
           const events = await tennisLive.fetchMonitorLiveEventsFresh(true);
           liveState = { events: events || [], closeDropouts: true };
@@ -223,18 +233,25 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       bundle.live = { tournaments: [], tournamentCount: 0, eventCount: 0, matches: [] };
     }
     bundle.live.eventCount = bundle.live.eventCount ?? (bundle.live.matches || []).length;
+    if (myGen !== refreshGeneration) return null;
     await tennisCache.setCachedBundle(bundle, bundle.fetched_at);
-    if (useDocks500) {
-      try {
-        const tennisThreeBuckets = require('./tennisThreeBuckets');
-        const split = await tennisThreeBuckets.splitFullToThreeBuckets(bundle);
-        bundle.bucketSplit = split;
+    try {
+      const tennisThreeBuckets = require('./tennisThreeBuckets');
+      if (!useDocks500) {
+        delete bundle.virtualSim;
+      }
+      const split = await tennisThreeBuckets.splitFullToThreeBuckets(bundle);
+      bundle.bucketSplit = split;
+      if (useDocks500) {
         bundle.virtualSim = bundle.virtualSim || null;
-        console.log(
-          `[tennis/monitor-redis] docks500 buckets prematch=${split.prematch} inplay=${split.inplay} settled=${split.settled}`,
-        );
-      } catch (e) {
-        console.error('[tennis/monitor-redis] docks500 three-buckets:', e.message);
+      }
+      console.log(
+        `[tennis/monitor-redis] three-buckets upstream=${bundle.upstream}`
+          + ` prematch=${split.prematch} inplay=${split.inplay} settled=${split.settled}`,
+      );
+    } catch (e) {
+      console.error('[tennis/monitor-redis] three-buckets:', e.message);
+      if (useDocks500) {
         try {
           const tennisSettledCache = require('./tennisSettledCache');
           await tennisSettledCache.setCachedBundle(bundle, bundle.fetched_at);
@@ -274,9 +291,11 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       throw e;
     })
     .finally(() => {
-      refreshPromise = null;
+      if (refreshPromise === run) refreshPromise = null;
     });
-  return refreshPromise;
+
+  refreshPromise = run;
+  return run;
 }
 
 function kickRefreshBackground() {

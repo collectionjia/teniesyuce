@@ -186,7 +186,8 @@ router.get('/state', auth(), async (req, res) => {
 router.get('/wallet', auth(), requireWallet, async (req, res) => {
   try {
     const status = await btcWallet.getWalletStatus(req.user.id);
-    if (status.configured) {
+    const wantBalance = String(req.query.balance ?? '1') !== '0';
+    if (status.configured && wantBalance) {
       try {
         const secrets = await btcWallet.loadWalletSecrets(req.user.id);
         status.usdcBalance = await polymarketTrade.fetchUsdcBalance(secrets);

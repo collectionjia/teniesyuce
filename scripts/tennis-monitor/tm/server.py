@@ -32,6 +32,7 @@ PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
 ALLOWED_COLLECT_INTERVALS = (0, 2, 4, 6, 12)
 ALLOWED_LIVE_POLL_INTERVALS = (0, 60, 120, 300)
+ALLOWED_COLLECT_HORIZON_DAYS = (1, 2, 3, 5)
 LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
 YUCE_SERVER_CONTAINER = (os.environ.get("YUCE_SERVER_CONTAINER") or "yuce-server-1").strip()
 
@@ -103,6 +104,7 @@ def _read_schedule_config() -> dict[str, Any]:
         "interval_hours": 6,
         "collect_enabled": True,
         "live_poll_interval_sec": LIVE_INTERVAL_SEC if LIVE_INTERVAL_SEC in ALLOWED_LIVE_POLL_INTERVALS else 300,
+        "collect_horizon_days": 1,
     }
     if SCHEDULE_FILE.exists():
         try:
@@ -117,10 +119,15 @@ def _read_schedule_config() -> dict[str, Any]:
             live_sec = int(live_sec_raw if live_sec_raw is not None else defaults["live_poll_interval_sec"])
             if live_sec not in ALLOWED_LIVE_POLL_INTERVALS:
                 live_sec = defaults["live_poll_interval_sec"]
+            horizon_raw = data.get("collect_horizon_days")
+            horizon = int(horizon_raw if horizon_raw is not None else defaults["collect_horizon_days"])
+            if horizon not in ALLOWED_COLLECT_HORIZON_DAYS:
+                horizon = defaults["collect_horizon_days"]
             return {
                 "interval_hours": hours,
                 "collect_enabled": collect_enabled,
                 "live_poll_interval_sec": live_sec,
+                "collect_horizon_days": horizon,
             }
         except Exception:
             pass
@@ -194,20 +201,25 @@ def _schedule_payload() -> dict[str, Any]:
     cfg = _read_schedule_config()
     hours = int(cfg["interval_hours"])
     live_sec = _live_interval_sec()
+    horizon = int(cfg.get("collect_horizon_days") or 1)
+    horizon_labels = {1: "今天(1天)", 2: "今天起2天", 3: "今天起3天", 5: "今天起5天"}
     return {
         "ok": True,
         "interval_hours": hours,
         "collect_enabled": bool(cfg.get("collect_enabled", True)),
         "live_poll_interval_sec": live_sec,
+        "collect_horizon_days": horizon,
         "collect_target": "top100",
         "allowed_intervals": list(ALLOWED_COLLECT_INTERVALS),
         "allowed_live_poll_intervals": list(ALLOWED_LIVE_POLL_INTERVALS),
+        "allowed_collect_horizon_days": list(ALLOWED_COLLECT_HORIZON_DAYS),
         "cron_line": (
             f"{_cron_expr_for_interval(hours)} top100-collect"
             if cfg.get("collect_enabled", True) and hours > 0
             else ""
         ),
         "label": "关闭定时" if hours <= 0 else f"每 {hours} 小时 Top100",
+        "collect_horizon_label": horizon_labels.get(horizon) or f"今天起{horizon}天",
         "live_poll_label": (
             "关闭"
             if live_sec <= 0
@@ -230,6 +242,11 @@ def _update_schedule(body: dict[str, Any]) -> dict[str, Any]:
         if live_sec not in ALLOWED_LIVE_POLL_INTERVALS:
             raise ValueError(f"live_poll_interval_sec must be one of {ALLOWED_LIVE_POLL_INTERVALS}")
         cfg["live_poll_interval_sec"] = live_sec
+    if "collect_horizon_days" in body and body.get("collect_horizon_days") is not None:
+        horizon = int(body["collect_horizon_days"])
+        if horizon not in ALLOWED_COLLECT_HORIZON_DAYS:
+            raise ValueError(f"collect_horizon_days must be one of {ALLOWED_COLLECT_HORIZON_DAYS}")
+        cfg["collect_horizon_days"] = horizon
     _write_schedule_config(cfg)
     cron_on = bool(cfg.get("collect_enabled", True)) and int(cfg["interval_hours"]) > 0
     _apply_collect_schedule(int(cfg["interval_hours"]), enabled=cron_on)
@@ -587,9 +604,10 @@ def _top100_api_from_snap(snap: dict[str, Any]) -> dict[str, Any]:
 
 def apply_top100_snapshot(snap: dict[str, Any]) -> None:
     """采集或 live 刷新后，同步 Top100 内存缓存（供 GET /top100）。"""
-    top100 = snap.get("top100")
-    if not top100 or not (top100.get("atp") or top100.get("wta")):
+    top100 = snap.get("rankingsBoard") or snap.get("top100")
+    if not isinstance(top100, dict) or not (top100.get("atp") or top100.get("wta")):
         return
+    snap = {**snap, "top100": top100}
     restore_top100_board(top100)
     payload = _top100_api_from_snap(snap)
     payload["atp"] = copy.deepcopy(payload.get("atp") or [])

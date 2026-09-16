@@ -18,10 +18,13 @@ function statusTypeOf(m) {
 }
 
 function isLive(m) {
+  if (m?.virtualPhase === 'inplay') return true;
   return LIVE_TYPES.has(statusTypeOf(m));
 }
 
 function isEnded(m) {
+  if (m?.virtualPhase === 'settled') return true;
+  if (m?.virtualPhase === 'prematch' || m?.virtualPhase === 'inplay') return false;
   const t = statusTypeOf(m);
   if (ENDED_TYPES.has(t)) return true;
   if (m?.status?.code === 100 || m?.status?.code === 60) return true;
@@ -184,6 +187,11 @@ async function splitFullToThreeBuckets(fullBundle) {
     ...baseShell(bundle, { source: 'tennis-inplay', matches: inplayMatches, liveOnly: true }),
     message: `inplay · ${inplayMatches.length}`,
   };
+  if (skipTop) {
+    inplay.upstream = 'docks500';
+    inplay.dataSource = 'docks500';
+    inplay.virtualSim = bundle.virtualSim || true;
+  }
   // settled: put ended in live.matches for TennisBoard compatibility
   const settledGrouped = groupScheduled(settledMatches);
   const settled = {
@@ -277,8 +285,16 @@ async function migratePrematchByStartTime(nowMs = Date.now()) {
  *（tick 期间新开赛、不全依赖盘前迁桶）
  */
 async function admitLiveFromFull() {
+  const tennisDataSource = require('./tennisDataSource');
+  if ((await tennisDataSource.get()) === 'docks500') {
+    return { admitted: 0, skipped: true, reason: 'virtual' };
+  }
   const full = await tennisCache.getBundle();
   if (!full) return { admitted: 0 };
+  // 全量仍是虚拟包时不要往盘中掺
+  if (full.upstream === 'docks500' || full.dataSource === 'docks500' || full.virtualSim) {
+    return { admitted: 0, skipped: true, reason: 'full is virtual' };
+  }
   const rankings = full.rankingsByPlayer || {};
   const candidates = flattenMatches(full).filter(
     (m) => isLive(m) && passesTop100(m, rankings)
@@ -366,11 +382,90 @@ async function migrateInplayEnded() {
   return { moved: ended.length };
 }
 
+/**
+ * 虚拟采集：默认用 docks/2026_500.txt 模拟盘前/盘中/盘后，写入 Redis 三桶。
+ * 不使用 Sofascore/IPWO 真实采集包。
+ */
+async function seedVirtualPrematchInplay(opts = {}) {
+  const tennisDocks500 = require('./tennisDocks500');
+  const tennisDataSource = require('./tennisDataSource');
+  const txtName = opts.txtName || '2026_500.txt';
+
+  try {
+    await tennisDataSource.set('docks500');
+  } catch (e) {
+    console.warn('[tennis/seed-virtual] set data-source', e.message);
+  }
+
+  try {
+    tennisDocks500.ensureByDayFromTxt({ force: !!opts.forceRebuild, txtName });
+  } catch (e) {
+    return { ok: false, error: e.message || `找不到 docks/${txtName}` };
+  }
+
+  if (opts.date) {
+    try {
+      await tennisDocks500.setSelectedDate(opts.date);
+    } catch (e) {
+      return { ok: false, error: e.message || '虚拟日期无效' };
+    }
+  }
+
+  let date = opts.date || (await tennisDocks500.getSelectedDate());
+  const days = tennisDocks500.listDays();
+  if (!date && days.length) date = days[0].date;
+  if (!date) return { ok: false, error: `docks/${txtName} 无可用按日数据` };
+
+  let bundle;
+  try {
+    bundle = tennisDocks500.loadDayBundle(date, { simulate: false });
+  } catch (e) {
+    return { ok: false, error: e.message || '读取 txt 日包失败' };
+  }
+
+  const all = flattenMatches(bundle).map((m) => ({ ...m }));
+  if (!all.length) return { ok: false, error: 'txt 日包无场次' };
+
+  const working = {
+    ...bundle,
+    scheduled: groupScheduled(all),
+    live: { matches: [], tournaments: [], tournamentCount: 0, eventCount: 0 },
+    fetched_at: new Date().toISOString(),
+    date,
+    dataSource: 'docks500',
+    upstream: 'docks500',
+    source: 'docks500',
+    txtSource: txtName,
+  };
+
+  tennisDocks500.applyVirtualPhases(working, {
+    prematchCount: opts.prematchCount,
+    inplayCount: opts.inplayCount,
+  });
+
+  const wrote = await tennisCache.setCachedBundle(working);
+  if (!wrote) return { ok: false, error: '写入 Redis 全量包失败（检查 Redis）' };
+
+  const split = await splitFullToThreeBuckets(working);
+  return {
+    ok: true,
+    from: 'docks-txt',
+    date,
+    txtSource: txtName,
+    ...split,
+    virtualSim: working.virtualSim || null,
+    message:
+      working.message
+      || `虚拟采集 · docks/${txtName} · ${date} · 盘前${split.prematch} / 盘中${split.inplay} / 盘后${split.settled}`,
+  };
+}
+
 module.exports = {
   splitFullToThreeBuckets,
   migratePrematchByStartTime,
   migrateInplayEnded,
   admitLiveFromFull,
+  seedVirtualPrematchInplay,
   isLive,
   isEnded,
   isNotStarted,

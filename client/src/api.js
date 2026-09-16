@@ -136,6 +136,10 @@ export async function fetchAdminProducts() {
   const { data } = await api.get('/admin/products')
   return data.products
 }
+export async function fetchAdminProduct(id) {
+  const { data } = await api.get(`/admin/products/${id}`)
+  return data.product
+}
 export async function createProduct(payload) {
   const { data } = await api.post('/admin/products', payload)
   return data
@@ -315,6 +319,11 @@ export async function fetchTennisMonitorTop100(refresh = false) {
   return data
 }
 
+export async function fetchTennisMonitorBundle() {
+  const { data } = await api.get('/admin/tennis-monitor/bundle')
+  return data
+}
+
 export async function fetchTennisMonitorTop20(refresh = false) {
   const { data } = await api.get('/admin/tennis-monitor/top20', {
     params: refresh ? { refresh: 1 } : {},
@@ -327,8 +336,8 @@ export async function fetchTennisMonitorLogs(lines = 120) {
   return data
 }
 
-export async function triggerTennisMonitorCollect() {
-  const { data } = await api.post('/admin/tennis-monitor/collect')
+export async function triggerTennisMonitorCollect(body = {}) {
+  const { data } = await api.post('/admin/tennis-monitor/collect', body)
   return data
 }
 
@@ -375,18 +384,158 @@ export async function updateTennisMonitorDataSource(source, extra = {}) {
   return data
 }
 
-export async function fetchTennisEngines() {
+let tennisEnginesCache = null
+let tennisEnginesCacheAt = 0
+const TENNIS_ENGINES_TTL_MS = 8000
+
+export function invalidateTennisEnginesCache() {
+  tennisEnginesCache = null
+  tennisEnginesCacheAt = 0
+}
+
+export async function fetchTennisEngines({ force = false } = {}) {
+  if (
+    !force
+    && tennisEnginesCache
+    && (Date.now() - tennisEnginesCacheAt) < TENNIS_ENGINES_TTL_MS
+  ) {
+    return tennisEnginesCache
+  }
   const { data } = await api.get('/admin/tennis-monitor/engines')
+  tennisEnginesCache = data
+  tennisEnginesCacheAt = Date.now()
   return data
+}
+
+export async function fetchTennisBettingExecLogs(params = {}) {
+  const { data } = await api.get('/admin/tennis-monitor/engines/betting-logs', { params })
+  return data
+}
+
+export async function clearTennisBettingExecLogs() {
+  const { data } = await api.post('/admin/tennis-monitor/engines/betting-logs/clear')
+  return data
+}
+
+export async function fetchTennisBettingOrders(params = {}) {
+  const limit = Number(params.limit) || 100
+  const offset = Number(params.offset) || 0
+  try {
+    const { data } = await api.get('/admin/tennis-monitor/engines/betting-orders', {
+      params: { limit, offset },
+    })
+    return data
+  } catch (e) {
+    // 远程/旧后端尚未部署该路由时回退到已有买卖记录
+    if (e?.response?.status !== 404) throw e
+    const { data } = await api.get('/trades', {
+      params: { product: 'all', limit, offset, _: Date.now() },
+      headers: { 'Cache-Control': 'no-cache' },
+    })
+    const items = (Array.isArray(data?.items) ? data.items : []).filter((r) =>
+      String(r.product || '').startsWith('tennis')
+    )
+    return {
+      total: items.length,
+      items,
+      userId: null,
+      userAccount: null,
+      fallback: true,
+    }
+  }
+}
+
+export async function deleteTennisBettingOrder(id) {
+  try {
+    const { data } = await api.delete(`/admin/tennis-monitor/engines/betting-orders/${id}`)
+    return data
+  } catch (e) {
+    if (e?.response?.status !== 404) throw e
+    const { data } = await api.delete(`/trades/${id}`)
+    return data
+  }
+}
+
+export async function clearTennisBettingOrders() {
+  try {
+    const { data } = await api.post('/admin/tennis-monitor/engines/betting-orders/clear')
+    return data
+  } catch (e) {
+    if (e?.response?.status !== 404) throw e
+    const { data } = await api.post('/trades/clear', { product: 'tennis-family' })
+    return data
+  }
 }
 
 export async function updateTennisEngines(payload) {
   const { data } = await api.post('/admin/tennis-monitor/engines', payload)
+  invalidateTennisEnginesCache()
+  return data
+}
+
+export async function markTennisBettingPlaced(payload) {
+  const { data } = await api.post('/admin/tennis-monitor/engines/betting-mark-placed', payload)
+  return data
+}
+
+export async function markTennisBettingSold(payload) {
+  const { data } = await api.post('/admin/tennis-monitor/engines/betting-mark-sold', payload)
   return data
 }
 
 export async function splitTennisThreeBuckets() {
   const { data } = await api.post('/admin/tennis-monitor/engines/split-buckets')
+  return data
+}
+
+export async function seedTennisVirtualBuckets(payload = {}) {
+  const { data } = await api.post('/admin/tennis-monitor/engines/seed-virtual', payload)
+  return data
+}
+
+export async function fetchDocks500Days() {
+  const { data } = await api.get('/admin/tennis-monitor/docks500/days')
+  return data
+}
+
+export async function fetchDocks500Day(date) {
+  const { data } = await api.get(`/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}`)
+  return data
+}
+
+export async function patchDocks500Match(date, id, patch) {
+  const { data } = await api.put(
+    `/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}/match/${encodeURIComponent(id)}`,
+    patch,
+  )
+  return data
+}
+
+export async function clearDocks500Day(date) {
+  const { data } = await api.post(
+    `/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}/clear`,
+  )
+  return data
+}
+
+export async function addDocks500Match(date, body) {
+  const { data } = await api.post(
+    `/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}/match`,
+    body,
+  )
+  return data
+}
+
+export async function unlockResimDocks500Day(date, body = {}) {
+  const { data } = await api.post(
+    `/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}/unlock-resim`,
+    body,
+  )
+  return data
+}
+
+export async function applyDocks500Day(date) {
+  const { data } = await api.post(`/admin/tennis-monitor/docks500/day/${encodeURIComponent(date)}/apply`)
   return data
 }
 
@@ -487,8 +636,10 @@ export async function fetchBtcState() {
   return data
 }
 
-export async function fetchBtcWallet() {
-  const { data } = await api.get('/btc/wallet')
+export async function fetchBtcWallet(opts = {}) {
+  const params = {}
+  if (opts.balance === false) params.balance = '0'
+  const { data } = await api.get('/btc/wallet', { params })
   return data
 }
 
@@ -574,6 +725,11 @@ export async function fetchTennisPrematchToday() {
 
 export async function placeTennisPrematchBatchTrade(payload) {
   const { data } = await api.post('/tennis-prematch/trade/batch', payload)
+  return data
+}
+
+export async function placeTennisPrematchSell(payload) {
+  const { data } = await api.post('/tennis-prematch/trade/sell', payload)
   return data
 }
 

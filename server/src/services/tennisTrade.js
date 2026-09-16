@@ -46,7 +46,7 @@ function pickSide(match, rankingsByPlayer) {
   return homeR < awayR ? 'home' : 'away';
 }
 
-async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'tennis' } = {}) {
+async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'tennis', simulate = false } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
   }
@@ -57,7 +57,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
   const amount = Number(amountUsd);
   if (!(amount >= 1)) throw new Error('每场投注金额至少 $1');
 
-  const secrets = await btcWallet.loadWalletSecrets(userId);
+  const isSim = !!simulate;
+  const secrets = isSim ? null : await btcWallet.loadWalletSecrets(userId);
   const tradeProduct = String(product || 'tennis').toLowerCase();
   let bundle;
   if (tradeProduct === 'tennis-prematch') {
@@ -110,7 +111,44 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
       continue;
     }
 
+    const labelBase = `${homeName || '?'} vs ${awayName || '?'}`;
+    const label = isSim ? `[模拟] ${labelBase}` : labelBase;
+
     try {
+      if (isSim) {
+        const orderId = `sim_${Date.now().toString(36)}_${String(eventId).slice(-6)}`;
+        try {
+          await tradeRecords.addTradeRecord(userId, {
+            product: tradeProduct,
+            action: 'buy',
+            market: String(eventId),
+            side,
+            amountUsd: amount,
+            shares: amount,
+            price: 1,
+            label,
+            orderId,
+            ok: true,
+          });
+        } catch (err) {
+          console.error('[tennis/trade] sim record', eventId, err.message || err);
+        }
+        results.push({
+          eventId,
+          ok: true,
+          side,
+          amountUsd: amount,
+          homeName,
+          awayName,
+          orderId,
+          simulated: true,
+          status: 'simulated',
+          takingAmount: String(amount),
+          makingAmount: '',
+        });
+        continue;
+      }
+
       const { tokenId } = await polymarketTrade.getEventSideTokenId(
         poly.url,
         side,
@@ -129,7 +167,6 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
       const orderId = result?.orderID || result?.id || result?.orderId || '';
       const price = tradeRecords.priceFromFill(result, { action: 'buy', amountUsd: amount });
       const shares = tradeRecords.sharesFromFill(result, { action: 'buy', amountUsd: amount, price });
-      const label = `${homeName || '?'} vs ${awayName || '?'}`;
       try {
         await tradeRecords.addTradeRecord(userId, {
           product: tradeProduct,
@@ -152,6 +189,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
         ok: true,
         side,
         amountUsd: amount,
+        price,
+        shares,
         homeName,
         awayName,
         orderId,
@@ -168,7 +207,7 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
           market: String(eventId),
           side,
           amountUsd: amount,
-          label: `${homeName || '?'} vs ${awayName || '?'}`,
+          label,
           ok: false,
           error: e.message || '下单失败',
         });
@@ -183,17 +222,19 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
   }
 
   const okCount = results.filter((r) => r.ok).length;
+  const simTag = isSim ? '模拟' : '';
   return {
     ok: okCount > 0,
     total: results.length,
     success: okCount,
     failed: results.length - okCount,
+    simulated: isSim,
     results,
     message: okCount === 0
-      ? '批量下单失败，请查看错误详情'
+      ? `批量${simTag}下单失败，请查看错误详情`
       : okCount === results.length
-        ? `批量下单完成：${okCount} 场已成交`
-        : `批量下单：${okCount} 场已成交，${results.length - okCount} 场失败`,
+        ? `批量${simTag}下单完成：${okCount} 场已${isSim ? '记账' : '成交'}`
+        : `批量${simTag}下单：${okCount} 场已${isSim ? '记账' : '成交'}，${results.length - okCount} 场失败`,
   };
 }
 
@@ -214,11 +255,58 @@ async function placeSellOrder(userId, {
   side,
   shares = 'all',
   product = 'tennis-inplay',
+  simulate = false,
 } = {}) {
   const tradeProduct = String(product || 'tennis-inplay').toLowerCase();
   const sideKey = String(side || '').toLowerCase();
   if (!eventId) throw new Error('缺少 eventId');
   if (!['home', 'away'].includes(sideKey)) throw new Error('投注方向无效');
+
+  const isSim = !!simulate;
+
+  // 模拟卖出：不依赖 Redis 场次 / PM 外链（虚拟日联调常缺这两项）
+  if (isSim) {
+    let homeName = '';
+    let awayName = '';
+    try {
+      const bundle = await resolveBundle(tradeProduct);
+      const match = bundle ? findMatch(bundle, eventId) : null;
+      if (match) {
+        homeName = match.homePlayer?.name || match.home || '';
+        awayName = match.awayPlayer?.name || match.away || '';
+      }
+    } catch (_) { /* ignore */ }
+    const labelBase = (homeName || awayName)
+      ? `${homeName || '?'} vs ${awayName || '?'}`
+      : String(eventId);
+    const label = `[模拟] ${labelBase}`;
+    const orderId = `sim_sell_${Date.now().toString(36)}_${String(eventId).slice(-6)}`;
+    try {
+      await tradeRecords.addTradeRecord(userId, {
+        product: tradeProduct,
+        action: 'sell',
+        market: String(eventId),
+        side: sideKey,
+        shares: null,
+        label,
+        orderId,
+        ok: true,
+      });
+    } catch (err) {
+      console.error('[tennis/trade] sim sell record', eventId, err.message || err);
+    }
+    return {
+      ok: true,
+      eventId: String(eventId),
+      side: sideKey,
+      simulated: true,
+      orderId,
+      soldShares: 'all',
+      status: 'simulated',
+      homeName,
+      awayName,
+    };
+  }
 
   const secrets = await btcWallet.loadWalletSecrets(userId);
   const bundle = await resolveBundle(tradeProduct);
@@ -232,6 +320,8 @@ async function placeSellOrder(userId, {
 
   const homeName = match.homePlayer?.name || match.home || '';
   const awayName = match.awayPlayer?.name || match.away || '';
+  const label = `${homeName || '?'} vs ${awayName || '?'}`;
+
   const { tokenId } = await polymarketTrade.getEventSideTokenId(
     poly.url,
     sideKey,
@@ -254,7 +344,6 @@ async function placeSellOrder(userId, {
   const orderId = result?.orderID || result?.id || result?.orderId || '';
   const price = tradeRecords.priceFromFill(result, { action: 'sell' });
   const soldShares = tradeRecords.sharesFromFill(result, { action: 'sell', price });
-  const label = `${homeName || '?'} vs ${awayName || '?'}`;
   try {
     await tradeRecords.addTradeRecord(userId, {
       product: tradeProduct,
@@ -281,6 +370,9 @@ async function placeSellOrder(userId, {
     orderId,
     soldShares,
     price,
+    amountUsd: price > 0 && soldShares > 0
+      ? Math.round(price * soldShares * 100) / 100
+      : null,
     homeName,
     awayName,
     status: result?.status || '',

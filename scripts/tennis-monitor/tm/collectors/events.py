@@ -1,6 +1,7 @@
 """Collect tennis events: list scheduled tournaments, then fetch 500/1000/GS draws only."""
 from __future__ import annotations
 
+import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -33,23 +34,47 @@ def _shift_date(match_date: str, days: int) -> str:
     return (base + timedelta(days=days)).strftime("%Y-%m-%d")
 
 
+def collect_date_list(start_date: str, horizon_days: int = 1) -> list[str]:
+    n = max(1, int(horizon_days or 1))
+    return [_shift_date(start_date, i) for i in range(n)]
+
+
+def read_collect_horizon_days() -> int:
+    """从 config/schedule.json 读采集跨度（今天起 1/2/3/5 天），默认 1。"""
+    allowed = (1, 2, 3, 5)
+    try:
+        from tm.env import MONITOR_ROOT
+
+        path = MONITOR_ROOT / "config" / "schedule.json"
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            n = int(data.get("collect_horizon_days") or 1)
+            if n in allowed:
+                return n
+    except Exception:
+        pass
+    return 1
+
+
 def _is_live(ev: dict) -> bool:
     stype = str((ev.get("status") or {}).get("type") or "").lower()
     desc = str((ev.get("status") or {}).get("description") or "").lower()
     return stype in {"inprogress", "live", "interrupted"} or "live" in desc
 
 
-def _is_active_on_date(ev: dict, match_date: str) -> bool:
+def _is_active_on_dates(ev: dict, date_set: set[str]) -> bool:
     if _is_ended(ev):
         return False
     if _is_live(ev):
         return True
     local = event_local_date(ev)
-    if local == match_date:
-        return True
-    if local == _shift_date(match_date, 1):
+    if local and local in date_set:
         return True
     return False
+
+
+def _is_active_on_date(ev: dict, match_date: str) -> bool:
+    return _is_active_on_dates(ev, {match_date, _shift_date(match_date, 1)})
 
 
 def _tournament_tour(tournament: dict) -> str:
@@ -137,24 +162,34 @@ def fetch_tournament_events(client, tournament: dict) -> list[dict]:
     return list(evdata.get("events") or [])
 
 
-def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
+def collect_tennis_events(
+    client,
+    match_date: str | None = None,
+    *,
+    horizon_days: int | None = None,
+) -> list[dict]:
     global _last_collect_stats
-    d = match_date or today_bj()
+    d0 = match_date or today_bj()
+    horizon = int(horizon_days) if horizon_days is not None else read_collect_horizon_days()
+    if horizon not in (1, 2, 3, 5):
+        horizon = 1
+    dates = collect_date_list(d0, horizon)
+    date_set = set(dates)
     events: list[dict] = []
     seen: set[Any] = set()
-    sofa_today_ids: set[Any] = set()
+    sofa_range_ids: set[Any] = set()
     live_tier = 0
     live_skipped = 0
 
     def add(ev: dict, *, from_sofa_day: str | None = None) -> None:
         eid = ev.get("id")
         if eid is None or eid in seen:
-            if eid is not None and from_sofa_day == d:
-                sofa_today_ids.add(eid)
+            if eid is not None and from_sofa_day in date_set:
+                sofa_range_ids.add(eid)
             return
         seen.add(eid)
-        if from_sofa_day == d:
-            sofa_today_ids.add(eid)
+        if from_sofa_day in date_set:
+            sofa_range_ids.add(eid)
         events.append(ev)
 
     for ev in client.get_live_tennis_events().get("events") or []:
@@ -164,21 +199,41 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
         else:
             live_skipped += 1
 
-    listed, pages = list_scheduled_tournaments(client, d)
-    tier_tournaments = [t for t in listed if is_tier_tournament(t)]
+    listed_all: list[dict] = []
+    listed_seen: set[Any] = set()
+    pages_total = 0
     detail_errors = 0
     detail_fetched = 0
+    tier_tournaments: list[dict] = []
+    tier_seen: set[Any] = set()
 
-    for tournament in tier_tournaments:
-        name = (tournament.get("uniqueTournament") or {}).get("name") or tournament.get("name") or "?"
-        try:
-            detail_fetched += 1
-            for ev in fetch_tournament_events(client, tournament):
-                if _is_active_on_date(ev, d):
-                    add(ev, from_sofa_day=d)
-        except Exception as exc:
-            detail_errors += 1
-            print(f"[events] tier tournament {name} skip: {exc}")
+    for d in dates:
+        listed, pages = list_scheduled_tournaments(client, d)
+        pages_total += pages
+        for t in listed:
+            tid = t.get("id")
+            if tid is None or tid in listed_seen:
+                continue
+            listed_seen.add(tid)
+            listed_all.append(t)
+        for tournament in listed:
+            if not is_tier_tournament(tournament):
+                continue
+            tid = tournament.get("id")
+            if tid is not None and tid in tier_seen:
+                continue
+            if tid is not None:
+                tier_seen.add(tid)
+            tier_tournaments.append(tournament)
+            name = (tournament.get("uniqueTournament") or {}).get("name") or tournament.get("name") or "?"
+            try:
+                detail_fetched += 1
+                for ev in fetch_tournament_events(client, tournament):
+                    if _is_active_on_dates(ev, date_set):
+                        add(ev, from_sofa_day=d)
+            except Exception as exc:
+                detail_errors += 1
+                print(f"[events] tier tournament {name} skip: {exc}")
 
     kept: list[dict] = []
     for ev in events:
@@ -189,14 +244,18 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
             continue
         bj = event_local_date(ev)
         eid = ev.get("id")
-        if bj == d or eid in sofa_today_ids:
+        if (bj and bj in date_set) or eid in sofa_range_ids:
             kept.append(ev)
 
     wta = sum(1 for ev in kept if _event_tour(ev) == "WTA")
+    end_d = dates[-1] if dates else d0
     _last_collect_stats = {
-        "date": d,
-        "pages": pages,
-        "listed": len(listed),
+        "date": d0,
+        "date_end": end_d,
+        "horizon_days": horizon,
+        "dates": dates,
+        "pages": pages_total,
+        "listed": len(listed_all),
         "tier": len(tier_tournaments),
         "tier_detail_fetched": detail_fetched,
         "tier_detail_errors": detail_errors,
@@ -208,14 +267,15 @@ def collect_tennis_events(client, match_date: str | None = None) -> list[dict]:
         "tournaments": [slim_tournament(t) for t in tier_tournaments],
         "requests": {
             "live": 1,
-            "scheduled_pages": pages,
+            "scheduled_pages": pages_total,
             "tier_detail": detail_fetched * 2,
-            "estimated": 2 + 1 + pages + detail_fetched * 2,
+            "estimated": 2 + 1 + pages_total + detail_fetched * 2,
         },
     }
     print(
-        f"[events] {d}: listed={len(listed)} pages={pages} tier={len(tier_tournaments)} "
-        f"kept={len(kept)} live={live_tier} live_skip={live_skipped} wta={wta}"
+        f"[events] {d0}..{end_d} ({horizon}d): listed={len(listed_all)} pages={pages_total} "
+        f"tier={len(tier_tournaments)} kept={len(kept)} live={live_tier} "
+        f"live_skip={live_skipped} wta={wta}"
     )
     if os.environ.get("SOFA_LOG_MATCHES", "1") == "1" and kept:
         from tm.collectors.tier_collect import log_tier_matches

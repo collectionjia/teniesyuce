@@ -7,6 +7,8 @@ import BtcBoard from './components/BtcBoard.vue'
 import BtcBoardAdmin from './components/BtcBoardAdmin.vue'
 import TennisMonitor from './components/TennisMonitor.vue'
 import SchedulerCenter from './components/SchedulerCenter.vue'
+import TennisDocksEditor from './components/TennisDocksEditor.vue'
+import TennisTop100Wide from './components/TennisTop100Wide.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
@@ -38,6 +40,111 @@ const products = ref([])
 const adminProducts = ref([])
 const userSubs = reactive({})
 const openedProduct = ref(null)
+/** 当前列表页是否已开启自动投注（由 TennisBoard / BtcBoard 上报） */
+const boardAutoBetOn = ref(false)
+/** 列表页已下单场次（购物车） */
+const boardPlacedOrders = ref([])
+const placedCartOpen = ref(false)
+/** 盘前/盘中 TennisBoard 实例，供页头「条件/投注设置」调用 */
+const tennisBoardRef = ref(null)
+
+const boardPlacedBuys = computed(() => boardPlacedOrders.value.filter((r) => !r.sold))
+const boardPlacedSells = computed(() => boardPlacedOrders.value.filter((r) => r.sold))
+const boardPlacedBuyCount = computed(() => boardPlacedBuys.value.length)
+/** 购物车标签：buy | sell */
+const placedCartTab = ref('buy')
+const boardPlacedTabRows = computed(() =>
+  placedCartTab.value === 'sell' ? boardPlacedSells.value : boardPlacedBuys.value,
+)
+
+function openPlacedCart() {
+  placedCartTab.value = 'buy'
+  placedCartOpen.value = true
+}
+
+function onBoardAutoBetChange(on) {
+  boardAutoBetOn.value = !!on
+}
+
+function onBoardPlacedOrdersChange(list) {
+  boardPlacedOrders.value = Array.isArray(list) ? list : []
+}
+
+function openBoardConditionModal() {
+  tennisBoardRef.value?.openConditionModal?.()
+}
+
+function openBoardBettingModal() {
+  tennisBoardRef.value?.openBettingModal?.()
+}
+
+function openBoardScheduleModal() {
+  tennisBoardRef.value?.openScheduleModal?.()
+}
+
+const sellingPlacedId = ref(null)
+async function sellBoardPlacedOrder(row) {
+  if (!row?.id || row.sold || sellingPlacedId.value) return
+  sellingPlacedId.value = String(row.id)
+  try {
+    await tennisBoardRef.value?.sellPlacedOrder?.(row.id)
+    showToast(row.simulated ? '已模拟卖出，该场不再自动下单' : '已卖出，该场不再自动下单', 'success')
+    placedCartTab.value = 'sell'
+  } catch (e) {
+    showToast(e?.response?.data?.error || e?.message || '卖出失败', 'error')
+  } finally {
+    sellingPlacedId.value = null
+  }
+}
+
+function clearBoardSoldOrders() {
+  if (!boardPlacedSells.value.length) {
+    showToast('暂无卖出记录', 'error')
+    return
+  }
+  if (!window.confirm(`确认清理 ${boardPlacedSells.value.length} 条卖出记录？清理后这些场次可再次被自动下单。`)) return
+  try {
+    const r = tennisBoardRef.value?.clearSoldPlacedOrders?.()
+    const n = Number(r?.cleared) || boardPlacedSells.value.length
+    showToast(n ? `已清理 ${n} 条卖出记录` : '已清理卖出记录', 'success')
+    placedCartTab.value = 'buy'
+  } catch (e) {
+    showToast(e?.message || '清理失败', 'error')
+  }
+}
+
+function fmtPlacedAt(iso) {
+  if (!iso) return ''
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ''
+    const p = (n) => String(n).padStart(2, '0')
+    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+  } catch {
+    return ''
+  }
+}
+
+/** 购物车：买入的运动员名（优先 sideName，否则用对阵+方向推） */
+function placedBetPlayerName(row) {
+  if (!row) return ''
+  const named = String(row.sideName || '').trim()
+  if (named && named !== '主' && named !== '客' && named !== '主队' && named !== '客队') return named
+  if (row.side === 'home' && row.homeName) return String(row.homeName)
+  if (row.side === 'away' && row.awayName) return String(row.awayName)
+  const label = String(row.label || '')
+  const parts = label.split(/\s+vs\s+/i)
+  if (parts.length === 2) {
+    const home = parts[0].trim()
+    const away = parts[1].trim()
+    if (row.side === 'home' && home) return home
+    if (row.side === 'away' && away) return away
+  }
+  if (named) return named
+  if (row.side === 'home') return '主队'
+  if (row.side === 'away') return '客队'
+  return ''
+}
 
 const agent = reactive({
   monthCommission: 0, withdrawable: 0, rate: 25, inviteCode: '',
@@ -509,7 +616,12 @@ function onWalletUpdated(s) {
     walletUsdcBalance.value = null
     return
   }
-  if (s.usdcBalance != null) walletUsdcBalance.value = s.usdcBalance
+  if (s.usdcBalance != null && s.usdcBalance !== '') {
+    walletUsdcBalance.value = s.usdcBalance
+  } else {
+    walletUsdcBalance.value = null
+    loadWalletHeader()
+  }
 }
 const headerTitle = computed(() => {
   if (paymentResult.show) {
@@ -520,7 +632,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -563,6 +675,79 @@ const paymentStatusStyle = computed(() => ({
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
 const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-betting', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+/** 模拟数据编辑：独立全屏页（?page=docks-editor） */
+const standaloneDocksEditor = ref(false)
+const standaloneDocksDate = ref('')
+/** Top100 采购：独立宽屏页（?page=top100） */
+const standaloneTop100 = ref(false)
+/** 独立页：/auth/me 后台校验中（有 token 时先出页面） */
+const standaloneAuthPending = ref(false)
+
+const ROLE_CACHE_KEY = 'yuce.standalone.role'
+
+function readStandalonePages() {
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const page = params.get('page')
+    if (page === 'docks-editor') {
+      standaloneDocksEditor.value = true
+      standaloneDocksDate.value = String(params.get('date') || '').trim()
+      standaloneTop100.value = false
+      return true
+    }
+    if (page === 'top100') {
+      standaloneTop100.value = true
+      standaloneDocksEditor.value = false
+      standaloneDocksDate.value = ''
+      return true
+    }
+  } catch (_) { /* ignore */ }
+  standaloneDocksEditor.value = false
+  standaloneDocksDate.value = ''
+  standaloneTop100.value = false
+  return false
+}
+
+function buildDocksEditorUrl(date) {
+  const q = new URLSearchParams()
+  q.set('page', 'docks-editor')
+  const d = String(date || '').trim()
+  if (d) q.set('date', d)
+  return `${window.location.origin}${window.location.pathname}?${q.toString()}`
+}
+
+function buildTop100WideUrl() {
+  const q = new URLSearchParams()
+  q.set('page', 'top100')
+  return `${window.location.origin}${window.location.pathname}?${q.toString()}`
+}
+
+/** 管理中心 / 采集页：新标签打开全屏模拟数据页 */
+function openDocksEditorPage(date) {
+  const d = String(date || '').trim()
+  if (d) {
+    try {
+      sessionStorage.setItem('tennis_docks_editor_date', d)
+    } catch (_) { /* ignore */ }
+  }
+  window.open(buildDocksEditorUrl(d), '_blank', 'noopener')
+}
+
+function openTop100WidePage() {
+  window.open(buildTop100WideUrl(), '_blank', 'noopener')
+}
+
+function onManageItemClick(item) {
+  if (item?.view === 'tennis-docks-editor') {
+    openDocksEditorPage()
+    return
+  }
+  if (item?.view === 'tennis-top100') {
+    openTop100WidePage()
+    return
+  }
+  go(item.view)
+}
 const adminManageSections = [
   {
     key: 'manage',
@@ -582,9 +767,11 @@ const adminManageSections = [
     title: '引擎类',
     desc: '网球采集 / 条件 / 投注 / 调度',
     items: [
-      { view: 'tennis-collect', label: '采集引擎', desc: '全量拆三桶 · Top100/盘中 · tick 刷 Polymarket', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-collect', label: '采集引擎', desc: '全量拆三桶 · Top100 · tick 刷 Polymarket', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 多组强制筛', icon: 'list', color: 'from-amber-500 to-yellow-500' },
       { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入与止损', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
+      { view: 'tennis-docks-editor', label: '虚拟日列表', desc: '盘前/盘中/盘后筛选 · 分页编辑模拟场次', icon: 'list', color: 'from-teal-500 to-cyan-600' },
+      { view: 'tennis-top100', label: 'Top100 宽屏', desc: 'ATP/WTA 并排 · 电脑全屏采购看板', icon: 'chart', color: 'from-sky-500 to-cyan-500' },
       { view: 'scheduler-center', label: '调度中心', desc: '采集/条件/投注 · 自定义时间 · 多任务', icon: 'list', color: 'from-sky-500 to-indigo-500' },
       { view: 'engine-api-keys', label: '引擎 API Key', desc: '签发 / 吊销 · 调用 /api/engine/*', icon: 'link', color: 'from-slate-500 to-zinc-600' },
     ],
@@ -869,6 +1056,9 @@ function setUser(u) {
   currentUser.btcSimEnabled = !!u.btcSimEnabled
   role.value = u.role
   balance.value = u.balance
+  try {
+    if (u?.role) localStorage.setItem(ROLE_CACHE_KEY, String(u.role))
+  } catch { /* ignore */ }
 }
 
 async function loadPaymentSettings() {
@@ -1557,22 +1747,60 @@ function withdrawStatusClass(s) {
   }[s] || 'bg-slate-100 text-slate-400'
 }
 
-async function refreshRoleData() {
-  if (role.value === 'user') {
-    await loadProducts()
-    await loadSubscriptions()
-  } else if (role.value === 'agent') {
-    await loadProducts()
-    await loadSubscriptions()
-    await loadAgentData()
-  } else if (role.value === 'admin') {
-    await loadProducts()
-    await loadSubscriptions()
-    await loadAdminData()
+/** 首页先出产品列表；订阅 / 管理后台数据后台拉，不挡「加载中」 */
+async function refreshRoleData({ deferSecondary = true } = {}) {
+  await loadProducts()
+  const loadSecondary = async () => {
+    try {
+      await loadSubscriptions()
+    } catch { /* 订阅失败不挡首页 */ }
+    try {
+      if (role.value === 'agent') await loadAgentData()
+      else if (role.value === 'admin') await loadAdminData()
+    } catch { /* 后台数据失败不挡首页 */ }
   }
+  if (deferSecondary) {
+    void loadSecondary()
+    return
+  }
+  await loadSecondary()
 }
 
 async function initSession() {
+  readStandalonePages()
+  const standalone = standaloneDocksEditor.value || standaloneTop100.value
+
+  // 独立宽屏页：有 token 立刻出壳，/auth/me 后台校验，不挡首屏
+  if (standalone) {
+    loading.value = false
+    const token = localStorage.getItem('token')
+    if (!token) {
+      authed.value = false
+      standaloneAuthPending.value = false
+      return
+    }
+    try {
+      const cached = localStorage.getItem(ROLE_CACHE_KEY)
+      if (cached) role.value = cached
+    } catch { /* ignore */ }
+    authed.value = true
+    standaloneAuthPending.value = true
+    api.fetchMe()
+      .then((user) => {
+        setUser(user)
+        authed.value = true
+      })
+      .catch(() => {
+        api.logoutLocal()
+        authed.value = false
+        role.value = 'user'
+      })
+      .finally(() => {
+        standaloneAuthPending.value = false
+      })
+    return
+  }
+
   loading.value = true
   try {
     const token = localStorage.getItem('token')
@@ -1581,7 +1809,7 @@ async function initSession() {
     setUser(user)
     authed.value = true
     view.value = defaultViewForRole(user.role)
-    await refreshRoleData()
+    await refreshRoleData({ deferSecondary: true })
   } catch {
     api.logoutLocal()
     authed.value = false
@@ -1606,8 +1834,10 @@ async function doLogin() {
     const data = await api.login(f.account, f.password)
     setUser(data.user)
     authed.value = true
-    view.value = defaultViewForRole(data.user.role)
-    await refreshRoleData()
+    if (!standaloneDocksEditor.value && !standaloneTop100.value) {
+      view.value = defaultViewForRole(data.user.role)
+      await refreshRoleData()
+    }
     showToast('登录成功', 'success')
   } catch (e) {
     loginError.value = e.response?.data?.error || '账号或密码错误'
@@ -1675,7 +1905,30 @@ function go(v) {
   if (v === 'mine') page.mine = 1
 }
 
+/** 盘前/盘中列表 → 管理中心条件引擎 / 投注引擎 / 调度中心 */
+function onOpenTennisAdminEngine(payload) {
+  if (payload?.kind === 'scheduler') {
+    go('scheduler-center')
+    return
+  }
+  const kind = payload?.kind === 'betting' ? 'betting' : 'condition'
+  const bucket = ['prematch', 'inplay', 'settled'].includes(payload?.bucket)
+    ? payload.bucket
+    : 'prematch'
+  try {
+    sessionStorage.setItem('tennis_engine_focus', JSON.stringify({ kind, bucket }))
+  } catch (_) { /* ignore */ }
+  go(kind === 'betting' ? 'tennis-betting' : 'tennis-condition')
+}
+
+function onOpenDocksEditor(date) {
+  openDocksEditorPage(date)
+}
+
 function openProduct(p) {
+  boardAutoBetOn.value = false
+  boardPlacedOrders.value = []
+  placedCartOpen.value = false
   openedProduct.value = p
   now.value = Date.now()
   view.value = 'product'
@@ -2151,6 +2404,7 @@ const icons = {
   help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17h.01"/></svg>',
   eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   eyeOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.4 4.7A9.6 9.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6 6.3A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 3.5-.6"/></svg>',
+  cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L21 8H7"/></svg>',
 }
 function icon(name) { return icons[name] || '' }
 
@@ -2203,6 +2457,12 @@ function isTennisInplayProduct(product) {
   if (tag === 'tennis-inplay') return true
   return /盘中采集|盘中网球/.test(String(product?.name || '')) && !/盘前|盘后/.test(String(product?.name || ''))
 }
+
+const showBoardEngineButtons = computed(
+  () => role.value === 'admin'
+    && !!openedProduct.value
+    && (isTennisPrematchProduct(openedProduct.value) || isTennisInplayProduct(openedProduct.value)),
+)
 
 function isTennisLiveProduct(product) {
   if (isTennisInplayProduct(product) || isTennisPrematchProduct(product) || isTennisSettledProduct(product)) return false
@@ -2286,7 +2546,62 @@ function productEmbedUrl(product) {
     <div v-if="loading" class="min-h-screen flex items-center justify-center bg-slate-900 text-white">加载中...</div>
 
     <template v-else>
-      <div class="relative mx-auto max-w-md min-h-screen bg-slate-50 flex flex-col phone-shadow overflow-hidden">
+      <!-- 模拟数据：独立全屏页（新标签打开，铺满浏览器） -->
+      <div
+        v-if="standaloneDocksEditor"
+        class="min-h-screen w-full bg-slate-100 text-slate-800"
+      >
+        <div v-if="!authed" class="min-h-screen flex items-center justify-center px-4">
+          <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-sm space-y-4">
+            <div>
+              <div class="text-lg font-semibold">虚拟日模拟数据</div>
+              <p class="text-sm text-slate-500 mt-1">请使用管理员账号登录后编辑</p>
+            </div>
+            <p v-if="loginError" class="text-sm text-danger">{{ loginError }}</p>
+            <input v-model="f.account" type="email" placeholder="邮箱" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" />
+            <input v-model="f.password" type="password" placeholder="密码" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" @keyup.enter="doLogin" />
+            <button type="button" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium" @click="doLogin">登录</button>
+          </div>
+        </div>
+        <div v-else-if="!standaloneAuthPending && role !== 'admin'" class="min-h-screen flex items-center justify-center px-4">
+          <div class="bg-white rounded-2xl p-6 shadow-sm text-center space-y-3 max-w-sm">
+            <p class="text-slate-700">仅管理员可编辑模拟数据</p>
+            <button type="button" class="chip-btn px-4 py-2 rounded-xl border border-slate-200 text-sm" @click="logout">退出</button>
+          </div>
+        </div>
+        <TennisDocksEditor v-else :initial-date="standaloneDocksDate" standalone />
+      </div>
+
+      <!-- Top100 采购：独立宽屏页 -->
+      <div
+        v-else-if="standaloneTop100"
+        class="min-h-screen w-full bg-slate-100 text-slate-800"
+      >
+        <div v-if="!authed" class="min-h-screen flex items-center justify-center px-4">
+          <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-sm space-y-4">
+            <div>
+              <div class="text-lg font-semibold">网球赛事 · 前100名赛事信息</div>
+              <p class="text-sm text-slate-500 mt-1">请使用管理员账号登录后查看</p>
+            </div>
+            <p v-if="loginError" class="text-sm text-danger">{{ loginError }}</p>
+            <input v-model="f.account" type="email" placeholder="邮箱" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" />
+            <input v-model="f.password" type="password" placeholder="密码" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" @keyup.enter="doLogin" />
+            <button type="button" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium" @click="doLogin">登录</button>
+          </div>
+        </div>
+        <div v-else-if="!standaloneAuthPending && role !== 'admin'" class="min-h-screen flex items-center justify-center px-4">
+          <div class="bg-white rounded-2xl p-6 shadow-sm text-center space-y-3 max-w-sm">
+            <p class="text-slate-700">仅管理员可查看 Top100 看板</p>
+            <button type="button" class="chip-btn px-4 py-2 rounded-xl border border-slate-200 text-sm" @click="logout">退出</button>
+          </div>
+        </div>
+        <TennisTop100Wide v-else standalone />
+      </div>
+
+      <div
+        v-else
+        class="relative mx-auto max-w-md min-h-screen bg-slate-50 flex flex-col phone-shadow overflow-hidden"
+      >
 
         <!-- 支付结果 / 成功页 -->
         <template v-if="paymentResult.show">
@@ -2489,28 +2804,6 @@ function productEmbedUrl(product) {
                 <div class="text-[15px] font-semibold leading-tight mt-0.5 truncate">{{ headerTitle }}</div>
               </div>
               <div class="flex items-center gap-1.5 shrink-0">
-                <div
-                  v-if="canShowWallet && walletConfigured && walletUsdcBalance != null"
-                  class="text-right px-1.5 py-0.5 rounded-md bg-white/10 border border-white/15 leading-tight"
-                  title="账户余额"
-                >
-                  <div class="text-[9px] opacity-70">余额</div>
-                  <div class="text-xs font-bold tabular-nums">${{ fmtWalletUsdc(walletUsdcBalance) }}</div>
-                </div>
-                <button
-                  v-if="canShowWallet"
-                  type="button"
-                  @click="showWalletSettings = true"
-                  class="h-7 px-2 rounded-md border border-white/25 hover:bg-white/10 transition text-[11px] font-medium whitespace-nowrap flex items-center gap-1"
-                  :title="walletConfigured ? '账户已配置' : '账户设置'"
-                >
-                  <span class="inline-block w-3 h-3" v-html="icon('wallet')"></span>
-                  <span>{{ walletConfigured ? '已配' : '账户' }}</span>
-                  <span
-                    class="w-1.5 h-1.5 rounded-full"
-                    :class="walletConfigured ? 'bg-emerald-300' : 'bg-white/40'"
-                  ></span>
-                </button>
                 <button
                   v-if="!showHelp && !paymentResult.show"
                   type="button"
@@ -2538,6 +2831,28 @@ function productEmbedUrl(product) {
                 </a>
                 <button @click="logout" class="h-7 px-2 rounded-md border border-white/25 hover:bg-white/10 transition text-[11px] font-medium whitespace-nowrap">
                   退出
+                </button>
+                <div
+                  v-if="canShowWallet && walletConfigured && walletUsdcBalance != null"
+                  class="text-right px-1.5 py-0.5 rounded-md bg-white/10 border border-white/15 leading-tight"
+                  title="账户余额"
+                >
+                  <div class="text-[9px] opacity-70">余额</div>
+                  <div class="text-xs font-bold tabular-nums">${{ fmtWalletUsdc(walletUsdcBalance) }}</div>
+                </div>
+                <button
+                  v-if="canShowWallet"
+                  type="button"
+                  @click="showWalletSettings = true"
+                  class="h-7 px-2 rounded-md border border-white/25 hover:bg-white/10 transition text-[11px] font-medium whitespace-nowrap flex items-center gap-1"
+                  :title="walletConfigured ? '账户已配置' : '账户设置'"
+                >
+                  <span class="inline-block w-3 h-3" v-html="icon('wallet')"></span>
+                  <span>{{ walletConfigured ? '已配' : '账户' }}</span>
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    :class="walletConfigured ? 'bg-emerald-300' : 'bg-white/40'"
+                  ></span>
                 </button>
               </div>
             </div>
@@ -2604,7 +2919,7 @@ function productEmbedUrl(product) {
                 </div>
                 <div
                   v-if="showSubscriptionInHeader(openedProduct)"
-                  class="flex flex-wrap items-center gap-2"
+                  class="flex flex-wrap items-center gap-2 w-full"
                 >
                   <button
                     type="button"
@@ -2619,10 +2934,45 @@ function productEmbedUrl(product) {
                     class="shrink-0 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
                   >兑换码购买</a>
                 </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-primary-700 font-medium px-0.5">
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-primary-700 font-medium px-0.5 w-full">
                   <span v-for="pl in plans" :key="pl.key">
                     ¥{{ planPriceInfo(openedProduct, pl.key).current }}/{{ planText(pl.key) }}
                   </span>
+                </div>
+                <div
+                  v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || boardAutoBetOn || showBoardEngineButtons)"
+                  class="flex flex-wrap items-center gap-1.5 w-full"
+                >
+                  <template v-if="showBoardEngineButtons">
+                    <button
+                      type="button"
+                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 text-xs font-semibold hover:bg-sky-100"
+                      @click="openBoardConditionModal"
+                    >条件设置</button>
+                    <button
+                      type="button"
+                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100"
+                      @click="openBoardBettingModal"
+                    >投注设置</button>
+                    <button
+                      type="button"
+                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-800 text-xs font-semibold hover:bg-indigo-100"
+                      @click="openBoardScheduleModal"
+                    >调度设置</button>
+                  </template>
+                  <button
+                    type="button"
+                    class="relative ml-auto inline-flex items-center justify-center w-8 h-8 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100"
+                    :title="boardPlacedBuyCount ? `买入持仓 ${boardPlacedBuyCount} 场` : (boardAutoBetOn ? '自动投注已开 · 暂无买入' : '购物车（暂无买入）')"
+                    aria-label="已下单场次"
+                    @click="openPlacedCart"
+                  >
+                    <span class="w-3.5 h-3.5 block [&>svg]:w-full [&>svg]:h-full" v-html="icon('cart')"></span>
+                    <span
+                      v-if="boardPlacedBuyCount > 0"
+                      class="absolute -top-1 -right-1 min-w-[1rem] h-4 px-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold leading-4 text-center"
+                    >{{ boardPlacedBuyCount > 99 ? '99+' : boardPlacedBuyCount }}</span>
+                  </button>
                 </div>
               </template>
               <div v-else class="flex items-center gap-2 min-h-0">
@@ -2666,18 +3016,30 @@ function productEmbedUrl(product) {
                 <!-- 网球：登录用户统一看全量数据 -->
                 <div v-if="isTennisPrematchProduct(openedProduct)" class="p-0">
                   <TennisBoard
+                    ref="tennisBoardRef"
                     board-mode="prematch"
                     :show-filters="true"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-edit-rules="role === 'admin'"
+                    :product-id="openedProduct.id"
+                    @open-admin-engine="onOpenTennisAdminEngine"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <div v-else-if="isTennisInplayProduct(openedProduct)" class="p-0">
                   <TennisBoard
+                    ref="tennisBoardRef"
                     board-mode="inplay"
                     :show-filters="true"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-edit-rules="role === 'admin'"
+                    :product-id="openedProduct.id"
+                    @open-admin-engine="onOpenTennisAdminEngine"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <div v-else-if="isTennisSettledProduct(openedProduct)" class="p-0">
@@ -2686,6 +3048,7 @@ function productEmbedUrl(product) {
                     :show-filters="true"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="false"
+                    @auto-bet-change="onBoardAutoBetChange"
                   />
                 </div>
                 <div v-else-if="isTennisLiveProduct(openedProduct)" class="p-0">
@@ -2694,6 +3057,8 @@ function productEmbedUrl(product) {
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <div v-else-if="isTennisNewProduct(openedProduct)" class="p-0">
@@ -2702,6 +3067,8 @@ function productEmbedUrl(product) {
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <div v-else-if="isTennisRangeProduct(openedProduct)" class="p-0">
@@ -2710,6 +3077,8 @@ function productEmbedUrl(product) {
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <div v-else-if="isTennisProduct(openedProduct)" class="p-0">
@@ -2717,6 +3086,8 @@ function productEmbedUrl(product) {
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
                   />
                 </div>
                 <!-- BTC 持仓看板：与网球相同浅色 Vue 直出 -->
@@ -2725,6 +3096,7 @@ function productEmbedUrl(product) {
                     :is-member="isActive(openedProduct.id)"
                     :show-sim-betting="canShowBtcSimBetting"
                     @wallet-refresh="loadWalletHeader"
+                    @auto-bet-change="onBoardAutoBetChange"
                   />
                 </div>
                 <div
@@ -3137,7 +3509,7 @@ function productEmbedUrl(product) {
                     v-for="item in section.items"
                     :key="item.key || item.view"
                     type="button"
-                    @click="go(item.view)"
+                    @click="onManageItemClick(item)"
                     class="bg-white rounded-xl px-1.5 py-2.5 shadow-sm ring-1 ring-slate-100 hover:bg-slate-50 transition-colors active:scale-[0.98] flex flex-col items-center gap-1.5 text-center"
                     :title="item.desc"
                   >
@@ -3271,7 +3643,7 @@ function productEmbedUrl(product) {
               <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
-              <TennisMonitor engine-page="collect" />
+              <TennisMonitor engine-page="collect" @open-docks-editor="onOpenDocksEditor" @open-top100-wide="openTop100WidePage" />
             </section>
 
             <section v-else-if="role==='admin' && view==='tennis-condition'" class="space-y-3 fade-up">
@@ -3306,7 +3678,7 @@ function productEmbedUrl(product) {
               <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
-              <TennisMonitor engine-page="collect" />
+              <TennisMonitor engine-page="collect" @open-docks-editor="onOpenDocksEditor" @open-top100-wide="openTop100WidePage" />
             </section>
 
             <section v-else-if="role==='admin' && view==='redeem-codes'" class="space-y-3 fade-up">
@@ -4242,6 +4614,93 @@ function productEmbedUrl(product) {
             @close="showWalletSettings = false"
             @updated="onWalletUpdated"
           />
+
+          <div
+            v-if="placedCartOpen"
+            class="fixed inset-0 z-[80] bg-slate-900/45 flex items-start justify-center pt-3 px-2"
+            @click.self="placedCartOpen = false"
+          >
+            <div
+              class="relative bg-white w-full max-w-md rounded-xl shadow-[0_16px_40px_rgba(15,23,42,0.22)] max-h-[min(88vh,720px)] flex flex-col overflow-hidden"
+              role="dialog"
+              aria-modal="true"
+            >
+              <div class="flex items-start justify-between gap-3 px-4 pt-4 pb-2 shrink-0">
+                <div class="min-w-0">
+                  <div class="font-semibold text-base text-slate-800">已下单场次</div>
+                  <p class="text-xs text-slate-400 mt-0.5">持仓不再重复下单</p>
+                </div>
+                <button type="button" class="text-slate-400 text-xl leading-none px-1 shrink-0" @click="placedCartOpen = false" aria-label="关闭">×</button>
+              </div>
+              <div class="px-4 pb-2 shrink-0 space-y-2">
+                <div class="flex rounded-lg bg-slate-100 p-0.5 gap-0.5">
+                  <button
+                    type="button"
+                    class="flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition"
+                    :class="placedCartTab === 'buy' ? 'bg-white text-sky-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    @click="placedCartTab = 'buy'"
+                  >买入 {{ boardPlacedBuyCount }}</button>
+                  <button
+                    type="button"
+                    class="flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition"
+                    :class="placedCartTab === 'sell' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'"
+                    @click="placedCartTab = 'sell'"
+                  >卖出 {{ boardPlacedSells.length }}</button>
+                </div>
+                <div v-if="placedCartTab === 'sell'" class="flex justify-end">
+                  <button
+                    type="button"
+                    class="text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 disabled:opacity-40 px-2.5 py-1 rounded-lg"
+                    :disabled="!boardPlacedSells.length"
+                    @click="clearBoardSoldOrders"
+                  >清理卖出</button>
+                </div>
+              </div>
+              <div class="overflow-y-auto px-4 py-3 border-t border-slate-100">
+                <div v-if="!boardPlacedTabRows.length" class="text-sm text-slate-400 py-8 text-center">
+                  {{ placedCartTab === 'sell' ? '暂无卖出记录' : '暂无买入持仓' }}
+                </div>
+                <ul v-else class="space-y-2">
+                  <li
+                    v-for="row in boardPlacedTabRows"
+                    :key="(placedCartTab === 'sell' ? 'sell-' : 'buy-') + row.id"
+                    class="rounded-xl border px-3 py-2"
+                    :class="placedCartTab === 'sell' ? 'border-rose-100 bg-rose-50/50' : 'border-sky-100 bg-sky-50/60'"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0">
+                        <div
+                          class="text-sm font-semibold leading-snug truncate"
+                          :class="placedCartTab === 'sell' ? 'text-rose-800' : 'text-sky-800'"
+                        >
+                          {{ placedCartTab === 'sell' ? '卖' : '买' }} {{ placedBetPlayerName(row) || '—' }}
+                        </div>
+                        <div class="mt-0.5 text-[11px] text-slate-500 truncate">{{ row.label || row.id }}</div>
+                      </div>
+                      <div class="shrink-0 flex items-center gap-1.5">
+                        <span
+                          v-if="placedCartTab === 'sell'"
+                          class="text-[10px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded"
+                        >已卖出</span>
+                        <span v-if="row.simulated" class="text-[10px] font-semibold text-violet-600 bg-violet-50 border border-violet-100 px-1.5 py-0.5 rounded">模拟</span>
+                        <button
+                          v-if="placedCartTab === 'buy'"
+                          type="button"
+                          class="text-[10px] font-semibold text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 px-2 py-0.5 rounded"
+                          :disabled="sellingPlacedId === String(row.id)"
+                          @click="sellBoardPlacedOrder(row)"
+                        >{{ sellingPlacedId === String(row.id) ? '…' : '卖出' }}</button>
+                      </div>
+                    </div>
+                    <div class="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                      <span v-if="row.amountUsd != null">${{ row.amountUsd }}</span>
+                      <span v-if="fmtPlacedAt(row.at)">{{ fmtPlacedAt(row.at) }}</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
 
           <div
             v-if="showRedeemModal"

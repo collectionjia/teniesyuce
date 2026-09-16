@@ -72,12 +72,16 @@ def _ensure_board(client: SofascoreClient, match_date: str, *, force_rankings: b
 
 def _scheduled_events_once(client: SofascoreClient, match_date: str, *, force: bool = False) -> list[dict]:
     global _scheduled_cache
-    if not force and _scheduled_cache.get("date") == match_date:
+    from tm.collectors.events import read_collect_horizon_days
+
+    horizon = read_collect_horizon_days()
+    cache_key = f"{match_date}:{horizon}"
+    if not force and _scheduled_cache.get("date") == cache_key:
         return list(_scheduled_cache.get("events") or [])
-    sched_raw = collect_tennis_events(client, match_date)
-    _scheduled_cache = {"date": match_date, "events": sched_raw}
-    print(f"[top100] scheduled cached date={match_date} events={len(sched_raw)}")
-    return sched_raw
+    sched_raw = collect_tennis_events(client, match_date, horizon_days=horizon)
+    _scheduled_cache = {"date": cache_key, "events": sched_raw}
+    print(f"[top100] scheduled cached date={match_date} horizon={horizon}d events={len(sched_raw)}")
+    return list(sched_raw)
 
 
 def _raw_to_slim_map(raw_events: list[dict], board: dict[str, Any]) -> dict[int, dict]:
@@ -121,7 +125,13 @@ def _snapshot_from_events(
         key=lambda e: (e.get("startTimestamp") or 0, e.get("id") or 0),
     )
     live_count = sum(1 for ev in by_id.values() if _slimis_live(ev))
-    rankings = enrich_rankings_from_events(slim_events, board, client)
+    prev_rankings = dict((_last_snapshot or {}).get("rankingsByPlayer") or {})
+    rankings = enrich_rankings_from_events(
+        slim_events,
+        board,
+        client,
+        prev_rankings=prev_rankings,
+    )
     prev_birth = dict((_last_snapshot or {}).get("birthYearByPlayer") or {})
     birth_by_player = dict(prev_birth)
     if enrich_birth and slim_events:

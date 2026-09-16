@@ -24,11 +24,13 @@ function rankMetrics(m, rankingsByPlayer = {}) {
   const homeStronger = homeR < awayR;
   const strongRank = homeStronger ? homeR : awayR;
   const weakRank = homeStronger ? awayR : homeR;
+  const strongBest = bestRank(homeStronger ? home : away, rankingsByPlayer);
   const weakBest = bestRank(homeStronger ? away : home, rankingsByPlayer);
   return {
     ready: true,
     gap: weakRank - strongRank,
-    rankDiff: weakBest != null ? strongRank - weakBest : null,
+    // 排差 = 现弱历史最高 − 现强历史最高
+    rankDiff: (weakBest != null && strongBest != null) ? weakBest - strongBest : null,
     strongRank,
   };
 }
@@ -268,11 +270,10 @@ function resolveGroupsFromProductSelect(libraryGroups, selectRows) {
 async function resolveBucketFilterGroups(bucketKey) {
   const tennisEngines = require('./tennisEngines');
   const productService = require('./product');
-  const cfg = await tennisEngines.getConfig();
+  // 列表过滤：条件规则优先从 Redis 读（保存时已镜像），再对 Redis 赛程包做内存筛选
+  const cfg = await tennisEngines.getConfigPreferRedis();
   const bucket = cfg.condition?.buckets?.[bucketKey];
-  if (!cfg.condition?.enabled) {
-    return { ok: false, reason: 'master_off', cfg, bucket, groups: [] };
-  }
+  // 不再看条件总开关：各桶「打开」即按该桶条件组过滤列表
   if (!bucket?.enabled) {
     return { ok: false, reason: 'bucket_off', cfg, bucket, groups: [] };
   }
@@ -280,23 +281,30 @@ async function resolveBucketFilterGroups(bucketKey) {
   const library = bucket.groups || [];
   if (product && Array.isArray(product.conditionSelect) && product.conditionSelect.length) {
     const groups = resolveGroupsFromProductSelect(library, product.conditionSelect);
-    return {
-      ok: true,
-      cfg,
-      bucket,
-      product,
-      groups,
-      source: 'product_condition_select',
-    };
+    // 产品挂了组但 id 对不上时，仍回退到引擎库全部组，避免「看似开了却不过滤」
+    if (groups.length) {
+      return {
+        ok: true,
+        cfg,
+        bucket,
+        product,
+        groups,
+        source: 'product_condition_select',
+      };
+    }
   }
-  // 产品未配置选择：不过滤
+  // 产品未配置选择（或挂载失效）：用条件引擎该桶全部组，保留各组 joinPrev（且/或）
+  const groups = library.map((g, i) => ({
+    ...g,
+    joinPrev: i === 0 ? 'or' : (String(g.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'),
+  }));
   return {
     ok: true,
     cfg,
     bucket,
     product,
-    groups: [],
-    source: 'no_product_select',
+    groups,
+    source: groups.length ? 'engine_library_all' : 'no_groups',
   };
 }
 
@@ -319,6 +327,7 @@ async function maybeApplyCondition(product, bundle) {
       condition_bucket: product,
       condition_source: resolved.source,
       condition_applied: false,
+      condition_skip: resolved.source === 'no_groups' ? 'no_groups' : null,
       admin_condition_rules: filterBucket,
     };
   }

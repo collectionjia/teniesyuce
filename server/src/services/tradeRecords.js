@@ -96,13 +96,22 @@ async function addTradeRecord(userId, row = {}) {
   return ret.insertId;
 }
 
-async function listTradeRecords(userId, { product = 'all', limit = 30, offset = 0 } = {}) {
+async function listTradeRecords(userId, { product = 'all', limit = 30, offset = 0, anyUser = false } = {}) {
   await ensureTradeRecordsTable();
-  const lim = Math.min(100, Math.max(1, Number(limit) || 30));
+  const lim = Math.min(200, Math.max(1, Number(limit) || 30));
   const off = Math.max(0, Number(offset) || 0);
-  const params = [userId];
-  let where = 'user_id=?';
-  if (product === 'btc' || product === 'tennis') {
+  const params = [];
+  let where = '1=1';
+  if (!anyUser) {
+    where = 'user_id=?';
+    params.push(userId);
+  } else if (userId) {
+    where += ' AND user_id=?';
+    params.push(userId);
+  }
+  if (product === 'tennis-family') {
+    where += " AND product LIKE 'tennis%'";
+  } else if (product && product !== 'all') {
     where += ' AND product=?';
     params.push(product);
   }
@@ -138,10 +147,51 @@ async function listTradeRecords(userId, { product = 'all', limit = 30, offset = 
   };
 }
 
+async function deleteTradeRecord(id, { userId = null, tennisOnly = true } = {}) {
+  await ensureTradeRecordsTable();
+  const rid = Number(id);
+  if (!rid) return { deleted: 0 };
+  const params = [rid];
+  let where = 'id=?';
+  if (userId) {
+    where += ' AND user_id=?';
+    params.push(userId);
+  }
+  if (tennisOnly) {
+    where += " AND product LIKE 'tennis%'";
+  }
+  const [ret] = await pool.query(`DELETE FROM trade_records WHERE ${where}`, params);
+  return { deleted: Number(ret.affectedRows) || 0 };
+}
+
+async function clearTradeRecords({ userId = null, product = 'tennis-family', anyUser = false } = {}) {
+  await ensureTradeRecordsTable();
+  const params = [];
+  let where = '1=1';
+  if (!anyUser) {
+    if (!userId) return { deleted: 0 };
+    where = 'user_id=?';
+    params.push(userId);
+  } else if (userId) {
+    where += ' AND user_id=?';
+    params.push(userId);
+  }
+  if (product === 'tennis-family') {
+    where += " AND product LIKE 'tennis%'";
+  } else if (product && product !== 'all') {
+    where += ' AND product=?';
+    params.push(product);
+  }
+  const [ret] = await pool.query(`DELETE FROM trade_records WHERE ${where}`, params);
+  return { deleted: Number(ret.affectedRows) || 0 };
+}
+
 module.exports = {
   ensureTradeRecordsTable,
   addTradeRecord,
   listTradeRecords,
+  deleteTradeRecord,
+  clearTradeRecords,
   priceFromFill,
   sharesFromFill,
 };

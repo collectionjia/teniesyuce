@@ -46,7 +46,11 @@ const props = defineProps({
   showSimBetting: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['wallet-refresh'])
+const emit = defineEmits(['wallet-refresh', 'auto-bet-change'])
+
+function notifyAutoBetChange() {
+  emit('auto-bet-change', !!simSettings.liveAuto)
+}
 
 const simBettingActive = computed(() => props.showSimBetting || props.admin)
 /** 有效订阅或管理预览：可见信号 / 人数 / 热度 */
@@ -384,6 +388,7 @@ function applySimSettings() {
   })
   tradeAmount.value = simSettings.liveAmount
   saveSimSettings()
+  notifyAutoBetChange()
   showSimSettings.value = false
 }
 
@@ -409,6 +414,7 @@ function toggleLiveAutoFromUi(ev) {
   }
   simSettings.liveAuto = want
   saveSimSettings()
+  notifyAutoBetChange()
   tradeMsg.value = want ? '已开启自动投注' : '已关闭自动投注'
   tradeMsgType.value = 'success'
 }
@@ -904,6 +910,7 @@ onMounted(() => {
     tradeAmount.value = getLiveAmount()
     loadWalletStatus()
   }
+  notifyAutoBetChange()
   load()
   pollTimer = setInterval(async () => {
     if (!props.admin && !(await refreshCrawlStatus())) {

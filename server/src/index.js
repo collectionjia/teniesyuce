@@ -31,6 +31,7 @@ const tennisNewRoutes = require('./routes/tennisNew');
 const tennisInplayRoutes = require('./routes/tennisInplay');
 const tennisPrematchRoutes = require('./routes/tennisPrematch');
 const tennisSettledRoutes = require('./routes/tennisSettled');
+const tennisOrdersRoutes = require('./routes/tennisOrders');
 const engineApiRoutes = require('./routes/engineApi');
 const adminSchedulerRoutes = require('./routes/adminScheduler');
 
@@ -54,6 +55,8 @@ app.use('/api/admin', adminSchedulerRoutes);
 app.use('/api/engine', engineApiRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/embed', embedRoutes);
+// 网球单场下单（邮箱找钱包，无需登录）— 须挂在 /api/tennis 之前以免被其它路由吞掉
+app.use('/api/tennis/orders', tennisOrdersRoutes);
 // 网球产品（盘前 / 盘中 / 盘后 + 旧 range/live/new 暂留）
 app.use('/api/tennis', tennisRoutes);
 app.use('/api/btc', btcRoutes);
@@ -98,25 +101,26 @@ app.listen(PORT, () => {
       }
       try {
         const tennisThreeBuckets = require('./services/tennisThreeBuckets');
-        const r = await tennisThreeBuckets.splitFullToThreeBuckets();
-        if (r?.ok) console.log('[tennis/three-buckets] split on startup', r);
+        const tennisFromMonitor = require('./services/tennisFromMonitor');
+        if (tennisRedis.monitorSyncEnabled()) {
+          await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
+          tennisFromMonitor.startBackgroundRefresh();
+          try {
+            const tennisLiveFromMonitor = require('./services/tennisLiveFromMonitor');
+            await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
+            tennisLiveFromMonitor.startBackgroundRefresh();
+            console.log('[tennis/live-cache] warmed from Sofascore monitor → Redis');
+          } catch (err) {
+            console.error('[tennis/live-cache] warm failed:', err.message);
+          }
+          console.log('[tennis/cache] monitor→redis sync enabled (TENNIS_SYNC_FROM_MONITOR=1)');
+        } else {
+          const r = await tennisThreeBuckets.splitFullToThreeBuckets();
+          if (r?.ok) console.log('[tennis/three-buckets] split on startup', r);
+        }
       } catch (err) {
-        console.error('[tennis/three-buckets] startup split:', err.message);
+        console.error('[tennis/cache] startup failed:', err.message);
       }
-      if (!tennisRedis.monitorSyncEnabled()) return;
-
-      const tennisFromMonitor = require('./services/tennisFromMonitor');
-      await tennisFromMonitor.refreshRedisFromMonitor({ includeLive: true });
-      tennisFromMonitor.startBackgroundRefresh();
-      try {
-        const tennisLiveFromMonitor = require('./services/tennisLiveFromMonitor');
-        await tennisLiveFromMonitor.refreshLiveBundleFromMonitor();
-        tennisLiveFromMonitor.startBackgroundRefresh();
-        console.log('[tennis/live-cache] warmed from Sofascore monitor → Redis');
-      } catch (err) {
-        console.error('[tennis/live-cache] warm failed:', err.message);
-      }
-      console.log('[tennis/cache] monitor→redis sync enabled (TENNIS_SYNC_FROM_MONITOR=1)');
     } catch (err) {
       console.error('[tennis/cache] startup failed:', err.message);
     }

@@ -193,19 +193,23 @@ def fetch_player_rank_detail(client: SofascoreClient, player_id: int) -> dict[st
 def fill_missing_historical_ranks(
     client: SofascoreClient,
     rankings: dict[str, dict[str, Any]],
-    events: list[dict],
+    events: list[dict] | None = None,
     *,
     max_players: int | None = None,
 ) -> int:
-    """补拉/刷新 team/{id}/rankings；官方 bestRanking 覆盖本地 best（避免 utr 污染或旧值残留）。"""
+    """补拉/刷新 team/{id}/rankings；官方 bestRanking 覆盖本地 best（避免 utr 污染或旧值残留）。
+
+    优先补：本场赛事球员 → 榜单中仍缺 best 的球员。
+    """
     import os
 
     cap = max_players
     if cap is None:
-        cap = int(os.environ.get("SOFA_BEST_RANK_ENRICH_MAX", "48"))
-    need: list[int] = []
+        # Top100 双边约 200 人；默认一次尽量补全，避免 ATP 榜无 best 时长期全空
+        cap = int(os.environ.get("SOFA_BEST_RANK_ENRICH_MAX", "220"))
+    event_ids: list[int] = []
     seen: set[int] = set()
-    for ev in events:
+    for ev in events or []:
         for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
             pid = side.get("id")
             if pid is None:
@@ -214,9 +218,27 @@ def fill_missing_historical_ranks(
             if ipid in seen:
                 continue
             seen.add(ipid)
-            need.append(ipid)
-    # 缺 best 的优先补全
-    need.sort(key=lambda pid: 0 if (rankings.get(str(pid)) or {}).get("best") is None else 1)
+            event_ids.append(ipid)
+    board_missing: list[int] = []
+    for key, row in (rankings or {}).items():
+        try:
+            ipid = int(key)
+        except (TypeError, ValueError):
+            continue
+        if ipid in seen:
+            continue
+        if (row or {}).get("best") is None:
+            board_missing.append(ipid)
+            seen.add(ipid)
+    # 缺 best 的赛事球员最优先，其次赛事已有 best（可刷新），再榜单缺 best
+    def _prio(pid: int) -> tuple[int, int]:
+        row = rankings.get(str(pid)) or {}
+        missing = 0 if row.get("best") is None else 1
+        in_event = 0 if pid in set(event_ids) else 1
+        return (missing, in_event)
+
+    need = event_ids + board_missing
+    need.sort(key=_prio)
     filled = 0
     for pid in need[: max(0, cap)]:
         detail = fetch_player_rank_detail(client, pid)
@@ -237,16 +259,38 @@ def fill_missing_historical_ranks(
     return filled
 
 
+def _merge_prev_rankings(
+    rankings: dict[str, dict[str, Any]],
+    prev: dict[str, dict[str, Any]] | None,
+) -> None:
+    """保留上次已补全的 best 等字段，避免全量重采时 ATP 史高被榜单空值冲掉。"""
+    if not prev:
+        return
+    for key, old in prev.items():
+        if not isinstance(old, dict):
+            continue
+        row = dict(rankings.get(key) or {})
+        changed = False
+        for field in ("best", "previous", "live", "utr", "current"):
+            if row.get(field) is None and old.get(field) is not None:
+                row[field] = old[field]
+                changed = True
+        if changed or key not in rankings:
+            rankings[key] = row
+
+
 def enrich_rankings_from_events(
     events: list[dict],
     board: dict[str, Any] | None,
     client: SofascoreClient | None = None,
+    prev_rankings: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, dict[str, Any]]:
     rankings = rankings_from_board(board)
-    for ev in events:
+    _merge_prev_rankings(rankings, prev_rankings)
+    for ev in events or []:
         _merge_event_ranks(rankings, ev)
-    if client is not None and events:
-        filled = fill_missing_historical_ranks(client, rankings, events)
+    if client is not None and rankings:
+        filled = fill_missing_historical_ranks(client, rankings, events or [])
         if filled:
             print(f"      历史最高排名补全 {filled} 人（team/.../rankings）")
     return rankings

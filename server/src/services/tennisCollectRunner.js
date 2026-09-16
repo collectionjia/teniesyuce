@@ -29,6 +29,7 @@ const LOG_DIR = path.join(MONITOR_DIR, 'logs');
 
 const ALLOWED_COLLECT_INTERVALS = [0, 2, 4, 6, 12];
 const ALLOWED_LIVE_POLL_INTERVALS = [0, 60, 120, 300];
+const ALLOWED_COLLECT_HORIZON_DAYS = [1, 2, 3, 5];
 
 let running = false;
 let child = null;
@@ -52,6 +53,7 @@ function readScheduleConfig() {
     interval_hours: 6,
     collect_enabled: true,
     live_poll_interval_sec: 300,
+    collect_horizon_days: 1,
   };
   try {
     if (!fs.existsSync(SCHEDULE_FILE)) return { ...defaults };
@@ -60,11 +62,14 @@ function readScheduleConfig() {
     if (!ALLOWED_COLLECT_INTERVALS.includes(hours)) hours = defaults.interval_hours;
     let liveSec = Number(data.live_poll_interval_sec ?? defaults.live_poll_interval_sec);
     if (!ALLOWED_LIVE_POLL_INTERVALS.includes(liveSec)) liveSec = defaults.live_poll_interval_sec;
+    let horizon = Number(data.collect_horizon_days ?? defaults.collect_horizon_days);
+    if (!ALLOWED_COLLECT_HORIZON_DAYS.includes(horizon)) horizon = defaults.collect_horizon_days;
     const enabled = data.collect_enabled;
     return {
       interval_hours: hours,
       collect_enabled: enabled === undefined ? defaults.collect_enabled : !!enabled,
       live_poll_interval_sec: liveSec,
+      collect_horizon_days: horizon,
       collect_target: data.collect_target || 'top100',
     };
   } catch {
@@ -81,17 +86,22 @@ function schedulePayload() {
   const cfg = readScheduleConfig();
   const hours = cfg.interval_hours;
   const liveSec = cfg.live_poll_interval_sec;
+  const horizon = cfg.collect_horizon_days;
   const labels = { 0: '关闭', 60: '1 分钟', 120: '2 分钟', 300: '5 分钟' };
+  const horizonLabels = { 1: '今天(1天)', 2: '今天起2天', 3: '今天起3天', 5: '今天起5天' };
   return {
     ok: true,
     interval_hours: hours,
     collect_enabled: cfg.collect_enabled !== false,
     live_poll_interval_sec: liveSec,
+    collect_horizon_days: horizon,
     allowed_intervals: ALLOWED_COLLECT_INTERVALS,
     allowed_live_poll_intervals: ALLOWED_LIVE_POLL_INTERVALS,
+    allowed_collect_horizon_days: ALLOWED_COLLECT_HORIZON_DAYS,
     cron: cfg.collect_enabled && hours > 0 ? `0 */${hours} * * *` : null,
     note: 'Docker 无 9004 时由 server 读写 config/schedule.json（定时需另配 cron/宿主机）',
     live_poll_label: labels[liveSec] || `${liveSec} 秒`,
+    collect_horizon_label: horizonLabels[horizon] || `今天起${horizon}天`,
     source: 'local',
   };
 }
@@ -119,8 +129,51 @@ function updateSchedule(body = {}) {
     }
     cfg.live_poll_interval_sec = liveSec;
   }
+  if (body.collect_horizon_days != null) {
+    const horizon = Number(body.collect_horizon_days);
+    if (!ALLOWED_COLLECT_HORIZON_DAYS.includes(horizon)) {
+      const err = new Error(`collect_horizon_days must be one of ${ALLOWED_COLLECT_HORIZON_DAYS.join(',')}`);
+      err.status = 400;
+      throw err;
+    }
+    cfg.collect_horizon_days = horizon;
+  }
   writeScheduleConfig(cfg);
+  // 把「未开赛采集间隔」同步到调度任务 collect.top100（小时 → 秒）
+  setImmediate(() => {
+    syncTop100CollectJob(cfg).catch((e) => {
+      console.warn('[tennisCollectRunner] syncTop100CollectJob', e.message || e);
+    });
+  });
   return schedulePayload();
+}
+
+async function syncTop100CollectJob(cfg) {
+  const store = require('./schedulerStore');
+  await store.ensureTables();
+  const hours = Number(cfg.interval_hours);
+  const enabled = cfg.collect_enabled !== false && hours > 0;
+  const intervalSec = hours > 0 ? Math.round(hours * 3600) : 6 * 3600;
+  const id = 'job_collect_top100';
+  const existing = await store.getJob(id);
+  const body = {
+    name: '网球·Top100采集(collect.py)',
+    scheduleMode: 'interval',
+    intervalSec,
+    enabled,
+    timeoutSec: 900,
+    params: { top100: true },
+  };
+  if (existing) {
+    await store.updateJob(id, body);
+    return;
+  }
+  if (!enabled) return;
+  await store.createJob({
+    id,
+    jobType: 'collect.top100',
+    ...body,
+  });
 }
 
 function nowIso() {
@@ -135,13 +188,28 @@ function pythonBin() {
   const candidates = [
     ...(inDockerCollect ? [] : [venvPy, path.join(MONITOR_DIR, 'venv', 'Scripts', 'python.exe')]),
     process.env.PYTHON,
-    'python3',
-    'python',
+    // Windows 上 Microsoft Store 的 python3.exe 常是空壳(exit 9009)，优先 python
+    ...(process.platform === 'win32' ? ['python', 'py', 'python3'] : ['python3', 'python']),
   ].filter(Boolean);
   for (const bin of candidates) {
-    if (bin.includes(path.sep) && fs.existsSync(bin)) return bin;
+    if (bin.includes(path.sep)) {
+      if (fs.existsSync(bin)) return bin;
+      continue;
+    }
+    // 名称型：用 --version 探测，避免点到不可用的 store stub
+    try {
+      const { spawnSync } = require('child_process');
+      const r = spawnSync(bin, ['--version'], {
+        encoding: 'utf8',
+        timeout: 5000,
+        windowsHide: true,
+      });
+      if (r.status === 0) return bin;
+    } catch {
+      /* try next */
+    }
   }
-  return 'python3';
+  return process.platform === 'win32' ? 'python' : 'python3';
 }
 
 function appendLogFile(lines) {
@@ -454,6 +522,7 @@ module.exports = {
   livePayload,
   schedulePayload,
   updateSchedule,
+  syncTop100CollectJob,
   readScheduleConfig,
   recentLogs,
   isRunning: () => running,

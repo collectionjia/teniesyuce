@@ -123,7 +123,7 @@ router.get('/condition/status', async (req, res) => {
       };
     }
     ok(res, req, {
-      open: !!cfg.condition?.enabled,
+      open: ['prematch', 'inplay', 'settled'].some((k) => !!cfg.condition?.buckets?.[k]?.enabled),
       buckets: summary,
     });
   } catch (e) {

@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [vue(), tailwindcss()],
     server: {
+      host: '127.0.0.1',
       port: 5279,
       proxy: {
         '/api': { target: apiTarget, changeOrigin: true, secure: true },

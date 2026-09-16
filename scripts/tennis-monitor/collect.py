@@ -39,7 +39,9 @@ def main() -> int:
             )
             print(f"详情: {msg}")
         elif "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
-            print(f"采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度，或临时清空 IPWO 配置改直连。")
+            print(
+                "采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度，或临时清空 IPWO 配置改直连。"
+            )
             print(f"详情: {msg}")
         else:
             print(f"采集失败: {msg}")
@@ -63,9 +65,9 @@ def main() -> int:
     if redis_info.get("ok"):
         redis_part = f"Redis ✓ {redis_info.get('events')} 场"
     elif redis_info.get("skipped"):
-        redis_part = f"Redis 跳过"
+        redis_part = "Redis 跳过"
     elif redis_info.get("error"):
-        redis_part = f"Redis 失败"
+        redis_part = "Redis 失败"
     print(
         f"完成: {result.get('total_events')} 场 · "
         f"PM {len(result.get('polymarketByEvent') or {})} · "
@@ -74,6 +76,9 @@ def main() -> int:
         f"(api={req.get('http_api')} poly={req.get('poly_requests', 0)}req)"
         + (f" · {total_part}" if total_part else "")
     )
+    # Redis 写入失败则非 0，避免管理页显示「采集成功」却无数据
+    if redis_info.get("error") and not redis_info.get("skipped"):
+        return 3
     return 0
 
 

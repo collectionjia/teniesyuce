@@ -352,7 +352,7 @@ API 对外中心 (/api/engine/*)
 |------|------|------|
 | `SchedulerJob` | **MySQL（主存）** | 调度配置唯一真相源；启动/变更从 DB 加载 |
 | `SchedulerRun` | **MySQL** | 定时与立即执行均落库；保留近 7–30 天可归档 |
-| 引擎开关 / 规则 | 沿用现有配置存储 | 条件/投注规则 CRUD **P0 仍走原管理接口**；`/api/engine/condition` 先做 status + 只读聚合 |
+| 引擎开关 / 规则 | **MySQL `tennis_engines_config`**（条件/投注/采集 JSON；自 Redis 可迁移） | 条件/投注规则 CRUD 走管理接口与 `/api/engine/condition`；调度任务与分组参数在 `scheduler_jobs` |
 | 定时互斥锁 | Redis：`scheduler:lock:{mutexKey}` | **仅定时**；立即执行不加此锁 |
 | API 审计 | DB 或日志流水 | — |
 

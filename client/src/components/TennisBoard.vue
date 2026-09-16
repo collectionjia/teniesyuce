@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue'
 import * as api from '../api'
 import { passesRangeTennis, passesTopPool, matchRangeMetrics, tierLabel, RANGE_RULES_TEXT, NEW_POOL_RULES_TEXT, matchInplayRankMetrics, inplayTierLabel } from '../utils/tennisRangeFilter'
 import {
@@ -8,19 +8,36 @@ import {
   applyPrematchFilters,
   applyInplayFilters,
   applySettledFilters,
-  passesInplayEntryRules,
+  passesInplayBettingEntry,
+  normalizeInplayBettingEntry,
 } from '../utils/tennisListFilters'
+import { useTennisConditionRules } from '../composables/useTennisConditionRules'
+import { useTennisBettingRules } from '../composables/useTennisBettingRules'
+import TennisBoardTopbar from './tennis-board/TennisBoardTopbar.vue'
+import TennisBoardFilters from './tennis-board/TennisBoardFilters.vue'
+import TennisBoardBatchBar from './tennis-board/TennisBoardBatchBar.vue'
+import TennisBoardMatchList from './tennis-board/TennisBoardMatchList.vue'
 
-const INPLAY_AUTO_RULES_TEXT = '买入：(现≤10且现差>20)或(现≤25且现差>30)·赢首盘·PM<91¢｜止损：局差弱−强>2（BO3第三盘；BO5 路径见§九）'
+const TennisConditionModal = defineAsyncComponent(() => import('./tennis-board/TennisConditionModal.vue'))
+const TennisBettingModal = defineAsyncComponent(() => import('./tennis-board/TennisBettingModal.vue'))
+const TennisBoardDetailModal = defineAsyncComponent(() => import('./tennis-board/TennisBoardDetailModal.vue'))
+const TennisScheduleModal = defineAsyncComponent(() => import('./tennis-board/TennisScheduleModal.vue'))
+
 const props = defineProps({
   showFilters: { type: Boolean, default: false },
   /** 有效订阅内可见排名/推荐/详情/外链 */
   isMember: { type: Boolean, default: false },
-  /** 已配置钱包且开通 BTC 虚拟投注时可批量下单 */
+  /** 已配置钱包且开通 BTC 虚拟投注时可真实批量下单 */
   canBatchTrade: { type: Boolean, default: false },
   /** classic | range | live | new | inplay | prematch | settled */
   boardMode: { type: String, default: 'classic' },
+  /** 仅管理员：在盘前列表直接编辑条件引擎规则 */
+  canEditRules: { type: Boolean, default: false },
+  /** 产品 ID：盘中挂载条件/投注选择写入该产品 */
+  productId: { type: [Number, String], default: null },
 })
+
+const emit = defineEmits(['open-admin-engine', 'auto-bet-change', 'placed-orders-change'])
 
 const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
@@ -45,7 +62,25 @@ const hideEndedEvents = computed(() => {
   }
   return isClassicMode.value || isInplayMode.value || isPrematchMode.value
 })
-const allowBatchTrade = computed(() => !isSettledMode.value && props.canBatchTrade)
+const allowBatchTrade = computed(() => {
+  if (isSettledMode.value) return false
+  if (props.canBatchTrade) return true
+  // 会员可看到开关；真正下单须自己打开「自动投注」
+  if (props.isMember && (isPrematchMode.value || isInplayMode.value)) return true
+  return false
+})
+/** 仅「虚拟/采集模拟」数据源下记账；真实采集时自动下单与止损均为实盘 */
+const isVirtualDataSource = computed(() => {
+  if (data.value?.tradeSimulate === true) return true
+  if (data.value?.tradeSimulate === false) return false
+  return !!(
+    data.value?.upstream === 'docks500'
+    || data.value?.source === 'docks500'
+    || data.value?.dataSource === 'docks500'
+    || data.value?.virtualSim
+  )
+})
+const useSimulateOrders = computed(() => !!isVirtualDataSource.value)
 const apiPath = computed(() => {
   if (isPrematchMode.value) return '/api/tennis-prematch'
   if (isRangeMode.value) return '/api/tennis-range'
@@ -72,6 +107,98 @@ const filtersOpen = ref(false)
 const detailMatch = ref(null)
 /** 详情页字段说明是否展开 */
 const detailHelpOpen = ref(false)
+const batchAmountUsd = ref('1')
+
+const {
+  rulesLoading,
+  rulesSaving,
+  rulesError,
+  rulesNotice,
+  conditionBucketOn,
+  conditionGroups,
+  conditionModalOpen,
+  selectLoading,
+  selectSaving,
+  selectError,
+  selectNotice,
+  libraryGroups,
+  productSelectCond,
+  canEditConditionRules,
+  conditionBucketLabel,
+  canEditProductSelect,
+  needsConditionGroupSelect,
+  rulesSummary,
+  conditionGroupLabel,
+  loadProductSelect,
+  loadConditionRules,
+  addSelectRow,
+  removeSelectRow,
+  setSelectRowField,
+  saveProductSelect,
+  setConditionGroupField,
+  addConditionGroup,
+  removeConditionGroup,
+  saveConditionRules,
+  openConditionModal,
+} = useTennisConditionRules({
+  props,
+  isPrematchMode,
+  isInplayMode,
+  getLoadOnce: () => loadOnce,
+  getShowAdminEngineButtons: () => showAdminEngineButtons.value,
+})
+
+const {
+  ensureStopRules,
+  bettingModalOpen,
+  betRulesLoading,
+  betRulesSaving,
+  betRulesError,
+  betRulesNotice,
+  bettingBucketOn,
+  bettingSimulateOn,
+  bettingGroups,
+  bettingEntry,
+  bettingEntryNorm,
+  INPLAY_AUTO_RULES_TEXT,
+  canEditBettingRules,
+  showAdminEngineButtons,
+  bettingBucketKey,
+  bettingBucketLabel,
+  betRulesSummary,
+  loadBettingRules,
+  setBettingEntryField,
+  setBettingGroupField,
+  setStopRuleField,
+  addBettingGroup,
+  removeBettingGroup,
+  addStopRule,
+  removeStopRule,
+  saveBettingRules,
+  openBettingModal,
+} = useTennisBettingRules({
+  props,
+  isPrematchMode,
+  isInplayMode,
+  batchAmountUsd,
+  getSyncListAutoBetFromBucket: () => syncListAutoBetFromBucket,
+  getLibraryGroups: () => libraryGroups.value,
+  getConditionGroups: () => conditionGroups.value,
+  getLoadProductSelect: () => loadProductSelect,
+  clearSelectNotices: () => {
+    selectNotice.value = ''
+    selectError.value = ''
+  },
+  getShowAdminEngineButtons: () => showAdminEngineButtons.value,
+})
+
+function openAdminEngine(kind) {
+  const bucket = isInplayMode.value ? 'inplay' : 'prematch'
+  try {
+    sessionStorage.setItem('tennis_engine_focus', JSON.stringify({ kind, bucket }))
+  } catch (_) { /* ignore */ }
+  emit('open-admin-engine', { kind, bucket })
+}
 
 const DETAIL_TIPS = [
   { k: '男/女', t: '巡回赛性别（ATP 男 / WTA 女）。' },
@@ -94,17 +221,16 @@ const DETAIL_TIPS = [
   { k: '外链价', t: 'Polymarket 对应市场价格（美分/隐含概率）。' },
 ]
 const selectedIds = ref(new Set())
-const batchAmountUsd = ref('1')
 const batchSubmitting = ref(false)
 const batchNotice = ref('')
 const batchError = ref('')
-const AUTO_BET_KEY = computed(() => {
-  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoBet.v1'
-  if (isRangeMode.value) return 'yuce.tennisRange.autoBet.v1'
-  if (isLiveMode.value) return 'yuce.tennisLive.autoBet.v1'
-  if (isNewMode.value) return 'yuce.tennisNew.autoBet.v1'
-  if (isInplayMode.value) return 'yuce.tennisInplay.autoBet.v1'
-  return 'yuce.tennis.autoBet.v1'
+const AUTO_SIM_BET_KEY = computed(() => {
+  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoSimBet.v1'
+  if (isRangeMode.value) return 'yuce.tennisRange.autoSimBet.v1'
+  if (isLiveMode.value) return 'yuce.tennisLive.autoSimBet.v1'
+  if (isNewMode.value) return 'yuce.tennisNew.autoSimBet.v1'
+  if (isInplayMode.value) return 'yuce.tennisInplay.autoSimBet.v1'
+  return 'yuce.tennis.autoSimBet.v1'
 })
 const AUTO_PLACED_KEY = computed(() => {
   if (isPrematchMode.value) return 'yuce.tennisPrematch.autoPlaced.v1'
@@ -114,13 +240,118 @@ const AUTO_PLACED_KEY = computed(() => {
   if (isInplayMode.value) return 'yuce.tennisInplay.autoPlaced.v1'
   return 'yuce.tennis.autoPlaced.v1'
 })
-const AUTO_SOLD_KEY = computed(() => 'yuce.tennisInplay.autoSold.v1')
-const autoBetEnabled = ref(false)
+const AUTO_SOLD_KEY = computed(() => 'yuce.tennis.autoSold.v1')
+/** 兼容旧盘中已卖出 key */
+const AUTO_SOLD_KEY_LEGACY_INPLAY = 'yuce.tennisInplay.autoSold.v1'
+/** 用户级：自动投注（默认关；真实采集=实盘，虚拟采集=记账） */
+const autoSimBetEnabled = ref(false)
+const autoBetEnabled = autoSimBetEnabled
 const autoPlacedIds = ref(new Set())
+/** 列表已下单明细（购物车）：id / label / side / amountUsd / at */
+const placedOrders = ref([])
 const autoSoldIds = ref(new Set())
 const stopLossBusy = ref(false)
 const settledStats = ref(null)
 let inplayPollTimer = null
+let stopLossPollTimer = null
+let pageRefreshPollTimer = null
+/** 列表自动投注 / 止损 / 页面刷新间隔（秒），来自投注引擎配置；页面刷新 0=关 */
+const listAutoBetIntervalSec = ref(60)
+const listStopLossIntervalSec = ref(60)
+const listPageRefreshIntervalSec = ref(0)
+const scheduleModalOpen = ref(false)
+const scheduleDraftAuto = ref(60)
+const scheduleDraftStop = ref(60)
+const scheduleDraftPage = ref(0)
+const scheduleSaving = ref(false)
+const scheduleError = ref('')
+const scheduleNotice = ref('')
+
+function clampPollSec(raw, fallback = 60) {
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(10, Math.min(600, Math.round(n)))
+}
+
+/** 0=关闭，否则 10–600 */
+function clampPageRefreshSec(raw) {
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n <= 0) return 0
+  return Math.max(10, Math.min(600, Math.round(n)))
+}
+
+async function loadListPollIntervals() {
+  try {
+    const cfg = await api.fetchTennisEngines()
+    const bet = cfg?.betting || {}
+    listAutoBetIntervalSec.value = clampPollSec(bet.listAutoBetIntervalSec, 60)
+    listStopLossIntervalSec.value = clampPollSec(bet.listStopLossIntervalSec, 60)
+    listPageRefreshIntervalSec.value = clampPageRefreshSec(bet.listPageRefreshIntervalSec)
+  } catch {
+    listAutoBetIntervalSec.value = 60
+    listStopLossIntervalSec.value = 60
+    listPageRefreshIntervalSec.value = 0
+  }
+}
+
+async function openScheduleModal() {
+  if (!showAdminEngineButtons.value) return
+  scheduleError.value = ''
+  scheduleNotice.value = ''
+  // 先用当前内存值打开，再后台刷新 engines 间隔
+  scheduleDraftAuto.value = listAutoBetIntervalSec.value
+  scheduleDraftStop.value = listStopLossIntervalSec.value
+  scheduleDraftPage.value = listPageRefreshIntervalSec.value
+  scheduleModalOpen.value = true
+  void loadListPollIntervals().then(() => {
+    if (!scheduleModalOpen.value) return
+    scheduleDraftAuto.value = listAutoBetIntervalSec.value
+    scheduleDraftStop.value = listStopLossIntervalSec.value
+    scheduleDraftPage.value = listPageRefreshIntervalSec.value
+  })
+}
+
+async function saveScheduleSettings() {
+  if (scheduleSaving.value) return
+  scheduleSaving.value = true
+  scheduleError.value = ''
+  scheduleNotice.value = ''
+  try {
+    const autoSec = clampPollSec(scheduleDraftAuto.value, 60)
+    const stopSec = clampPollSec(scheduleDraftStop.value, 60)
+    const pageSec = clampPageRefreshSec(scheduleDraftPage.value)
+    await api.updateTennisEngines({
+      betting: {
+        listAutoBetIntervalSec: autoSec,
+        listStopLossIntervalSec: stopSec,
+        listPageRefreshIntervalSec: pageSec,
+      },
+    })
+    listAutoBetIntervalSec.value = autoSec
+    listStopLossIntervalSec.value = stopSec
+    listPageRefreshIntervalSec.value = pageSec
+    scheduleDraftAuto.value = autoSec
+    scheduleDraftStop.value = stopSec
+    scheduleDraftPage.value = pageSec
+    syncInplayPoll()
+    scheduleNotice.value = pageSec > 0
+      ? `已保存：页面刷新 ${pageSec}s · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+      : `已保存：页面刷新关 · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+    setTimeout(() => { scheduleNotice.value = '' }, 2500)
+  } catch (e) {
+    scheduleError.value = e?.response?.data?.error || e?.message || '保存失败'
+  } finally {
+    scheduleSaving.value = false
+  }
+}
+
+function openScheduleAdmin() {
+  try {
+    sessionStorage.setItem('tennis_engine_focus', JSON.stringify({ kind: 'scheduler' }))
+  } catch (_) { /* ignore */ }
+  emit('open-admin-engine', { kind: 'scheduler' })
+  scheduleModalOpen.value = false
+}
 
 function pct(v) {
   if (v == null || !Number.isFinite(Number(v))) return '—'
@@ -131,52 +362,194 @@ function num(v) {
   return Number(v).toFixed(2)
 }
 
+function notifyAutoBetChange() {
+  emit('auto-bet-change', !!autoSimBetEnabled.value)
+}
+
+function notifyPlacedOrdersChange() {
+  const sold = autoSoldIds.value
+  emit('placed-orders-change', sortPlacedOrdersLikeList(placedOrders.value).map((r) => ({
+    ...r,
+    sold: sold.has(String(r.id)),
+  })))
+}
+
+/** 购物车顺序与当前列表一致（开赛时间升序）；不在列表中的排最后 */
+function sortPlacedOrdersLikeList(list) {
+  const order = new Map(matches.value.map((m, i) => [String(m.id), i]))
+  return [...(list || [])].sort((a, b) => {
+    const ia = order.has(String(a.id)) ? order.get(String(a.id)) : Number.MAX_SAFE_INTEGER
+    const ib = order.has(String(b.id)) ? order.get(String(b.id)) : Number.MAX_SAFE_INTEGER
+    if (ia !== ib) return ia - ib
+    const ta = String(a.at || '')
+    const tb = String(b.at || '')
+    if (ta !== tb) return ta < tb ? -1 : 1
+    return String(a.id).localeCompare(String(b.id))
+  })
+}
+
+function normalizePlacedRecords(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  for (const item of raw) {
+    if (item && typeof item === 'object' && item.id != null) {
+      out.push({
+        id: String(item.id),
+        label: String(item.label || item.id),
+        side: item.side === 'away' ? 'away' : (item.side === 'home' ? 'home' : ''),
+        sideName: item.sideName ? String(item.sideName) : '',
+        homeName: item.homeName ? String(item.homeName) : '',
+        awayName: item.awayName ? String(item.awayName) : '',
+        amountUsd: Number.isFinite(Number(item.amountUsd)) ? Number(item.amountUsd) : null,
+        at: item.at || null,
+        simulated: !!item.simulated,
+      })
+    } else if (item != null && item !== '') {
+      out.push({
+        id: String(item),
+        label: String(item),
+        side: '',
+        sideName: '',
+        homeName: '',
+        awayName: '',
+        amountUsd: null,
+        at: null,
+        simulated: false,
+      })
+    }
+  }
+  return out
+}
+
 function loadTennisAutoState() {
   try {
-    autoBetEnabled.value = localStorage.getItem(AUTO_BET_KEY.value) === '1'
+    // 用户开启且未自行关闭时，刷新后保持勾选
+    autoSimBetEnabled.value = localStorage.getItem(AUTO_SIM_BET_KEY.value) === '1'
     const raw = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')
-    autoPlacedIds.value = new Set(Array.isArray(raw) ? raw.map(String) : [])
-    if (isInplayMode.value) {
-      const sold = JSON.parse(localStorage.getItem(AUTO_SOLD_KEY.value) || '[]')
-      autoSoldIds.value = new Set(Array.isArray(sold) ? sold.map(String) : [])
+    placedOrders.value = normalizePlacedRecords(raw).slice(-200)
+    autoPlacedIds.value = new Set(placedOrders.value.map((r) => r.id))
+    const soldMerged = new Set()
+    for (const key of [AUTO_SOLD_KEY.value, AUTO_SOLD_KEY_LEGACY_INPLAY]) {
+      try {
+        const sold = JSON.parse(localStorage.getItem(key) || '[]')
+        if (Array.isArray(sold)) sold.forEach((id) => soldMerged.add(String(id)))
+      } catch { /* ignore */ }
     }
+    autoSoldIds.value = soldMerged
   } catch {
-    autoBetEnabled.value = false
+    autoSimBetEnabled.value = false
     autoPlacedIds.value = new Set()
+    placedOrders.value = []
     autoSoldIds.value = new Set()
   }
+  notifyAutoBetChange()
+  notifyPlacedOrdersChange()
 }
 
 function saveTennisAutoState() {
-  localStorage.setItem(AUTO_BET_KEY.value, autoBetEnabled.value ? '1' : '0')
-  localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify([...autoPlacedIds.value].slice(-200)))
-  if (isInplayMode.value) {
-    localStorage.setItem(AUTO_SOLD_KEY.value, JSON.stringify([...autoSoldIds.value].slice(-200)))
+  localStorage.setItem(AUTO_SIM_BET_KEY.value, autoSimBetEnabled.value ? '1' : '0')
+  localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify(placedOrders.value.slice(-200)))
+  localStorage.setItem(AUTO_SOLD_KEY.value, JSON.stringify([...autoSoldIds.value].slice(-400)))
+}
+
+function rememberPlacedOrders(orders, results, amount) {
+  const byId = new Map(placedOrders.value.map((r) => [r.id, r]))
+  const nowIso = new Date().toISOString()
+  for (const r of results || []) {
+    if (!r?.ok || r.eventId == null) continue
+    const id = String(r.eventId)
+    const m = matches.value.find((x) => String(x.id) === id)
+    const fromOrder = (orders || []).find((o) => String(o.eventId) === id)
+    const side = r.side || fromOrder?.side || ''
+    const home = (m ? matchHomeName(m) : '') || r.homeName || fromOrder?.homeName || ''
+    const away = (m ? matchAwayName(m) : '') || r.awayName || fromOrder?.awayName || ''
+    let sideName = ''
+    if (side === 'away') sideName = away
+    else if (side === 'home') sideName = home
+    if (!sideName && r.sideName) sideName = String(r.sideName)
+    if (!sideName || sideName === '—' || sideName === '?') {
+      sideName = side === 'away' ? '客队' : side === 'home' ? '主队' : ''
+    }
+    byId.set(id, {
+      id,
+      label: (home || away) ? `${home || '?'} vs ${away || '?'}` : id,
+      side,
+      sideName,
+      homeName: home || '',
+      awayName: away || '',
+      amountUsd: Number.isFinite(Number(r.amountUsd)) ? Number(r.amountUsd) : amount,
+      at: nowIso,
+      simulated: !!(r.simulated),
+    })
   }
+  placedOrders.value = [...byId.values()].slice(-200)
+  autoPlacedIds.value = new Set(placedOrders.value.map((x) => x.id))
+  saveTennisAutoState()
+  notifyPlacedOrdersChange()
+  syncInplayPoll()
+}
+
+async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
+  if (!isPrematchMode.value && !isInplayMode.value) return
+  // 管理员「桶打开」只影响规则与引擎；用户是否自动投注由本人开关决定
+  if (fromSave) {
+    betRulesNotice.value = autoSimBetEnabled.value
+      ? `规则已保存；你已开启「自动投注」，将按管理员条件在本账号下单`
+      : `规则已保存；有持仓时会按卖出条件与调度间隔刷 PM 并自动卖出；买入仍需自行打开「自动投注」`
+  }
+  await loadListPollIntervals()
+  syncInplayPoll()
+  if (isInplayMode.value || isPrematchMode.value) await maybeAutoStopLoss()
+  if (!autoSimBetEnabled.value) return
+  if (!allowBatchTrade.value) {
+    const msg = '已开自动投注，但当前账号无法批量（需会员）'
+    if (fromSave) betRulesError.value = msg
+    else batchError.value = msg
+    return
+  }
+  const eligible = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)) && !autoSoldIds.value.has(String(m.id)))
+  if (!eligible.length) {
+    const msg = matches.value.length
+      ? '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名）'
+      : '自动投注已开，当前列表为空'
+    if (fromSave) betRulesError.value = msg
+    else batchError.value = msg
+    return
+  }
+  await maybeAutoBatchTrade()
 }
 
 async function toggleAutoBet(ev) {
   const want = !!ev?.target?.checked
-  if (want && !allowBatchTrade.value) {
-    batchError.value = '当前账号未开通网球自动投注'
+  if (want && !props.isMember && !props.canBatchTrade) {
+    batchError.value = '需会员后才能开启自动投注'
     ev.target.checked = false
     return
   }
   if (want && !window.confirm(
     isInplayMode.value
-      ? `确认开启盘中自动投注？\n规则：${INPLAY_AUTO_RULES_TEXT}\n买入后按止损条件自动平仓，风险自负。`
-      : '确认开启网球自动投注？\n将对可同步场次按当前金额自动批量确认，风险自负。'
+      ? `确认开启「自动投注」？\n将按管理员条件/投注设置在你本账号下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。\n规则：${INPLAY_AUTO_RULES_TEXT.value}`
+      : '确认开启「自动投注」？\n将按管理员条件/投注设置在你本账号批量下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。'
   )) {
     ev.target.checked = false
     return
   }
-  autoBetEnabled.value = want
+  autoSimBetEnabled.value = want
   saveTennisAutoState()
+  notifyAutoBetChange()
   batchNotice.value = want ? '已开启自动投注' : '已关闭自动投注'
+  if (want) await loadListPollIntervals()
   syncInplayPoll()
   if (want) {
-    await maybeAutoBatchTrade()
-    if (isInplayMode.value) await maybeAutoStopLoss()
+    const eligible = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)) && !autoSoldIds.value.has(String(m.id)))
+    if (!eligible.length) {
+      batchError.value = matches.value.length
+        ? '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名）'
+        : '自动投注已开，当前列表为空'
+    } else {
+      await maybeAutoBatchTrade()
+    }
+    if (isInplayMode.value || isPrematchMode.value) await maybeAutoStopLoss()
   }
 }
 const serverTimeBase = ref(null)
@@ -193,7 +566,7 @@ const nowSec = computed(() => {
 
 function isLiveStatus(s) {
   if (!s) return false
-  const t = String(s).toLowerCase()
+  const t = String(s).toLowerCase().replace(/\s+/g, '')
   return (
     t.includes('live') ||
     t === 'inprogress' ||
@@ -316,17 +689,20 @@ function matchMetrics(m) {
   if (homeR == null || awayR == null) {
     return { gap: -1, rankDiff: 0, ready: false, hasRankDiff: false, strongRank: null }
   }
-  // 现差 = 弱现−强现；排差 = 强者现排 − 弱者历史最高
+  // 现差 = 弱现−强现；排差 = 现弱历史最高 − 现强历史最高
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const strongNow = homeStronger ? homeR : awayR
   const homeDetail = rankDetailOf(home)
   const awayDetail = rankDetailOf(away)
+  const strongBest = homeStronger
+    ? (homeDetail.best != null ? Number(homeDetail.best) : null)
+    : (awayDetail.best != null ? Number(awayDetail.best) : null)
   const weakBest = homeStronger
     ? (awayDetail.best != null ? Number(awayDetail.best) : null)
     : (homeDetail.best != null ? Number(homeDetail.best) : null)
-  const hasRankDiff = Number.isFinite(weakBest)
-  const rankDiff = hasRankDiff ? strongNow - weakBest : 0
+  const hasRankDiff = Number.isFinite(strongBest) && Number.isFinite(weakBest)
+  const rankDiff = hasRankDiff ? weakBest - strongBest : 0
   return { gap, rankDiff, ready: true, hasRankDiff, strongRank: strongNow }
 }
 
@@ -479,6 +855,48 @@ const paginatedMatches = computed(() => {
   return matches.value.slice(start, start + PAGE_SIZE)
 })
 
+watch(matches, () => {
+  if (placedOrders.value.length) notifyPlacedOrdersChange()
+})
+
+watch(rawMatches, () => {
+  pruneEndedPlacedOrders()
+})
+
+/** 模拟单：赛事已结束（或盘中已从列表消失）则移出购物车，避免残留 */
+function pruneEndedPlacedOrders() {
+  if (!placedOrders.value.length) return
+  const byId = new Map(rawMatches.value.map((m) => [String(m.id), m]))
+  const next = []
+  let removed = 0
+  for (const row of placedOrders.value) {
+    const id = String(row.id)
+    const m = byId.get(id)
+    const isSim = !!row.simulated
+    if (isSim) {
+      if (m && isMatchEnded(m)) {
+        removed += 1
+        continue
+      }
+      // 盘中列表不再包含该场（通常已完赛移出）
+      if (isInplayMode.value && !m) {
+        removed += 1
+        continue
+      }
+    } else if (m && isMatchEnded(m)) {
+      // 实盘已结束也不再展示在购物车
+      removed += 1
+      continue
+    }
+    next.push(row)
+  }
+  if (!removed) return
+  placedOrders.value = next
+  autoPlacedIds.value = new Set(next.map((r) => String(r.id)))
+  saveTennisAutoState()
+  notifyPlacedOrdersChange()
+}
+
 function isInplayTier500Or1000(m) {
   const raw = String(m?.level || '').toLowerCase()
   const label = matchLevelLabel(m).toLowerCase()
@@ -494,8 +912,16 @@ function polySidePrice(m, side) {
   const poly = polyOf(m?.id)
   if (!poly) return null
   let p = side === 'home' ? poly.home_price : poly.away_price
-  if (p == null && Array.isArray(poly.moneyline?.prices)) {
-    p = poly.moneyline.prices[side === 'home' ? 0 : 1]
+  const mlPrices = poly.moneyline?.prices
+  if (p == null && Array.isArray(mlPrices)) {
+    p = mlPrices[side === 'home' ? 0 : 1]
+  }
+  // 虚拟造数：prices: { home, away } 或顶层 prices
+  if (p == null && mlPrices && typeof mlPrices === 'object' && !Array.isArray(mlPrices)) {
+    p = side === 'home' ? mlPrices.home : mlPrices.away
+  }
+  if (p == null && poly.prices && typeof poly.prices === 'object') {
+    p = side === 'home' ? poly.prices.home : poly.prices.away
   }
   if (p == null) return null
   const n = Number(p)
@@ -565,22 +991,156 @@ function analyzeStrongSets(m, strongSide) {
   return { strongSets, weakSets, current, pairs }
 }
 
-function gamesTrailStopLoss(strongG, weakG) {
-  return strongG < weakG && (weakG - strongG) > 2
+function gamesTrailStopLoss(strongG, weakG, lead = 2) {
+  const need = Number(lead)
+  const n = Number.isFinite(need) ? need : 2
+  // 与文案「局差≥」一致（弱方领先局数）
+  return strongG < weakG && weakG - strongG >= n
 }
 
-/**
- * 盘中止损（文档 §九）：
- * - BO3：第三盘，弱−强 > 2
- * - BO5 路径A（曾 2:0）：第五盘局差 > 2
- * - BO5 路径B（1:1 后变 1:2）：第四盘关键止损；或 2:2 第五盘
- */
-function shouldInplayStopLoss(m) {
-  if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
-  const side = pickSide(m)
-  if (!side) return false
+function matchConfiguredStopRule(m, side, rule) {
   const { strongSets, weakSets, current } = analyzeStrongSets(m, side)
-  if (!current || !gamesTrailStopLoss(current.strong, current.weak)) return false
+  const pmMaxRaw = rule.stopPmCentsMax
+  const pmMax = Number(pmMaxRaw)
+  // 未设置 PM¢（空 / all / 无效）→ 不参与判断；场次无赔率时同样跳过
+  const wantPm = pmMaxRaw != null && pmMaxRaw !== '' && pmMaxRaw !== 'all' && Number.isFinite(pmMax) && pmMax > 0
+  let applyPm = false
+  let pmOk = true
+  if (wantPm) {
+    const p = polySidePrice(m, side)
+    if (p != null) {
+      applyPm = true
+      pmOk = (p * 100) < pmMax
+    }
+  }
+
+  const fmt = String(rule.stopFormat || 'any').toLowerCase()
+  const hasFormat = fmt === 'bo3' || fmt === 'bo5'
+  const setIndex = Number(rule.stopSetIndex)
+  const hasSetIndex = Number.isFinite(setIndex) && setIndex > 0 && rule.stopSetIndex !== '' && rule.stopSetIndex !== 'all'
+  const hasStrongSets = rule.stopStrongSets != null && rule.stopStrongSets !== '' && rule.stopStrongSets !== 'all'
+  const hasWeakSets = rule.stopWeakSets != null && rule.stopWeakSets !== '' && rule.stopWeakSets !== 'all'
+  const lead = rule.stopGameLead
+  const hasTrail = !(lead == null || lead === '' || lead === 'all')
+  // 局差与 PM 作为整体 OR；弱方局分已弃用
+  const hasAnyConstraint = applyPm || hasFormat || hasSetIndex || hasStrongSets || hasWeakSets || hasTrail
+  if (!hasAnyConstraint) return false
+
+  // 无比分：仅当确有 PM 赔率可算时，才允许纯 PM 触发
+  if (!current) {
+    return applyPm && pmOk
+  }
+
+  const bo5 = isBo5Match(m)
+  if (fmt === 'bo3' && bo5) return false
+  if (fmt === 'bo5' && !bo5) return false
+  if (hasSetIndex && current.setIndex !== setIndex) return false
+  if (hasStrongSets) {
+    if (strongSets !== Number(rule.stopStrongSets)) return false
+  }
+  if (hasWeakSets) {
+    if (weakSets !== Number(rule.stopWeakSets)) return false
+  }
+  if (hasTrail || applyPm) {
+    const trailOk = hasTrail ? gamesTrailStopLoss(current.strong, current.weak, lead) : false
+    const pOk = applyPm ? pmOk : false
+    if (hasTrail && applyPm) {
+      if (!(trailOk || pOk)) return false
+    } else if (hasTrail) {
+      if (!trailOk) return false
+    } else if (!pOk) {
+      return false
+    }
+  }
+  return true
+}
+
+function matchConfiguredStopGroup(m, side, group) {
+  if (group.stopEnabled === false) return false
+  const rules = Array.isArray(group.stopRules) ? group.stopRules : []
+  if (!rules.length) return false
+  let acc = null
+  for (let i = 0; i < rules.length; i++) {
+    const rule = softenStopRuleForMatch(rules[i])
+    const hit = matchConfiguredStopRule(m, side, rule)
+    if (i === 0) acc = hit
+    else if (String(rules[i].joinPrev || 'or').toLowerCase() === 'and') acc = acc && hit
+    else acc = acc || hit
+  }
+  return !!acc
+}
+
+/** 旧默认 BO3+第3盘+局差2 在匹配时视为未填，避免只改了 PM 永远不卖 */
+function softenStopRuleForMatch(r) {
+  const o = { ...(r || {}) }
+  const fmt = String(o.stopFormat || '').toLowerCase()
+  if (fmt === 'bo3' && Number(o.stopSetIndex) === 3 && Number(o.stopGameLead) === 2) {
+    o.stopFormat = 'any'
+    o.stopSetIndex = 'all'
+    o.stopGameLead = 'all'
+  }
+  return o
+}
+
+/** 持仓买入侧：优先购物车记录，否则回退建议侧 */
+function heldSideOf(eventId, m) {
+  const id = String(eventId || m?.id || '')
+  const row = placedOrders.value.find((r) => String(r.id) === id)
+  if (row?.side === 'home' || row?.side === 'away') return row.side
+  if (row?.sideName && m) {
+    const sn = String(row.sideName || '').trim().toLowerCase()
+    const home = String(matchHomeName(m) || '').trim().toLowerCase()
+    const away = String(matchAwayName(m) || '').trim().toLowerCase()
+    if (sn && home && sn === home) return 'home'
+    if (sn && away && sn === away) return 'away'
+  }
+  return pickSide(m)
+}
+
+function openPlacedIds() {
+  return [...autoPlacedIds.value].filter((id) => !autoSoldIds.value.has(String(id))).map(String)
+}
+
+function hasConfiguredStopLoss() {
+  return bettingGroups.value.some((g) => g.stopEnabled !== false && ensureStopRules(g).length > 0)
+}
+
+/** 有未平仓持仓，且已配止损（或盘中可走默认止损）时，按调度刷 PM 并自动卖 */
+function shouldRunStopLossMonitor() {
+  if (!isPrematchMode.value && !isInplayMode.value) return false
+  if (!allowBatchTrade.value) return false
+  if (!openPlacedIds().length) return false
+  if (hasConfiguredStopLoss()) return true
+  return isInplayMode.value
+}
+
+/** 盘前/盘中止损：有配置止损组则按配置；盘中无配置时回退默认规则。sideOverride=持仓侧 */
+function shouldConfiguredOrDefaultStopLoss(m, sideOverride = null) {
+  if (isMatchEnded(m)) return false
+  const side = sideOverride || pickSide(m)
+  if (!side) return false
+
+  const configured = bettingGroups.value.filter((g) => g.stopEnabled !== false && ensureStopRules(g).length)
+  if (configured.length) {
+    // 有 PM 止损时可在未开打时判断；纯比分止损仍需已开打
+    const anyPmStop = configured.some((g) => ensureStopRules(g).some((r) => {
+      const v = r?.stopPmCentsMax
+      return v != null && v !== '' && v !== 'all' && Number(v) > 0
+    }))
+    if (!anyPmStop && !isMatchLive(m) && !liveSetPairs(m).length) return false
+    let acc = null
+    for (let i = 0; i < configured.length; i++) {
+      const hit = matchConfiguredStopGroup(m, side, configured[i])
+      if (i === 0) acc = hit
+      else if (String(configured[i].joinPrev || 'or').toLowerCase() === 'and') acc = acc && hit
+      else acc = acc || hit
+    }
+    return !!acc
+  }
+
+  if (!isInplayMode.value || !isMatchLive(m)) return false
+  const { strongSets, weakSets, current } = analyzeStrongSets(m, side)
+  if (!current || !gamesTrailStopLoss(current.strong, current.weak, 2)) return false
   if (isBo5Match(m)) {
     if (strongSets === 1 && weakSets === 2 && current.setIndex === 4) return true
     if (strongSets === 2 && weakSets === 2 && current.setIndex === 5) return true
@@ -589,21 +1149,40 @@ function shouldInplayStopLoss(m) {
   return strongSets === 1 && weakSets === 1 && current.setIndex === 3
 }
 
+function shouldInplayStopLoss(m) {
+  return shouldConfiguredOrDefaultStopLoss(m, heldSideOf(m?.id, m))
+}
+
+function resolveBatchStakeUsd() {
+  const fromGroup = Number(bettingGroups.value.find((g) => Number(g.amountUsd) >= 1)?.amountUsd)
+  if (fromGroup >= 1) return fromGroup
+  const fromInput = Number(batchAmountUsd.value)
+  return fromInput >= 1 ? fromInput : 0
+}
+
 function passesInplayAutoBet(m) {
   if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
   const side = pickSide(m)
   if (!side) return false
-  if (!passesInplayEntryRules(m, data.value?.rankingsByPlayer || {})) return false
-  if (!strongWonFirstSet(m)) return false
-  const cents = strongPolyPriceCents(m)
-  if (cents == null || cents >= 91) return false
-  return !!polyUrlOf(m)
+  if (!polyUrlOf(m)) return false
+  return passesInplayBettingEntry(m, data.value?.rankingsByPlayer || {}, bettingEntry.value, {
+    strongWonFirstSet,
+    strongPolyCents: strongPolyPriceCents,
+    getFirstSetGames: (match) => {
+      const pairs = liveSetPairs(match)
+      if (!pairs.length) return null
+      const first = pairs[0]
+      return { home: first.home, away: first.away }
+    },
+  })
 }
 
 function canSelectMatch(m) {
   if (isSettledMode.value) return false
   if (!props.isMember || !allowBatchTrade.value) return false
   if (!m?.id || isMatchEnded(m)) return false
+  const id = String(m.id)
+  if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
   if (!polyUrlOf(m)) return false
   if (isInplayMode.value) return passesInplayAutoBet(m)
   return pickSide(m) != null
@@ -650,9 +1229,18 @@ function toggleSelectPage() {
 
 function buildBatchOrders() {
   return [...selectedIds.value].map((eventId) => {
+    const id = String(eventId)
+    if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return null
     const m = matches.value.find((x) => String(x.id) === eventId)
-    return { eventId, side: pickSide(m) }
-  }).filter((o) => o.side)
+    const side = pickSide(m)
+    if (!m || !side) return null
+    return {
+      eventId,
+      side,
+      homeName: matchHomeName(m),
+      awayName: matchAwayName(m),
+    }
+  }).filter(Boolean)
 }
 
 function formatBatchResultLine(r, list) {
@@ -667,64 +1255,82 @@ function formatBatchResultLine(r, list) {
   return `${label}：${r.error || '失败'}`
 }
 
+const BATCH_TRADE_CHUNK = 20
+
+async function placeBatchTradeRequest(orders, amount) {
+  const payload = { orders, amountUsd: amount, simulate: !!useSimulateOrders.value }
+  if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
+  if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
+  if (isLiveMode.value) return api.placeTennisLiveBatchTrade(payload)
+  if (isInplayMode.value) return api.placeTennisInplayBatchTrade(payload)
+  if (isNewMode.value) return api.placeTennisNewBatchTrade(payload)
+  return api.placeTennisBatchTrade(payload)
+}
+
 async function submitBatchTrade({ auto = false } = {}) {
   batchError.value = ''
   if (!auto) batchNotice.value = ''
+  if (auto && !autoSimBetEnabled.value) return
+  if (!auto && !props.canBatchTrade && !autoSimBetEnabled.value) {
+    batchError.value = '默认不下单。请先开启「自动投注」，或配置钱包后手动实盘批量'
+    return
+  }
   const orders = buildBatchOrders()
   if (!orders.length) {
     if (!auto) batchError.value = '请先勾选可同步的场次'
     return
   }
-  const amount = Number(batchAmountUsd.value)
+  const amount = resolveBatchStakeUsd()
   if (!(amount >= 1)) {
-    batchError.value = '每场金额至少 $1'
+    batchError.value = '每场金额至少 $1（请在投注设置组内填写投入$）'
     return
   }
   batchSubmitting.value = true
   try {
-    const resp = isPrematchMode.value
-      ? await api.placeTennisPrematchBatchTrade({ orders, amountUsd: amount })
-      : isRangeMode.value
-        ? await api.placeTennisRangeBatchTrade({ orders, amountUsd: amount })
-        : isLiveMode.value
-          ? await api.placeTennisLiveBatchTrade({ orders, amountUsd: amount })
-          : isInplayMode.value
-            ? await api.placeTennisInplayBatchTrade({ orders, amountUsd: amount })
-            : isNewMode.value
-              ? await api.placeTennisNewBatchTrade({ orders, amountUsd: amount })
-              : await api.placeTennisBatchTrade({ orders, amountUsd: amount })
-    const lines = (resp.results || []).map((r) => formatBatchResultLine(r, matches.value))
-    if (resp.success > 0) {
-      const okLines = lines.filter((_, i) => resp.results[i]?.ok)
+    // 服务端单次最多 20 场；盘前自动勾选常超限，需分批否则整单被拒、一单不下
+    const chunks = []
+    for (let i = 0; i < orders.length; i += BATCH_TRADE_CHUNK) {
+      chunks.push(orders.slice(i, i + BATCH_TRADE_CHUNK))
+    }
+    const allResults = []
+    let success = 0
+    let failed = 0
+    for (const chunk of chunks) {
+      const resp = await placeBatchTradeRequest(chunk, amount)
+      const part = Array.isArray(resp?.results) ? resp.results : []
+      allResults.push(...part)
+      success += Number(resp?.success) || part.filter((r) => r?.ok).length
+      failed += Number(resp?.failed) || part.filter((r) => !r?.ok).length
+    }
+    const lines = allResults.map((r) => formatBatchResultLine(r, matches.value))
+    if (success > 0) {
+      const okLines = lines.filter((_, i) => allResults[i]?.ok)
       if (auto) {
         batchNotice.value = [
-          `自动投注成功 ${resp.success} 场`,
-          resp.message || null,
+          `自动投注成功 ${success} 场`,
+          chunks.length > 1 ? `分 ${chunks.length} 批提交` : null,
           ...okLines.slice(0, 3),
           okLines.length > 3 ? `…另有 ${okLines.length - 3} 场成功` : null,
         ].filter(Boolean).join('\n')
       } else {
-        batchNotice.value = [resp.message, ...okLines].filter(Boolean).join('\n')
+        batchNotice.value = [
+          chunks.length > 1 ? `已分 ${chunks.length} 批提交，成功 ${success} 场` : null,
+          ...okLines,
+        ].filter(Boolean).join('\n')
       }
-      const failed = (resp.results || []).filter((r) => !r.ok).map((r) => String(r.eventId))
+      const failedIds = new Set(allResults.filter((r) => !r.ok).map((r) => String(r.eventId)))
       const next = new Set(selectedIds.value)
-      const placed = new Set(autoPlacedIds.value)
       for (const o of orders) {
         const id = String(o.eventId)
-        if (!failed.includes(id)) {
-          next.delete(id)
-          placed.add(id)
-        }
+        if (!failedIds.has(id)) next.delete(id)
       }
       selectedIds.value = next
-      autoPlacedIds.value = placed
-      saveTennisAutoState()
+      rememberPlacedOrders(orders, allResults, amount)
     } else if (!auto) {
       batchNotice.value = ''
     }
-    if (resp.failed > 0 || resp.success === 0) {
-      batchError.value = lines.filter((_, i) => !resp.results[i]?.ok).join('\n')
-        || resp.message
+    if (failed > 0 || success === 0) {
+      batchError.value = lines.filter((_, i) => !allResults[i]?.ok).join('\n')
         || '批量同步失败'
     }
   } catch (e) {
@@ -736,36 +1342,174 @@ async function submitBatchTrade({ auto = false } = {}) {
 
 async function maybeAutoBatchTrade() {
   if (!autoBetEnabled.value || !allowBatchTrade.value || batchSubmitting.value) return
-  const candidates = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)))
-  if (!candidates.length) return
+  const candidates = matches.value.filter((m) => {
+    const id = String(m.id)
+    return canSelectMatch(m) && !autoPlacedIds.value.has(id) && !autoSoldIds.value.has(id)
+  })
+  if (!candidates.length) {
+    // 盘中：开了自动但无可下单场次时给提示（购物车仍可打开，可能为空）
+    if (isInplayMode.value && !batchNotice.value) {
+      batchNotice.value = '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名，且满足盘中买入条件）'
+    }
+    return
+  }
   const next = new Set(selectedIds.value)
   for (const m of candidates) next.add(String(m.id))
   selectedIds.value = next
   await submitBatchTrade({ auto: true })
 }
 
+async function placeStopSell(m, side, { simulate } = {}) {
+  const payload = {
+    eventId: String(m.id),
+    side,
+    shares: 'all',
+    simulate: simulate != null ? !!simulate : !!useSimulateOrders.value,
+  }
+  if (isPrematchMode.value) return api.placeTennisPrematchSell(payload)
+  return api.placeTennisInplaySell(payload)
+}
+
+/** 购物车手动卖出：平仓后写入已卖出，后续不再自动买入该场 */
+async function sellPlacedOrder(eventId) {
+  const id = String(eventId || '')
+  if (!id) throw new Error('缺少赛事')
+  if (autoSoldIds.value.has(id)) return { ok: true, alreadySold: true }
+  if (batchSubmitting.value || stopLossBusy.value) throw new Error('请稍候再试')
+  const row = placedOrders.value.find((r) => String(r.id) === id)
+  const m = rawMatches.value.find((x) => String(x.id) === id)
+    || matches.value.find((x) => String(x.id) === id)
+  let side = row?.side === 'away' || row?.side === 'home' ? row.side : ''
+  if (!side && m) side = pickSide(m) || ''
+  // 仅有 sideName 时反推方向
+  if (!side && row && m) {
+    const sn = String(row.sideName || '').trim().toLowerCase()
+    const home = String(matchHomeName(m) || '').trim().toLowerCase()
+    const away = String(matchAwayName(m) || '').trim().toLowerCase()
+    if (sn && home && sn === home) side = 'home'
+    else if (sn && away && sn === away) side = 'away'
+  }
+  if (!side && row?.sideName) {
+    // 购物车仍有记录但列表已无该场：默认按买入侧字符串兜底
+    side = 'home'
+  }
+  if (!side) throw new Error('无法确定买入方向，不能卖出')
+
+  // 真实采集下，旧模拟单只本地平仓；否则按采集源决定是否模拟
+  const simulate = !!useSimulateOrders.value
+  if (!simulate && row?.simulated) {
+    const sold = new Set(autoSoldIds.value)
+    sold.add(id)
+    autoSoldIds.value = sold
+    saveTennisAutoState()
+    notifyPlacedOrdersChange()
+    syncInplayPoll()
+    batchNotice.value = `已本地平仓（原模拟单）：${row?.label || id}（不再自动下单）`
+    return { ok: true, simulated: true, localOnly: true }
+  }
+
+  stopLossBusy.value = true
+  try {
+    let resp = { ok: true, simulated: simulate }
+    if (isPrematchMode.value || isInplayMode.value) {
+      try {
+        resp = await placeStopSell(m || { id }, side, { simulate })
+      } catch (e) {
+        // 模拟单：接口失败也本地记为已卖出，保证购物车可用
+        if (simulate) {
+          resp = {
+            ok: true,
+            simulated: true,
+            localOnly: true,
+            error: e?.response?.data?.error || e?.message || '',
+          }
+        } else {
+          throw e
+        }
+      }
+    }
+    const sold = new Set(autoSoldIds.value)
+    sold.add(id)
+    autoSoldIds.value = sold
+    saveTennisAutoState()
+    notifyPlacedOrdersChange()
+    syncInplayPoll()
+    batchNotice.value = `已卖出${simulate ? '（模拟）' : ''}：${row?.label || id}（不再自动下单）`
+    return { ok: true, ...resp }
+  } finally {
+    stopLossBusy.value = false
+  }
+}
+
+/** 清理卖出记录：从购物车移除已卖出，并解除其「禁止再买」标记 */
+function clearSoldPlacedOrders() {
+  const soldIds = new Set([...autoSoldIds.value].map(String))
+  const before = soldIds.size
+  if (!before && !placedOrders.value.some((r) => soldIds.has(String(r.id)))) {
+    return { cleared: 0 }
+  }
+  placedOrders.value = placedOrders.value.filter((r) => !soldIds.has(String(r.id)))
+  autoPlacedIds.value = new Set(placedOrders.value.map((r) => String(r.id)))
+  autoSoldIds.value = new Set()
+  try {
+    localStorage.removeItem(AUTO_SOLD_KEY_LEGACY_INPLAY)
+  } catch { /* ignore */ }
+  saveTennisAutoState()
+  notifyPlacedOrdersChange()
+  syncInplayPoll()
+  return { cleared: before }
+}
+
 async function maybeAutoStopLoss() {
-  if (!isInplayMode.value || !autoBetEnabled.value || !allowBatchTrade.value) return
+  if ((!isInplayMode.value && !isPrematchMode.value) || !allowBatchTrade.value) return
   if (batchSubmitting.value || stopLossBusy.value) return
-  const targets = rawMatches.value.filter((m) => {
-    const id = String(m.id)
-    if (!autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
-    return shouldInplayStopLoss(m)
-  })
-  if (!targets.length) return
+  if (!shouldRunStopLossMonitor()) return
+  const byId = new Map(rawMatches.value.map((m) => [String(m.id), m]))
+  const targets = []
+  const localClose = []
+  for (const id of openPlacedIds()) {
+    const m = byId.get(id)
+    if (!m) continue
+    const side = heldSideOf(id, m)
+    if (!side) continue
+    if (!shouldConfiguredOrDefaultStopLoss(m, side)) continue
+    const row = placedOrders.value.find((r) => String(r.id) === id)
+    // 真实采集：旧模拟单无链上仓位，仅本地平仓；实盘单走真实止损
+    if (!isVirtualDataSource.value && row?.simulated) {
+      localClose.push({ m, row })
+      continue
+    }
+    targets.push({ m, side, simulate: !!isVirtualDataSource.value })
+  }
+  if (!targets.length && !localClose.length) return
   stopLossBusy.value = true
   const sold = new Set(autoSoldIds.value)
   const lines = []
   try {
-    for (const m of targets) {
+    for (const { m, row } of localClose) {
       const id = String(m.id)
-      const side = pickSide(m)
-      if (!side) continue
+      sold.add(id)
+      const label = row?.label || `${matchHomeName(m)} vs ${matchAwayName(m)}`
+      lines.push(`${label}：原模拟单已本地平仓`)
+    }
+    for (const { m, side, simulate } of targets) {
+      const id = String(m.id)
       try {
-        const resp = await api.placeTennisInplaySell({ eventId: id, side, shares: 'all' })
+        let resp
+        try {
+          resp = await placeStopSell(m, side, { simulate })
+        } catch (e) {
+          // 虚拟记账：接口失败也本地落袋；实盘失败则抛出
+          if (simulate) {
+            resp = { ok: true, simulated: true, localOnly: true, error: e?.response?.data?.error || e?.message }
+          } else {
+            throw e
+          }
+        }
         sold.add(id)
         const label = `${matchHomeName(m)} vs ${matchAwayName(m)}`
-        lines.push(`${label}：止损已平仓${resp?.soldShares ? ` (${resp.soldShares})` : ''}`)
+        const tag = resp?.localOnly ? '（本页记账）' : (simulate || resp?.simulated ? '（模拟）' : '')
+        lines.push(`${label}：止损已平仓${resp?.soldShares ? ` (${resp.soldShares})` : ''}${tag}`)
       } catch (e) {
         const label = `${matchHomeName(m)} vs ${matchAwayName(m)}`
         lines.push(`${label}：止损失败 ${e.response?.data?.error || e.message || ''}`)
@@ -775,24 +1519,65 @@ async function maybeAutoStopLoss() {
     if (sold.size !== autoSoldIds.value.size) {
       autoSoldIds.value = sold
       saveTennisAutoState()
+      notifyPlacedOrdersChange()
+      syncInplayPoll()
     }
     if (lines.some((l) => l.includes('已平仓'))) {
-      batchNotice.value = ['自动止损', ...lines.filter((l) => l.includes('已平仓')).slice(0, 5)].join('\n')
+      batchNotice.value = ['自动止损（已卖出赛事不再买入）', ...lines.filter((l) => l.includes('已平仓')).slice(0, 5)].join('\n')
     }
   } finally {
     stopLossBusy.value = false
   }
 }
 
-function syncInplayPoll() {
+function clearListPollTimers() {
   if (inplayPollTimer) {
     clearInterval(inplayPollTimer)
     inplayPollTimer = null
   }
-  if (!isInplayMode.value || !autoBetEnabled.value) return
-  inplayPollTimer = setInterval(() => {
-    loadOnce({ quiet: true })
-  }, 60000)
+  if (stopLossPollTimer) {
+    clearInterval(stopLossPollTimer)
+    stopLossPollTimer = null
+  }
+  if (pageRefreshPollTimer) {
+    clearInterval(pageRefreshPollTimer)
+    pageRefreshPollTimer = null
+  }
+}
+
+function syncInplayPoll() {
+  clearListPollTimers()
+  if (!isInplayMode.value && !isPrematchMode.value) return
+  const needBuy = !!autoBetEnabled.value
+  const needStop = shouldRunStopLossMonitor()
+  const pageSec = clampPageRefreshSec(listPageRefreshIntervalSec.value)
+  const needPage = pageSec > 0
+  if (!needBuy && !needStop && !needPage) return
+  const buyMs = clampPollSec(listAutoBetIntervalSec.value, 60) * 1000
+  const stopMs = clampPollSec(listStopLossIntervalSec.value, 60) * 1000
+  const pageMs = pageSec * 1000
+
+  if (needPage) {
+    pageRefreshPollTimer = setInterval(() => {
+      loadOnce({ quiet: true })
+    }, pageMs)
+  }
+  // 自动投注：若与页面刷新同间隔则已由页面刷新覆盖
+  if (needBuy && (!needPage || pageMs !== buyMs)) {
+    inplayPollTimer = setInterval(() => {
+      loadOnce({ quiet: true })
+    }, buyMs)
+  }
+  // 止损：跳过已由页面刷新或买入同间隔覆盖的情况
+  if (needStop) {
+    const coveredByBuy = needBuy && stopMs === buyMs && (!needPage || pageMs !== buyMs)
+    const coveredByPage = needPage && pageMs === stopMs
+    if (!coveredByBuy && !coveredByPage) {
+      stopLossPollTimer = setInterval(() => {
+        loadOnce({ quiet: true, skipAutoBatch: true })
+      }, stopMs)
+    }
+  }
 }
 
 watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter, settledPnlMark], () => {
@@ -1026,7 +1811,8 @@ function fmtEdge(v) {
 }
 
 function fmtOdds(side) {
-  const d = side?.decimal
+  // 兼容 { decimal } 与虚拟造数直接给数字
+  const d = side != null && typeof side === 'object' ? side.decimal : side
   if (d == null || Number.isNaN(Number(d))) return '—'
   return Number(d).toFixed(2)
 }
@@ -1047,7 +1833,26 @@ function lastToken(name) {
 function polySideCents(poly, homeName, awayName) {
   const ml = poly?.moneyline
   const outcomes = ml?.outcomes || []
-  const prices = ml?.prices || []
+  let prices = ml?.prices
+  // 虚拟造数：prices 可能是 { home, away } 或顶层 poly.prices
+  if (!Array.isArray(prices) && prices && typeof prices === 'object') {
+    const home = Number(prices.home)
+    const away = Number(prices.away)
+    if (Number.isFinite(home) && Number.isFinite(away)) {
+      let h = home <= 1 ? Math.round(home * 100) : Math.round(home)
+      let a = away <= 1 ? Math.round(away * 100) : Math.round(away)
+      const sum = h + a
+      if (sum > 0 && sum !== 100) {
+        if (h >= a) h += 100 - sum
+        else a += 100 - sum
+      }
+      return { home: h, away: a }
+    }
+  }
+  if ((!Array.isArray(prices) || !prices.length) && poly?.prices && typeof poly.prices === 'object') {
+    return polySideCents({ ...poly, moneyline: { ...(ml || {}), prices: poly.prices } }, homeName, awayName)
+  }
+  prices = Array.isArray(prices) ? prices : []
   if (!outcomes.length || !prices.length) return { home: null, away: null }
   const homeLast = lastToken(homeName)
   const awayLast = lastToken(awayName)
@@ -1200,7 +2005,13 @@ function playerLiveScoreText(m, side) {
 }
 
 /** 打开页面时从 Redis 加载；quiet 时用于盘中自动轮询 */
-async function loadOnce({ quiet = false } = {}) {
+async function loadOnce({
+  quiet = false,
+  skipAutoBatch = false,
+  skipStopLoss = false,
+  /** 止损/自动买入不挡列表 loading，后台跑 */
+  deferSideEffects = false,
+} = {}) {
   if (!quiet) {
     error.value = ''
     loading.value = true
@@ -1225,6 +2036,9 @@ async function loadOnce({ quiet = false } = {}) {
         ? payload
         : payload?.data || payload
     data.value = bundle
+    if (isInplayMode.value && bundle?.bettingEntry) {
+      bettingEntry.value = normalizeInplayBettingEntry(bundle.bettingEntry)
+    }
     if (bundle?.serverTime != null) {
       serverTimeBase.value = Number(bundle.serverTime)
       loadedAtMs.value = Date.now()
@@ -1238,8 +2052,20 @@ async function loadOnce({ quiet = false } = {}) {
     } else {
       settledStats.value = null
     }
-    await maybeAutoStopLoss()
-    await maybeAutoBatchTrade()
+
+    // 先结束 loading，列表可交互；止损/自动买放到后面
+    if (!quiet) loading.value = false
+
+    const runSideEffects = async () => {
+      if (!skipStopLoss) await maybeAutoStopLoss()
+      if (!skipAutoBatch) await maybeAutoBatchTrade()
+      pruneEndedPlacedOrders()
+    }
+    if (deferSideEffects || quiet) {
+      void runSideEffects().catch(() => { /* 后台失败不挡列表 */ })
+    } else {
+      await runSideEffects()
+    }
   } catch (e) {
     if (!quiet) error.value = e?.message || '加载失败'
   } finally {
@@ -1265,9 +2091,40 @@ onMounted(() => {
   } else if (hideEndedEvents.value && filter.value === 'ended') {
     filter.value = 'Not started'
   }
-  loadOnce()
-  syncInplayPoll()
+
+  // 预拉弹窗 chunk，避免第一次点设置再等下载
+  void import('./tennis-board/TennisConditionModal.vue')
+  void import('./tennis-board/TennisBettingModal.vue')
+  void import('./tennis-board/TennisScheduleModal.vue')
+
+  // 赛程数据与引擎配置并行：列表不等 engines / 投注规则
+  const dataPromise = loadOnce({ deferSideEffects: true })
+  const cfgPromise = Promise.all([
+    loadListPollIntervals(),
+    loadBettingRules(),
+    Promise.resolve().then(() => { loadConditionRules() }),
+  ]).catch(() => { /* 配置失败不挡列表 */ })
+
+  void dataPromise.then(() => {
+    syncInplayPoll()
+  })
+  void cfgPromise.then(() => {
+    syncInplayPoll()
+  })
+
   tickTimer = setInterval(() => { clockTick.value++ }, 30000)
+})
+
+watch(canEditConditionRules, (on) => {
+  if (on) loadConditionRules()
+})
+
+watch(canEditBettingRules, (on) => {
+  if (on) loadBettingRules()
+})
+
+watch(bettingBucketKey, () => {
+  if (canEditBettingRules.value) loadBettingRules()
 })
 
 watch(
@@ -1324,10 +2181,7 @@ watch(
 )
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
-  if (inplayPollTimer) {
-    clearInterval(inplayPollTimer)
-    inplayPollTimer = null
-  }
+  clearListPollTimers()
 })
 
 function gapInfo(m) {
@@ -1362,7 +2216,7 @@ function gapInfo(m) {
   const homeR = currentRankOf(home)
   const awayR = currentRankOf(away)
   if (homeR == null || awayR == null) return { ready: false }
-  // 现排名差 = 弱−强；历史最高排名差 = 高−低
+  // 现排名差 = 弱−强；排差 = 现弱历史最高 − 现强历史最高
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const better = homeStronger ? shortName(home.name) : shortName(away.name)
@@ -1372,10 +2226,12 @@ function gapInfo(m) {
   const awayDetail = rankDetailOf(away, m)
   const homeBest = homeDetail.best != null ? Number(homeDetail.best) : null
   const awayBest = awayDetail.best != null ? Number(awayDetail.best) : null
+  const strongBest = homeStronger ? homeBest : awayBest
+  const weakBest = homeStronger ? awayBest : homeBest
   const hasBest = Number.isFinite(homeBest) && Number.isFinite(awayBest)
   const bestHigh = hasBest ? Math.min(homeBest, awayBest) : null
   const bestLow = hasBest ? Math.max(homeBest, awayBest) : null
-  const rankDiff = hasBest ? bestHigh - bestLow : null
+  const rankDiff = (Number.isFinite(weakBest) && Number.isFinite(strongBest)) ? weakBest - strongBest : null
   return {
     ready: true,
     gap,
@@ -1388,6 +2244,8 @@ function gapInfo(m) {
     awayBest,
     bestHigh,
     bestLow,
+    strongBest,
+    weakBest,
     rankDiff,
   }
 }
@@ -1405,492 +2263,225 @@ function settledPnlBadge(m) {
   if (hasBet) return { text: '投', cls: 'pnl-bet' }
   return null
 }
+
+defineExpose({
+  openConditionModal,
+  openBettingModal,
+  openScheduleModal,
+  sellPlacedOrder,
+  clearSoldPlacedOrders,
+  getPlacedOrders: () => placedOrders.value.map((r) => ({ ...r })),
+})
 </script>
 
 <template>
   <div class="wrap">
-    <div v-if="isInplayMode && (allowBatchTrade || bundleHint)" class="inplay-source-bar">
-      <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ INPLAY_AUTO_RULES_TEXT }}</span>
-      <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
-    </div>
-    <div v-if="isSettledMode && settledStats" class="settled-stats-bar">
-      <span>合计 盈{{ pct(settledStats.total?.winRate) }} / 亏{{ pct(settledStats.total?.lossRate) }} · PnL {{ num(settledStats.total?.totalPnl) }}</span>
-      <span>盘前 盈{{ pct(settledStats.prematch?.winRate) }} / 亏{{ pct(settledStats.prematch?.lossRate) }}</span>
-      <span>盘中 盈{{ pct(settledStats.inplay?.winRate) }} / 亏{{ pct(settledStats.inplay?.lossRate) }}</span>
-      <template v-if="(settledStats.rules || []).length">
-        <span
-          v-for="r in settledStats.rules"
-          :key="r.key || r.id"
-          class="settled-rule-stat"
-          :title="(r.bucket === 'prematch' ? '盘前' : '盘中') + ' · ' + (r.source === 'trade' ? '真实成交' : '纸面回测') + ' · n=' + (r.settledCount || 0)"
-        >
-          {{ r.bucket === 'prematch' ? '前' : '中' }}·{{ r.name }}
-          盈{{ pct(r.winRate) }} / 亏{{ pct(r.lossRate) }}
-          · {{ num(r.totalPnl) }}
-          <em v-if="r.source === 'paper'">纸</em>
-        </span>
+    <TennisBoardTopbar
+      :is-inplay-mode="isInplayMode"
+      :is-settled-mode="isSettledMode"
+      :allow-batch-trade="allowBatchTrade"
+      :bundle-hint="bundleHint"
+      :inplay-auto-rules-text="INPLAY_AUTO_RULES_TEXT"
+      :settled-stats="settledStats"
+      :stats="stats"
+      :loading="loading"
+      :filter="filter"
+      :hide-ended-events="hideEndedEvents"
+      :pct="pct"
+      :num="num"
+      :set-status-filter="setStatusFilter"
+    />
+
+    <TennisConditionModal
+      v-model:open="conditionModalOpen"
+      v-model:condition-bucket-on="conditionBucketOn"
+      :condition-bucket-label="conditionBucketLabel"
+      :rules-loading="rulesLoading"
+      :rules-summary="rulesSummary"
+      :can-edit-condition-rules="canEditConditionRules"
+      :rules-error="rulesError"
+      :rules-notice="rulesNotice"
+      :rules-saving="rulesSaving"
+      :condition-groups="conditionGroups"
+      :is-inplay-mode="isInplayMode"
+      :is-prematch-mode="isPrematchMode"
+      :can-edit-product-select="canEditProductSelect"
+      :needs-condition-group-select="needsConditionGroupSelect"
+      :select-error="selectError"
+      :select-notice="selectNotice"
+      :select-loading="selectLoading"
+      :select-saving="selectSaving"
+      :product-select-cond="productSelectCond"
+      :library-groups="libraryGroups"
+      :condition-group-label="conditionGroupLabel"
+      :set-condition-group-field="setConditionGroupField"
+      :remove-condition-group="removeConditionGroup"
+      :add-condition-group="addConditionGroup"
+      :save-condition-rules="saveConditionRules"
+      :add-select-row="addSelectRow"
+      :save-product-select="saveProductSelect"
+      :set-select-row-field="setSelectRowField"
+      :remove-select-row="removeSelectRow"
+      :open-admin-engine="openAdminEngine"
+    />
+
+    <TennisBettingModal
+      v-model:open="bettingModalOpen"
+      v-model:betting-bucket-on="bettingBucketOn"
+      v-model:betting-simulate-on="bettingSimulateOn"
+      :is-inplay-mode="isInplayMode"
+      :bet-rules-loading="betRulesLoading"
+      :select-loading="selectLoading"
+      :bet-rules-summary="betRulesSummary"
+      :can-edit-betting-rules="canEditBettingRules"
+      :betting-entry-norm="bettingEntryNorm"
+      :bet-rules-saving="betRulesSaving"
+      :bet-rules-error="betRulesError"
+      :bet-rules-notice="betRulesNotice"
+      :betting-bucket-label="bettingBucketLabel"
+      :betting-groups="bettingGroups"
+      :ensure-stop-rules="ensureStopRules"
+      :open-admin-engine="openAdminEngine"
+      :set-betting-entry-field="setBettingEntryField"
+      :add-betting-group="addBettingGroup"
+      :save-betting-rules="saveBettingRules"
+      :set-betting-group-field="setBettingGroupField"
+      :remove-betting-group="removeBettingGroup"
+      :set-stop-rule-field="setStopRuleField"
+      :remove-stop-rule="removeStopRule"
+      :add-stop-rule="addStopRule"
+    />
+
+    <TennisScheduleModal
+      v-model:open="scheduleModalOpen"
+      v-model:auto-bet-sec="scheduleDraftAuto"
+      v-model:stop-loss-sec="scheduleDraftStop"
+      v-model:page-refresh-sec="scheduleDraftPage"
+      :saving="scheduleSaving"
+      :error="scheduleError"
+      :notice="scheduleNotice"
+      @save="saveScheduleSettings"
+      @open-admin="openScheduleAdmin"
+    />
+
+    <TennisBoardFilters
+      :is-member="isMember"
+      :is-new-mode="isNewMode"
+      :show-filters="showFilters"
+      :is-prematch-mode="isPrematchMode"
+      :is-inplay-mode="isInplayMode"
+      :is-settled-mode="isSettledMode"
+      :is-range-mode="isRangeMode"
+      :classic-rank-filters-on="classicRankFiltersOn"
+      :hide-ended-events="hideEndedEvents"
+      v-model:top-pool-max="topPoolMax"
+      :new-pool-rules-text="NEW_POOL_RULES_TEXT"
+      v-model:filters-open="filtersOpen"
+      :filter-summary="filterSummary"
+      :filter="filter"
+      v-model:tour="tour"
+      v-model:pm-filter="pmFilter"
+      v-model:settled-pnl-mark="settledPnlMark"
+      v-model:gap-min="gapMin"
+      v-model:diff-max="diffMax"
+      v-model:strong-rank-max="strongRankMax"
+      :range-rules-text="RANGE_RULES_TEXT"
+      :set-status-filter="setStatusFilter"
+    />
+
+    <TennisBoardMatchList
+      :loading="loading"
+      :data="data"
+      :error="error"
+      :matches="matches"
+      :is-inplay-mode="isInplayMode"
+      :stats="stats"
+      :bundle-hint="bundleHint"
+      :allow-batch-trade="allowBatchTrade"
+      :paginated-matches="paginatedMatches"
+      :auto-placed-ids="autoPlacedIds"
+      :is-member="isMember"
+      :is-new-mode="isNewMode"
+      :is-selected="isSelected"
+      :can-select-match="canSelectMatch"
+      :toggle-select="toggleSelect"
+      :is-start-same-day="isStartSameDay"
+      :fmt-time="fmtTime"
+      :status-text="statusText"
+      :match-tour-title="matchTourTitle"
+      :match-gender-class="matchGenderClass"
+      :match-gender-label="matchGenderLabel"
+      :match-level-label="matchLevelLabel"
+      :odds-of="oddsOf"
+      :poly-of="polyOf"
+      :gap-info="gapInfo"
+      :settled-pnl-badge="settledPnlBadge"
+      :is-match-live="isMatchLive"
+      :pick-side="pickSide"
+      :list-rank-of="listRankOf"
+      :match-home-name="matchHomeName"
+      :match-away-name="matchAwayName"
+      :live-set-cells="liveSetCells"
+      :live-point-text="livePointText"
+      :open-detail="openDetail"
+      :open-market="openMarket"
+      :poly-url-of="polyUrlOf"
+      :total-pages="totalPages"
+      :current-page="currentPage"
+      :go-page="goPage"
+    >
+      <template #batch>
+        <TennisBoardBatchBar
+          :allow-batch-trade="allowBatchTrade"
+          :auto-sim-bet-enabled="autoSimBetEnabled"
+          :page-all-selected="pageAllSelected"
+          :page-selectable="pageSelectable"
+          :selected-count="selectedCount"
+          v-model:batch-amount-usd="batchAmountUsd"
+          :batch-submitting="batchSubmitting"
+          :batch-notice="batchNotice"
+          :batch-error="batchError"
+          :toggle-auto-bet="toggleAutoBet"
+          :toggle-select-page="toggleSelectPage"
+          :submit-batch-trade="submitBatchTrade"
+          :clear-selection="clearSelection"
+        />
       </template>
-      <span v-else class="settled-rule-hint">未配置投注条件组时不按规则拆分</span>
-    </div>
+    </TennisBoardMatchList>
 
-    <div class="topbar">
-      <span class="meta-chip">{{ stats.date }}</span>
-      <span class="meta-chip">{{ loading ? '…' : `${stats.shown}/${stats.all}` }}</span>
-      <div class="stats">
-        <div class="stat"><b>{{ stats.tournaments }}</b><span>赛</span></div>
-        <div class="stat"><b>{{ stats.collected }}</b><span>总</span></div>
-        <button type="button" class="stat stat-btn" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">
-          <b>{{ stats.all }}</b><span>全</span>
-        </button>
-        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">
-          <b>{{ stats.open }}</b><span>未开</span>
-        </button>
-        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">
-          <b>{{ stats.live }}</b><span>进行</span>
-        </button>
-        <button
-          v-if="!hideEndedEvents"
-          type="button"
-          class="stat stat-btn"
-          :class="{ active: filter === 'ended' }"
-          @click="setStatusFilter('ended')"
-        >
-          <b>{{ stats.ended }}</b><span>结束</span>
-        </button>
-      </div>
-    </div>
-
-    <div v-if="isMember && isNewMode" class="new-pool-bar">
-      <span class="label">排名池</span>
-      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
-      <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-      <span class="new-pool-hint">{{ NEW_POOL_RULES_TEXT }}</span>
-    </div>
-
-    <div v-if="showFilters && !isPrematchMode && !isInplayMode && !isSettledMode" class="filter-panel">
-      <button type="button" class="filter-toggle" @click="filtersOpen = !filtersOpen">
-        <span class="filter-toggle-main">
-          <span class="filter-toggle-title">筛选</span>
-          <span class="filter-toggle-summary">{{ filterSummary }}</span>
-        </span>
-        <span class="filter-toggle-arrow" :class="{ open: filtersOpen }">▾</span>
-      </button>
-
-      <div v-show="filtersOpen" class="filter-body">
-        <div v-if="!isInplayMode && !isPrematchMode && !isSettledMode" class="filters">
-          <button type="button" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">全部</button>
-          <button type="button" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">未开始</button>
-          <button type="button" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">进行中</button>
-          <button v-if="!hideEndedEvents" type="button" :class="{ active: filter === 'ended' }" @click="setStatusFilter('ended')">已结束</button>
-        </div>
-
-        <div class="filter-row">
-          <span class="label">巡回</span>
-          <button type="button" class="chip-btn" :class="{ active: tour === 'all' }" @click="tour = 'all'">全部</button>
-          <button type="button" class="chip-btn" :class="{ active: tour === 'ATP' }" @click="tour = 'ATP'">男</button>
-          <button type="button" class="chip-btn" :class="{ active: tour === 'WTA' }" @click="tour = 'WTA'">女</button>
-        </div>
-
-        <div class="filter-row">
-          <span class="label">PM</span>
-          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'all' }" @click="pmFilter = 'all'">全部</button>
-          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'yes' }" @click="pmFilter = 'yes'">有外链</button>
-          <button type="button" class="chip-btn" :class="{ active: pmFilter === 'no' }" @click="pmFilter = 'no'">无外链</button>
-        </div>
-
-        <template v-if="isSettledMode">
-          <div class="filter-row">
-            <span class="label">盈亏</span>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'all' }" @click="settledPnlMark = 'all'">全部</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'bet' }" @click="settledPnlMark = 'bet'">有投注</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'win' }" @click="settledPnlMark = 'win'">盈利</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'loss' }" @click="settledPnlMark = 'loss'">亏损</button>
-          </div>
-        </template>
-
-        <template v-else-if="classicRankFiltersOn">
-          <div class="filter-row">
-            <span class="label">现差</span>
-            <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="gapMin = 'all'">不限</button>
-            <button type="button" class="chip-btn" :class="{ active: gapMin === '50' }" @click="gapMin = '50'">≥50</button>
-            <button type="button" class="chip-btn" :class="{ active: gapMin === '70' }" @click="gapMin = '70'">≥70</button>
-            <button type="button" class="chip-btn" :class="{ active: gapMin === '90' }" @click="gapMin = '90'">≥90</button>
-          </div>
-
-          <div class="filter-row">
-            <span class="label">排差</span>
-            <button type="button" class="chip-btn" :class="{ active: diffMax === 'all' }" @click="diffMax = 'all'">不限</button>
-            <button type="button" class="chip-btn" :class="{ active: diffMax === '0' }" @click="diffMax = '0'">&lt;0</button>
-            <button type="button" class="chip-btn" :class="{ active: diffMax === '-30' }" @click="diffMax = '-30'">≤-30</button>
-            <button type="button" class="chip-btn" :class="{ active: diffMax === '-50' }" @click="diffMax = '-50'">≤-50</button>
-            <button type="button" class="chip-btn" :class="{ active: diffMax === '-70' }" @click="diffMax = '-70'">≤-70</button>
-          </div>
-
-          <div class="filter-row">
-            <span class="label">强现</span>
-            <button type="button" class="chip-btn" :class="{ active: strongRankMax === 'all' }" @click="strongRankMax = 'all'">不限</button>
-            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '10' }" @click="strongRankMax = '10'">≤10</button>
-            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '20' }" @click="strongRankMax = '20'">≤20</button>
-            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '50' }" @click="strongRankMax = '50'">≤50</button>
-            <button type="button" class="chip-btn" :class="{ active: strongRankMax === '100' }" @click="strongRankMax = '100'">≤100</button>
-          </div>
-        </template>
-        <div v-else-if="isMember && isRangeMode" class="filter-row range-rules">
-          <span class="label">区间</span>
-          <span class="range-rules-text">{{ RANGE_RULES_TEXT }}</span>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="loading && !data" class="empty">加载赛程中…</div>
-    <div v-else-if="error && !data" class="empty err">{{ error }}</div>
-    <div v-else-if="!matches.length && !isInplayMode" class="empty">
-      当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
-      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
-    </div>
-    <div v-else-if="!matches.length && isInplayMode" class="empty" role="status">
-      暂无数据
-    </div>
-
-    <template v-else>
-    <div v-if="allowBatchTrade" class="batch-bar">
-      <div class="batch-bar-controls">
-        <label class="auto-bet-toggle" :class="{ on: autoBetEnabled }">
-          <input type="checkbox" :checked="autoBetEnabled" @change="toggleAutoBet" />
-          <span>自动投注</span>
-        </label>
-        <label class="batch-check-all">
-          <input
-            type="checkbox"
-            :checked="pageAllSelected && pageSelectable.length > 0"
-            :disabled="!pageSelectable.length"
-            @change="toggleSelectPage"
-          />
-          <span>全选</span>
-        </label>
-        <span class="batch-count">{{ selectedCount }}</span>
-        <label class="batch-amount">
-          <span>$</span>
-          <input v-model="batchAmountUsd" type="number" min="1" step="1" inputmode="decimal" />
-        </label>
-        <button
-          type="button"
-          class="batch-btn"
-          :disabled="batchSubmitting || selectedCount === 0"
-          @click="submitBatchTrade()"
-        >{{ batchSubmitting ? '…' : '批量' }}</button>
-        <button
-          v-if="selectedCount"
-          type="button"
-          class="batch-clear"
-          :disabled="batchSubmitting"
-          @click="clearSelection"
-        >清</button>
-      </div>
-      <div v-if="batchNotice" class="batch-notice">{{ batchNotice }}</div>
-      <div v-if="batchError" class="batch-error">{{ batchError }}</div>
-    </div>
-
-    <div class="list">
-      <article
-        v-for="m in paginatedMatches"
-        :key="m.id"
-        class="row-card"
-        :class="{ selected: isSelected(m), selectable: canSelectMatch(m) }"
-      >
-        <label v-if="allowBatchTrade" class="row-check" :class="{ disabled: !canSelectMatch(m) }">
-          <input
-            type="checkbox"
-            :checked="isSelected(m)"
-            :disabled="!canSelectMatch(m)"
-            @change="toggleSelect(m)"
-          />
-        </label>
-        <div class="row-body">
-        <div class="row-time">
-          <span class="start-value" :class="{ today: isStartSameDay(m.startTimestamp) }">{{ fmtTime(m.startTimestamp) }}</span>
-          <span class="start-status" :class="{ live: isMatchLive(m) }">{{ statusText(m) }}</span>
-          <span class="tour-title">{{ matchTourTitle(m) }}</span>
-          <div class="badges">
-            <span class="badge" :class="matchGenderClass(m)">{{ matchGenderLabel(m) }}</span>
-            <span class="badge level">{{ matchLevelLabel(m) }}</span>
-            <span v-if="isMember && oddsOf(m.id)?.full_time" class="badge odds">报</span>
-            <span v-if="isMember && polyOf(m.id)?.url" class="badge poly">外</span>
-            <span v-if="isMember && isNewMode && gapInfo(m).ready" class="badge live-tier">{{ gapInfo(m).tier }}</span>
-            <span
-              v-if="isInplayMode && gapInfo(m).ready"
-              class="badge live-tier"
-              :title="`现差 ${gapInfo(m).gap} · 需≥${gapInfo(m).minGap}`"
-            >{{ gapInfo(m).tier }} · 差{{ gapInfo(m).gap }}</span>
-            <span
-              v-if="settledPnlBadge(m)"
-              class="badge"
-              :class="settledPnlBadge(m).cls"
-            >{{ settledPnlBadge(m).text }}</span>
-          </div>
-        </div>
-        <div class="row-main">
-          <div v-if="isMatchLive(m)" class="matchup is-live-board">
-            <div class="matchup-line">
-              <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
-                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
-                <span class="player-name">{{ matchHomeName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
-              </span>
-              <div class="live-set-scores" aria-label="主队盘分">
-                <span
-                  v-for="(cell, idx) in liveSetCells(m, 'home')"
-                  :key="'h' + idx"
-                  class="set-cell"
-                  :class="cell.cls"
-                >{{ cell.text }}</span>
-                <span v-if="livePointText(m, 'home')" class="live-point">{{ livePointText(m, 'home') }}</span>
-              </div>
-            </div>
-            <span class="vs-row">VS</span>
-            <div class="matchup-line">
-              <span class="name live-player-bottom" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': true }">
-                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
-                <span class="player-name">{{ matchAwayName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
-              </span>
-              <div class="live-set-scores" aria-label="客队盘分">
-                <span
-                  v-for="(cell, idx) in liveSetCells(m, 'away')"
-                  :key="'a' + idx"
-                  class="set-cell"
-                  :class="cell.cls"
-                >{{ cell.text }}</span>
-                <span v-if="livePointText(m, 'away')" class="live-point">{{ livePointText(m, 'away') }}</span>
-              </div>
-            </div>
-          </div>
-          <div v-else class="matchup is-stacked">
-            <div class="matchup-line">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'home' }">
-                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
-                <span class="player-name">{{ matchHomeName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
-              </span>
-            </div>
-            <span class="vs-row">VS</span>
-            <div class="matchup-line">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'away' }">
-                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
-                <span class="player-name">{{ matchAwayName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
-              </span>
-            </div>
-          </div>
-          <div v-if="isMember" class="row-actions">
-            <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
-            <button
-              type="button"
-              class="act-btn market"
-              :disabled="!polyUrlOf(m)"
-              :title="polyUrlOf(m) ? '打开关联页' : '暂无对应外链'"
-              @click="openMarket(m)"
-            >外链</button>
-          </div>
-        </div>
-        </div>
-      </article>
-    </div>
-
-    <div v-if="totalPages > 1" class="pager">
-      <button type="button" class="pager-btn" :disabled="currentPage <= 1" @click="goPage(currentPage - 1)">上一页</button>
-      <span class="pager-info">第 {{ currentPage }} / {{ totalPages }} 页</span>
-      <button type="button" class="pager-btn" :disabled="currentPage >= totalPages" @click="goPage(currentPage + 1)">下一页</button>
-    </div>
-    </template>
-
-    <Teleport to="body">
-      <div v-if="detailMatch" class="modal-mask" @click.self="closeDetail">
-        <div class="modal-sheet" role="dialog" aria-modal="true">
-          <div class="modal-head">
-            <div class="modal-head-main">
-              <div class="modal-title">详情</div>
-              <div class="modal-sub">
-                {{ shortName(matchHomeName(detailMatch)) }} vs {{ shortName(matchAwayName(detailMatch)) }}
-              </div>
-              <div class="modal-meta">
-                <span>{{ (detailMatch.tournamentShort || detailMatch.tournament || '').replace(/,.*/, '') }}</span>
-                <template v-if="detailMatch.roundLabel"> · {{ detailMatch.roundLabel }}</template>
-                · <span :class="{ today: isStartSameDay(detailMatch.startTimestamp) }">{{ fmtTime(detailMatch.startTimestamp) }}</span>
-                · {{ statusText(detailMatch) }}
-                <template v-if="detailMatch.groundLabel"> · {{ detailMatch.groundLabel }}</template>
-              </div>
-              <div class="badges modal-badges">
-                <span
-                  class="badge"
-                  :class="(detailMatch.gender || detailMatch.homePlayer?.gender || detailMatch.awayPlayer?.gender) === 'F' ? 'gender-f' : 'gender-m'"
-                >{{ (detailMatch.gender || detailMatch.homePlayer?.gender || detailMatch.awayPlayer?.gender) === 'F' ? '女' : '男' }}</span>
-                <span class="badge level">{{ matchLevelLabel(detailMatch) }}</span>
-                <span v-if="oddsOf(detailMatch.id)?.full_time" class="badge odds">报</span>
-                <span v-if="polyOf(detailMatch.id)?.url" class="badge poly">外</span>
-                <span
-                  v-if="isInplayMode && gapInfo(detailMatch).ready"
-                  class="badge live-tier"
-                >{{ gapInfo(detailMatch).tier }} · 差{{ gapInfo(detailMatch).gap }}</span>
-                <span v-if="pickSide(detailMatch)" class="badge pick">优{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
-              </div>
-            </div>
-            <div class="modal-head-actions">
-              <button
-                type="button"
-                class="help-bang modal-help-bang"
-                :class="{ on: detailHelpOpen }"
-                title="字段说明"
-                aria-label="字段说明"
-                @click="toggleDetailHelp($event)"
-              >!</button>
-              <button type="button" class="modal-x" @click="closeDetail" aria-label="关闭">×</button>
-            </div>
-          </div>
-
-          <div v-if="detailHelpOpen" class="modal-help-panel">
-            <div class="modal-help-title">字段说明</div>
-            <ul class="modal-help-list">
-              <li v-for="item in DETAIL_TIPS" :key="item.k">
-                <b>{{ item.k }}</b>：{{ item.t }}
-              </li>
-            </ul>
-          </div>
-
-          <div class="modal-body">
-            <div class="duel">
-              <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'home' }">
-                <div class="duel-top">
-                  <span class="duel-rank">#{{ rankText(currentRankOf(detailMatch.homePlayer || { name: detailMatch.home })) }}</span>
-                  <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'home')">{{ playerLiveScoreText(detailMatch, 'home') }}</span>
-                </div>
-                <div class="duel-name">{{ playerNameWithAge(detailMatch.homePlayer || { name: detailMatch.home }, eloOf(detailMatch.id)?.home) }}</div>
-                <div class="duel-sub">
-                  周{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).previous) }}
-                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best) }}</span>
-                  · L{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).live) }}
-                  · U{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).utr) }}
-                </div>
-              </div>
-              <div class="duel-vs">VS</div>
-              <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'away' }">
-                <div class="duel-top">
-                  <span class="duel-rank">#{{ rankText(currentRankOf(detailMatch.awayPlayer || { name: detailMatch.away })) }}</span>
-                  <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'away')">{{ playerLiveScoreText(detailMatch, 'away') }}</span>
-                </div>
-                <div class="duel-name">{{ playerNameWithAge(detailMatch.awayPlayer || { name: detailMatch.away }, eloOf(detailMatch.id)?.away) }}</div>
-                <div class="duel-sub">
-                  周{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).previous) }}
-                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best) }}</span>
-                  · L{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).live) }}
-                  · U{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).utr) }}
-                </div>
-              </div>
-            </div>
-
-            <div class="kv-grid">
-              <template v-if="gapInfo(detailMatch).ready">
-                <div class="kv" v-if="isRangeMode || isNewMode || isInplayMode">
-                  <span class="k">{{ isInplayMode ? '盘中档' : (isNewMode ? '档位' : '区间') }}</span>
-                  <span class="v">{{ gapInfo(detailMatch).tier }}</span>
-                  <span class="s">现差 {{ gapInfo(detailMatch).gap }} · 需≥{{ gapInfo(detailMatch).minGap }}</span>
-                </div>
-                <template v-else>
-                  <div class="kv">
-                    <span class="k">现排名差</span>
-                    <span class="v rank-curr">{{ gapInfo(detailMatch).gap }}</span>
-                    <span class="s">{{ rankText(gapInfo(detailMatch).weakNow) }}−{{ rankText(gapInfo(detailMatch).strongNow) }} · {{ gapInfo(detailMatch).better }}高</span>
-                  </div>
-                  <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
-                    <span class="k">历史最高排名差</span>
-                    <span class="v rank-best">{{ gapInfo(detailMatch).rankDiff }}</span>
-                    <span class="s">{{ rankText(gapInfo(detailMatch).bestHigh) }}−{{ rankText(gapInfo(detailMatch).bestLow) }}</span>
-                  </div>
-                  <div class="kv" v-else>
-                    <span class="k">历史最高排名差</span>
-                    <span class="v muted">—</span>
-                    <span class="s">缺最高排名</span>
-                  </div>
-                </template>
-              </template>
-              <div class="kv" v-else>
-                <span class="k">现排名差</span>
-                <span class="v muted">—</span>
-                <span class="s">暂无现排名</span>
-              </div>
-
-              <template v-if="eloOf(detailMatch.id)?.ok">
-                <div class="kv wide">
-                  <span class="k">Elo</span>
-                  <span class="v">
-                    <template v-if="eloOf(detailMatch.id).best?.edge_pct == null">
-                      {{ eloOf(detailMatch.id).best?.short || '—' }} {{ eloOf(detailMatch.id).best?.win_pct ?? '—' }}%
-                    </template>
-                    <template v-else>
-                      {{ eloOf(detailMatch.id).best?.short || '—' }}
-                      <span :class="eloOf(detailMatch.id).best.edge_pct >= 0 ? 'pos' : 'neg'">{{ fmtEdge(eloOf(detailMatch.id).best.edge_pct) }}</span>
-                    </template>
-                  </span>
-                  <span class="s">
-                    {{ eloOf(detailMatch.id).home?.short || '主' }} {{ eloOf(detailMatch.id).home?.win_pct ?? '—' }}%
-                    <span :class="(eloOf(detailMatch.id).home?.edge_pct ?? 0) >= 0 ? 'pos' : 'neg'">{{ fmtEdge(eloOf(detailMatch.id).home?.edge_pct) }}</span>
-                    ·
-                    {{ eloOf(detailMatch.id).away?.short || '客' }} {{ eloOf(detailMatch.id).away?.win_pct ?? '—' }}%
-                    <span :class="(eloOf(detailMatch.id).away?.edge_pct ?? 0) >= 0 ? 'pos' : 'neg'">{{ fmtEdge(eloOf(detailMatch.id).away?.edge_pct) }}</span>
-                    · {{ eloOf(detailMatch.id).ratingSource || eloOf(detailMatch.id).surface || 'elo' }}
-                  </span>
-                </div>
-              </template>
-              <div class="kv wide" v-else>
-                <span class="k">Elo</span>
-                <span class="v muted">—</span>
-                <span class="s">未匹配 Tennis Abstract</span>
-              </div>
-
-              <div class="kv" v-if="oddsOf(detailMatch.id)?.full_time">
-                <span class="k">报价</span>
-                <div class="kv-lines">
-                  <div class="kv-line">
-                    <span class="n">{{ shortName(matchHomeName(detailMatch)) }}</span>
-                    <span class="num">{{ fmtOdds(oddsOf(detailMatch.id).full_time.home) }}</span>
-                  </div>
-                  <div class="kv-line">
-                    <span class="n">{{ shortName(matchAwayName(detailMatch)) }}</span>
-                    <span class="num">{{ fmtOdds(oddsOf(detailMatch.id).full_time.away) }}</span>
-                  </div>
-                </div>
-                <span v-if="oddsSourceLabel(detailMatch.id)" class="s">{{ oddsSourceLabel(detailMatch.id) }}</span>
-              </div>
-
-              <div class="kv" v-if="polyOf(detailMatch.id)?.url">
-                <span class="k">外链</span>
-                <div class="kv-lines">
-                  <div class="kv-line">
-                    <span class="n">{{ shortName(matchHomeName(detailMatch)) }}</span>
-                    <span class="num">{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home }}</span>
-                  </div>
-                  <div class="kv-line">
-                    <span class="n">{{ shortName(matchAwayName(detailMatch)) }}</span>
-                    <span class="num">{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away }}</span>
-                  </div>
-                </div>
-                <span class="s">{{ polyOf(detailMatch.id)?.closed ? '已结算 · 隐含占比' : '隐含占比' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-foot">
-            <button type="button" class="act-btn" @click="closeDetail">关闭</button>
-            <button
-              type="button"
-              class="act-btn market"
-              :disabled="!polyUrlOf(detailMatch)"
-              @click="openMarket(detailMatch)"
-            >外链</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <TennisBoardDetailModal
+      :detail-match="detailMatch"
+      :detail-help-open="detailHelpOpen"
+      :detail-tips="DETAIL_TIPS"
+      :is-inplay-mode="isInplayMode"
+      :is-range-mode="isRangeMode"
+      :is-new-mode="isNewMode"
+      :short-name="shortName"
+      :match-home-name="matchHomeName"
+      :match-away-name="matchAwayName"
+      :is-start-same-day="isStartSameDay"
+      :fmt-time="fmtTime"
+      :status-text="statusText"
+      :match-level-label="matchLevelLabel"
+      :odds-of="oddsOf"
+      :poly-of="polyOf"
+      :gap-info="gapInfo"
+      :pick-side="pickSide"
+      :toggle-detail-help="toggleDetailHelp"
+      :close-detail="closeDetail"
+      :rank-text="rankText"
+      :current-rank-of="currentRankOf"
+      :player-live-score-text="playerLiveScoreText"
+      :player-name-with-age="playerNameWithAge"
+      :elo-of="eloOf"
+      :rank-detail-of="rankDetailOf"
+      :fmt-edge="fmtEdge"
+      :fmt-odds="fmtOdds"
+      :odds-source-label="oddsSourceLabel"
+      :poly-side-cents="polySideCents"
+      :poly-url-of="polyUrlOf"
+      :open-market="openMarket"
+    />
   </div>
 </template>
 
@@ -1913,939 +2504,4 @@ function settledPnlBadge(m) {
   padding: 6px;
   border-radius: 0;
 }
-.topbar {
-  display: flex; flex-wrap: nowrap; align-items: center; gap: 4px;
-  margin-bottom: 6px; overflow-x: auto;
-}
-.meta-chip, .btn, .chip-btn, .filters button {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: #64748b;
-  border-radius: 999px;
-  padding: 5px 11px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  flex-shrink: 0;
-  line-height: 1.3;
-}
-.btn.ghost {
-  cursor: pointer;
-  color: var(--primary);
-  border-color: #c7d2fe;
-  background: var(--primary-soft);
-  padding: 6px 12px;
-  font-size: 0.82rem;
-}
-.btn:disabled { opacity: 0.5; cursor: wait; }
-.stats {
-  display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
-  margin: 0 0 0 auto; min-width: 168px; flex: 1; max-width: 260px;
-}
-.stat {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 2px 3px;
-  text-align: center;
-}
-.stat b {
-  display: block;
-  color: var(--primary);
-  font-size: 0.72rem;
-  font-weight: 700;
-  line-height: 1.05;
-  font-variant-numeric: tabular-nums;
-}
-.stat span { color: var(--muted); font-size: 0.52rem; line-height: 1.1; }
-.stat-btn {
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  font: inherit;
-  width: 100%;
-  padding: 2px 2px;
-}
-.stat-btn:hover {
-  border-color: #c7d2fe;
-  background: var(--primary-soft);
-}
-.stat-btn.active {
-  border-color: var(--primary);
-  background: var(--primary-soft);
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
-}
-.stat-btn.active span { color: #6366f1; font-weight: 600; }
-.filters { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-.filter-panel {
-  margin-bottom: 6px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.filter-toggle {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-}
-.filter-toggle-main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.filter-toggle-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.filter-toggle-summary {
-  font-size: 0.7rem;
-  color: #64748b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.filter-toggle-arrow {
-  color: var(--primary);
-  font-size: 0.86rem;
-  line-height: 1;
-  transition: transform 0.18s ease;
-  flex-shrink: 0;
-}
-.filter-toggle-arrow.open { transform: rotate(180deg); }
-.filter-body {
-  padding: 0 8px 8px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 8px;
-}
-.filter-row {
-  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
-  margin-bottom: 6px;
-}
-.filter-row:last-child { margin-bottom: 0; }
-.filter-row .label {
-  color: #64748b; font-size: 0.72rem; font-weight: 600; min-width: 2rem;
-}
-.range-rules-text {
-  flex: 1;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: #475569;
-  font-weight: 600;
-}
-.inplay-source-bar {
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  color: #92400e;
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-.settled-stats-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  margin-bottom: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #334155;
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-.settled-rule-stat {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-}
-.settled-rule-stat em {
-  font-style: normal;
-  margin-left: 4px;
-  color: #94a3b8;
-  font-size: 0.65rem;
-}
-.settled-rule-hint {
-  color: #94a3b8;
-}
-.inplay-source-bar code {
-  font-size: 0.7rem;
-  background: #fef3c7;
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-.empty.inplay-empty {
-  border-color: #fed7aa;
-  background: #fff7ed;
-  color: #9a3412;
-}
-.empty.inplay-empty .inplay-empty-inline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-weight: 700;
-  font-size: 0.92rem;
-}
-.empty.inplay-empty .bang {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.85rem;
-  line-height: 1;
-  color: #fff;
-  background: #ea580c;
-}
-.empty.inplay-empty .hint {
-  margin-top: 8px;
-  color: #9a3412;
-  opacity: 0.95;
-  font-size: 0.74rem;
-  line-height: 1.45;
-  max-width: 28rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-.new-pool-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-}
-.new-pool-bar .label {
-  color: #64748b;
-  font-size: 0.72rem;
-  font-weight: 600;
-  min-width: 2.5rem;
-}
-.new-pool-hint {
-  flex: 1 1 160px;
-  font-size: 0.68rem;
-  color: #94a3b8;
-  line-height: 1.35;
-}
-.live-tier-rules {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-.live-tier-rule {
-  font-size: 10px;
-  font-weight: 700;
-  color: #64748b;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 2px 8px;
-}
-.live-tier-rule.on {
-  color: #6d28d9;
-  border-color: #ddd6fe;
-  background: #f5f3ff;
-}
-.live-gap-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  font-size: 11px;
-  color: #475569;
-  margin: 2px 0 4px;
-  padding: 0 2px;
-}
-.live-gap-strip b { color: #b45309; font-weight: 800; }
-.live-gap-strip .muted { color: #94a3b8; font-weight: 600; }
-.badge.live-tier { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
-.badge.live-tier.ok { background: #ecfdf5; color: #047857; border-color: #bbf7d0; }
-.badge.live-tier.warn { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
-.live-only-label {
-  font-size: 0.82rem;
-  color: #7c3aed;
-  font-weight: 600;
-}
-.chip-btn, .filters button { cursor: pointer; padding: 6px 12px; font-size: 0.82rem; }
-.chip-btn.active, .filters button.active {
-  color: var(--primary);
-  background: var(--primary-soft);
-  border-color: #c7d2fe;
-  font-weight: 700;
-}
-.list { display: grid; gap: 5px; }
-.row-card {
-  background: var(--card);
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-  padding: 6px 8px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 6px;
-}
-.row-card.selected {
-  border-color: #c7d2fe;
-  background: #fafaff;
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.12);
-}
-.row-check {
-  flex-shrink: 0;
-  padding-top: 2px;
-  cursor: pointer;
-  display: flex;
-  align-items: flex-start;
-}
-.row-check.disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-.row-check input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
-  cursor: inherit;
-}
-.row-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.batch-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  margin-bottom: 6px;
-  padding: 6px 8px;
-  background: var(--card);
-  border: 1px solid #c7d2fe;
-  border-radius: 8px;
-}
-.batch-bar-controls {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-}
-.auto-bet-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  border-radius: 999px;
-  padding: 4px 8px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.auto-bet-toggle.on {
-  color: #14532d;
-  border-color: #86efac;
-  background: #f0fdf4;
-}
-.auto-bet-toggle input {
-  accent-color: #16a34a;
-}
-.batch-check-all {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.batch-check-all input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
-}
-.batch-count {
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--primary);
-  flex-shrink: 0;
-}
-.batch-amount {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: #64748b;
-  flex-shrink: 0;
-}
-.batch-amount input {
-  width: 3.6rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 5px 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.batch-btn {
-  border: 0;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 8px;
-  padding: 7px 12px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.batch-btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.batch-clear {
-  border: 1px solid var(--line);
-  background: #fff;
-  color: #64748b;
-  border-radius: 8px;
-  padding: 7px 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.batch-notice,
-.batch-error {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  font-size: 0.72rem;
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: pre-line;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  max-height: 5.6em;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 4px 2px 2px;
-}
-.batch-notice {
-  color: var(--success);
-  border-top: 1px dashed #bbf7d0;
-}
-.batch-error {
-  color: var(--danger);
-  border-top: 1px dashed #fecaca;
-}
-.row-time {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.row-time .start-value {
-  color: #0f172a;
-  font-size: 0.84rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.row-time .start-value.today {
-  color: #dc2626;
-}
-.row-time .start-status {
-  color: #64748b;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-.row-time .start-status.live {
-  color: var(--success);
-  font-weight: 700;
-}
-.row-time .tour-title {
-  color: #64748b;
-  font-size: 0.7rem;
-  font-weight: 600;
-  line-height: 1.3;
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.row-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-.matchup {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 6px;
-  min-width: 0;
-  flex: 1;
-}
-.matchup.is-live-board,
-.matchup.is-stacked {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 1px;
-  flex: 1;
-  min-width: 0;
-}
-.matchup-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 0;
-}
-.matchup.is-stacked .matchup-line {
-  justify-content: flex-start;
-}
-.vs-row {
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1.1;
-  padding: 1px 0;
-  flex-shrink: 0;
-}
-.matchup.is-live-board .name {
-  min-width: 0;
-  flex: 1;
-  text-align: left;
-  justify-content: flex-start;
-  padding: 0;
-  margin: 0;
-}
-.matchup.is-live-board .live-player-top,
-.matchup.is-live-board .live-player-bottom {
-  width: auto;
-  max-width: 100%;
-}
-.live-set-scores {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  padding: 0 2px;
-  flex-shrink: 0;
-}
-.live-set-scores .set-cell {
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-  min-width: 0.9rem;
-  text-align: center;
-}
-.live-set-scores .score-big {
-  color: #2563eb;
-  font-size: 0.95rem;
-  font-weight: 800;
-}
-.live-set-scores .score-small {
-  color: #dc2626;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-.live-set-scores .score-even {
-  color: #334155;
-  font-size: 0.86rem;
-  font-weight: 700;
-}
-.live-set-scores .live-point {
-  margin-left: 2px;
-  padding-left: 5px;
-  border-left: 1px solid #e2e8f0;
-  color: #0f172a;
-  font-size: 0.82rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.matchup.is-stacked .name {
-  min-width: 0;
-  flex-wrap: wrap;
-  white-space: normal;
-}
-.matchup.is-stacked .player-name {
-  min-width: 0;
-}
-.matchup.is-live .player-row.live-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.matchup.is-live .player-row.live-line .name {
-  flex: 1;
-  min-width: 0;
-}
-.matchup .name .player-score,
-.matchup .player-row .player-score {
-  margin-left: 5px;
-  flex-shrink: 0;
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #334155;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.04em;
-}
-.matchup.is-live .player-row.live-line .player-score {
-  margin-left: 0;
-  text-align: right;
-  white-space: nowrap;
-}
-.matchup .name {
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.matchup .name.pick { color: var(--primary); }
-.list-rank {
-  color: #64748b;
-  font-size: 0.72rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.pick-tag {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 1px 5px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  line-height: 1.35;
-  color: #fff;
-  background: var(--primary);
-}
-.matchup .vs-text {
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.row-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-  align-items: center;
-}
-.act-btn {
-  border: 1px solid #c7d2fe;
-  background: var(--primary-soft);
-  color: var(--primary);
-  border-radius: 8px;
-  padding: 7px 11px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-.act-btn.market {
-  background: var(--primary);
-  color: #fff;
-  border-color: var(--primary);
-}
-.act-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.pager {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9;
-}
-.pager-info {
-  color: #64748b; font-size: 0.76rem; font-weight: 600;
-  min-width: 5.5em; text-align: center;
-}
-.pager-btn {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: #475569;
-  border-radius: 8px;
-  padding: 7px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.pager-btn:hover:not(:disabled) {
-  border-color: #c7d2fe;
-  color: var(--primary);
-  background: var(--primary-soft);
-}
-.pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.empty {
-  text-align: center; color: var(--muted);
-  padding: 16px 8px; font-size: 0.86rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-}
-.empty.err { color: var(--danger); }
-.empty .hint { margin-top: 6px; font-size: 0.68rem; opacity: 0.85; }
-
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 8px;
-}
-.modal-sheet {
-  width: 100%;
-  max-width: 26rem;
-  max-height: min(88vh, 720px);
-  background: #fff;
-  border-radius: 14px 14px 12px 12px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.modal-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 12px 12px 10px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.modal-head-main { min-width: 0; flex: 1; }
-.modal-head-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.modal-title { font-size: 0.92rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
-.modal-sub { margin-top: 2px; font-size: 0.88rem; font-weight: 700; color: #334155; line-height: 1.3; }
-.modal-meta {
-  margin-top: 4px; font-size: 0.72rem; color: #64748b; line-height: 1.35;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.modal-meta .today { color: #dc2626; font-weight: 700; }
-.modal-badges { margin-top: 6px; justify-content: flex-start; }
-.modal-x {
-  width: 32px; height: 32px; border: 1px solid var(--line);
-  background: #fff; color: #64748b; border-radius: 8px;
-  font-size: 1.25rem; line-height: 1; cursor: pointer; flex-shrink: 0;
-}
-.modal-body {
-  padding: 10px 12px 12px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.modal-foot {
-  display: flex;
-  gap: 8px;
-  padding: 10px 12px 12px;
-  border-top: 1px solid #f1f5f9;
-}
-.modal-foot .act-btn {
-  flex: 1;
-  padding: 10px 10px;
-  font-size: 0.86rem;
-  border-radius: 8px;
-}
-
-.duel {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 6px;
-  align-items: stretch;
-  margin-bottom: 10px;
-}
-.duel-vs {
-  align-self: center;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--muted);
-}
-.duel-side {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 9px;
-  min-width: 0;
-}
-.duel-side.pick {
-  border-color: #c7d2fe;
-  background: var(--primary-soft);
-}
-.duel-top {
-  display: flex; align-items: center; justify-content: space-between; gap: 4px;
-}
-.duel-rank {
-  font-size: 0.82rem; font-weight: 800; color: #2563eb;
-  font-variant-numeric: tabular-nums;
-}
-.duel-score {
-  font-size: 0.8rem; font-weight: 800; color: #0f172a;
-  font-variant-numeric: tabular-nums;
-}
-.duel-name {
-  margin-top: 3px;
-  font-size: 0.88rem; font-weight: 800; color: #0f172a;
-  line-height: 1.25;
-  word-break: break-word;
-}
-.duel-side.pick .duel-name { color: #3730a3; }
-.duel-sub {
-  margin-top: 3px;
-  font-size: 0.68rem; color: #64748b; line-height: 1.35;
-}
-.duel-sub .rank-best {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.kv-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-.kv {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 7px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.kv.wide { grid-column: 1 / -1; }
-.kv .k {
-  font-size: 0.68rem; font-weight: 700; color: #94a3b8;
-  text-transform: uppercase; letter-spacing: 0.02em;
-}
-.kv .v {
-  font-size: 0.86rem; font-weight: 800; color: #0f172a;
-  font-variant-numeric: tabular-nums; line-height: 1.3;
-  word-break: break-word;
-}
-.kv .v.warn { color: var(--warning); }
-.kv .v.rank-curr { color: #2563eb; }
-.kv .v.rank-best { color: #dc2626; }
-.kv .v.muted, .kv .s { color: #64748b; }
-.kv .s { font-size: 0.68rem; line-height: 1.35; font-weight: 600; }
-.kv-lines { display: grid; gap: 3px; margin-top: 1px; }
-.kv-line {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
-  font-variant-numeric: tabular-nums;
-}
-.kv-line .n {
-  font-size: 0.82rem; font-weight: 700; color: #334155;
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.kv-line .num {
-  font-size: 0.88rem; font-weight: 800; color: #0f172a; flex-shrink: 0;
-}
-.pos { color: var(--success); }
-.neg { color: var(--danger); }
-
-.badges { display: flex; flex-wrap: wrap; gap: 4px; }
-.badge {
-  border-radius: 999px; padding: 3px 8px;
-  font-size: 0.76rem; font-weight: 700; line-height: 1.35;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.badge.gender-m { background: #eef2ff; color: #4338ca; }
-.badge.gender-f { background: #fdf2f8; color: #be185d; }
-.badge.level { background: #f0fdf4; color: #15803d; }
-.badge.odds { background: #fffbeb; color: #b45309; }
-.badge.poly { background: #f5f3ff; color: #6d28d9; }
-.badge.pnl-win { background: #ecfdf5; color: #047857; }
-.badge.pnl-loss { background: #fef2f2; color: #b91c1c; }
-.badge.pnl-flat { background: #f8fafc; color: #64748b; }
-.badge.pnl-bet { background: #eff6ff; color: #1d4ed8; }
-.badge.pick { background: var(--primary); color: #fff; }
-.help-bang.modal-help-bang {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #fed7aa;
-  border-radius: 8px;
-  background: #fff7ed;
-  color: #c2410c;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-.help-bang.modal-help-bang.on {
-  background: #ea580c;
-  border-color: #ea580c;
-  color: #fff;
-}
-.modal-help-panel {
-  margin: 0;
-  padding: 10px 12px;
-  border-bottom: 1px solid #fed7aa;
-  background: #fff7ed;
-  color: #9a3412;
-  max-height: 40vh;
-  overflow-y: auto;
-}
-.modal-help-title {
-  font-size: 0.8rem;
-  font-weight: 800;
-  margin-bottom: 6px;
-}
-.modal-help-list {
-  margin: 0;
-  padding-left: 1.1rem;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  font-weight: 600;
-}
-.modal-help-list li { margin-bottom: 4px; }
-.modal-help-list b { color: #7c2d12; }
-.tour-title { color: #64748b; font-size: 0.72rem; font-weight: 600; }
-.pname.pick { color: var(--primary); font-weight: 700; }
-.pname .pick-tag { margin-left: 4px; vertical-align: middle; }
 </style>

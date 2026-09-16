@@ -12,6 +12,8 @@ const props = defineProps({
   },
 })
 
+const emit = defineEmits(['open-docks-editor', 'open-top100-wide'])
+
 const isCollectPage = computed(() => props.enginePage === 'collect')
 const isConditionPage = computed(() => props.enginePage === 'condition')
 const isBettingPage = computed(() => props.enginePage === 'betting')
@@ -39,6 +41,7 @@ function emptyConditionGroup() {
   return {
     id: `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
+    joinPrev: 'or',
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
@@ -60,6 +63,7 @@ function emptyBettingGroup(kind = 'inplay') {
     id: `bg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
     joinPrev: 'or',
+    amountUsd: 1,
     stopEnabled: isInplay,
     stopRules: isInplay ? [emptyStopRule()] : [],
   }
@@ -69,12 +73,13 @@ function emptyStopRule() {
   return {
     name: '',
     joinPrev: 'or',
-    stopFormat: 'bo3',
-    stopSetIndex: 3,
+    stopFormat: 'any',
+    stopSetIndex: 'all',
     stopStrongSets: 'all',
     stopWeakSets: 'all',
-    stopGameLead: 2,
+    stopGameLead: 'all',
     stopWeakGamesMin: 'all',
+    stopPmCentsMax: 'all',
   }
 }
 
@@ -115,6 +120,7 @@ function cloneBettingBuckets(src) {
     const b = src?.[k]
     out[k] = {
       enabled: !!b?.enabled,
+      simulate: !!b?.simulate,
       groups: Array.isArray(b?.groups)
         ? b.groups.map((g) => {
           const base = { ...emptyBettingGroup(k), ...g }
@@ -123,8 +129,45 @@ function cloneBettingBuckets(src) {
         })
         : [emptyBettingGroup(k)],
     }
+    if (k === 'inplay') {
+      out[k].entry = normalizeInplayEntryDraft(b?.entry)
+    }
   }
   return out
+}
+
+function emptyInplayEntry() {
+  return {
+    requireWonFirstSet: true,
+    firstSetExcludeEnabled: true,
+    firstSetExcludeScore: '7:5',
+    pmCentsMax: 91,
+    rankGapRules: [],
+  }
+}
+
+function normalizeInplayEntryDraft(raw) {
+  const d = emptyInplayEntry()
+  if (!raw || typeof raw !== 'object') {
+    return {
+      requireWonFirstSet: d.requireWonFirstSet,
+      firstSetExcludeEnabled: d.firstSetExcludeEnabled,
+      firstSetExcludeScore: d.firstSetExcludeScore,
+      pmCentsMax: d.pmCentsMax,
+      rankGapRules: [],
+    }
+  }
+  const excludeScore = raw.firstSetExcludeScore != null && String(raw.firstSetExcludeScore).trim()
+    ? String(raw.firstSetExcludeScore).trim().slice(0, 12)
+    : d.firstSetExcludeScore
+  return {
+    requireWonFirstSet: raw.requireWonFirstSet !== false,
+    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true
+      || (raw.firstSetExcludeEnabled == null && raw.requireWonFirstSet !== false && d.firstSetExcludeEnabled),
+    firstSetExcludeScore: excludeScore || '7:5',
+    pmCentsMax: raw.pmCentsMax === '' || raw.pmCentsMax == null ? 'all' : raw.pmCentsMax,
+    rankGapRules: [],
+  }
 }
 
 const conditionDraft = ref(cloneConditionBuckets(null))
@@ -175,22 +218,32 @@ const activeConditionBucket = computed(() => conditionDraft.value?.[conditionTab
   groups: [emptyConditionGroup()],
 })
 
-const activeBettingBucket = computed(() => bettingDraft.value?.[bettingTab.value] || {
-  enabled: false,
-  groups: [emptyBettingGroup(bettingTab.value)],
+const activeBettingBucket = computed(() => {
+  const b = bettingDraft.value?.[bettingTab.value]
+  if (b) {
+    if (bettingTab.value === 'inplay' && !b.entry) {
+      return { ...b, entry: normalizeInplayEntryDraft(null) }
+    }
+    return b
+  }
+  return {
+    enabled: false,
+    simulate: false,
+    groups: [emptyBettingGroup(bettingTab.value)],
+    entry: bettingTab.value === 'inplay' ? normalizeInplayEntryDraft(null) : undefined,
+  }
 })
 
 const loading = ref(true)
 const refreshing = ref(false)
 const collecting = ref(false)
-const liveCollecting = ref(false)
 const error = ref('')
 const notice = ref('')
 const status = ref(null)
 const top100Board = ref(null)
 const liveData = ref(null)
 const logs = ref(null)
-const tab = ref('atp') // atp | wta | live | inplay | logs
+const tab = ref('atp') // atp | wta | live | logs
 const topPoolMax = ref('100') // 20 | 50 | 100
 const tierFilter = ref({ gs: false, t1000: false, t500: false })
 const onlyWithMatches = ref(false)
@@ -209,9 +262,6 @@ const TICK_OPTIONS = [
 ]
 const playerPage = ref(1)
 const livePage = ref(1)
-const inplayPage = ref(1)
-const inplayBundle = ref(null)
-const inplayLoading = ref(false)
 const logPage = ref(1)
 const cronOpen = ref(false)
 const statsOpen = ref(false)
@@ -227,6 +277,13 @@ const INTERVAL_OPTIONS = [
   { hours: 4, label: '4 小时' },
   { hours: 6, label: '6 小时' },
   { hours: 12, label: '12 小时' },
+]
+
+const HORIZON_OPTIONS = [
+  { days: 1, label: '今天(1天)' },
+  { days: 2, label: '今天起2天' },
+  { days: 3, label: '今天起3天' },
+  { days: 5, label: '今天起5天' },
 ]
 
 const LIVE_POLL_OPTIONS = [
@@ -267,6 +324,14 @@ const collectIntervalLabel = computed(() => {
   const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
   return opt?.label || (collectIntervalHours.value <= 0 ? '关闭定时' : `每 ${collectIntervalHours.value} 小时`)
 })
+const collectHorizonDays = computed(() => {
+  const days = Number(schedule.value?.collect_horizon_days ?? status.value?.schedule?.collect_horizon_days)
+  return HORIZON_OPTIONS.some((o) => o.days === days) ? days : 1
+})
+const collectHorizonLabel = computed(() => {
+  const opt = HORIZON_OPTIONS.find((o) => o.days === collectHorizonDays.value)
+  return opt?.label || schedule.value?.collect_horizon_label || `今天起${collectHorizonDays.value}天`
+})
 const livePollIntervalSec = computed(() => {
   const sec = Number(
     schedule.value?.live_poll_interval_sec
@@ -305,8 +370,7 @@ const pageSub = computed(() => {
     const on = ['prematch', 'inplay', 'settled']
       .filter((k) => b[k]?.enabled)
       .map((k) => ({ prematch: '盘前', inplay: '盘中', settled: '盘后' }[k]))
-    const master = engines.value?.condition?.enabled ? '总开关开' : '总开关关'
-    return on.length ? `${master} · 已开：${on.join('、')}` : `${master} · 各桶均未打开`
+    return on.length ? `已开：${on.join('、')}` : '各桶均未打开（打开后列表按该桶条件组筛选）'
   }
   if (isBettingPage.value) {
     const b = engines.value?.betting?.buckets || {}
@@ -319,7 +383,7 @@ const pageSub = computed(() => {
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
       : `${master} · 各桶均未打开 · 账号 ${account || '未设'}`
   }
-  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · Top100 ${collectIntervalLabel.value} · Redis ${tennisDataSourceLabel.value}`
+  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · 范围 ${collectHorizonLabel.value} · Top100 ${collectIntervalLabel.value} · Redis ${tennisDataSourceLabel.value}`
 })
 
 watch(
@@ -464,23 +528,6 @@ const pagedLiveMatches = computed(() => {
   return liveMatches.value.slice(start, start + LIVE_PAGE_SIZE)
 })
 
-const inplayMatches = computed(() => {
-  const list = inplayBundle.value?.live?.matches || []
-  return Array.isArray(list) ? list : []
-})
-const inplayPageCount = computed(() => Math.max(1, Math.ceil(inplayMatches.value.length / LIVE_PAGE_SIZE)))
-const pagedInplayMatches = computed(() => {
-  const start = (inplayPage.value - 1) * LIVE_PAGE_SIZE
-  return inplayMatches.value.slice(start, start + LIVE_PAGE_SIZE)
-})
-const inplayMeta = computed(() => ({
-  date: inplayBundle.value?.date || '—',
-  fetchedAt: inplayBundle.value?.fetched_at || null,
-  count: inplayMatches.value.length,
-  source: inplayBundle.value?.dataSource || inplayBundle.value?.collectScript || 'collect_live',
-  empty: !!inplayBundle.value?.empty,
-  message: inplayBundle.value?.message || inplayBundle.value?.update?.message || '',
-}))
 const logLines = computed(() => {
   const raw = logs.value?.lines || logs.value?.content || status.value?.latest_log_tail || ''
   return String(raw).split('\n')
@@ -518,7 +565,6 @@ const statusTone = computed(() => {
 const busy = computed(() => (
   running.value
   || collecting.value
-  || liveCollecting.value
   || liveRunning.value
   || !!top100Board.value?.loading
 ))
@@ -596,7 +642,14 @@ async function loadStatus() {
 
 async function loadTop100(force = false) {
   const data = await api.fetchTennisMonitorTop100(force)
-  top100Board.value = data
+  // 兼容嵌套 top100.atp / 顶层 atp，避免榜单在包里却列表为空
+  const atp = data?.atp || data?.top100?.atp || data?.rankingsBoard?.atp || []
+  const wta = data?.wta || data?.top100?.wta || data?.rankingsBoard?.wta || []
+  top100Board.value = {
+    ...data,
+    atp: Array.isArray(atp) ? atp : [],
+    wta: Array.isArray(wta) ? wta : [],
+  }
   if (data?.loading) {
     startTop100LoadingClock()
     if (!top100Timer) {
@@ -630,14 +683,6 @@ async function loadLive() {
   liveData.value = await api.fetchTennisMonitorLive()
 }
 
-async function loadInplay() {
-  inplayLoading.value = true
-  try {
-    inplayBundle.value = await api.fetchTennisInplayToday()
-  } finally {
-    inplayLoading.value = false
-  }
-}
 
 async function loadSchedule() {
   schedule.value = await api.fetchTennisMonitorSchedule()
@@ -651,7 +696,9 @@ async function loadDataSource() {
 }
 
 async function loadEngines() {
-  engines.value = await api.fetchTennisEngines()
+  const data = await api.fetchTennisEngines()
+  engines.value = data
+  return data
 }
 
 async function loadLogs() {
@@ -666,24 +713,34 @@ async function refreshAll({ silent = false } = {}) {
     notice.value = ''
   }
   try {
-    const results = await Promise.allSettled([
-      loadStatus(),
-      loadTop100(false),
-      loadLive(),
-      loadInplay(),
-      loadLogs(),
-      loadSchedule(),
-      loadDataSource(),
-      loadEngines(),
-    ])
+    // 条件 / 投注页不依赖官网采集数据，避免 top100/live 超时导致整页打不开
+    const tasks = (isConditionPage.value || isBettingPage.value)
+      ? [
+          loadEngines(),
+          loadDataSource().catch(() => {}),
+          loadStatus().catch(() => {}),
+        ]
+      : [
+          loadStatus(),
+          loadTop100(false),
+          loadLive(),
+          loadLogs(),
+          loadSchedule(),
+          loadDataSource(),
+          loadEngines(),
+        ]
+    const results = await Promise.allSettled(tasks)
     const failed = results.find((r) => r.status === 'rejected')
     if (failed && !silent) {
       const reason = failed.reason
       const msg = reason?.response?.data?.error || reason?.message || ''
-      // 无 9004 时部分接口已本地兜底；勿把可选 monitor 错误当成整页失败
       if (msg && !/9004|监控服务|monitor/i.test(msg)) {
         error.value = formatMonitorError(msg)
       }
+    }
+    // 条件/投注：引擎加载失败也给出可见提示，避免空白页
+    if ((isConditionPage.value || isBettingPage.value) && !engines.value) {
+      error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
     }
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
@@ -714,7 +771,11 @@ async function waitCollectDone() {
         }
         api.refreshTennisCache().catch(() => {})
         api.refreshTennisNewCache().catch(() => {})
-        await loadTop100(true)
+        try {
+          await loadTop100(true)
+        } catch (e) {
+          console.warn('[TennisMonitor] loadTop100 after collect', e)
+        }
         await loadDataSource()
         await loadLogs()
       }
@@ -725,32 +786,6 @@ async function waitCollectDone() {
   error.value = '采集仍在进行，请稍后在日志中查看结果'
 }
 
-async function waitLiveCollectDone() {
-  const deadline = Date.now() + 90 * 1000
-  while (Date.now() < deadline) {
-    await new Promise((r) => setTimeout(r, 2000))
-    await loadLive()
-    await loadStatus()
-    if (!liveRunning.value) {
-      const err = livePoll.value?.error
-      if (livePoll.value?.status === 'failed' && err) {
-        notice.value = ''
-        error.value = formatMonitorError(err)
-      } else {
-        error.value = ''
-        try {
-          await loadInplay()
-        } catch { /* ignore */ }
-        const n = inplayMeta.value.count
-        showNotice(`盘中采集完成：${n} 场（Redis tennis:bundle:inplay）`)
-        api.refreshTennisCache().catch(() => {})
-      }
-      return
-    }
-  }
-  notice.value = ''
-  error.value = '盘中采集超时，请稍后再试'
-}
 
 async function triggerCollect() {
   if (collecting.value || running.value) return
@@ -762,7 +797,32 @@ async function triggerCollect() {
   error.value = ''
   notice.value = ''
   try {
-    await api.triggerTennisMonitorCollect()
+    // 虚拟模式：只读 docks/2026_500.txt，不采官网
+    if (isVirtualSource.value) {
+      const r = await api.triggerTennisMonitorCollect({
+        fromTxt: true,
+        source: 'docks500',
+        date: dataSource.value?.docks500?.date || undefined,
+        prematchCount: 12,
+        inplayCount: 12,
+      })
+      showNotice(
+        r.message
+        || `虚拟·txt（2026_500.txt · ${r.date || '-'}）：盘前 ${r.prematch ?? 0} · 盘中 ${r.inplay ?? 0} · 盘后 ${r.settled ?? 0}`,
+      )
+      try {
+        const ds = await api.fetchTennisMonitorDataSource()
+        dataSource.value = { ...(dataSource.value || {}), ...ds }
+      } catch (_) { /* ignore */ }
+      api.refreshTennisCache().catch(() => {})
+      api.refreshTennisNewCache().catch(() => {})
+      await loadTop100(true)
+      await loadDataSource()
+      await loadStatus()
+      return
+    }
+    // 真实模式：官网 collect.py
+    await api.triggerTennisMonitorCollect({ fromTxt: false })
     await loadStatus()
     await loadLogs()
     if (running.value) await waitCollectDone()
@@ -773,28 +833,6 @@ async function triggerCollect() {
   }
 }
 
-async function triggerLiveCollect() {
-  if (liveCollecting.value || liveRunning.value) return
-  if (!collectEnabled.value) {
-    error.value = '采集已关闭，请先打开采集开关'
-    return
-  }
-  liveCollecting.value = true
-  error.value = ''
-  notice.value = ''
-  try {
-    await api.triggerTennisMonitorLiveCollect()
-    await loadLive()
-    await loadStatus()
-    await loadLogs()
-    if (liveRunning.value) await waitLiveCollectDone()
-    else await loadInplay()
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '触发失败')
-  } finally {
-    liveCollecting.value = false
-  }
-}
 
 function parseScoreTextSides(text) {
   if (!text) return null
@@ -834,6 +872,24 @@ async function onIntervalChange(event) {
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新频度失败')
     event.target.value = String(collectIntervalHours.value)
+  } finally {
+    scheduleSaving.value = false
+  }
+}
+
+async function onHorizonChange(event) {
+  const days = Number(event.target.value)
+  if (!HORIZON_OPTIONS.some((o) => o.days === days) || days === collectHorizonDays.value) return
+  scheduleSaving.value = true
+  error.value = ''
+  try {
+    const data = await api.updateTennisMonitorSchedule({ collect_horizon_days: days })
+    schedule.value = data
+    await loadStatus()
+    showNotice(`采集范围已设为 ${HORIZON_OPTIONS.find((o) => o.days === days)?.label || days + '天'}（开始=今天）`)
+  } catch (e) {
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新采集范围失败')
+    event.target.value = String(collectHorizonDays.value)
   } finally {
     scheduleSaving.value = false
   }
@@ -890,12 +946,6 @@ async function patchEngines(patch) {
   }
 }
 
-function onConditionEnabledChange(ev) {
-  patchEngines({ condition: { enabled: !!ev?.target?.checked } })
-}
-function onBettingEnabledChange(ev) {
-  patchEngines({ betting: { enabled: !!ev?.target?.checked } })
-}
 function onTickEnabledChange(ev) {
   patchEngines({ collect: { inplay_tick_enabled: !!ev?.target?.checked } })
 }
@@ -910,6 +960,18 @@ function onBettingAmountUsdChange(ev) {
   const n = Number(ev?.target?.value)
   if (!Number.isFinite(n) || n <= 0) return
   patchEngines({ betting: { amountUsd: Math.round(n * 100) / 100 } })
+}
+
+function onListPollIntervalChange(field, ev) {
+  const n = Number(ev?.target?.value)
+  if (!Number.isFinite(n)) return
+  let sec
+  if (field === 'listPageRefreshIntervalSec') {
+    sec = n <= 0 ? 0 : Math.max(10, Math.min(600, Math.round(n)))
+  } else {
+    sec = Math.max(10, Math.min(600, Math.round(n)))
+  }
+  patchEngines({ betting: { [field]: sec } })
 }
 
 function parseConditionNum(raw) {
@@ -976,7 +1038,6 @@ async function saveConditionBucketAndEnable() {
   const bucket = conditionDraft.value[tab]
   await patchEngines({
     condition: {
-      enabled: bucket.enabled ? true : !!engines.value?.condition?.enabled,
       buckets: {
         [tab]: {
           enabled: !!bucket.enabled,
@@ -1003,6 +1064,9 @@ function setBettingGroupField(groupIndex, key, raw) {
     g[key] = Number.isFinite(n) ? n : 91
   } else if (['requireWonFirstSet', 'stopEnabled', 'firstSetExcludeEnabled'].includes(key)) {
     g[key] = !!raw
+  } else if (key === 'amountUsd') {
+    const n = Number(raw)
+    g[key] = Number.isFinite(n) && n >= 1 ? Math.round(n * 100) / 100 : 1
   } else if (key === 'firstSetExcludeScore') {
     g[key] = String(raw || '').trim().slice(0, 16)
   } else if (key === 'joinPrev') {
@@ -1012,7 +1076,10 @@ function setBettingGroupField(groupIndex, key, raw) {
   } else {
     g[key] = raw
   }
-  if (!Array.isArray(g.stopRules) || !g.stopRules.length) g.stopRules = [emptyStopRule()]
+  if (!Array.isArray(g.stopRules)) g.stopRules = []
+  if (key === 'stopEnabled' && g.stopEnabled && g.stopRules.length === 0) {
+    g.stopRules = [emptyStopRule()]
+  }
   groups[groupIndex] = g
   bettingDraft.value = {
     ...bettingDraft.value,
@@ -1026,12 +1093,16 @@ function setStopRuleField(groupIndex, ruleIndex, key, raw) {
   const g = { ...groups[groupIndex] }
   const rules = [...ensureStopRules(g)]
   const r = { ...emptyStopRule(), ...rules[ruleIndex] }
-  if (['stopStrongSets', 'stopWeakSets', 'stopWeakGamesMin'].includes(key)) {
+  if (['stopStrongSets', 'stopWeakSets', 'stopWeakGamesMin', 'stopPmCentsMax'].includes(key)) {
     r[key] = parseConditionNum(raw)
   } else if (['stopGameLead', 'stopSetIndex'].includes(key)) {
-    const n = Number(raw)
-    if (key === 'stopSetIndex') r[key] = Number.isFinite(n) ? Math.max(1, Math.min(5, n)) : 3
-    else r[key] = Number.isFinite(n) ? n : 2
+    const s = String(raw ?? '').trim()
+    if (!s) r[key] = 'all'
+    else {
+      const n = Number(s)
+      if (key === 'stopSetIndex') r[key] = Number.isFinite(n) ? Math.max(1, Math.min(5, n)) : 'all'
+      else r[key] = Number.isFinite(n) ? n : 'all'
+    }
   } else if (key === 'joinPrev') {
     r[key] = raw === 'and' ? 'and' : 'or'
   } else if (key === 'name') {
@@ -1052,7 +1123,9 @@ function addStopRule(groupIndex) {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || [])]
   const g = { ...groups[groupIndex] }
-  g.stopRules = [...ensureStopRules(g), emptyStopRule()]
+  const prev = Array.isArray(g.stopRules) ? g.stopRules : []
+  g.stopRules = [...prev, emptyStopRule()]
+  g.stopEnabled = true
   groups[groupIndex] = g
   bettingDraft.value = {
     ...bettingDraft.value,
@@ -1083,6 +1156,40 @@ function setBettingBucketEnabled(ev) {
   }
 }
 
+function setBettingBucketSimulate(ev) {
+  const tab = bettingTab.value
+  bettingDraft.value = {
+    ...bettingDraft.value,
+    [tab]: { ...bettingDraft.value[tab], simulate: !!ev?.target?.checked },
+  }
+}
+
+function ensureInplayEntry() {
+  const cur = bettingDraft.value.inplay || {}
+  if (!cur.entry) {
+    bettingDraft.value = {
+      ...bettingDraft.value,
+      inplay: { ...cur, entry: normalizeInplayEntryDraft(null) },
+    }
+  }
+}
+
+function setInplayEntryField(key, raw) {
+  ensureInplayEntry()
+  const cur = bettingDraft.value.inplay
+  const entry = { ...normalizeInplayEntryDraft(cur.entry) }
+  if (key === 'requireWonFirstSet') entry.requireWonFirstSet = !!raw
+  else if (key === 'firstSetExcludeEnabled') entry.firstSetExcludeEnabled = !!raw
+  else if (key === 'firstSetExcludeScore') {
+    const s = String(raw ?? '').trim().slice(0, 12)
+    entry.firstSetExcludeScore = s || '7:5'
+  } else if (key === 'pmCentsMax') {
+    const s = String(raw ?? '').trim()
+    entry.pmCentsMax = s === '' ? 'all' : (Number.isFinite(Number(s)) ? Number(s) : 'all')
+  }
+  bettingDraft.value = { ...bettingDraft.value, inplay: { ...cur, entry } }
+}
+
 function addBettingGroup() {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || []), emptyBettingGroup(tab)]
@@ -1109,17 +1216,32 @@ async function saveBettingBucketAndEnable() {
   const bucket = bettingDraft.value[tab]
   await patchEngines({
     betting: {
-      enabled: bucket.enabled ? true : !!engines.value?.betting?.enabled,
+      // 总开关已废弃：任意桶打开即可投注
+      enabled: true,
       buckets: {
         [tab]: {
           enabled: !!bucket.enabled,
+          simulate: !!bucket.simulate,
           groups: (bucket.groups || []).map((g) => ({
             ...emptyBettingGroup(tab),
             ...g,
+            amountUsd: Number(g.amountUsd) >= 1 ? Math.round(Number(g.amountUsd) * 100) / 100 : 1,
             // 投注引擎只用开区间强现> / 强现<，避免旧 strongRankMax 暗中生效
             strongRankMax: 'all',
             stopRules: ensureStopRules(g).map((r) => ({ ...emptyStopRule(), ...r })),
           })),
+          ...(tab === 'inplay' ? {
+            entry: (() => {
+              const e = normalizeInplayEntryDraft(bucket.entry)
+              return {
+                requireWonFirstSet: e.requireWonFirstSet !== false,
+                firstSetExcludeEnabled: !!e.firstSetExcludeEnabled,
+                firstSetExcludeScore: e.firstSetExcludeScore || '7:5',
+                pmCentsMax: e.pmCentsMax === '' || e.pmCentsMax == null ? 'all' : e.pmCentsMax,
+                rankGapRules: [],
+              }
+            })(),
+          } : {}),
         },
       },
     },
@@ -1133,6 +1255,30 @@ async function onSplitBuckets() {
     showNotice(`三桶：盘前 ${r.prematch ?? 0} · 盘中 ${r.inplay ?? 0} · 盘后 ${r.settled ?? 0}`)
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '拆桶失败')
+  } finally {
+    enginesSaving.value = false
+  }
+}
+
+async function onSeedVirtualBuckets() {
+  enginesSaving.value = true
+  try {
+    const r = await api.seedTennisVirtualBuckets({ prematchCount: 12, inplayCount: 12 })
+    const vs = r.virtualSim || {}
+    showNotice(
+      `虚拟·txt（${r.txtSource || r.from || '-'} · ${r.date || '-'}）：`
+      + `盘前 ${r.prematch ?? vs.prematch ?? 0}`
+      + ` · 盘中 ${r.inplay ?? vs.inplay ?? 0}`
+      + ` · 盘后 ${r.settled ?? vs.settled ?? 0}`,
+    )
+    // 切到虚拟源后刷新状态
+    try {
+      const ds = await api.fetchTennisMonitorDataSource()
+      dataSource.value = { ...(dataSource.value || {}), ...ds }
+    } catch (_) { /* ignore */ }
+    api.refreshTennisCache().catch(() => {})
+  } catch (e) {
+    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '造盘前/盘中失败')
   } finally {
     enginesSaving.value = false
   }
@@ -1162,7 +1308,7 @@ async function onDataSourceChange(next, date) {
     return
   }
   if (next === 'docks500' && dataSource.value?.docks500_available === false) {
-    error.value = '虚拟数据不可用（检查 docks/2026_500.txt）'
+    error.value = '虚拟数据不可用（检查 docks/*.txt，如 2026_all_gs_1000_500.txt）'
     return
   }
   // 切到虚拟前记住真实源，方便关虚拟时还原
@@ -1229,9 +1375,6 @@ function setLivePage(page) {
   livePage.value = Math.min(Math.max(1, page), livePageCount.value)
 }
 
-function setInplayPage(page) {
-  inplayPage.value = Math.min(Math.max(1, page), inplayPageCount.value)
-}
 
 function setLogPage(page) {
   logPage.value = Math.min(Math.max(1, page), logPageCount.value)
@@ -1260,12 +1403,6 @@ function livePageLabel() {
   return `${start}-${end} / ${liveMatches.value.length}`
 }
 
-function inplayPageLabel() {
-  if (!inplayMatches.value.length) return '0 条'
-  const start = (inplayPage.value - 1) * LIVE_PAGE_SIZE + 1
-  const end = Math.min(inplayPage.value * LIVE_PAGE_SIZE, inplayMatches.value.length)
-  return `${start}-${end} / ${inplayMatches.value.length}`
-}
 
 function logPageLabel() {
   if (!logLines.value.length) return '0 行'
@@ -1280,11 +1417,7 @@ watch([tab, topPoolMax, tierFilter, onlyWithMatches], () => {
 })
 watch(tab, () => {
   livePage.value = 1
-  inplayPage.value = 1
   logPage.value = 1
-  if (tab.value === 'inplay' && !inplayBundle.value) {
-    loadInplay().catch(() => {})
-  }
 })
 watch(players, (list) => {
   if (playerPage.value > Math.max(1, Math.ceil(list.length / PLAYER_PAGE_SIZE))) {
@@ -1296,24 +1429,38 @@ watch(liveMatches, (list) => {
     livePage.value = 1
   }
 })
-watch(inplayMatches, (list) => {
-  if (inplayPage.value > Math.max(1, Math.ceil(list.length / LIVE_PAGE_SIZE))) {
-    inplayPage.value = 1
-  }
-})
 watch(logLines, () => {
   if (logPage.value > logPageCount.value) logPage.value = 1
 })
 
 onMounted(() => {
+  // 从盘前/盘中列表跳转进来时，定位到对应桶
+  try {
+    const raw = sessionStorage.getItem('tennis_engine_focus')
+    if (raw) {
+      const focus = JSON.parse(raw)
+      sessionStorage.removeItem('tennis_engine_focus')
+      const bucket = focus?.bucket
+      if (isConditionPage.value && ['prematch', 'inplay', 'settled'].includes(bucket)) {
+        conditionTab.value = bucket
+      }
+      if (isBettingPage.value && ['prematch', 'inplay'].includes(bucket)) {
+        bettingTab.value = bucket
+      }
+    }
+  } catch (_) { /* ignore */ }
+
   refreshAll()
-  pollTimer = setInterval(() => {
-    loadStatus().catch(() => {})
-    if (running.value) loadLogs().catch(() => {})
-  }, 5000)
-  liveTimer = setInterval(() => {
-    loadLive().catch(() => {})
-  }, LIVE_UI_REFRESH_MS)
+  // 仅采集页轮询官网状态 / live；条件与投注页不打扰
+  if (isCollectPage.value) {
+    pollTimer = setInterval(() => {
+      loadStatus().catch(() => {})
+      if (running.value) loadLogs().catch(() => {})
+    }, 5000)
+    liveTimer = setInterval(() => {
+      loadLive().catch(() => {})
+    }, LIVE_UI_REFRESH_MS)
+  }
 })
 
 onUnmounted(() => {
@@ -1335,8 +1482,12 @@ onUnmounted(() => {
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
         <template v-if="isCollectPage">
-          <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect">
-            {{ running ? 'Top100 采集中…' : collecting ? '触发中…' : '立即采集 Top100' }}
+          <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect" :title="isVirtualSource ? '虚拟：只读 docks/2026_500.txt，不采官网' : '真实：运行 collect.py 采官网'">
+            {{
+              running ? '采集中…'
+                : collecting ? (isVirtualSource ? 'txt 造数中…' : '触发中…')
+                  : (isVirtualSource ? '立即采集（仅 txt）' : '立即采集 Top100')
+            }}
           </button>
         </template>
       </div>
@@ -1428,6 +1579,32 @@ onUnmounted(() => {
               </option>
             </select>
           </label>
+          <button
+            v-if="isVirtualSource"
+            type="button"
+            class="btn ghost"
+            :disabled="dataSourceSaving || loading || !dataSource?.docks500?.date"
+            title="打开虚拟日编辑页"
+            @click="emit('open-docks-editor', dataSource?.docks500?.date)"
+          >编辑本虚拟日</button>
+          <button
+            type="button"
+            class="btn ghost"
+            title="电脑宽屏查看 ATP/WTA Top100"
+            @click="emit('open-top100-wide')"
+          >Top100 宽屏</button>
+          <label class="interval-select" title="开始固定为今天；结束可选跨度">
+            <span>采集范围</span>
+            <select
+              :value="collectHorizonDays"
+              :disabled="scheduleSaving || loading || running || isVirtualSource"
+              @change="onHorizonChange"
+            >
+              <option v-for="opt in HORIZON_OPTIONS" :key="opt.days" :value="opt.days">
+                {{ opt.label }}
+              </option>
+            </select>
+          </label>
           <label class="interval-select">
             <span>Top100 频度</span>
             <select
@@ -1451,28 +1628,26 @@ onUnmounted(() => {
             </select>
           </label>
           <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onSplitBuckets">拆三桶</button>
+          <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onSeedVirtualBuckets" title="用 docks 已下载的 txt 比赛数据模拟盘前/盘中并写入 Redis">虚拟·txt造数</button>
           <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onRunTick">跑一轮 tick</button>
         </div>
+      </section>
+
+      <section v-if="isConditionPage && !engines" class="engine-panel">
+        <div class="engine-panel-head">
+          <h3>条件引擎</h3>
+        </div>
+        <p class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
       </section>
 
       <section v-if="isConditionPage && engines" class="engine-panel" id="engine-condition">
         <div class="engine-panel-head">
           <h3>条件引擎</h3>
-          <span class="engine-panel-tag">分桶开关 · 多组 OR</span>
+          <span class="engine-panel-tag">分桶开关 · 打开即筛列表</span>
         </div>
-        <div class="settings-row engines-row">
-          <label class="collect-toggle">
-            <span>总开关</span>
-            <input
-              type="checkbox"
-              :checked="!!engines.condition?.enabled"
-              :disabled="enginesSaving"
-              @change="onConditionEnabledChange"
-            >
-            <span class="toggle-state" :class="{ off: !engines.condition?.enabled }">{{ engines.condition?.enabled ? '已开启' : '已关闭' }}</span>
-          </label>
-          <span class="engines-note" style="margin:0">总开关关闭时不强制筛；此处维护条件组库，组间 AND/OR 在产品管理配置</span>
-        </div>
+        <p class="engines-note" style="margin:0 0 8px">
+          无总开关：某桶「打开」后，该产品列表即按本桶条件组筛选；多组之间可选「或 / 且」。
+        </p>
 
         <div class="condition-tabs" role="tablist">
           <button
@@ -1520,6 +1695,18 @@ onUnmounted(() => {
                 :title="isConditionGroupCollapsed(gi) ? '展开' : '折叠'"
                 @click="toggleConditionGroup(gi)"
               >{{ isConditionGroupCollapsed(gi) ? '▸' : '▾' }}</button>
+              <select
+                v-if="gi > 0"
+                class="group-join-select"
+                :value="g.joinPrev || 'or'"
+                :disabled="enginesSaving"
+                title="与上一组的连接"
+                @change="setGroupField(gi, 'joinPrev', $event.target.value)"
+              >
+                <option value="or">或 OR</option>
+                <option value="and">且 AND</option>
+              </select>
+              <span v-else class="muted group-join-placeholder">首组</span>
               <input
                 class="group-name-input"
                 type="text"
@@ -1529,7 +1716,7 @@ onUnmounted(() => {
                 :disabled="enginesSaving"
                 @change="setGroupField(gi, 'name', $event.target.value)"
               >
-              <span class="muted">组内字段「且」· 组间组合在产品管理</span>
+              <span class="muted">组内字段「且」</span>
               <button
                 type="button"
                 class="btn ghost sm"
@@ -1673,16 +1860,6 @@ onUnmounted(() => {
           <span class="engine-panel-tag">盘前/盘中 · 止损组</span>
         </div>
         <div class="settings-row engines-row">
-          <label class="collect-toggle">
-            <span>总开关</span>
-            <input
-              type="checkbox"
-              :checked="!!engines.betting?.enabled"
-              :disabled="enginesSaving"
-              @change="onBettingEnabledChange"
-            >
-            <span class="toggle-state" :class="{ off: !engines.betting?.enabled }">{{ engines.betting?.enabled ? '已开启' : '已关闭' }}</span>
-          </label>
           <label class="interval-select">
             <span>投注账号登录邮箱</span>
             <input
@@ -1695,7 +1872,7 @@ onUnmounted(() => {
             >
           </label>
           <label class="interval-select">
-            <span>投注金额 (USD)</span>
+            <span>默认金额 (USD)</span>
             <input
               type="number"
               min="0.01"
@@ -1706,7 +1883,46 @@ onUnmounted(() => {
               @change="onBettingAmountUsdChange"
             >
           </label>
-          <span class="engines-note" style="margin:0">买入条件在产品管理选择条件组；此处仅配止损</span>
+          <label class="interval-select" title="盘前/盘中列表按间隔自动刷新赛程；0=关闭">
+            <span>页面刷新(秒)</span>
+            <input
+              type="number"
+              min="0"
+              max="600"
+              step="1"
+              style="width: 5.5rem"
+              :value="engines.betting?.listPageRefreshIntervalSec ?? 0"
+              :disabled="enginesSaving"
+              @change="onListPollIntervalChange('listPageRefreshIntervalSec', $event)"
+            >
+          </label>
+          <label class="interval-select" title="列表页开启自动投注后，刷新赛程并尝试买入的间隔">
+            <span>自动投注刷新(秒)</span>
+            <input
+              type="number"
+              min="10"
+              max="600"
+              step="1"
+              style="width: 5.5rem"
+              :value="engines.betting?.listAutoBetIntervalSec ?? 60"
+              :disabled="enginesSaving"
+              @change="onListPollIntervalChange('listAutoBetIntervalSec', $event)"
+            >
+          </label>
+          <label class="interval-select" title="列表页开启自动投注后，检查止损/卖出的间隔">
+            <span>止损刷新(秒)</span>
+            <input
+              type="number"
+              min="10"
+              max="600"
+              step="1"
+              style="width: 5.5rem"
+              :value="engines.betting?.listStopLossIntervalSec ?? 60"
+              :disabled="enginesSaving"
+              @change="onListPollIntervalChange('listStopLossIntervalSec', $event)"
+            >
+          </label>
+          <span class="engines-note" style="margin:0">各桶打开即投注；列表轮询 10–600 秒（页面刷新可填 0 关闭），改后刷新列表页生效</span>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -1737,8 +1953,73 @@ onUnmounted(() => {
               >
               <span class="toggle-state" :class="{ off: !activeBettingBucket.enabled }">{{ activeBettingBucket.enabled ? '已开启' : '已关闭' }}</span>
             </label>
+            <label v-if="bettingTab !== 'inplay'" class="collect-toggle" title="调度/引擎侧默认；列表用户各自打开「自动投注」才会按规则下单">
+              <span>模拟投注</span>
+              <input
+                type="checkbox"
+                :checked="!!activeBettingBucket.simulate"
+                :disabled="enginesSaving"
+                @change="setBettingBucketSimulate"
+              >
+              <span class="toggle-state" :class="{ off: !activeBettingBucket.simulate }">{{ activeBettingBucket.simulate ? '模拟' : '实盘' }}</span>
+            </label>
             <button type="button" class="btn ghost" :disabled="enginesSaving" @click="addBettingGroup">加一组</button>
             <button type="button" class="btn primary" :disabled="enginesSaving" @click="saveBettingBucketAndEnable">保存本桶</button>
+          </div>
+
+          <div v-if="bettingTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
+            <div class="condition-group-head">
+              <div class="condition-group-title">盘中自动买入条件</div>
+              <div class="condition-group-hint">列表「自动投注」与调度买入共用；默认即原写死规则，可改</div>
+            </div>
+            <div class="condition-fields">
+              <label class="collect-toggle">
+                <span>须赢首盘</span>
+                <input
+                  type="checkbox"
+                  :checked="!!activeBettingBucket.entry?.requireWonFirstSet"
+                  :disabled="enginesSaving"
+                  @change="setInplayEntryField('requireWonFirstSet', $event.target.checked)"
+                >
+              </label>
+              <label
+                v-if="activeBettingBucket.entry?.requireWonFirstSet"
+                class="collect-toggle"
+                title="首盘局分为该比分时不买入（顺序无关，默认 7:5）"
+              >
+                <span>排除首盘</span>
+                <input
+                  type="checkbox"
+                  :checked="!!activeBettingBucket.entry?.firstSetExcludeEnabled"
+                  :disabled="enginesSaving"
+                  @change="setInplayEntryField('firstSetExcludeEnabled', $event.target.checked)"
+                >
+              </label>
+              <label
+                v-if="activeBettingBucket.entry?.requireWonFirstSet && activeBettingBucket.entry?.firstSetExcludeEnabled"
+                title="仅排除第一盘该局分，如 7:5 / 7-5"
+              >
+                局分
+                <input
+                  type="text"
+                  :value="activeBettingBucket.entry?.firstSetExcludeScore || '7:5'"
+                  placeholder="7:5"
+                  :disabled="enginesSaving"
+                  @change="setInplayEntryField('firstSetExcludeScore', $event.target.value)"
+                >
+              </label>
+              <label>买入侧 PM¢&lt;
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  :value="activeBettingBucket.entry?.pmCentsMax === 'all' || activeBettingBucket.entry?.pmCentsMax == null || activeBettingBucket.entry?.pmCentsMax === '' ? '' : activeBettingBucket.entry.pmCentsMax"
+                  placeholder="不限"
+                  :disabled="enginesSaving"
+                  @change="setInplayEntryField('pmCentsMax', $event.target.value)"
+                >
+              </label>
+            </div>
           </div>
 
           <div
@@ -1798,7 +2079,7 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving || g.stopEnabled === false"
+                :disabled="enginesSaving"
                 @click="addStopRule(gi)"
               >加一条止损</button>
             </div>
@@ -1853,7 +2134,8 @@ onUnmounted(() => {
                       type="number"
                       min="1"
                       max="5"
-                      :value="sr.stopSetIndex ?? 3"
+                      :value="sr.stopSetIndex === 'all' || sr.stopSetIndex == null || sr.stopSetIndex === '' ? '' : sr.stopSetIndex"
+                      placeholder="不限"
                       :disabled="enginesSaving || g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopSetIndex', $event.target.value)"
                     >
@@ -1880,30 +2162,34 @@ onUnmounted(() => {
                       @change="setStopRuleField(gi, si, 'stopWeakSets', $event.target.value)"
                     >
                   </label>
-                  <label>弱方局分≥
+                  <label>局差≥
                     <input
                       type="number"
                       min="0"
-                      :value="sr.stopWeakGamesMin === 'all' || sr.stopWeakGamesMin == null ? '' : sr.stopWeakGamesMin"
+                      :value="sr.stopGameLead === 'all' || sr.stopGameLead == null || sr.stopGameLead === '' ? '' : sr.stopGameLead"
                       placeholder="不限"
                       :disabled="enginesSaving || g.stopEnabled === false"
-                      @change="setStopRuleField(gi, si, 'stopWeakGamesMin', $event.target.value)"
+                      @change="setStopRuleField(gi, si, 'stopGameLead', $event.target.value)"
                     >
                   </label>
-                  <label>局差弱−强&gt;
+                  <label>PM¢&lt;
                     <input
                       type="number"
-                      min="0"
-                      :value="sr.stopGameLead ?? 2"
+                      min="1"
+                      max="99"
+                      step="1"
+                      :value="sr.stopPmCentsMax === 'all' || sr.stopPmCentsMax == null || sr.stopPmCentsMax === '' ? '' : sr.stopPmCentsMax"
+                      placeholder="不限"
+                      title="买入侧 Polymarket 价格(¢)小于此值则触发；与局差满足其一即可；留空或不存在赔率时不参与判断"
                       :disabled="enginesSaving || g.stopEnabled === false"
-                      @change="setStopRuleField(gi, si, 'stopGameLead', $event.target.value)"
+                      @change="setStopRuleField(gi, si, 'stopPmCentsMax', $event.target.value)"
                     >
                   </label>
                 </div>
               </div>
             </div>
             <p class="condition-group-hint">
-              组内可加多条止损，条间选且/或；买入条件请在产品管理中选择条件组。
+              组内可加多条条件，条间选且/或；未填字段表示不限制。局差与 PM 满足其一即可。不投入金额（买入金额用上方「金额$」）。买入条件请在产品管理中选择条件组。
             </p>
             </div>
             </div>
@@ -2015,7 +2301,6 @@ onUnmounted(() => {
         <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
         <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
         <button type="button" :class="{ on: tab === 'live' }" @click="tab = 'live'">进行中</button>
-        <button type="button" :class="{ on: tab === 'inplay' }" @click="tab = 'inplay'">盘中采集</button>
         <button type="button" :class="{ on: tab === 'logs' }" @click="tab = 'logs'">日志</button>
         <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
       </div>
@@ -2099,76 +2384,6 @@ onUnmounted(() => {
             <div class="pager-actions">
               <button type="button" class="pager-btn" :disabled="livePage <= 1" @click="setLivePage(livePage - 1)">上一页</button>
               <button type="button" class="pager-btn" :disabled="livePage >= livePageCount" @click="setLivePage(livePage + 1)">下一页</button>
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <div v-else-if="tab === 'inplay'" class="panel">
-        <div class="panel-h row">
-          <span class="panel-title">盘中采集 · {{ inplayMeta.date }}</span>
-          <span class="muted panel-meta">
-            <template v-if="liveRunning || liveCollecting">采集中…</template>
-            <template v-else-if="inplayLoading">读取 Redis…</template>
-            <template v-else>
-              {{ inplayMeta.source }} · tennis:bundle:inplay · {{ fmtTime(inplayMeta.fetchedAt) }}
-            </template>
-          </span>
-        </div>
-        <div class="pool-bar pool-bar-tail" style="margin-bottom: 8px">
-          <button
-            type="button"
-            class="chip-btn"
-            :disabled="liveCollecting || liveRunning || !collectEnabled"
-            @click="triggerLiveCollect"
-          >
-            {{ liveRunning ? '采集中…' : liveCollecting ? '触发中…' : '立即采集盘中' }}
-          </button>
-          <button type="button" class="chip-btn" :disabled="inplayLoading" @click="loadInplay">刷新列表</button>
-          <span class="pool-meta">{{ inplayMeta.count }} 场 · 进行中 · Top100 · GS/500/1000 · 写入盘中产品页</span>
-        </div>
-        <div v-if="livePoll.error" class="banner err">{{ formatMonitorError(livePoll.error) }}</div>
-        <div v-else-if="inplayLoading && !inplayMatches.length" class="empty">读取盘中包…</div>
-        <div v-else-if="!inplayMatches.length" class="empty">
-          {{ inplayMeta.message || '暂无盘中数据' }}
-          <div class="hint">请点击「立即采集盘中」运行 collect_live.py</div>
-        </div>
-        <template v-else>
-          <div class="pager">
-            <span class="pager-info">第 {{ inplayPage }} / {{ inplayPageCount }} 页 · {{ inplayPageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="inplayPage <= 1" @click="setInplayPage(inplayPage - 1)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="inplayPage >= inplayPageCount" @click="setInplayPage(inplayPage + 1)">下一页</button>
-            </div>
-          </div>
-          <div class="live-list">
-            <div v-for="m in pagedInplayMatches" :key="'inplay-' + m.id" class="live-row">
-              <div class="live-top">
-                <span class="st live">{{ m.status || '进行中' }}</span>
-              </div>
-              <div class="live-players">
-                <div class="live-player-line">
-                  <span class="live-name">{{ m.homePlayer?.name || m.home || '—' }}</span>
-                  <span v-if="playerLiveScoreText(m, 'home')" class="live-player-score">{{ playerLiveScoreText(m, 'home') }}</span>
-                </div>
-                <span class="live-vs">VS</span>
-                <div class="live-player-line">
-                  <span class="live-name">{{ m.awayPlayer?.name || m.away || '—' }}</span>
-                  <span v-if="playerLiveScoreText(m, 'away')" class="live-player-score">{{ playerLiveScoreText(m, 'away') }}</span>
-                </div>
-              </div>
-              <div class="live-bot">
-                <span>{{ (m.tournamentShort || m.tournament || '—').replace(/,.*/, '') }}</span>
-                <span v-if="m.roundLabel || m.round"> · {{ m.roundLabel || m.round }}</span>
-                <span> · {{ m.tour || '' }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="pager pager-bottom">
-            <span class="pager-info">{{ inplayPageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="inplayPage <= 1" @click="setInplayPage(inplayPage - 1)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="inplayPage >= inplayPageCount" @click="setInplayPage(inplayPage + 1)">下一页</button>
             </div>
           </div>
         </template>
@@ -2438,6 +2653,22 @@ onUnmounted(() => {
 .condition-group-head .group-name-input:focus {
   outline: none;
   border-color: #a5b4fc;
+}
+.group-join-select {
+  flex-shrink: 0;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fff7ed;
+}
+.group-join-placeholder {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: #64748b;
+  min-width: 2rem;
 }
 .group-fold-btn {
   flex-shrink: 0;

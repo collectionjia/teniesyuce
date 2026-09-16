@@ -45,8 +45,13 @@ def log_timing_summary(timing: dict[str, float], total_sec: float) -> None:
 
 
 def log_collect_header(*, match_date: str | None = None, top100: bool = True) -> str:
+    from tm.collectors.events import collect_date_list, read_collect_horizon_days
+
     d = match_date or today_bj()
-    print(f"=== 网球采集 {d} ===")
+    horizon = read_collect_horizon_days()
+    end = collect_date_list(d, horizon)[-1]
+    range_label = f"{d}..{end}（{horizon}天）" if horizon > 1 else d
+    print(f"=== 网球采集 {range_label} ===")
     p = proxy_status_public()
     if p.get("enabled"):
         print(
@@ -317,7 +322,12 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
                     f"[4/{_STEPS}] 球员排名与赔率：{len(slim_events)} 场"
                 )
                 t0 = time.perf_counter()
-                rankings_by_player = enrich_rankings_from_events(slim_events, enrich_board, client)
+                rankings_by_player = enrich_rankings_from_events(
+                    slim_events,
+                    enrich_board,
+                    client,
+                    prev_rankings=rankings_by_player if isinstance(rankings_by_player, dict) else None,
+                )
                 birth_year_by_player = fill_missing_birth_years(client, slim_events)
                 odds_by_event = enrich_odds_for_events(client, slim_events)
                 odds_events = len(slim_events)
@@ -371,6 +381,8 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
     collect_payload = {
         "ok": True,
         "date": d,
+        "date_end": (collect_stats or {}).get("date_end") or d,
+        "horizon_days": (collect_stats or {}).get("horizon_days") or 1,
         "events": slim_events,
         "total_events": len(slim_events),
         "tier_before": tier_before,
@@ -384,6 +396,24 @@ def run_tier_collect(*, match_date: str | None = None, top100: bool = True) -> d
         "top100": top100,
         "top_rank_max": _TOP_N if top100 else None,
     }
+    # 榜单写入 Redis，供管理页 ATP/WTA Top100 展示（勿只留 boolean top100）
+    if board is not None:
+        try:
+            from tm.collectors.rankings import attach_matches
+            attach_matches(board, slim_events)
+        except Exception:
+            pass
+        collect_payload["rankingsBoard"] = {
+            "atp": board.get("atp") or [],
+            "wta": board.get("wta") or [],
+            "summary": {
+                "total_matches": len(slim_events),
+                "atp_players": len(board.get("atp") or []),
+                "wta_players": len(board.get("wta") or []),
+                "atp_matches": sum(int(p.get("matchCount") or 0) for p in (board.get("atp") or [])),
+                "wta_matches": sum(int(p.get("matchCount") or 0) for p in (board.get("wta") or [])),
+            },
+        }
     print(f"[6/{_STEPS}] 写入 Redis（bundle + tennis:bundle:full）")
     t0 = time.perf_counter()
     persist_result = persist_collect_bundle(collect_payload)

@@ -26,8 +26,10 @@ async function engineGate(requireEngineOn) {
     return { ok: true };
   }
   if (requireEngineOn === 'condition') {
-    if (cfg.condition?.enabled === false) {
-      return { ok: false, reason: 'condition engine off' };
+    const buckets = cfg.condition?.buckets || {};
+    const anyOn = ['prematch', 'inplay', 'settled'].some((k) => buckets[k]?.enabled);
+    if (!anyOn) {
+      return { ok: false, reason: 'condition buckets all off' };
     }
     return { ok: true };
   }
@@ -35,8 +37,24 @@ async function engineGate(requireEngineOn) {
 }
 
 async function executeJobType(job, params = {}) {
+  const tennisDataSource = require('./tennisDataSource');
+  const isVirtual = (await tennisDataSource.get()) === 'docks500';
+
   switch (job.jobType) {
     case 'collect.full': {
+      // 虚拟：只从 docks/2026_500.txt 造数，不拆官网全量包
+      if (isVirtual) {
+        const r = await tennisThreeBuckets.seedVirtualPrematchInplay({
+          txtName: '2026_500.txt',
+          prematchCount: params.prematchCount,
+          inplayCount: params.inplayCount,
+        });
+        if (!r.ok) throw new Error(r.error || 'virtual txt seed failed');
+        return {
+          message: r.message || 'collect.full virtual txt done',
+          metrics: r,
+        };
+      }
       const split = await tennisThreeBuckets.splitFullToThreeBuckets();
       const migP = await tennisThreeBuckets.migratePrematchByStartTime();
       const migI = await tennisThreeBuckets.migrateInplayEnded();
@@ -45,7 +63,28 @@ async function executeJobType(job, params = {}) {
         metrics: { split, migratePrematch: migP, migrateInplay: migI },
       };
     }
+    case 'collect.top100': {
+      if (isVirtual) {
+        return { skipped: true, message: '虚拟(txt)模式跳过官网 Top100 采集' };
+      }
+      const tennisCollectRunner = require('./tennisCollectRunner');
+      if (tennisCollectRunner.isRunning()) {
+        return { skipped: true, message: 'collect.py already running' };
+      }
+      const started = tennisCollectRunner.startCollect({
+        matchDate: params.matchDate || null,
+        top100: params.top100 !== false,
+      });
+      if (!started.ok) throw new Error(started.error || 'collect.top100 start failed');
+      return { message: 'collect.top100 started', metrics: started.last || {} };
+    }
     case 'collect.inplay_tick': {
+      if (isVirtual) {
+        return {
+          skipped: true,
+          message: '虚拟(txt)模式跳过官网 tick / Polymarket 采集',
+        };
+      }
       const cfg = await tennisEngines.getConfig();
       if (cfg.collect?.inplay_tick_enabled === false) {
         return { skipped: true, message: 'inplay_tick disabled in collect config' };
@@ -78,7 +117,7 @@ async function executeJobType(job, params = {}) {
       for (const key of keys) {
         let bundle = await caches[key].getBundle();
         const before = countBundle(key, bundle);
-        if (bundle && cfg.condition?.enabled) {
+        if (bundle && (cfg.condition?.buckets?.[key]?.enabled)) {
           const full = cfg.condition?.buckets?.[key];
           let groups = full?.groups || [];
           if (groupIndex != null && groups[groupIndex]) {
@@ -111,17 +150,20 @@ async function executeJobType(job, params = {}) {
         userId,
         onlyBucket: params.bucket || null,
         onlyGroupIndex: params.groupIndex != null ? Number(params.groupIndex) : null,
+        onlyStrategyKey: params.strategyKey || null,
+        mode: params.mode === 'stop' ? 'stop' : (params.mode === 'both' ? 'both' : 'buy'),
       });
       return { message: 'bet.scan done', metrics: r || {} };
     }
     case 'bet.stop_loss': {
-      // 现网止损已并入 runBettingPass；单独 job 时同样调用
       const cfg = await tennisEngines.getConfig();
       const r = await tennisBettingEngine.runBettingPass({
-        amountUsd: Number(cfg.betting?.amountUsd ?? 1),
-        userId: cfg.betting?.userId,
+        amountUsd: Number(params.amountUsd ?? cfg.betting?.amountUsd ?? 1),
+        userId: params.userId ?? cfg.betting?.userId,
         onlyBucket: params.bucket || null,
         onlyGroupIndex: params.groupIndex != null ? Number(params.groupIndex) : null,
+        onlyStrategyKey: params.strategyKey || null,
+        mode: 'stop',
       });
       return { message: 'bet.stop_loss done', metrics: r || {} };
     }
@@ -211,8 +253,10 @@ async function runJob(jobId, trigger = 'manual') {
     new Promise((resolve) => {
       timer = setTimeout(async () => {
         timedOut = true;
-        await store.finishRun(runId, { status: 'timeout', error: `timeout ${job.timeoutSec}s` });
-        if (trigger === 'schedule') scheduleLocks.delete(job.mutexKey || job.id);
+        // 只记超时状态，不解锁：等 work.finally 释放，避免超时后重叠跑 bet.scan
+        try {
+          await store.finishRun(runId, { status: 'timeout', error: `timeout ${job.timeoutSec}s` });
+        } catch { /* ignore */ }
         resolve({ accepted: true, runId, status: 'timeout' });
       }, timeoutMs);
     }),

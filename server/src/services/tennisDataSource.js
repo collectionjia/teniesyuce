@@ -10,7 +10,7 @@ function normalize(raw) {
   return 'ipwo';
 }
 
-/** 网球页 Redis 写入源：ipwo / api / docks500（本地 2026_500 按日回放） */
+/** 网球页 Redis 写入源：ipwo / api / docks500（本地 docks/*.txt 按日虚拟回放） */
 async function get() {
   const client = await redis.getClient();
   if (!client) return normalize(DEFAULT);
@@ -21,6 +21,11 @@ async function get() {
     console.error('[tennis/data-source] read failed:', err.message);
     return normalize(DEFAULT);
   }
+}
+
+/** 仅 docks500（采集虚拟）允许模拟记账；真实采集一律实盘 */
+async function shouldSimulateTrades() {
+  return (await get()) === 'docks500';
 }
 
 async function set(source) {
@@ -49,5 +54,6 @@ module.exports = {
   set,
   normalize,
   label,
+  shouldSimulateTrades,
   KEY,
 };

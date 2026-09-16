@@ -3,6 +3,7 @@ const { auth } = require('../middleware/auth');
 const tennisInplayCache = require('../services/tennisInplayCache');
 const btcWallet = require('../services/btcWallet');
 const tennisTrade = require('../services/tennisTrade');
+const tennisDataSource = require('../services/tennisDataSource');
 
 const router = Router();
 
@@ -14,6 +15,20 @@ async function requireWallet(req, res, next) {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: '权限校验失败' });
+  }
+}
+
+/** 虚拟采集强制模拟；真实采集时前端 simulate=true 模拟，否则实盘（需钱包） */
+async function resolveTradeSimulate(req, res, next) {
+  try {
+    const forceSim = await tennisDataSource.shouldSimulateTrades();
+    const wantSim = forceSim || !!(req.body && (req.body.simulate === true || req.body.simulate === 1 || req.body.simulate === '1'));
+    req.tradeSimulate = wantSim;
+    if (req.tradeSimulate) return next();
+    return requireWallet(req, res, next);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: '交易模式校验失败' });
   }
 }
 
@@ -85,12 +100,31 @@ router.get('/today', auth(), async (_req, res) => {
   try {
     const raw = await tennisInplayCache.getBundle();
     if (!raw) {
-      return res.json({ ...emptyInplayBundle(), member: true });
+      let bettingEntry = null;
+      try {
+        const tennisEngines = require('../services/tennisEngines');
+        const cfg = await tennisEngines.getConfigPreferRedis();
+        bettingEntry = tennisEngines.normalizeInplayBettingEntry(cfg?.betting?.buckets?.inplay?.entry);
+      } catch (_) { /* ignore */ }
+      return res.json({
+        ...emptyInplayBundle(),
+        member: true,
+        bettingEntry,
+        tradeSimulate: await tennisDataSource.shouldSimulateTrades(),
+      });
     }
     let full = sanitizeCollectLiveBundle(raw);
     const tennisConditionApply = require('../services/tennisConditionApply');
     full = await tennisConditionApply.maybeApplyCondition('inplay', full);
-    res.json({ ...full, member: true });
+    let bettingEntry = null;
+    try {
+      const tennisEngines = require('../services/tennisEngines');
+      const cfg = await tennisEngines.getConfigPreferRedis();
+      bettingEntry = tennisEngines.normalizeInplayBettingEntry(cfg?.betting?.buckets?.inplay?.entry);
+    } catch (e) {
+      console.warn('[tennis-inplay/today] bettingEntry', e.message);
+    }
+    res.json({ ...full, member: true, bettingEntry, tradeSimulate: await tennisDataSource.shouldSimulateTrades() });
   } catch (err) {
     console.error('[tennis-inplay/today]', err);
     res.status(500).json({
@@ -100,13 +134,14 @@ router.get('/today', auth(), async (_req, res) => {
   }
 });
 
-router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
+router.post('/trade/batch', auth(), resolveTradeSimulate, async (req, res) => {
   try {
     const { orders, amountUsd } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.user.id, {
       orders,
       amountUsd,
       product: 'tennis-inplay',
+      simulate: !!req.tradeSimulate,
     });
     res.json(result);
   } catch (e) {
@@ -115,7 +150,7 @@ router.post('/trade/batch', auth(), requireWallet, async (req, res) => {
   }
 });
 
-router.post('/trade/sell', auth(), requireWallet, async (req, res) => {
+router.post('/trade/sell', auth(), resolveTradeSimulate, async (req, res) => {
   try {
     const { eventId, side, shares } = req.body || {};
     const result = await tennisTrade.placeSellOrder(req.user.id, {
@@ -123,6 +158,7 @@ router.post('/trade/sell', auth(), requireWallet, async (req, res) => {
       side,
       shares,
       product: 'tennis-inplay',
+      simulate: !!req.tradeSimulate,
     });
     res.json(result);
   } catch (e) {

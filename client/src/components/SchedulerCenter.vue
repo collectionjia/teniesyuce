@@ -22,14 +22,85 @@ const form = ref({
   enabled: true,
 })
 
+const listPoll = ref({
+  listAutoBetIntervalSec: 60,
+  listStopLossIntervalSec: 60,
+  listPageRefreshIntervalSec: 0,
+  saving: false,
+})
+
+async function loadListPoll() {
+  try {
+    const cfg = await api.fetchTennisEngines()
+    const bet = cfg?.betting || {}
+    listPoll.value.listAutoBetIntervalSec = Number(bet.listAutoBetIntervalSec) || 60
+    listPoll.value.listStopLossIntervalSec = Number(bet.listStopLossIntervalSec) || 60
+    const pageN = Number(bet.listPageRefreshIntervalSec)
+    listPoll.value.listPageRefreshIntervalSec = Number.isFinite(pageN) && pageN > 0
+      ? Math.max(10, Math.min(600, Math.round(pageN)))
+      : 0
+  } catch {
+    /* keep defaults */
+  }
+}
+
+async function saveListPoll() {
+  msg.value = ''
+  err.value = ''
+  listPoll.value.saving = true
+  try {
+    const autoSec = Math.max(10, Math.min(600, Math.round(Number(listPoll.value.listAutoBetIntervalSec) || 60)))
+    const stopSec = Math.max(10, Math.min(600, Math.round(Number(listPoll.value.listStopLossIntervalSec) || 60)))
+    let pageSec = Number(listPoll.value.listPageRefreshIntervalSec)
+    if (!Number.isFinite(pageSec) || pageSec <= 0) pageSec = 0
+    else pageSec = Math.max(10, Math.min(600, Math.round(pageSec)))
+    await api.updateTennisEngines({
+      betting: {
+        listAutoBetIntervalSec: autoSec,
+        listStopLossIntervalSec: stopSec,
+        listPageRefreshIntervalSec: pageSec,
+      },
+    })
+    listPoll.value.listAutoBetIntervalSec = autoSec
+    listPoll.value.listStopLossIntervalSec = stopSec
+    listPoll.value.listPageRefreshIntervalSec = pageSec
+    msg.value = pageSec > 0
+      ? `已保存列表轮询：页面 ${pageSec}s · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+      : `已保存列表轮询：页面刷新关 · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+  } catch (e) {
+    err.value = e?.response?.data?.error || e.message || '保存轮询间隔失败'
+  } finally {
+    listPoll.value.saving = false
+  }
+}
+
 const jobTypeOptions = computed(() => {
   if (jobTypes.value.length) return jobTypes.value
   return [
-    { jobType: 'collect.full', label: '采集 · 全量拆三桶', category: 'collect' },
-    { jobType: 'collect.inplay_tick', label: '采集 · 盘中 tick', category: 'collect' },
-    { jobType: 'condition.query', label: '条件 · 查询筛选', category: 'condition' },
-    { jobType: 'bet.scan', label: '投注 · 扫描下单', category: 'betting' },
+    { jobType: 'collect.full', label: '采集引擎 · 全量拆三桶', category: 'collect' },
+    { jobType: 'collect.inplay_tick', label: '采集引擎 · 盘中 tick', category: 'collect' },
+    { jobType: 'condition.query', label: '条件引擎 · 查询筛选', category: 'condition' },
+    { jobType: 'bet.scan', label: '投注引擎 · 扫描下单', category: 'betting' },
   ]
+})
+
+const CATEGORY_LABELS = {
+  collect: '采集引擎',
+  condition: '条件引擎',
+  betting: '投注引擎',
+}
+
+const jobTypeGroups = computed(() => {
+  const order = ['collect', 'condition', 'betting']
+  const map = { collect: [], condition: [], betting: [] }
+  for (const t of jobTypeOptions.value) {
+    const cat = t.category || categoryOfJobType(t.jobType)
+    if (!map[cat]) map[cat] = []
+    map[cat].push(t)
+  }
+  return order
+    .filter((cat) => map[cat]?.length)
+    .map((cat) => ({ category: cat, label: CATEGORY_LABELS[cat] || cat, items: map[cat] }))
 })
 
 function categoryOfJobType(jobType) {
@@ -121,6 +192,7 @@ async function refresh() {
       selectedJobId.value = jobs.value[0].id
     }
     if (selectedJobId.value) await loadRuns()
+    await loadListPoll()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '加载失败'
   } finally {
@@ -278,7 +350,7 @@ onMounted(refresh)
         <div>
           <div class="font-semibold">调度中心</div>
           <p class="text-xs text-slate-400 mt-0.5">
-            名称：采集固定「采集」；条件/投注为引擎分组名（下拉选择）。
+            支持三种引擎：采集 / 条件 / 投注。名称：采集固定「采集」；条件与投注选引擎分组名。
           </p>
         </div>
         <button
@@ -300,12 +372,60 @@ onMounted(refresh)
     </div>
 
     <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+      <div>
+        <div class="font-semibold text-sm">列表页轮询（投注引擎）</div>
+        <p class="text-xs text-slate-400 mt-0.5">盘前/盘中：页面刷新（0=关）/ 自动投注 / 止损（10–600 秒）</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+        <label class="block">
+          <div class="text-xs text-slate-400 mb-1">页面刷新(秒)</div>
+          <input
+            v-model.number="listPoll.listPageRefreshIntervalSec"
+            type="number"
+            min="0"
+            max="600"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
+            title="0=关闭"
+          >
+        </label>
+        <label class="block">
+          <div class="text-xs text-slate-400 mb-1">自动投注刷新(秒)</div>
+          <input
+            v-model.number="listPoll.listAutoBetIntervalSec"
+            type="number"
+            min="10"
+            max="600"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
+          >
+        </label>
+        <label class="block">
+          <div class="text-xs text-slate-400 mb-1">止损刷新(秒)</div>
+          <input
+            v-model.number="listPoll.listStopLossIntervalSec"
+            type="number"
+            min="10"
+            max="600"
+            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
+          >
+        </label>
+        <button
+          type="button"
+          class="text-sm px-3 py-2 rounded-xl bg-slate-800 text-white disabled:opacity-50"
+          :disabled="listPoll.saving"
+          @click="saveListPoll"
+        >{{ listPoll.saving ? '保存中…' : '保存间隔' }}</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
       <div class="font-semibold text-sm">新增任务</div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <div class="text-xs text-slate-400 mb-1">目标类型</div>
           <select v-model="form.jobType" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-            <option v-for="t in jobTypeOptions" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
+            <optgroup v-for="g in jobTypeGroups" :key="g.category" :label="g.label">
+              <option v-for="t in g.items" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
+            </optgroup>
           </select>
         </div>
         <div>

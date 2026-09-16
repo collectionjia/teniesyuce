@@ -105,19 +105,19 @@ async function save() {
       proxyAddress: data.proxyAddress || '',
       signatureType: Number(data.signatureType || 1),
       maskedKey: data.maskedKey || '',
-      usdcBalance: status.usdcBalance,
+      // 换钱包后先清空，避免顶栏继续显示上一钱包余额
+      usdcBalance: null,
     })
     draft.privateKey = ''
     notice.value = data.message || '账户已加密保存'
     emit('updated', { ...status })
     if (status.configured) {
       try {
-        const test = await api.testBtcWallet({})
-        if (test?.ok) {
-          status.usdcBalance = test.usdcBalance ?? null
-          emit('updated', { ...status })
-        }
-      } catch { /* ignore */ }
+        const fresh = await api.fetchBtcWallet()
+        status.usdcBalance = fresh?.usdcBalance ?? null
+        if (fresh?.signatureType != null) status.signatureType = Number(fresh.signatureType)
+        emit('updated', { ...status })
+      } catch { /* 余额拉取失败时顶栏显示 —，可稍后重试 */ }
     }
   } catch (e) {
     error.value = e.response?.data?.error || e.message || '保存失败'

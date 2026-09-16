@@ -1,19 +1,31 @@
 /**
  * 网球三引擎配置（管理员）：采集 / 条件 / 投注
- * 存 Redis tennis:engines:config
+ * 主存 MySQL `tennis_engines_config`；保存时镜像 Redis：
+ *   - `tennis:engines:config` 全量
+ *   - `tennis:engines:config:condition` 条件块
+ * 列表过滤：getConfigPreferRedis 先读 Redis 条件，再对 Redis 赛程包内存筛选。
  *
  * 条件引擎 buckets：
  *   prematch|inplay|settled: { enabled, groups[] }
- *   groups = 条件组库（组间 AND/OR 在产品管理配置）；组内字段 AND
- *   组字段：id / name / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankMax / strongRankGt / strongRankLt / gapMode
+ *   groups = 条件组库（组间 AND/OR）；组内字段 AND
+ *   组字段：id / name / joinPrev / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankGt / strongRankLt / gapMode
+ *
+ * 投注引擎 buckets：
+ *   prematch|inplay: { enabled, groups[] }（买入 + 盘中止损规则）
+ *
+ * 调度引擎任务与「条件」参数（bucket/groupIndex）见 scheduler_jobs.params_json（已 MySQL）。
  */
 const crypto = require('crypto');
 const redis = require('./redis');
+const pool = require('../db');
 
 const CONFIG_KEY = 'tennis:engines:config';
+const MYSQL_CONFIG_ID = 'default';
 const ALLOWED_TICK_SEC = [1, 2, 5, 10];
 const BUCKET_KEYS = ['prematch', 'inplay', 'settled'];
 const BETTING_BUCKET_KEYS = ['prematch', 'inplay'];
+
+let tableReady = false;
 
 function newGroupId() {
   return crypto.randomBytes(8).toString('hex');
@@ -23,6 +35,8 @@ function emptyGroup() {
   return {
     id: newGroupId(),
     name: '',
+    /** 与上一组连接：or | and（首组忽略） */
+    joinPrev: 'or',
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
@@ -46,12 +60,54 @@ function emptyStopRule() {
   return {
     name: '',
     joinPrev: 'or',
-    stopFormat: 'bo3',
-    stopSetIndex: 3,
+    stopFormat: 'any',
+    stopSetIndex: 'all',
     stopStrongSets: 'all',
     stopWeakSets: 'all',
-    stopGameLead: 2,
+    stopGameLead: 'all',
     stopWeakGamesMin: 'all',
+    stopPmCentsMax: 'all',
+  };
+}
+
+/** 盘中列表/自动投注买入条件（原写死规则，现可在投注引擎配置） */
+function defaultInplayBettingEntry() {
+  return {
+    requireWonFirstSet: true,
+    firstSetExcludeEnabled: true,
+    firstSetExcludeScore: '7:5',
+    pmCentsMax: 91,
+    rankGapRules: [],
+  };
+}
+
+function normalizeInplayBettingEntry(raw) {
+  const d = defaultInplayBettingEntry();
+  if (!raw || typeof raw !== 'object') {
+    return {
+      requireWonFirstSet: d.requireWonFirstSet,
+      firstSetExcludeEnabled: d.firstSetExcludeEnabled,
+      firstSetExcludeScore: d.firstSetExcludeScore,
+      pmCentsMax: d.pmCentsMax,
+      rankGapRules: [],
+    };
+  }
+  let pmCentsMax = d.pmCentsMax;
+  if (raw.pmCentsMax === '' || raw.pmCentsMax === 'all' || raw.pmCentsMax == null) {
+    pmCentsMax = 'all';
+  } else if (Number.isFinite(Number(raw.pmCentsMax))) {
+    pmCentsMax = Number(raw.pmCentsMax);
+  }
+  const excludeScore = raw.firstSetExcludeScore != null && String(raw.firstSetExcludeScore).trim()
+    ? String(raw.firstSetExcludeScore).trim().slice(0, 12)
+    : d.firstSetExcludeScore;
+  return {
+    requireWonFirstSet: raw.requireWonFirstSet !== false,
+    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true
+      || (raw.firstSetExcludeEnabled == null && raw.requireWonFirstSet !== false && d.firstSetExcludeEnabled),
+    firstSetExcludeScore: excludeScore || '7:5',
+    pmCentsMax,
+    rankGapRules: [],
   };
 }
 
@@ -61,9 +117,16 @@ function emptyBettingGroup(kind = 'inplay') {
     id: newGroupId(),
     name: '',
     joinPrev: 'or',
+    amountUsd: 1,
     stopEnabled: isInplay,
     stopRules: isInplay ? [emptyStopRule()] : [],
   };
+}
+
+function clampPollSec(raw, fallback = 60) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(600, Math.max(10, Math.round(n)));
 }
 
 function normalizeGroup(g) {
@@ -75,7 +138,9 @@ function normalizeGroup(g) {
     : base.firstSetExcludeScore;
   return {
     id,
+    strategyKey: g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '',
     name: g.name != null ? String(g.name).slice(0, 40) : '',
+    joinPrev: String(g.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or',
     tour: g.tour != null ? g.tour : base.tour,
     pm: g.pm != null ? g.pm : base.pm,
     gapMin: g.gapMin != null ? g.gapMin : base.gapMin,
@@ -88,6 +153,8 @@ function normalizeGroup(g) {
     requireWonFirstSet: g.requireWonFirstSet === true,
     firstSetExcludeEnabled: g.firstSetExcludeEnabled === true,
     firstSetExcludeScore: excludeScore || '7:5',
+    /** 条件检查调度间隔（秒）：时间到了检查，满足则买入 */
+    checkIntervalSec: clampPollSec(g.checkIntervalSec, 60),
   };
 }
 
@@ -95,17 +162,43 @@ function normalizeStopRule(r) {
   const base = emptyStopRule();
   if (!r || typeof r !== 'object') return base;
   const join = String(r.joinPrev || 'or').toLowerCase();
-  const fmt = String(r.stopFormat || base.stopFormat).toLowerCase();
-  const setIndex = Number(r.stopSetIndex);
+  let fmt = String(r.stopFormat || base.stopFormat).toLowerCase();
+  const setRaw = r.stopSetIndex;
+  let stopSetIndex = 'all';
+  if (setRaw != null && setRaw !== '' && setRaw !== 'all') {
+    const setIndex = Number(setRaw);
+    if (Number.isFinite(setIndex) && setIndex > 0) stopSetIndex = Math.max(1, Math.min(5, setIndex));
+  }
+  const leadRaw = r.stopGameLead;
+  let stopGameLead = 'all';
+  if (leadRaw != null && leadRaw !== '' && leadRaw !== 'all') {
+    const lead = Number(leadRaw);
+    if (Number.isFinite(lead)) stopGameLead = lead;
+  }
+  // 旧默认占位 BO3+第3盘+局差2 → 视为未限制
+  if (fmt === 'bo3' && stopSetIndex === 3 && stopGameLead === 2) {
+    fmt = 'any';
+    stopSetIndex = 'all';
+    stopGameLead = 'all';
+  }
+  const pmRaw = r.stopPmCentsMax;
+  let stopPmCentsMax = base.stopPmCentsMax;
+  if (pmRaw != null && pmRaw !== '' && pmRaw !== 'all') {
+    const pm = Number(pmRaw);
+    stopPmCentsMax = Number.isFinite(pm) && pm > 0 ? pm : 'all';
+  } else if (pmRaw === '' || pmRaw === 'all') {
+    stopPmCentsMax = 'all';
+  }
   return {
     name: r.name != null ? String(r.name).slice(0, 40) : '',
     joinPrev: join === 'and' ? 'and' : 'or',
     stopFormat: ['bo3', 'bo5', 'any'].includes(fmt) ? fmt : 'any',
-    stopSetIndex: Number.isFinite(setIndex) ? Math.max(1, Math.min(5, setIndex)) : base.stopSetIndex,
+    stopSetIndex,
     stopStrongSets: r.stopStrongSets != null ? r.stopStrongSets : base.stopStrongSets,
     stopWeakSets: r.stopWeakSets != null ? r.stopWeakSets : base.stopWeakSets,
-    stopGameLead: r.stopGameLead != null ? Number(r.stopGameLead) : base.stopGameLead,
+    stopGameLead,
     stopWeakGamesMin: r.stopWeakGamesMin != null ? r.stopWeakGamesMin : base.stopWeakGamesMin,
+    stopPmCentsMax,
   };
 }
 
@@ -147,12 +240,20 @@ function normalizeBettingGroup(g, kind = 'inplay') {
   if (!g || typeof g !== 'object' || Array.isArray(g)) return base;
   const join = String(g.joinPrev || 'or').toLowerCase();
   const id = g.id != null && String(g.id).trim() ? String(g.id).trim().slice(0, 40) : newGroupId();
+  const amountRaw = Number(g.amountUsd);
+  const amountUsd = Number.isFinite(amountRaw) && amountRaw >= 1
+    ? Math.round(amountRaw * 100) / 100
+    : base.amountUsd;
   return {
     id,
+    strategyKey: g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '',
     name: g.name != null ? String(g.name).slice(0, 40) : '',
     joinPrev: join === 'and' ? 'and' : 'or',
+    amountUsd,
     stopEnabled: g.stopEnabled != null ? !!g.stopEnabled : base.stopEnabled,
     stopRules: resolveStopRules(g, kind),
+    /** 止损检查调度间隔（秒）：时间到了检查，满足则卖出 */
+    stopIntervalSec: clampPollSec(g.stopIntervalSec, 60),
   };
 }
 
@@ -234,6 +335,10 @@ const DEFAULT_CONFIG = {
     enabled: true,
     inplay_tick_enabled: true,
     inplay_tick_interval_sec: 5,
+    inplay_tick_fields: {
+      score: true,
+      odds: true,
+    },
   },
   condition: {
     enabled: false,
@@ -257,12 +362,23 @@ const DEFAULT_CONFIG = {
     userId: null,
     userAccount: null,
     amountUsd: 1,
+    /** 列表页「自动投注」刷新间隔（秒） */
+    listAutoBetIntervalSec: 60,
+    /** 列表页止损检查间隔（秒） */
+    listStopLossIntervalSec: 60,
+    /** 列表页整页数据刷新间隔（秒）；0=关闭 */
+    listPageRefreshIntervalSec: 0,
     buckets: {
-      prematch: { enabled: false, groups: defaultPrematchBettingGroups() },
-      inplay: { enabled: false, groups: defaultInplayBettingGroups() },
+      prematch: { enabled: false, simulate: false, groups: defaultPrematchBettingGroups() },
+      inplay: {
+        enabled: false,
+        simulate: false,
+        groups: defaultInplayBettingGroups(),
+        entry: defaultInplayBettingEntry(),
+      },
     },
     rules: {
-      note: '盘前/盘中分桶；买入条件在产品管理选择；此处仅配止损',
+      note: '盘前/盘中分桶；盘中买入条件见 inplay.entry；止损见各组 stopRules',
     },
   },
 };
@@ -310,6 +426,19 @@ function normalizeCondition(condition) {
   return c;
 }
 
+function clampListPollSec(raw, fallback = 60) {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(10, Math.min(600, Math.round(n)));
+}
+
+/** 页面刷新：0=关闭，其余 10–600 秒 */
+function clampPageRefreshSec(raw) {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.max(10, Math.min(600, Math.round(n)));
+}
+
 function normalizeBetting(betting) {
   const b = betting && typeof betting === 'object' ? { ...betting } : {};
   const legacyPm = Number(b.rules?.pmMaxCents);
@@ -320,17 +449,26 @@ function normalizeBetting(betting) {
     if (raw && Array.isArray(raw.groups)) {
       buckets[key] = {
         enabled: !!raw.enabled,
+        simulate: !!raw.simulate,
         groups: raw.groups.map((g) => normalizeBettingGroup(g, key)),
       };
+      if (key === 'inplay') {
+        buckets[key].entry = normalizeInplayBettingEntry(raw.entry);
+      }
     } else {
       buckets[key] = {
         enabled: false,
+        simulate: false,
         groups: key === 'inplay' ? defaultInplayBettingGroups() : defaultPrematchBettingGroups(),
       };
+      if (key === 'inplay') {
+        buckets[key].entry = normalizeInplayBettingEntry(raw?.entry);
+      }
       if (Number.isFinite(legacyPm) && key === 'inplay') {
         buckets[key].groups = buckets[key].groups.map((g) => ({ ...g, pmMaxCents: legacyPm }));
       }
       if (raw?.enabled != null) buckets[key].enabled = !!raw.enabled;
+      if (raw?.simulate != null) buckets[key].simulate = !!raw.simulate;
     }
   }
   // 旧版仅全局 enabled + rules：视为盘中桶
@@ -344,25 +482,127 @@ function normalizeBetting(betting) {
     ? String(b.userAccount).trim()
     : null;
   b.amountUsd = b.amountUsd != null ? Number(b.amountUsd) || 1 : 1;
+  b.listAutoBetIntervalSec = clampListPollSec(b.listAutoBetIntervalSec, 60);
+  b.listStopLossIntervalSec = clampListPollSec(b.listStopLossIntervalSec, 60);
+  b.listPageRefreshIntervalSec = clampPageRefreshSec(b.listPageRefreshIntervalSec);
   b.rules = {
     note: b.rules?.note || '盘前/盘中分桶；多组 OR；组内买入且止损可配',
   };
   return b;
 }
 
+function normalizeCollect(c = {}) {
+  const base = DEFAULT_CONFIG.collect;
+  const fields = {
+    ...base.inplay_tick_fields,
+    ...(c.inplay_tick_fields && typeof c.inplay_tick_fields === 'object' ? c.inplay_tick_fields : {}),
+  };
+  return {
+    enabled: c.enabled !== false,
+    inplay_tick_enabled: c.inplay_tick_enabled !== false,
+    inplay_tick_interval_sec: Number(c.inplay_tick_interval_sec) > 0
+      ? Number(c.inplay_tick_interval_sec)
+      : base.inplay_tick_interval_sec,
+    inplay_tick_fields: {
+      score: fields.score !== false,
+      odds: fields.odds !== false,
+    },
+  };
+}
+
 function normalizeConfig(cfg) {
   const next = cfg && typeof cfg === 'object' ? { ...cfg } : JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  next.collect = normalizeCollect(next.collect || {});
   next.condition = normalizeCondition(next.condition || {});
   next.betting = normalizeBetting(next.betting || {});
   return next;
 }
 
-async function getConfig() {
+async function ensureTable() {
+  if (tableReady) return;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS tennis_engines_config (
+      id VARCHAR(32) NOT NULL PRIMARY KEY,
+      config_json JSON NOT NULL,
+      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  tableReady = true;
+}
+
+async function readRedisRaw() {
   const client = await redis.getClient();
-  if (!client) return normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+  if (!client) return null;
   try {
     const raw = await client.get(CONFIG_KEY);
-    const cfg = normalizeConfig(raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+    return raw || null;
+  } catch (e) {
+    console.warn('[tennis/engines] redis read', e.message);
+    return null;
+  }
+}
+
+async function mirrorRedis(cfg) {
+  try {
+    const client = await redis.getClient();
+    if (!client) return;
+    const payload = JSON.stringify(cfg);
+    await client
+      .multi()
+      .set(CONFIG_KEY, payload)
+      .set(`${CONFIG_KEY}:condition`, JSON.stringify(cfg.condition || {}))
+      .exec();
+  } catch (e) {
+    console.warn('[tennis/engines] redis mirror', e.message);
+  }
+}
+
+async function loadConfigFromMysql() {
+  await ensureTable();
+  const [[row]] = await pool.query(
+    'SELECT config_json FROM tennis_engines_config WHERE id=? LIMIT 1',
+    [MYSQL_CONFIG_ID]
+  );
+  if (!row?.config_json) return null;
+  try {
+    const raw = row.config_json;
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch (e) {
+    console.error('[tennis/engines] mysql parse', e.message);
+    return null;
+  }
+}
+
+async function saveConfigToMysql(cfg) {
+  await ensureTable();
+  const json = JSON.stringify(cfg);
+  await pool.query(
+    `INSERT INTO tennis_engines_config (id, config_json)
+     VALUES (?, CAST(? AS JSON))
+     ON DUPLICATE KEY UPDATE config_json=VALUES(config_json), updated_at=NOW()`,
+    [MYSQL_CONFIG_ID, json]
+  );
+}
+
+async function getConfig() {
+  try {
+    let parsed = await loadConfigFromMysql();
+    if (!parsed) {
+      const redisRaw = await readRedisRaw();
+      if (redisRaw) {
+        try {
+          parsed = JSON.parse(redisRaw);
+          const normalized = normalizeConfig(parsed);
+          await saveConfigToMysql(normalized);
+          console.log('[tennis/engines] migrated config Redis → MySQL');
+          parsed = normalized;
+        } catch (e) {
+          console.warn('[tennis/engines] redis migrate parse', e.message);
+          parsed = null;
+        }
+      }
+    }
+    const cfg = normalizeConfig(parsed || JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
     await enrichBettingAccount(cfg);
     return cfg;
   } catch (e) {
@@ -371,9 +611,41 @@ async function getConfig() {
   }
 }
 
+/**
+ * 列表过滤专用：优先读 Redis 条件，再筛 Redis 赛程包；空则回退 MySQL 并回写 Redis。
+ */
+async function getConfigPreferRedis() {
+  try {
+    const client = await redis.getClient();
+    if (client) {
+      try {
+        const condRaw = await client.get(`${CONFIG_KEY}:condition`);
+        if (condRaw) {
+          return normalizeConfig({ condition: JSON.parse(condRaw) });
+        }
+        const fullRaw = await client.get(CONFIG_KEY);
+        if (fullRaw) {
+          return normalizeConfig(JSON.parse(fullRaw));
+        }
+      } catch (e) {
+        console.warn('[tennis/engines] getConfigPreferRedis redis', e.message);
+      }
+    }
+    const fromMysql = await loadConfigFromMysql();
+    if (fromMysql) {
+      const cfg = normalizeConfig(fromMysql);
+      await mirrorRedis(cfg);
+      return cfg;
+    }
+    return normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+  } catch (e) {
+    console.error('[tennis/engines] getConfigPreferRedis', e.message);
+    return getConfig();
+  }
+}
+
 async function enrichBettingAccount(cfg) {
   try {
-    const pool = require('../db');
     const bet = cfg?.betting;
     if (!bet) return;
     if (bet.userAccount && !bet.userId) {
@@ -398,7 +670,6 @@ async function enrichBettingAccount(cfg) {
 }
 
 async function resolveBettingUser(patchBetting, nextBetting) {
-  const pool = require('../db');
   const accountRaw = patchBetting?.userAccount;
   if (accountRaw !== undefined) {
     const account = accountRaw != null ? String(accountRaw).trim() : '';
@@ -468,14 +739,21 @@ async function setConfig(patch) {
       const p = patchBetBuckets[key];
       const base = next.betting.buckets[key] || {
         enabled: false,
+        simulate: false,
         groups: key === 'inplay' ? defaultInplayBettingGroups() : defaultPrematchBettingGroups(),
       };
       next.betting.buckets[key] = {
         enabled: p.enabled != null ? !!p.enabled : !!base.enabled,
+        simulate: p.simulate != null ? !!p.simulate : !!base.simulate,
         groups: Array.isArray(p.groups)
           ? p.groups.map((g) => normalizeBettingGroup(g, key))
           : (base.groups || [emptyBettingGroup(key)]),
       };
+      if (key === 'inplay') {
+        next.betting.buckets[key].entry = normalizeInplayBettingEntry(
+          p.entry != null ? p.entry : base.entry,
+        );
+      }
     }
   }
   next = normalizeConfig(next);
@@ -491,13 +769,15 @@ async function setConfig(patch) {
     }
     next.collect.inplay_tick_interval_sec = n;
   }
-  const client = await redis.getClient();
-  if (!client) {
-    const err = new Error('Redis unavailable; engine config not persisted');
+  try {
+    await saveConfigToMysql(next);
+  } catch (e) {
+    console.error('[tennis/engines] setConfig mysql', e.message);
+    const err = new Error('MySQL unavailable; engine config not persisted');
     err.status = 503;
     throw err;
   }
-  await client.set(CONFIG_KEY, JSON.stringify(next));
+  await mirrorRedis(next);
   return next;
 }
 
@@ -512,13 +792,15 @@ async function writeConfig(cfg) {
     }
     next.collect.inplay_tick_interval_sec = n;
   }
-  const client = await redis.getClient();
-  if (!client) {
-    const err = new Error('Redis unavailable; engine config not persisted');
+  try {
+    await saveConfigToMysql(next);
+  } catch (e) {
+    console.error('[tennis/engines] writeConfig mysql', e.message);
+    const err = new Error('MySQL unavailable; engine config not persisted');
     err.status = 503;
     throw err;
   }
-  await client.set(CONFIG_KEY, JSON.stringify(next));
+  await mirrorRedis(next);
   return next;
 }
 
@@ -532,9 +814,11 @@ function assertConditionBucket(bucket) {
 
 async function getCondition() {
   const cfg = await getConfig();
+  const buckets = cfg.condition?.buckets || {};
+  const anyOn = ['prematch', 'inplay', 'settled'].some((k) => buckets[k]?.enabled);
   return {
-    open: !!cfg.condition?.enabled,
-    buckets: cfg.condition?.buckets || {},
+    open: anyOn,
+    buckets,
   };
 }
 
@@ -675,6 +959,7 @@ async function deleteConditionGroup(bucket, index) {
 
 module.exports = {
   getConfig,
+  getConfigPreferRedis,
   setConfig,
   writeConfig,
   DEFAULT_CONFIG,
@@ -685,14 +970,14 @@ module.exports = {
   emptyGroup,
   emptyBettingGroup,
   emptyStopRule,
+  defaultInplayBettingEntry,
+  normalizeInplayBettingEntry,
   normalizeGroup,
   normalizeBettingGroup,
   normalizeStopRule,
   normalizeCondition,
   normalizeBetting,
   newGroupId,
-  emptyGroup,
-  emptyBettingGroup,
   getCondition,
   getBetting,
   setBettingAmountUsd,

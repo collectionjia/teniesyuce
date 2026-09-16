@@ -49,6 +49,23 @@ def build_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
     fetched_at = datetime.now(timezone.utc).isoformat()
     data_filter = "top100" if collect.get("top100") else "tier"
     event_count = len(events)
+    rankings_board = collect.get("rankingsBoard") or collect.get("top100Board")
+    # collect 里 top100 可能是 bool；榜单对象在 rankingsBoard
+    top100_board = None
+    if isinstance(rankings_board, dict) and (rankings_board.get("atp") or rankings_board.get("wta")):
+        top100_board = {
+            "atp": rankings_board.get("atp") or [],
+            "wta": rankings_board.get("wta") or [],
+            "summary": rankings_board.get("summary") or {
+                "total_matches": event_count,
+                "atp_players": len(rankings_board.get("atp") or []),
+                "wta_players": len(rankings_board.get("wta") or []),
+            },
+        }
+    elif isinstance(collect.get("top100"), dict) and (
+        collect["top100"].get("atp") or collect["top100"].get("wta")
+    ):
+        top100_board = collect["top100"]
     return {
         "ok": True,
         "sport": "tennis",
@@ -75,6 +92,8 @@ def build_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
         "polymarketByEvent": collect.get("polymarketByEvent") or {},
         "theOddsApiByEvent": collect.get("theOddsApiByEvent") or {},
         "birthYearByPlayer": collect.get("birthYearByPlayer") or {},
+        "top100": top100_board,
+        "rankingsBoard": top100_board,
         "requests": collect.get("requests"),
         "timing": collect.get("timing"),
         "events": event_count,
