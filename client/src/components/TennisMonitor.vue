@@ -2221,7 +2221,7 @@ onUnmounted(() => {
             :key="'bet-' + (g.id || bettingTab) + '-' + gi"
             class="condition-group-wrap"
           >
-            <div v-if="gi > 0" class="condition-join">
+            <div v-if="gi > 0 && !isStopPage" class="condition-join">
               <select
                 :value="g.joinPrev || 'or'"
                 @change="setBettingGroupField(gi, 'joinPrev', $event.target.value)"
@@ -2401,7 +2401,9 @@ onUnmounted(() => {
               </div>
             </div>
             <p class="condition-group-hint">
-              组内可加多条条件，条间选且/或；未填字段表示不限制。局差与 PM 满足其一即可。调度请用「止损引擎 · 持仓止损扫描」。
+              {{ isStopPage
+                ? '各止损组相互隔离，仅对本组挂接的订单生效；组内可加多条止损条件，条间选且/或。调度请用「止损引擎 · 持仓止损扫描」。'
+                : '组内可加多条条件，条间选且/或；未填字段表示不限制。局差与 PM 满足其一即可。调度请用「止损引擎 · 持仓止损扫描」。' }}
             </p>
             </div>
             </div>

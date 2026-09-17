@@ -1,5 +1,5 @@
 /**
- * 投注引擎：盘前 / 盘中分桶；多组 OR；组内买入条件 AND；止损按组配置
+ * 投注引擎：盘前 / 盘中分桶；买入条件组可 OR/AND；止损组相互隔离、组内止损条可 OR/AND
  * tick 后先止损再买入。
  */
 const redis = require('./redis');
@@ -473,14 +473,20 @@ function matchStopGroup(m, side, group, bundle) {
   return tennisConditionApply.evalGroupsChain(rules, (r) => matchStopRule(m, side, r, bundle));
 }
 
-/** 启用止损的组按 joinPrev 链求值；组内多条止损同样按 joinPrev */
-function shouldStopLoss(m, rankings, groups, bundle) {
+/** 各止损组相互隔离：逐组独立评估，命中即触发（组间不用 joinPrev）；组内多条止损仍按 joinPrev */
+function findStopTrigger(m, rankings, groups, bundle) {
   const side = pickStrongSide(m, rankings);
   if (!side) return null;
   const list = (Array.isArray(groups) ? groups : []).filter((g) => g.stopEnabled !== false);
-  if (!list.length) return null;
-  const hit = tennisConditionApply.evalGroupsChain(list, (g) => matchStopGroup(m, side, g, bundle));
-  return hit ? side : null;
+  for (const g of list) {
+    if (matchStopGroup(m, side, g, bundle)) return { side, group: g };
+  }
+  return null;
+}
+
+function shouldStopLoss(m, rankings, groups, bundle) {
+  const t = findStopTrigger(m, rankings, groups, bundle);
+  return t ? t.side : null;
 }
 
 function flattenPrematchMatches(bundle) {
@@ -591,17 +597,22 @@ async function runBucketPass({
           : (posSk === '_' ? stopGroups.filter((g) => g.stopEnabled !== false) : []);
         if (!activeStopGroups.length) continue;
         stopChecked += 1;
-        const side = shouldStopLoss(m, rankings, activeStopGroups, bundle);
-        const sk = posSk === '_' ? (groupStrategyKey(stopGroup) || primarySk) : posSk;
-        if (side) {
+        const logSk = posSk === '_'
+          ? (groupStrategyKey(stopGroup) || groupStrategyKey(activeStopGroups[0]) || primarySk)
+          : posSk;
+        const trigger = findStopTrigger(m, rankings, activeStopGroups, bundle);
+        if (trigger) {
+          const sk = posSk === '_'
+            ? (groupStrategyKey(trigger.group) || primarySk)
+            : posSk;
           stopMet += 1;
-          sellOrders.push({ eventId: m.id, side, match: m, strategyKey: sk });
+          sellOrders.push({ eventId: m.id, side: trigger.side, match: m, strategyKey: sk });
         } else {
           logItems.push({
             at,
             type: 'stop',
             bucket: bucketKey,
-            strategyKey: sk,
+            strategyKey: logSk,
             strategyKeys,
             eventId: id,
             match: matchLabel(m),
