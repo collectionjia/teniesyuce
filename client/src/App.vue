@@ -781,7 +781,7 @@ const adminManageSections = [
     title: '引擎类',
     desc: '网球采集 / 条件 / 投注 / 止损 配置',
     items: [
-      { view: 'tennis-collect', label: '采集引擎', desc: '全量拆三桶 · Top100 · tick 刷 Polymarket', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-collect', label: '采集引擎', desc: 'Top100 采集 · 虚拟/真实源 · 采集范围', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 多组强制筛', icon: 'list', color: 'from-amber-500 to-yellow-500' },
       { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
       { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },

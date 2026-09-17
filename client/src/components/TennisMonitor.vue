@@ -265,9 +265,9 @@ const enginesSaving = ref(false)
 const playerPage = ref(1)
 const livePage = ref(1)
 const logPage = ref(1)
-const cronOpen = ref(false)
 const statsOpen = ref(false)
 const metricsOpen = ref(false)
+const poolFilterOpen = ref(false)
 
 const PLAYER_PAGE_SIZE = 15
 const LIVE_PAGE_SIZE = 12
@@ -309,7 +309,6 @@ const liveMatches = computed(() => {
   return Array.isArray(list) ? list : []
 })
 const bundle = computed(() => status.value?.latest_bundle || {})
-const cronLines = computed(() => (status.value?.cron || []).filter((l) => l && !String(l).startsWith('#')))
 const collectHorizonDays = computed(() => {
   const days = Number(schedule.value?.collect_horizon_days ?? status.value?.schedule?.collect_horizon_days)
   return HORIZON_OPTIONS.some((o) => o.days === days) ? days : 1
@@ -373,7 +372,7 @@ const pageSub = computed(() => {
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
       : `${master} · 各桶均未打开 · 账号 ${account || '未设'}`
   }
-  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · 范围 ${collectHorizonLabel.value} · Redis ${tennisDataSourceLabel.value}`
+  return `范围 ${collectHorizonLabel.value} · Redis ${tennisDataSourceLabel.value}`
 })
 
 watch(
@@ -889,25 +888,6 @@ async function onLivePollIntervalChange(event) {
   }
 }
 
-async function onCollectEnabledChange(event) {
-  const want = !!event.target.checked
-  if (want === collectEnabled.value || scheduleSaving.value) return
-  scheduleSaving.value = true
-  error.value = ''
-  notice.value = ''
-  try {
-    const data = await api.updateTennisMonitorSchedule({ collect_enabled: want })
-    schedule.value = data
-    await loadStatus()
-    showNotice(want ? '已开启采集（定时 / 手动 / 进行中拉取）' : '已关闭采集')
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新采集开关失败')
-    event.target.checked = collectEnabled.value
-  } finally {
-    scheduleSaving.value = false
-  }
-}
-
 async function patchEngines(patch) {
   enginesSaving.value = true
   error.value = ''
@@ -922,9 +902,6 @@ async function patchEngines(patch) {
   }
 }
 
-function onTickEnabledChange(ev) {
-  patchEngines({ collect: { inplay_tick_enabled: !!ev?.target?.checked } })
-}
 function onBettingUserAccountChange(ev) {
   const account = String(ev?.target?.value || '').trim()
   patchEngines({ betting: { userAccount: account || null } })
@@ -1221,18 +1198,6 @@ async function saveBettingBucketAndEnable() {
   })
 }
 
-async function onSplitBuckets() {
-  enginesSaving.value = true
-  try {
-    const r = await api.splitTennisThreeBuckets()
-    showNotice(`三桶：盘前 ${r.prematch ?? 0} · 盘中 ${r.inplay ?? 0} · 盘后 ${r.settled ?? 0}`)
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '拆桶失败')
-  } finally {
-    enginesSaving.value = false
-  }
-}
-
 async function onSeedVirtualBuckets() {
   enginesSaving.value = true
   try {
@@ -1256,23 +1221,6 @@ async function onSeedVirtualBuckets() {
     enginesSaving.value = false
   }
 }
-async function onRunTick() {
-  enginesSaving.value = true
-  try {
-    const r = await api.runTennisInplayTick()
-    showNotice(
-      `tick · PM ${r.prices?.updated ?? 0}`
-      + ` · 迁盘中 ${r.migrated_prematch_to_inplay ?? 0}`
-      + ` · 新纳 ${r.admitted_live_from_full ?? 0}`
-      + ` · 迁盘后 ${r.migrated_inplay_to_settled ?? 0}`,
-    )
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || 'tick 失败')
-  } finally {
-    enginesSaving.value = false
-  }
-}
-
 async function onDataSourceChange(next, date) {
   if (dataSourceSaving.value) return
   if (next === tennisDataSource.value && !date) return
@@ -1361,6 +1309,13 @@ function tierFilterSummary() {
   const on = TIER_OPTIONS.filter((o) => tierFilter.value[o.key]).map((o) => o.label)
   return on.length ? on.join(' · ') : '未选'
 }
+
+const poolFilterSummary = computed(() => {
+  const parts = [`Top${topPoolMax.value}`]
+  if (tierFilterActive()) parts.push(tierFilterSummary())
+  if (onlyWithMatches.value) parts.push('仅有赛事')
+  return parts.join(' · ')
+})
 
 function playerPageLabel() {
   if (!players.value.length) return '0 条'
@@ -1470,29 +1425,9 @@ onUnmounted(() => {
       <section v-if="isCollectPage" class="engine-panel" id="engine-collect">
         <div class="engine-panel-head">
           <h3>采集引擎</h3>
-          <span class="engine-panel-tag">全量 · 迁桶 · tick</span>
+          <span class="engine-panel-tag">全量采集</span>
         </div>
         <div class="settings-row engines-row">
-          <label class="collect-toggle">
-            <span>采集打开</span>
-            <input
-              type="checkbox"
-              :checked="collectEnabled"
-              :disabled="scheduleSaving || loading"
-              @change="onCollectEnabledChange"
-            >
-            <span class="toggle-state" :class="{ off: !collectEnabled }">{{ collectEnabled ? '已开启' : '已关闭' }}</span>
-          </label>
-          <label class="collect-toggle">
-            <span>盘中 tick</span>
-            <input
-              type="checkbox"
-              :checked="engines ? engines.collect?.inplay_tick_enabled !== false : true"
-              :disabled="enginesSaving || !engines"
-              @change="onTickEnabledChange"
-            >
-            <span class="toggle-state" :class="{ off: engines && engines.collect?.inplay_tick_enabled === false }">{{ engines && engines.collect?.inplay_tick_enabled === false ? '已关闭' : '已开启' }}</span>
-          </label>
           <label class="collect-toggle">
             <span>虚拟</span>
             <input
@@ -1578,9 +1513,7 @@ onUnmounted(() => {
               </option>
             </select>
           </label>
-          <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onSplitBuckets">拆三桶</button>
           <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onSeedVirtualBuckets" title="用 docks 已下载的 txt 比赛数据模拟盘前/盘中并写入 Redis">虚拟·txt造数</button>
-          <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onRunTick">跑一轮 tick</button>
         </div>
       </section>
 
@@ -2241,17 +2174,6 @@ onUnmounted(() => {
         </div>
       </details>
 
-      <details v-if="cronLines.length || schedule" class="panel panel-fold" :open="cronOpen" @toggle="cronOpen = $event.target.open">
-        <summary class="panel-h row fold-summary">
-          <span>定时任务</span>
-          <span class="muted panel-meta">{{ cronOpen ? '收起' : '展开' }}</span>
-        </summary>
-        <div class="cron-list">
-          <code v-for="(line, i) in cronLines" :key="i">{{ line }}</code>
-          <code v-if="!cronLines.length && schedule?.cron_line">{{ schedule.cron_line }}</code>
-        </div>
-      </details>
-
       <div class="tabs">
         <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
         <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
@@ -2260,36 +2182,14 @@ onUnmounted(() => {
         <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
       </div>
 
-      <div v-if="tab === 'atp' || tab === 'wta'" class="filter-bars">
-        <div class="pool-bar">
-          <span class="pool-label">排名池</span>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-          <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
-        </div>
-        <div class="pool-bar">
-          <span class="pool-label">赛事</span>
-          <button
-            v-for="opt in TIER_OPTIONS"
-            :key="opt.key"
-            type="button"
-            class="chip-btn"
-            :class="{ active: tierFilter[opt.key] }"
-            @click="toggleTier(opt.key)"
-          >
-            {{ opt.label }}
-          </button>
-        </div>
-        <div class="pool-bar pool-bar-tail">
-          <label class="match-only">
-            <input v-model="onlyWithMatches" type="checkbox">
-            <span>仅有赛事</span>
-          </label>
-          <span class="pool-meta">
-            {{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场
-            <template v-if="tierFilterActive()"> · {{ tierFilterSummary() }}</template>
-          </span>
-        </div>
+      <div v-if="tab === 'atp' || tab === 'wta'" class="filter-bar-compact">
+        <button type="button" class="btn ghost filter-open-btn" @click="poolFilterOpen = true">
+          筛选
+          <span class="filter-open-sub">{{ poolFilterSummary }}</span>
+        </button>
+        <span class="pool-meta">
+          {{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场
+        </span>
       </div>
 
       <div v-if="tab === 'live'" class="panel">
@@ -2442,6 +2342,43 @@ onUnmounted(() => {
         </div>
       </div>
     </template>
+
+    <div v-if="poolFilterOpen" class="pool-filter-mask" @click.self="poolFilterOpen = false">
+      <div class="pool-filter-panel" role="dialog" aria-modal="true" aria-label="球员筛选">
+        <header class="pool-filter-head">
+          <h4>筛选</h4>
+          <button type="button" class="btn ghost" @click="poolFilterOpen = false">关闭</button>
+        </header>
+        <div class="pool-filter-body">
+          <div class="pool-bar">
+            <span class="pool-label">排名池</span>
+            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+          </div>
+          <div class="pool-bar">
+            <span class="pool-label">赛事</span>
+            <button
+              v-for="opt in TIER_OPTIONS"
+              :key="opt.key"
+              type="button"
+              class="chip-btn"
+              :class="{ active: tierFilter[opt.key] }"
+              @click="toggleTier(opt.key)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <label class="match-only">
+            <input v-model="onlyWithMatches" type="checkbox">
+            <span>仅有赛事</span>
+          </label>
+        </div>
+        <footer class="pool-filter-foot">
+          <button type="button" class="btn primary" @click="poolFilterOpen = false">完成</button>
+        </footer>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -3023,8 +2960,31 @@ onUnmounted(() => {
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
   padding: 0 2px;
 }
-.filter-bars { display: flex; flex-direction: column; gap: 6px; }
-.pool-bar-tail { justify-content: space-between; }
+.filter-bar-compact {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  padding: 0 2px;
+}
+.filter-open-btn { display: inline-flex; align-items: center; gap: 6px; }
+.filter-open-sub { font-weight: 600; color: #64748b; }
+.pool-filter-mask {
+  position: fixed; inset: 0; z-index: 1200;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.pool-filter-panel {
+  width: min(420px, 100%); background: #fff; border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2); overflow: hidden;
+}
+.pool-filter-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px 14px; border-bottom: 1px solid #e2e8f0;
+}
+.pool-filter-head h4 { margin: 0; font-size: 0.95rem; color: #0f172a; }
+.pool-filter-body { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.pool-filter-foot {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 10px 14px 14px; border-top: 1px solid #e2e8f0;
+}
 .pool-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-right: 2px; white-space: nowrap; }
 .pool-meta { margin-left: auto; font-size: 0.72rem; color: #64748b; font-weight: 600; text-align: right; }
 .match-only {

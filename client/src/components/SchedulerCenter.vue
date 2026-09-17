@@ -24,16 +24,19 @@ const form = ref({
   enabled: true,
 })
 
+const HIDDEN_JOB_TYPES = new Set(['collect.inplay_tick'])
+
 const jobTypeOptions = computed(() => {
-  if (jobTypes.value.length) return jobTypes.value
-  return [
-    { jobType: 'collect.full', label: '采集引擎 · 全量拆三桶', category: 'collect' },
-    { jobType: 'collect.top100', label: '采集引擎 · Top100 collect.py', category: 'collect' },
-    { jobType: 'collect.inplay_tick', label: '采集引擎 · 盘中 tick', category: 'collect' },
-    { jobType: 'condition.query', label: '条件引擎 · 查询筛选', category: 'condition' },
-    { jobType: 'bet.scan', label: '投注引擎 · 扫描下单', category: 'betting' },
-    { jobType: 'bet.stop_loss', label: '止损引擎 · 持仓止损扫描', category: 'stop' },
-  ]
+  const list = jobTypes.value.length
+    ? jobTypes.value
+    : [
+      { jobType: 'collect.full', label: '采集引擎 · 全量', category: 'collect' },
+      { jobType: 'collect.top100', label: '采集引擎 · Top100 collect.py', category: 'collect' },
+      { jobType: 'condition.query', label: '条件引擎 · 查询筛选', category: 'condition' },
+      { jobType: 'bet.scan', label: '投注引擎 · 扫描下单', category: 'betting' },
+      { jobType: 'bet.stop_loss', label: '止损引擎 · 持仓止损扫描', category: 'stop' },
+    ]
+  return list.filter((t) => !HIDDEN_JOB_TYPES.has(t.jobType))
 })
 
 const CATEGORY_LABELS = {
@@ -42,6 +45,8 @@ const CATEGORY_LABELS = {
   betting: '投注引擎',
   stop: '止损引擎',
 }
+
+const visibleJobs = computed(() => jobs.value.filter((j) => !HIDDEN_JOB_TYPES.has(j.jobType)))
 
 const jobTypeGroups = computed(() => {
   const order = ['collect', 'condition', 'betting', 'stop']
@@ -114,11 +119,11 @@ async function refresh() {
     if (!form.value.nameKey) {
       form.value.nameKey = pickDefaultNameKey(categoryOfJobType(form.value.jobType))
     }
-    if (selectedJobId.value && !jobs.value.find((x) => x.id === selectedJobId.value)) {
-      selectedJobId.value = jobs.value[0]?.id || ''
+    if (selectedJobId.value && !visibleJobs.value.find((x) => x.id === selectedJobId.value)) {
+      selectedJobId.value = visibleJobs.value[0]?.id || ''
     }
-    if (!selectedJobId.value && jobs.value[0]) {
-      selectedJobId.value = jobs.value[0].id
+    if (!selectedJobId.value && visibleJobs.value[0]) {
+      selectedJobId.value = visibleJobs.value[0].id
     }
     if (selectedJobId.value) await loadRuns()
   } catch (e) {
@@ -350,8 +355,8 @@ onUnmounted(stopLogTimer)
 
     <div class="card">
       <div class="sec-title">任务列表</div>
-      <div v-if="!jobs.length" class="empty">暂无任务，请先新增</div>
-      <div v-for="job in jobs" :key="job.id" class="job" :class="{ active: selectedJobId === job.id }">
+      <div v-if="!visibleJobs.length" class="empty">暂无任务，请先新增</div>
+      <div v-for="job in visibleJobs" :key="job.id" class="job" :class="{ active: selectedJobId === job.id }">
         <div class="job-main">
           <div class="job-name">{{ job.name }}</div>
           <div class="job-meta">
@@ -377,7 +382,7 @@ onUnmounted(stopLogTimer)
         <div class="log-tools">
           <select v-model="selectedJobId" class="job-select">
             <option value="">选择任务</option>
-            <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.name }}</option>
+            <option v-for="j in visibleJobs" :key="j.id" :value="j.id">{{ j.name }}</option>
           </select>
           <label class="check inline">
             <input v-model="autoRefreshLogs" type="checkbox" />

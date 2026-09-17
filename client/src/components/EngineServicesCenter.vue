@@ -195,21 +195,9 @@ onUnmounted(() => {
           <button
             type="button"
             class="action-btn"
-            :disabled="busy.collectFull"
-            @click="runAction('collectFull', '全量拆桶', () => api.runCollectFull({ top100: false }))"
-          >拆三桶</button>
-          <button
-            type="button"
-            class="action-btn"
             :disabled="busy.collectTop100"
             @click="runAction('collectTop100', 'Top100', () => api.runCollectFull({ top100: true }))"
           >Top100</button>
-          <button
-            type="button"
-            class="action-btn"
-            :disabled="busy.collectPartial"
-            @click="runAction('collectPartial', '盘中 tick', () => api.runCollectPartial())"
-          >tick</button>
         </div>
         <p v-if="card.id === 'collect' && collectDetail" class="detail-line">
           运行 full={{ collectDetail.running?.full ? '是' : '否' }}
