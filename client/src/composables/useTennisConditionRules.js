@@ -220,6 +220,22 @@ export function useTennisConditionRules({
     }
   }
 
+  /** 会员列表：从 /today 返回的条件元数据还原当前生效组 */
+  function hydrateConditionFromBundle(bundle) {
+    if (!bundle || typeof bundle !== 'object') return
+    const rules = bundle.admin_condition_rules
+    const groups = Array.isArray(rules?.groups) ? rules.groups : []
+    if (groups.length) {
+      libraryGroups.value = groups
+      conditionGroups.value = groups.map((g) => ({ ...emptyConditionGroup(), ...g, strongRankMax: 'all' }))
+      conditionBucketOn.value = rules?.enabled !== false || bundle.condition_applied === true
+      return
+    }
+    if (bundle.condition_applied === true) {
+      conditionBucketOn.value = true
+    }
+  }
+
   function hydrateConditionRulesFromCache() {
     const cached = api.peekTennisEnginesCache?.({ allowStale: true })
     if (!cached?.condition?.buckets) return false
@@ -375,5 +391,6 @@ export function useTennisConditionRules({
     removeConditionGroup,
     saveConditionRules,
     openConditionModal,
+    hydrateConditionFromBundle,
   }
 }

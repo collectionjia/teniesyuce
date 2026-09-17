@@ -21,7 +21,7 @@ const emit = defineEmits(['update:batchAmountUsd'])
 <template>
 <div class="batch-bar">
       <div class="batch-bar-controls">
-        <label class="auto-bet-toggle" :class="{ on: autoSimBetEnabled }" title="默认关闭；打开后按管理员规则自动下单。采集未开虚拟=真实交易；虚拟采集=仅记账">
+        <label class="auto-bet-toggle" :class="{ on: autoSimBetEnabled }" title="默认关闭；打开后按当前列表条件自动下单。采集未开虚拟=真实交易；虚拟采集=仅记账">
           <input type="checkbox" :checked="autoSimBetEnabled" @change="toggleAutoBet" />
           <span>自动投注</span>
         </label>

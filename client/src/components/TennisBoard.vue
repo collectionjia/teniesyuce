@@ -10,6 +10,7 @@ import {
   applySettledFilters,
   passesInplayBettingEntry,
   normalizeInplayBettingEntry,
+  filterMatchesByConditionGroups,
 } from '../utils/tennisListFilters'
 import { useTennisConditionRules } from '../composables/useTennisConditionRules'
 import { useTennisBettingRules } from '../composables/useTennisBettingRules'
@@ -152,6 +153,7 @@ const {
   removeConditionGroup,
   saveConditionRules,
   openConditionModal,
+  hydrateConditionFromBundle,
 } = useTennisConditionRules({
   props,
   isPrematchMode,
@@ -506,7 +508,7 @@ async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
   // 管理员「桶打开」只影响规则与引擎；用户是否自动投注由本人开关决定
   if (fromSave) {
     betRulesNotice.value = autoSimBetEnabled.value
-      ? `规则已保存；你已开启「自动投注」，将按管理员条件在本账号下单`
+      ? `规则已保存；你已开启「自动投注」，将按当前列表条件在本账号下单`
       : `规则已保存；有持仓时会按卖出条件与调度间隔刷 PM 并自动卖出；买入仍需自行打开「自动投注」`
   }
   await loadListPollIntervals()
@@ -519,10 +521,10 @@ async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
     else batchError.value = msg
     return
   }
-  const eligible = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)) && !autoSoldIds.value.has(String(m.id)))
+  const eligible = matches.value.filter((m) => canAutoBetMatch(m))
   if (!eligible.length) {
     const msg = matches.value.length
-      ? '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名）'
+      ? '自动投注已开，但当前列表没有满足条件且可下单的场次'
       : '自动投注已开，当前列表为空'
     if (fromSave) betRulesError.value = msg
     else batchError.value = msg
@@ -540,8 +542,8 @@ async function toggleAutoBet(ev) {
   }
   if (want && !window.confirm(
     isInplayMode.value
-      ? `确认开启「自动投注」？\n将按管理员条件/投注设置在你本账号下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。\n规则：${INPLAY_AUTO_RULES_TEXT.value}`
-      : '确认开启「自动投注」？\n将按管理员条件/投注设置在你本账号批量下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。'
+      ? `确认开启「自动投注」？\n将按当前列表条件在你本账号自动下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。\n附加：${INPLAY_AUTO_RULES_TEXT.value}`
+      : '确认开启「自动投注」？\n将按当前列表条件在你本账号自动批量下单。\n采集未开虚拟时为真实交易（需页头钱包）；虚拟采集时仅记账。'
   )) {
     ev.target.checked = false
     return
@@ -553,10 +555,10 @@ async function toggleAutoBet(ev) {
   if (want) await loadListPollIntervals()
   syncInplayPoll()
   if (want) {
-    const eligible = matches.value.filter((m) => canSelectMatch(m) && !autoPlacedIds.value.has(String(m.id)) && !autoSoldIds.value.has(String(m.id)))
+    const eligible = matches.value.filter((m) => canAutoBetMatch(m))
     if (!eligible.length) {
       batchError.value = matches.value.length
-        ? '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名）'
+        ? '自动投注已开，但当前列表没有满足条件且可下单的场次'
         : '自动投注已开，当前列表为空'
     } else {
       await maybeAutoBatchTrade()
@@ -1167,6 +1169,52 @@ function resolveBatchStakeUsd() {
   return fromInput >= 1 ? fromInput : 1
 }
 
+function resolveAutoBetConditionGroups() {
+  const fromBundle = data.value?.admin_condition_rules?.groups
+  if (Array.isArray(fromBundle) && fromBundle.length) return fromBundle
+  if (props.productId != null && productSelectCond.value?.length && libraryGroups.value?.length) {
+    const byId = new Map(libraryGroups.value.filter((g) => g?.id).map((g) => [String(g.id), g]))
+    const out = []
+    productSelectCond.value.forEach((row, i) => {
+      const def = byId.get(String(row?.id))
+      if (!def) return
+      const join = String(row?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'
+      out.push({ ...def, joinPrev: i === 0 ? 'or' : join })
+    })
+    if (out.length) return out
+  }
+  if (conditionBucketOn.value && conditionGroups.value?.length) {
+    return conditionGroups.value
+  }
+  return []
+}
+
+function passesListConditionGroups(m) {
+  const groups = resolveAutoBetConditionGroups()
+  if (!groups.length) return true
+  const ctx = {
+    rankingsByPlayer: data.value?.rankingsByPlayer || {},
+    polymarketByEvent: data.value?.polymarketByEvent || {},
+  }
+  return filterMatchesByConditionGroups([m], groups, ctx).length > 0
+}
+
+/** 自动投注：仅当前列表内、满足条件组、未买过/未卖过的场次 */
+function canAutoBetMatch(m) {
+  if (!props.isMember || !allowBatchTrade.value) return false
+  if (!m?.id || isMatchEnded(m)) return false
+  const id = String(m.id)
+  if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
+  if (!polyUrlOf(m)) return false
+  if (!pickSide(m)) return false
+  if (!matches.value.some((x) => String(x.id) === id)) return false
+  if (!passesListConditionGroups(m)) return false
+  if (isInplayMode.value && !data.value?.condition_applied) {
+    return passesInplayAutoBet(m)
+  }
+  return true
+}
+
 function passesInplayAutoBet(m) {
   if (!isInplayMode.value || !isMatchLive(m) || isMatchEnded(m)) return false
   const side = pickSide(m)
@@ -1349,14 +1397,10 @@ async function submitBatchTrade({ auto = false } = {}) {
 
 async function maybeAutoBatchTrade() {
   if (!autoBetEnabled.value || !allowBatchTrade.value || batchSubmitting.value) return
-  const candidates = matches.value.filter((m) => {
-    const id = String(m.id)
-    return canSelectMatch(m) && !autoPlacedIds.value.has(id) && !autoSoldIds.value.has(id)
-  })
+  const candidates = matches.value.filter((m) => canAutoBetMatch(m))
   if (!candidates.length) {
-    // 盘中：开了自动但无可下单场次时给提示（购物车仍可打开，可能为空）
-    if (isInplayMode.value && !batchNotice.value) {
-      batchNotice.value = '自动投注已开，但当前列表没有可下单场次（需 Polymarket 外链 + 双方现排名，且满足盘中买入条件）'
+    if ((isInplayMode.value || isPrematchMode.value) && !batchNotice.value) {
+      batchNotice.value = '自动投注已开，当前列表暂无满足条件的新场次'
     }
     return
   }
@@ -1590,7 +1634,19 @@ function syncInplayPoll() {
 watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter, settledPnlMark], () => {
   currentPage.value = 1
   clearSelection()
+  if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value)) {
+    void maybeAutoBatchTrade()
+  }
 })
+
+watch(
+  () => (autoBetEnabled.value ? matches.value.map((m) => String(m.id)).join('|') : ''),
+  () => {
+    if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value)) {
+      void maybeAutoBatchTrade()
+    }
+  },
+)
 
 watch(() => props.isMember, (ok) => {
   if (!ok) {
@@ -2071,6 +2127,7 @@ async function loadOnce({
         ? payload
         : payload?.data || payload
     data.value = bundle
+    hydrateConditionFromBundle(bundle)
     if (isInplayMode.value && bundle?.bettingEntry) {
       bettingEntry.value = normalizeInplayBettingEntry(bundle.bettingEntry)
     }
