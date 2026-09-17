@@ -649,7 +649,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -691,7 +691,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-betting', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 /** 模拟数据编辑：独立全屏页（?page=docks-editor） */
 const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
@@ -791,11 +791,10 @@ const adminManageSections = [
   {
     key: 'engines',
     title: '引擎类',
-    desc: '网球采集 / 条件 / 投注 / 止损 配置',
+    desc: '网球采集 / 条件 / 止损 配置',
     items: [
       { view: 'tennis-collect', label: '采集引擎', desc: 'Top100 采集 · 虚拟/真实源 · 采集范围', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
-      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 多组强制筛', icon: 'list', color: 'from-amber-500 to-yellow-500' },
-      { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
+      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 调度命中自动投注', icon: 'list', color: 'from-amber-500 to-yellow-500' },
       { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },
       { view: 'tennis-docks-editor', label: '虚拟日列表', desc: '盘前/盘中/盘后筛选 · 分页编辑模拟场次', icon: 'list', color: 'from-teal-500 to-cyan-600' },
       { view: 'tennis-top100', label: 'Top100 宽屏', desc: 'ATP/WTA 并排 · 电脑全屏采购看板', icon: 'chart', color: 'from-sky-500 to-cyan-500' },
@@ -1959,6 +1958,7 @@ function logout() {
 }
 
 function go(v) {
+  if (v === 'tennis-betting') v = 'tennis-condition'
   view.value = v
   if (v === 'products') page.products = 1
   if (v === 'agents') page.agents = 1
@@ -1968,24 +1968,20 @@ function go(v) {
   if (v === 'mine') page.mine = 1
 }
 
-/** 盘前/盘中列表 → 管理中心条件引擎 / 投注引擎 / 止损引擎 / 调度中心 */
+/** 盘前/盘中列表 → 管理中心条件引擎 / 止损引擎 / 调度中心 */
 function onOpenTennisAdminEngine(payload) {
   if (payload?.kind === 'scheduler') {
     go('scheduler-center')
     return
   }
-  const kind = payload?.kind === 'betting'
-    ? 'betting'
-    : payload?.kind === 'stop'
-      ? 'stop'
-      : 'condition'
+  const kind = payload?.kind === 'stop' ? 'stop' : 'condition'
   const bucket = ['prematch', 'inplay', 'settled'].includes(payload?.bucket)
     ? payload.bucket
     : 'prematch'
   try {
     sessionStorage.setItem('tennis_engine_focus', JSON.stringify({ kind, bucket }))
   } catch (_) { /* ignore */ }
-  go(kind === 'betting' ? 'tennis-betting' : kind === 'stop' ? 'tennis-stop' : 'tennis-condition')
+  go(kind === 'stop' ? 'tennis-stop' : 'tennis-condition')
 }
 
 function onOpenDocksEditor(date) {
@@ -3731,13 +3727,6 @@ function productEmbedUrl(product) {
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
               <TennisMonitor engine-page="condition" />
-            </section>
-
-            <section v-else-if="role==='admin' && view==='tennis-betting'" class="space-y-3 fade-up">
-              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
-                <span v-html="icon('back')"></span>返回管理中心
-              </button>
-              <TennisMonitor engine-page="betting" />
             </section>
 
             <section v-else-if="role==='admin' && view==='tennis-stop'" class="space-y-3 fade-up">

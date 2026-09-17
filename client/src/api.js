@@ -470,6 +470,11 @@ export async function fetchTennisBettingOrders(params = {}) {
   }
 }
 
+export async function linkTennisBettingOrderStopGroup(id, payload = {}) {
+  const { data } = await api.patch(`/admin/tennis-monitor/engines/betting-orders/${id}/stop-group`, payload)
+  return data
+}
+
 export async function deleteTennisBettingOrder(id) {
   try {
     const { data } = await api.delete(`/admin/tennis-monitor/engines/betting-orders/${id}`)
@@ -654,6 +659,21 @@ export async function fetchStopLossStatus() {
 }
 
 // --- 调度中心 / 引擎 API Key（管理员网页 JWT）---
+export async function fetchSchedulerTelegram() {
+  const { data } = await api.get('/admin/scheduler/telegram')
+  return data
+}
+
+export async function saveSchedulerTelegram(payload) {
+  const { data } = await api.post('/admin/scheduler/telegram', payload)
+  return data
+}
+
+export async function testSchedulerTelegram() {
+  const { data } = await api.post('/admin/scheduler/telegram/test')
+  return data
+}
+
 export async function fetchSchedulerStatus() {
   const { data } = await api.get('/admin/scheduler/status')
   return data

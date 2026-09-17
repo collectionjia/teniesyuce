@@ -46,7 +46,20 @@ function pickSide(match, rankingsByPlayer) {
   return homeR < awayR ? 'home' : 'away';
 }
 
-async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'tennis', simulate = false } = {}) {
+function bucketFromProduct(product) {
+  const p = String(product || '').toLowerCase();
+  if (p.includes('inplay') || p.includes('live')) return 'inplay';
+  return 'prematch';
+}
+
+async function placeBatchOrders(userId, {
+  orders = [],
+  amountUsd,
+  product = 'tennis',
+  simulate = false,
+  strategyKey: batchStrategyKey = null,
+  bucket: batchBucket = null,
+} = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
   }
@@ -60,6 +73,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
   const isSim = !!simulate;
   const secrets = isSim ? null : await btcWallet.loadWalletSecrets(userId);
   const tradeProduct = String(product || 'tennis').toLowerCase();
+  const defaultBucket = batchBucket || bucketFromProduct(tradeProduct);
+  const defaultSk = batchStrategyKey != null ? String(batchStrategyKey).trim().slice(0, 48) : '';
   let bundle;
   if (tradeProduct === 'tennis-prematch') {
     bundle = await tennisPrematchCache.getBundle();
@@ -128,6 +143,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
             price: 1,
             label,
             orderId,
+            strategyKey: String(item?.strategyKey || defaultSk || '').trim() || null,
+            bucket: item?.bucket || defaultBucket,
             ok: true,
           });
         } catch (err) {
@@ -178,6 +195,8 @@ async function placeBatchOrders(userId, { orders = [], amountUsd, product = 'ten
           price,
           label,
           orderId,
+          strategyKey: String(item?.strategyKey || defaultSk || '').trim() || null,
+          bucket: item?.bucket || defaultBucket,
           ok: true,
         });
       } catch (err) {

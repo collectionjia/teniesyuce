@@ -17,6 +17,8 @@ async function ensureTradeRecordsTable() {
       price DECIMAL(12,6) NULL,
       label VARCHAR(255) NULL,
       order_id VARCHAR(128) NULL,
+      strategy_key VARCHAR(48) NULL,
+      bucket VARCHAR(16) NULL,
       ok TINYINT(1) NOT NULL DEFAULT 1,
       error_msg VARCHAR(512) NULL,
       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -24,6 +26,12 @@ async function ensureTradeRecordsTable() {
       INDEX idx_trade_product (user_id, product, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  try {
+    await pool.query('ALTER TABLE trade_records ADD COLUMN strategy_key VARCHAR(48) NULL');
+  } catch { /* exists */ }
+  try {
+    await pool.query('ALTER TABLE trade_records ADD COLUMN bucket VARCHAR(16) NULL');
+  } catch { /* exists */ }
   ready = true;
 }
 
@@ -76,8 +84,8 @@ async function addTradeRecord(userId, row = {}) {
   }
   const [ret] = await pool.query(
     `INSERT INTO trade_records
-      (user_id, product, action, market, side, amount_usd, shares, price, label, order_id, ok, error_msg)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+      (user_id, product, action, market, side, amount_usd, shares, price, label, order_id, strategy_key, bucket, ok, error_msg)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       userId,
       product,
@@ -89,6 +97,8 @@ async function addTradeRecord(userId, row = {}) {
       row.price != null && Number.isFinite(Number(row.price)) ? Number(row.price) : null,
       row.label ? String(row.label).slice(0, 255) : null,
       row.orderId ? String(row.orderId).slice(0, 128) : null,
+      row.strategyKey ? String(row.strategyKey).trim().slice(0, 48) : null,
+      row.bucket ? String(row.bucket).trim().slice(0, 16) : null,
       row.ok === false ? 0 : 1,
       row.error ? String(row.error).slice(0, 512) : null,
     ]
@@ -116,7 +126,7 @@ async function listTradeRecords(userId, { product = 'all', limit = 30, offset = 
     params.push(product);
   }
   const [rows] = await pool.query(
-    `SELECT id, product, action, market, side, amount_usd, shares, price, label, order_id, ok, error_msg, created_at
+    `SELECT id, product, action, market, side, amount_usd, shares, price, label, order_id, strategy_key, bucket, ok, error_msg, created_at
      FROM trade_records
      WHERE ${where}
      ORDER BY id DESC
@@ -140,6 +150,8 @@ async function listTradeRecords(userId, { product = 'all', limit = 30, offset = 
       price: r.price != null ? Number(r.price) : null,
       label: r.label || '',
       orderId: r.order_id || '',
+      strategyKey: r.strategy_key || '',
+      bucket: r.bucket || '',
       ok: !!r.ok,
       error: r.error_msg || '',
       createdAt: r.created_at,
@@ -186,10 +198,24 @@ async function clearTradeRecords({ userId = null, product = 'tennis-family', any
   return { deleted: Number(ret.affectedRows) || 0 };
 }
 
+async function updateTradeRecordStrategy(id, { userId, strategyKey, bucket } = {}) {
+  await ensureTradeRecordsTable();
+  const rid = Number(id);
+  if (!rid || !userId) return { updated: 0 };
+  const sk = strategyKey != null ? String(strategyKey).trim().slice(0, 48) : null;
+  const bk = bucket != null ? String(bucket).trim().slice(0, 16) : null;
+  const [ret] = await pool.query(
+    `UPDATE trade_records SET strategy_key=?, bucket=? WHERE id=? AND user_id=? AND product LIKE 'tennis%'`,
+    [sk, bk, rid, userId],
+  );
+  return { updated: Number(ret.affectedRows) || 0, strategyKey: sk, bucket: bk };
+}
+
 module.exports = {
   ensureTradeRecordsTable,
   addTradeRecord,
   listTradeRecords,
+  updateTradeRecordStrategy,
   deleteTradeRecord,
   clearTradeRecords,
   priceFromFill,

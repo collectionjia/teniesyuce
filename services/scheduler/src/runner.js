@@ -2,6 +2,7 @@ const store = require('./store');
 const { engineGate } = require('./engineGate');
 const { executeJobTypeHttp } = require('./httpExecutor');
 const { executeJobTypeLegacy } = require('./legacyExecutor');
+const { fireTelegramNotify } = require('./telegramNotify');
 
 const scheduleLocks = new Map();
 
@@ -35,6 +36,7 @@ async function runJob(jobId, trigger = 'manual') {
     }
     const runId = await store.startRun({ jobId, trigger });
     await store.finishRun(runId, { status: 'skipped', message: gate.reason });
+    fireTelegramNotify({ job, trigger, status: 'skipped', message: gate.reason });
     return { accepted: true, runId, status: 'skipped', message: gate.reason };
   }
 
@@ -62,12 +64,18 @@ async function runJob(jobId, trigger = 'manual') {
           message: result.message || 'skipped',
           metrics: result.metrics || null,
         });
+        fireTelegramNotify({
+          job, trigger, status: 'skipped', message: result.message, metrics: result.metrics,
+        });
         return { accepted: true, runId, status: 'skipped', message: result.message };
       }
       await store.finishRun(runId, {
         status: 'success',
         message: result?.message || 'ok',
         metrics: result?.metrics || null,
+      });
+      fireTelegramNotify({
+        job, trigger, status: 'success', message: result?.message, metrics: result?.metrics,
       });
       return {
         accepted: true,
@@ -82,6 +90,7 @@ async function runJob(jobId, trigger = 'manual') {
         status: 'failed',
         error: e.message || String(e),
       });
+      fireTelegramNotify({ job, trigger, status: 'failed', error: e.message || String(e) });
       return { accepted: true, runId, status: 'failed', error: e.message || String(e) };
     } finally {
       if (trigger === 'schedule') {
@@ -98,6 +107,9 @@ async function runJob(jobId, trigger = 'manual') {
         timedOut = true;
         try {
           await store.finishRun(runId, { status: 'timeout', error: `timeout ${job.timeoutSec}s` });
+          fireTelegramNotify({
+            job, trigger, status: 'timeout', error: `timeout ${job.timeoutSec}s`,
+          });
         } catch { /* ignore */ }
         resolve({ accepted: true, runId, status: 'timeout' });
       }, timeoutMs);

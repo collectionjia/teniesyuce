@@ -5,10 +5,46 @@ const express = require('express');
 const { auth } = require('../middleware/auth');
 const store = require('../services/schedulerStore');
 const schedulerClient = require('../services/schedulerClient');
+const schedulerTelegram = require('../services/schedulerTelegram');
 const engineApiKeys = require('../services/engineApiKeys');
 
 const router = express.Router();
 router.use(auth(['admin']));
+
+router.get('/scheduler/telegram', async (_req, res) => {
+  try {
+    const config = await schedulerTelegram.getConfig();
+    res.json({ ok: true, config });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+router.post('/scheduler/telegram', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const patch = {};
+    if (body.enabled != null) patch.enabled = !!body.enabled;
+    if (body.notifyManual != null) patch.notifyManual = !!body.notifyManual;
+    if (body.chatId != null) patch.chatId = body.chatId;
+    if (body.botToken != null && String(body.botToken).trim()) {
+      patch.botToken = body.botToken;
+    }
+    const config = await schedulerTelegram.saveConfig(patch);
+    res.json({ ok: true, config });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
+
+router.post('/scheduler/telegram/test', async (_req, res) => {
+  try {
+    await schedulerTelegram.sendTestMessage();
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ ok: false, error: e.message });
+  }
+});
 
 router.get('/scheduler/status', async (_req, res) => {
   try {

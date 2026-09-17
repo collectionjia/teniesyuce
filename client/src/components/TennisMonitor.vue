@@ -70,8 +70,10 @@ function emptyConditionGroup() {
 
 function emptyBettingGroup(kind = 'inplay') {
   const isInplay = kind === 'inplay'
+  const id = `bg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
   return {
-    id: `bg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    id,
+    strategyKey: id,
     name: '',
     joinPrev: 'or',
     amountUsd: 1,
@@ -271,6 +273,101 @@ const conditionSaving = ref(false)
 const bettingSaving = ref(false)
 const conditionDraftDirty = ref(false)
 const bettingDraftDirty = ref(false)
+
+const stopOrders = ref([])
+const stopOrdersLoading = ref(false)
+const stopOrdersError = ref('')
+const stopOrderLinkBusy = ref(null)
+
+function stopGroupKey(g) {
+  return String(g?.strategyKey || g?.id || '').trim()
+}
+
+function stopGroupLabel(g, gi) {
+  const n = String(g?.name || '').trim()
+  return n || `止损组 ${gi + 1}`
+}
+
+function orderBucketKey(row) {
+  const bk = String(row?.bucket || '').trim()
+  if (bk === 'prematch' || bk === 'inplay') return bk
+  const p = String(row?.product || '').toLowerCase()
+  if (p.includes('inplay') || p.includes('live')) return 'inplay'
+  return 'prematch'
+}
+
+function orderIsOpenBuy(row) {
+  if (!row || row.action !== 'buy' || row.ok === false) return false
+  const market = String(row.market || '')
+  const side = String(row.side || '').toLowerCase()
+  if (!market || !side) return false
+  const sells = stopOrders.value.filter((x) => x.action === 'sell' && x.ok !== false && String(x.market) === market && String(x.side).toLowerCase() === side)
+  const buyId = Number(row.id)
+  return !sells.some((s) => Number(s.id) > buyId)
+}
+
+const openStopOrders = computed(() => stopOrders.value.filter(orderIsOpenBuy))
+
+function ordersLinkedToStopGroup(g) {
+  const sk = stopGroupKey(g)
+  if (!sk) return []
+  return openStopOrders.value.filter((o) => String(o.strategyKey || '') === sk)
+}
+
+const stopGroupOptions = computed(() => {
+  const tab = bettingTab.value
+  const groups = bettingDraft.value?.[tab]?.groups || []
+  return groups.map((g, gi) => ({
+    key: stopGroupKey(g),
+    label: stopGroupLabel(g, gi),
+    bucket: tab,
+  })).filter((o) => o.key)
+})
+
+async function loadStopOrders() {
+  if (!isStopPage.value) return
+  stopOrdersLoading.value = true
+  stopOrdersError.value = ''
+  try {
+    const data = await api.fetchTennisBettingOrders({ limit: 200 })
+    stopOrders.value = Array.isArray(data?.items) ? data.items : []
+  } catch (e) {
+    stopOrdersError.value = e?.response?.data?.error || e.message || '加载订单失败'
+    stopOrders.value = []
+  } finally {
+    stopOrdersLoading.value = false
+  }
+}
+
+async function linkOrderToStopGroup(order, groupKey, bucket) {
+  if (!order?.id || !groupKey) return
+  stopOrderLinkBusy.value = order.id
+  stopOrdersError.value = ''
+  try {
+    await api.linkTennisBettingOrderStopGroup(order.id, {
+      strategyKey: groupKey,
+      bucket: bucket || orderBucketKey(order),
+    })
+    stopOrders.value = stopOrders.value.map((o) => (
+      o.id === order.id ? { ...o, strategyKey: groupKey, bucket: bucket || orderBucketKey(order) } : o
+    ))
+    showNotice('已挂止损组')
+  } catch (e) {
+    stopOrdersError.value = e?.response?.data?.error || e.message || '挂止损组失败'
+  } finally {
+    stopOrderLinkBusy.value = null
+  }
+}
+
+async function attachOrderToGroup(orderId, gi) {
+  const g = bettingDraft.value?.[bettingTab.value]?.groups?.[gi]
+  const sk = stopGroupKey(g)
+  if (!sk) return
+  const order = openStopOrders.value.find((o) => String(o.id) === String(orderId))
+  if (!order) return
+  await linkOrderToStopGroup(order, sk, bettingTab.value)
+}
+
 const playerPage = ref(1)
 const livePage = ref(1)
 const logPage = ref(1)
@@ -364,7 +461,9 @@ const pageSub = computed(() => {
     const on = ['prematch', 'inplay', 'settled']
       .filter((k) => b[k]?.enabled)
       .map((k) => ({ prematch: '盘前', inplay: '盘中', settled: '盘后' }[k]))
-    return on.length ? `已开：${on.join('、')}` : '各桶均未打开（打开后列表按该桶条件组筛选）'
+    const account = engines.value?.betting?.userAccount || engines.value?.betting?.userId
+    const buckets = on.length ? `已开：${on.join('、')}` : '各桶均未打开'
+    return `${buckets} · 账号 ${account || '未设'} · 调度命中自动投注`
   }
   if (isBettingPage.value || isStopPage.value) {
     const b = engines.value?.betting?.buckets || {}
@@ -375,7 +474,7 @@ const pageSub = computed(() => {
     const account = engines.value?.betting?.userAccount || engines.value?.betting?.userId
     if (isStopPage.value) {
       const groups = ['prematch', 'inplay'].reduce((n, k) => n + (b[k]?.groups?.length || 0), 0)
-      return `止损组 ${groups} · 账号 ${account || '未设'} · 与投注引擎共用配置`
+      return `止损组 ${groups} · 账号 ${account || '未设'} · 与条件引擎共用账号`
     }
     return on.length
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
@@ -400,6 +499,16 @@ watch(
     bettingDraft.value = cloneBettingBuckets(buckets)
   },
   { deep: true, immediate: true },
+)
+
+watch(
+  conditionTab,
+  (t) => {
+    if (isConditionPage.value && (t === 'prematch' || t === 'inplay')) {
+      bettingTab.value = t
+    }
+  },
+  { immediate: true },
 )
 
 const redisUpstreamLabel = computed(() => {
@@ -1268,14 +1377,19 @@ async function saveBettingBucketAndEnable() {
         [tab]: {
           enabled: !!bucket.enabled,
           simulate: !!bucket.simulate,
-          groups: (bucket.groups || []).map((g) => ({
-            ...emptyBettingGroup(tab),
-            ...g,
+          groups: (bucket.groups || []).map((g) => {
+            const base = { ...emptyBettingGroup(tab), ...g }
+            const id = String(base.id || '').trim() || emptyBettingGroup(tab).id
+            return {
+            ...base,
+            id,
+            strategyKey: String(base.strategyKey || id).trim() || id,
             amountUsd: Number(g.amountUsd) >= 1 ? Math.round(Number(g.amountUsd) * 100) / 100 : 1,
             // 投注引擎只用开区间强现> / 强现<，避免旧 strongRankMax 暗中生效
             strongRankMax: 'all',
             stopRules: ensureStopRules(g).map((r) => ({ ...emptyStopRule(), ...r })),
-          })),
+            }
+          }),
           ...(tab === 'inplay' ? {
             entry: (() => {
               const e = normalizeInplayEntryDraft(bucket.entry)
@@ -1490,6 +1604,7 @@ onMounted(() => {
   }
 
   refreshAll()
+  if (isStopPage.value) loadStopOrders()
   // 仅采集页轮询官网状态 / live；条件与投注页不打扰
   if (isCollectPage.value) {
     pollTimer = setInterval(() => {
@@ -1640,7 +1755,32 @@ onUnmounted(() => {
         <template v-else>
         <p class="engines-note" style="margin:0 0 8px">
           各条件组相互独立。盘前组可勾选「关联未开赛产品」；产品管理选用后，打开该未开赛产品页即按该组条件筛选列表。
+          在调度中心添加「条件引擎」任务后，命中数据将自动调用投注（无需单独配置投注引擎）。
         </p>
+
+        <div class="settings-row engines-row">
+          <label class="interval-select">
+            <span>投注账号登录邮箱</span>
+            <input
+              type="email"
+              style="width: 14rem"
+              :value="engines.betting?.userAccount || ''"
+              placeholder="登录邮箱"
+              @change="onBettingUserAccountChange"
+            >
+          </label>
+          <label class="interval-select">
+            <span>默认金额 (USD)</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              style="width: 6.5rem"
+              :value="engines.betting?.amountUsd ?? 1"
+              @change="onBettingAmountUsdChange"
+            >
+          </label>
+        </div>
 
         <div class="condition-tabs" role="tablist">
           <button
@@ -1669,11 +1809,79 @@ onUnmounted(() => {
               >
               <span class="toggle-state" :class="{ off: !activeConditionBucket.enabled }">{{ activeConditionBucket.enabled ? '已开启' : '已关闭' }}</span>
             </label>
+            <label v-if="conditionTab === 'prematch'" class="collect-toggle" title="虚拟采集时强制模拟；真实采集时按此开关">
+              <span>模拟投注</span>
+              <input
+                type="checkbox"
+                :checked="!!activeBettingBucket.simulate"
+                @change="setBettingBucketSimulate"
+              >
+              <span class="toggle-state" :class="{ off: !activeBettingBucket.simulate }">{{ activeBettingBucket.simulate ? '模拟' : '实盘' }}</span>
+            </label>
             <button type="button" class="btn ghost" @click="addConditionGroup">加一组条件</button>
             <button type="button" class="btn primary" :disabled="conditionSaving" @click="saveConditionBucketAndEnable">
               {{ conditionSaving ? '保存中…' : '保存本桶' }}
             </button>
+            <button
+              v-if="conditionTab === 'prematch' || conditionTab === 'inplay'"
+              type="button"
+              class="btn ghost"
+              :disabled="bettingSaving"
+              @click="saveBettingBucketAndEnable"
+            >{{ bettingSaving ? '保存中…' : '保存投注参数' }}</button>
             <span v-if="conditionDraftDirty" class="dirty-hint">有未保存修改</span>
+            <span v-else-if="bettingDraftDirty" class="dirty-hint">投注参数未保存</span>
+          </div>
+
+          <div v-if="conditionTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
+            <div class="condition-group-head">
+              <div class="condition-group-title">盘中自动买入条件</div>
+              <div class="condition-group-hint">列表「自动投注」与调度条件命中后的买入共用</div>
+            </div>
+            <div class="condition-fields">
+              <label class="collect-toggle">
+                <span>须赢首盘</span>
+                <input
+                  type="checkbox"
+                  :checked="!!activeBettingBucket.entry?.requireWonFirstSet"
+                  @change="setInplayEntryField('requireWonFirstSet', $event.target.checked)"
+                >
+              </label>
+              <label
+                v-if="activeBettingBucket.entry?.requireWonFirstSet"
+                class="collect-toggle"
+                title="首盘局分为该比分时不买入（顺序无关，默认 7:5）"
+              >
+                <span>排除首盘</span>
+                <input
+                  type="checkbox"
+                  :checked="!!activeBettingBucket.entry?.firstSetExcludeEnabled"
+                  @change="setInplayEntryField('firstSetExcludeEnabled', $event.target.checked)"
+                >
+              </label>
+              <label
+                v-if="activeBettingBucket.entry?.requireWonFirstSet && activeBettingBucket.entry?.firstSetExcludeEnabled"
+                title="仅排除第一盘该局分，如 7:5 / 7-5"
+              >
+                局分
+                <input
+                  type="text"
+                  :value="activeBettingBucket.entry?.firstSetExcludeScore || '7:5'"
+                  placeholder="7:5"
+                  @change="setInplayEntryField('firstSetExcludeScore', $event.target.value)"
+                >
+              </label>
+              <label>买入侧 PM¢&lt;
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  :value="activeBettingBucket.entry?.pmCentsMax === 'all' || activeBettingBucket.entry?.pmCentsMax == null || activeBettingBucket.entry?.pmCentsMax === '' ? '' : activeBettingBucket.entry.pmCentsMax"
+                  placeholder="不限"
+                  @change="setInplayEntryField('pmCentsMax', $event.target.value)"
+                >
+              </label>
+            </div>
           </div>
 
           <div
@@ -1909,7 +2117,7 @@ onUnmounted(() => {
           </label>
           <span class="engines-note" style="margin:0">
             {{ isStopPage
-              ? '止损组与投注引擎共用；保存后可在调度中心添加「止损引擎」任务'
+              ? '止损组与条件引擎共用账号；保存后可在调度中心添加「止损引擎」任务'
               : '各桶打开即投注；列表轮询 10–600 秒（页面刷新可填 0 关闭），改后刷新列表页生效' }}
           </span>
         </div>
@@ -2040,6 +2248,7 @@ onUnmounted(() => {
                 @change="setBettingGroupField(gi, 'name', $event.target.value)"
               >
               <span class="muted">止损组</span>
+              <span v-if="isStopPage" class="muted sm">已挂 {{ ordersLinkedToStopGroup(g).length }} 笔</span>
               <button
                 type="button"
                 class="btn ghost sm"
@@ -2047,6 +2256,28 @@ onUnmounted(() => {
               >删除</button>
             </div>
             <div v-show="!isBettingGroupCollapsed(gi)" class="condition-group-body">
+
+            <div v-if="isStopPage" class="stop-order-link-panel">
+              <label class="stop-order-pick">
+                <span>挂订单</span>
+                <select
+                  :disabled="!!stopOrderLinkBusy"
+                  @change="attachOrderToGroup($event.target.value, gi); $event.target.value = ''"
+                >
+                  <option value="">选择未平仓订单…</option>
+                  <option
+                    v-for="o in openStopOrders.filter((x) => orderBucketKey(x) === bettingTab)"
+                    :key="o.id"
+                    :value="o.id"
+                  >{{ o.label || o.market }} · {{ o.side }}</option>
+                </select>
+              </label>
+              <ul v-if="ordersLinkedToStopGroup(g).length" class="linked-orders-mini">
+                <li v-for="o in ordersLinkedToStopGroup(g)" :key="'lnk-' + o.id">
+                  {{ o.label || o.market }} · {{ o.side }}
+                </li>
+              </ul>
+            </div>
 
             <div class="condition-group-section stop-section-head">
               <span>止损条件</span>
@@ -2174,6 +2405,51 @@ onUnmounted(() => {
             </p>
             </div>
             </div>
+          </div>
+
+          <div v-if="isStopPage" class="stop-orders-panel">
+            <div class="condition-group-head">
+              <div class="condition-group-title">订单列表</div>
+              <button type="button" class="btn ghost sm" :disabled="stopOrdersLoading" @click="loadStopOrders">
+                {{ stopOrdersLoading ? '刷新中…' : '刷新' }}
+              </button>
+            </div>
+            <p v-if="stopOrdersError" class="engines-note fail">{{ stopOrdersError }}</p>
+            <p v-else class="engines-note">下单后在此挂止损组；各止损组相互隔离，仅对本组订单生效。</p>
+            <div v-if="!openStopOrders.length && !stopOrdersLoading" class="engines-note muted">暂无未平仓买入订单</div>
+            <table v-else class="stop-orders-table">
+              <thead>
+                <tr>
+                  <th>场次</th>
+                  <th>桶</th>
+                  <th>方向</th>
+                  <th>金额</th>
+                  <th>止损组</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="o in openStopOrders" :key="'ord-' + o.id">
+                  <td>{{ o.label || o.market }}</td>
+                  <td>{{ orderBucketKey(o) === 'inplay' ? '盘中' : '盘前' }}</td>
+                  <td>{{ o.side }}</td>
+                  <td>{{ o.amountUsd != null ? ('$' + o.amountUsd) : '—' }}</td>
+                  <td>
+                    <select
+                      :value="o.strategyKey || ''"
+                      :disabled="stopOrderLinkBusy === o.id"
+                      @change="linkOrderToStopGroup(o, $event.target.value, orderBucketKey(o))"
+                    >
+                      <option value="">未挂止损组</option>
+                      <option
+                        v-for="opt in stopGroupOptions.filter((x) => x.bucket === orderBucketKey(o))"
+                        :key="opt.key"
+                        :value="opt.key"
+                      >{{ opt.label }}</option>
+                    </select>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
         </template>
@@ -3220,6 +3496,26 @@ onUnmounted(() => {
   margin: 0; background: #0f172a; color: #e2e8f0; border-radius: 10px;
   padding: 12px; font-size: 0.72rem; line-height: 1.45; min-height: 240px;
   max-height: 42vh; overflow: auto; white-space: pre-wrap; word-break: break-word;
+}
+
+.stop-orders-panel {
+  margin-top: 16px; padding-top: 12px; border-top: 1px dashed #e2e8f0;
+}
+.stop-orders-table {
+  width: 100%; border-collapse: collapse; font-size: 0.78rem;
+}
+.stop-orders-table th,
+.stop-orders-table td {
+  border-bottom: 1px solid #e2e8f0; padding: 8px 6px; text-align: left; vertical-align: middle;
+}
+.stop-orders-table select { max-width: 12rem; font-size: 0.76rem; }
+.stop-order-link-panel {
+  display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-start;
+  margin-bottom: 10px; padding: 8px 10px; background: #f8fafc; border-radius: 8px;
+}
+.stop-order-pick { display: flex; flex-direction: column; gap: 4px; font-size: 0.76rem; }
+.linked-orders-mini {
+  margin: 0; padding-left: 1rem; font-size: 0.74rem; color: #475569;
 }
 
 @media (max-width: 720px) {

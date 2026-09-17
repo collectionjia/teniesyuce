@@ -18,6 +18,18 @@ const createOpen = ref(false)
 const logOpen = ref(false)
 const creating = ref(false)
 
+const tgOpen = ref(false)
+const tgSaving = ref(false)
+const tgTesting = ref(false)
+const tgForm = ref({
+  enabled: false,
+  notifyManual: true,
+  chatId: '',
+  botToken: '',
+  botTokenSet: false,
+  botTokenPreview: '',
+})
+
 function defaultForm() {
   return {
     nameKey: 'collect:top100',
@@ -296,6 +308,64 @@ watch(
   },
 )
 
+async function loadTelegramConfig() {
+  try {
+    const data = await api.fetchSchedulerTelegram()
+    const c = data?.config || {}
+    tgForm.value = {
+      enabled: !!c.enabled,
+      notifyManual: c.notifyManual !== false,
+      chatId: c.chatId || '',
+      botToken: '',
+      botTokenSet: !!c.botTokenSet,
+      botTokenPreview: c.botTokenPreview || '',
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+async function saveTelegramConfig() {
+  tgSaving.value = true
+  err.value = ''
+  msg.value = ''
+  try {
+    const payload = {
+      enabled: tgForm.value.enabled,
+      notifyManual: tgForm.value.notifyManual,
+      chatId: tgForm.value.chatId,
+    }
+    if (tgForm.value.botToken.trim()) payload.botToken = tgForm.value.botToken.trim()
+    const data = await api.saveSchedulerTelegram(payload)
+    const c = data?.config || {}
+    tgForm.value.botToken = ''
+    tgForm.value.botTokenSet = !!c.botTokenSet
+    tgForm.value.botTokenPreview = c.botTokenPreview || ''
+    msg.value = 'Telegram 通知已保存'
+  } catch (e) {
+    err.value = e?.response?.data?.error || e.message || '保存失败'
+  } finally {
+    tgSaving.value = false
+  }
+}
+
+async function testTelegramConfig() {
+  tgTesting.value = true
+  err.value = ''
+  msg.value = ''
+  try {
+    if (tgForm.value.botToken.trim()) {
+      await saveTelegramConfig()
+    }
+    await api.testSchedulerTelegram()
+    msg.value = '测试消息已发送，请查看 Telegram'
+  } catch (e) {
+    err.value = e?.response?.data?.error || e.message || '测试发送失败'
+  } finally {
+    tgTesting.value = false
+  }
+}
+
 async function refresh() {
   loading.value = true
   err.value = ''
@@ -304,6 +374,7 @@ async function refresh() {
       api.fetchSchedulerStatus(),
       api.fetchSchedulerJobs(),
     ])
+    await loadTelegramConfig()
     status.value = st
     jobs.value = j.jobs || []
     jobTypes.value = j.jobTypes || []
@@ -591,7 +662,51 @@ onUnmounted(() => {
         调度循环：
         <span :class="status.running ? 'ok' : 'fail'">{{ status.running ? '运行中' : '未启动' }}</span>
         · 任务 {{ status.enabledCount }}/{{ status.jobCount }} 启用
+        · Telegram
+        <span :class="tgForm.enabled && tgForm.botTokenSet ? 'ok' : 'fail'">
+          {{ tgForm.enabled && tgForm.botTokenSet ? '已开' : '未配置' }}
+        </span>
       </div>
+      <details class="tg-panel" :open="tgOpen" @toggle="tgOpen = $event.target.open">
+        <summary class="tg-summary">Telegram 通知设置</summary>
+        <div class="tg-body">
+          <p class="sub tg-hint">
+            在 @BotFather 创建机器人获取 Token；与机器人对话或将其加入群组后，用 @userinfobot 等获取 Chat ID。
+            任务每次执行完成（成功/失败/跳过/超时）会推送通知。
+          </p>
+          <div class="tg-grid">
+            <label class="check inline">
+              <input v-model="tgForm.enabled" type="checkbox" />
+              启用通知
+            </label>
+            <label class="check inline">
+              <input v-model="tgForm.notifyManual" type="checkbox" />
+              手动「执行」也通知
+            </label>
+            <label>
+              <span>Bot Token</span>
+              <input
+                v-model="tgForm.botToken"
+                type="password"
+                autocomplete="off"
+                :placeholder="tgForm.botTokenSet ? `已保存 ${tgForm.botTokenPreview}` : '123456:ABC-DEF…'"
+              />
+            </label>
+            <label>
+              <span>Chat ID</span>
+              <input v-model.trim="tgForm.chatId" type="text" placeholder="你的用户 ID 或群组 ID" />
+            </label>
+          </div>
+          <div class="tg-actions">
+            <button type="button" class="btn ghost sm" :disabled="tgSaving || tgTesting" @click="saveTelegramConfig">
+              {{ tgSaving ? '保存中…' : '保存' }}
+            </button>
+            <button type="button" class="btn ghost sm" :disabled="tgTesting || tgSaving" @click="testTelegramConfig">
+              {{ tgTesting ? '发送中…' : '发送测试' }}
+            </button>
+          </div>
+        </div>
+      </details>
       <p v-if="msg" class="tip ok">{{ msg }}</p>
       <p v-if="err" class="tip fail">{{ err }}</p>
     </div>
@@ -1196,5 +1311,43 @@ select, input[type='number'], input[type='time'], .job-select {
 .log-table .msg {
   word-break: break-word;
   white-space: pre-wrap;
+}
+.tg-panel {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.tg-summary {
+  cursor: pointer;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+}
+.tg-body { padding: 0 12px 12px; }
+.tg-hint { margin: 0 0 10px; font-size: 0.76rem; line-height: 1.45; }
+.tg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+}
+.tg-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+.tg-grid input[type="text"],
+.tg-grid input[type="password"] {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+.tg-actions { display: flex; gap: 8px; margin-top: 10px; }
+@media (max-width: 720px) {
+  .tg-grid { grid-template-columns: 1fr; }
 }
 </style>

@@ -504,13 +504,23 @@ function strategyKeysFromGroups(groups) {
   const keys = [];
   const seen = new Set();
   for (const g of groups || []) {
-    const k = String(g?.strategyKey || '').trim();
+    const k = String(g?.strategyKey || g?.id || '').trim();
     if (k && !seen.has(k)) {
       seen.add(k);
       keys.push(k);
     }
   }
   return keys;
+}
+
+function groupStrategyKey(g) {
+  return String(g?.strategyKey || g?.id || '').trim();
+}
+
+function findStopGroupForKey(groups, sk) {
+  const key = String(sk || '').trim();
+  if (!key || key === '_') return null;
+  return (groups || []).find((g) => groupStrategyKey(g) === key) || null;
 }
 
 async function runBucketPass({
@@ -565,29 +575,42 @@ async function runBucketPass({
     for (const m of matches) {
       const id = String(m.id);
       if (!matchInAllowSet(allowSet, id)) continue;
-      const owned = hasStrategyEvent(placed, primarySk, id)
-        || (hasLegacyEvent(placed, id) && !hasLegacyEvent(sold, id));
-      if (!owned || hasStrategyEvent(sold, primarySk, id)) continue;
-      if (hasLegacyEvent(sold, id) && !hasStrategyEvent(placed, primarySk, id)) continue;
-      stopChecked += 1;
-      const side = shouldStopLoss(m, rankings, stopGroups, bundle);
-      if (side) {
-        stopMet += 1;
-        sellOrders.push({ eventId: m.id, side, match: m, strategyKey: primarySk });
-      } else {
-        logItems.push({
-          at,
-          type: 'stop',
-          bucket: bucketKey,
-          strategyKey: primarySk,
-          strategyKeys,
-          eventId: id,
-          match: matchLabel(m),
-          met: false,
-          action: 'none',
-          detail: '持仓检查：止损条件不满足',
-          simulated: isSim,
-        });
+      let skList = listStrategyKeysForEvent(placed, id).filter((sk) => !hasStrategyEvent(sold, sk, id));
+      if (!skList.length && hasLegacyEvent(placed, id) && !hasLegacyEvent(sold, id)) {
+        skList = ['_'];
+      }
+      if (!skList.length) continue;
+      for (const posSk of skList) {
+        const owned = posSk === '_'
+          ? hasLegacyEvent(placed, id)
+          : hasStrategyEvent(placed, posSk, id);
+        if (!owned) continue;
+        const stopGroup = findStopGroupForKey(stopGroups, posSk);
+        const activeStopGroups = stopGroup
+          ? (stopGroup.stopEnabled === false ? [] : [stopGroup])
+          : (posSk === '_' ? stopGroups.filter((g) => g.stopEnabled !== false) : []);
+        if (!activeStopGroups.length) continue;
+        stopChecked += 1;
+        const side = shouldStopLoss(m, rankings, activeStopGroups, bundle);
+        const sk = posSk === '_' ? (groupStrategyKey(stopGroup) || primarySk) : posSk;
+        if (side) {
+          stopMet += 1;
+          sellOrders.push({ eventId: m.id, side, match: m, strategyKey: sk });
+        } else {
+          logItems.push({
+            at,
+            type: 'stop',
+            bucket: bucketKey,
+            strategyKey: sk,
+            strategyKeys,
+            eventId: id,
+            match: matchLabel(m),
+            met: false,
+            action: 'none',
+            detail: '持仓检查：止损条件不满足',
+            simulated: isSim,
+          });
+        }
       }
     }
   }
@@ -710,10 +733,17 @@ async function runBucketPass({
   if (buyOrders.length) {
     try {
       const result = await tennisTrade.placeBatchOrders(uidNum, {
-        orders: buyOrders.map(({ eventId, side }) => ({ eventId, side })),
+        orders: buyOrders.map(({ eventId, side, strategyKey }) => ({
+          eventId,
+          side,
+          strategyKey,
+          bucket: bucketKey,
+        })),
         amountUsd: stake,
         product,
         simulate: isSim,
+        strategyKey: primarySk,
+        bucket: bucketKey,
       });
       for (const r of result.results || []) {
         const id = String(r.eventId);
@@ -848,6 +878,7 @@ async function runBettingPass({
   userId,
   onlyBucket = null,
   onlyGroupIndex = null,
+  conditionGroupIndex = null,
   onlyStrategyKey = null,
   mode = 'both',
 } = {}) {
@@ -900,11 +931,11 @@ async function runBettingPass({
     const productService = require('./product');
     const bucketCfg = cfg.betting?.buckets?.[bucketKey];
     // 止损可在桶关闭时仍检查持仓；买入要求桶打开（或指定组/策略）
-    if (passMode !== 'stop' && !bucketCfg?.enabled && onlyGroupIndex == null && !onlyStrategyKey) return;
-    if (passMode === 'buy' && !bucketCfg?.enabled && onlyGroupIndex == null && !onlyStrategyKey) return;
+    if (passMode !== 'stop' && !bucketCfg?.enabled && onlyGroupIndex == null && conditionGroupIndex == null && !onlyStrategyKey) return;
+    if (passMode === 'buy' && !bucketCfg?.enabled && onlyGroupIndex == null && conditionGroupIndex == null && !onlyStrategyKey) return;
     if (onlyBucket && onlyBucket !== bucketKey) return;
     let stopGroupsAll = bucketCfg?.groups || [];
-    if (onlyGroupIndex != null) {
+    if (onlyGroupIndex != null && passMode !== 'buy') {
       const g = stopGroupsAll[onlyGroupIndex];
       if (!g) return;
       stopGroupsAll = [g];
@@ -913,7 +944,11 @@ async function runBettingPass({
     const onlineProduct = await productService.findOnlineProductForBucket(bucketKey);
     const condLib = cfg.condition?.buckets?.[bucketKey]?.groups || [];
     let entryGroupsAll = [];
-    if (onlineProduct) {
+    if (conditionGroupIndex != null && passMode === 'buy') {
+      const g = condLib[conditionGroupIndex];
+      if (!g) return;
+      entryGroupsAll = [{ ...g, joinPrev: 'or' }];
+    } else if (onlineProduct) {
       const betSel = Array.isArray(onlineProduct.bettingSelect) ? onlineProduct.bettingSelect : [];
       const condSel = Array.isArray(onlineProduct.conditionSelect) ? onlineProduct.conditionSelect : [];
       const sel = betSel.length ? betSel : condSel;
@@ -932,6 +967,10 @@ async function runBettingPass({
           ...strategyKeysFromGroups(entryGroupsAll),
           ...strategyKeysFromGroups(stopGroupsAll),
         ])];
+    if (!skList.length && conditionGroupIndex != null && entryGroupsAll.length === 1) {
+      const cgSk = groupStrategyKey(entryGroupsAll[0]);
+      if (cgSk) skList = [cgSk];
+    }
     if (!skList.length) skList = [''];
 
     let bundle = bucketKey === 'inplay'
@@ -954,7 +993,7 @@ async function runBettingPass({
         entryGroups = filterByStrategyKey(condLib, sk);
       }
       if (!stopGroups.length && !entryGroups.length) continue;
-      if (passMode === 'buy' && !bucketCfg?.enabled) continue;
+      if (passMode === 'buy' && !bucketCfg?.enabled && conditionGroupIndex == null) continue;
       let effectiveMode = passMode;
       if (passMode === 'both' && !bucketCfg?.enabled && sk) {
         if (!stopGroups.length) continue;
@@ -1005,9 +1044,60 @@ async function runBettingPass({
     buckets: results,
     onlyBucket,
     onlyGroupIndex,
+    conditionGroupIndex,
     onlyStrategyKey: onlyStrategyKey || null,
     mode: passMode,
   };
+}
+
+/**
+ * 订单改挂止损组：同步 Redis 持仓策略键
+ */
+async function reassignBettingStrategy({
+  userId,
+  product,
+  eventId,
+  strategyKey,
+  oldStrategyKey = null,
+} = {}) {
+  const uid = String(Number(userId) || 0);
+  const prod = String(product || '').toLowerCase();
+  const id = String(eventId || '').trim();
+  const newSk = String(strategyKey || '').trim();
+  if (!uid || uid === '0' || !id || !newSk) {
+    return { ok: false, error: 'missing userId/eventId/strategyKey' };
+  }
+  if (!['tennis-prematch', 'tennis-inplay'].includes(prod)) {
+    return { ok: false, error: 'invalid product' };
+  }
+  const state = await loadState();
+  ensureUidState(state, uid);
+  const placed = new Set((state.placed[uid][prod] || []).map(String));
+  const oldCandidates = oldStrategyKey
+    ? [String(oldStrategyKey).trim()]
+    : listStrategyKeysForEvent(placed, id);
+  let moved = false;
+  for (const oldSk of oldCandidates) {
+    if (!oldSk || oldSk === newSk) continue;
+    if (!hasStrategyEvent(placed, oldSk, id) && !(oldSk === '_' && hasLegacyEvent(placed, id))) continue;
+    const shares = getStakeShares(state, uid, prod, oldSk, id);
+    if (oldSk !== '_') {
+      placed.delete(strategyEventKey(oldSk, id));
+    } else {
+      placed.delete(id);
+    }
+    clearStakeShares(state, uid, prod, oldSk, id);
+    markStrategyEvent(placed, newSk, id);
+    if (shares > 0) setStakeShares(state, uid, prod, newSk, id, shares);
+    moved = true;
+    break;
+  }
+  if (!moved) {
+    markStrategyEvent(placed, newSk, id);
+  }
+  state.placed[uid][prod] = [...placed].slice(-2000);
+  await saveState(state);
+  return { ok: true, strategyKey: newSk, product: prod, eventId: id };
 }
 
 module.exports = {
@@ -1016,6 +1106,7 @@ module.exports = {
   saveState,
   markPlacedFromOrders,
   markSoldFromOrders,
+  reassignBettingStrategy,
   shouldStopLoss,
   passesEntry,
 };

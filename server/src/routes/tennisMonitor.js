@@ -824,6 +824,41 @@ router.get('/engines/betting-orders', async (req, res) => {
   }
 });
 
+router.patch('/engines/betting-orders/:id/stop-group', async (req, res) => {
+  try {
+    const tennisEngines = require('../services/tennisEngines');
+    const tennisBettingEngine = require('../services/tennisBettingEngine');
+    const tradeRecords = require('../services/tradeRecords');
+    const cfg = await tennisEngines.getConfig();
+    const uid = Number(cfg.betting?.userId) || 0;
+    if (!uid) return res.status(400).json({ ok: false, error: '未配置投注用户' });
+    const strategyKey = String(req.body?.strategyKey || '').trim();
+    const bucket = String(req.body?.bucket || '').trim();
+    if (!strategyKey) return res.status(400).json({ ok: false, error: '请选择止损组' });
+    const list = await tradeRecords.listTradeRecords(uid, { product: 'tennis-family', limit: 200 });
+    const row = (list.items || []).find((x) => Number(x.id) === Number(req.params.id));
+    if (!row) return res.status(404).json({ ok: false, error: '订单不存在' });
+    const product = String(row.product || '').toLowerCase().includes('inplay') ? 'tennis-inplay' : 'tennis-prematch';
+    const bk = bucket || (product.includes('inplay') ? 'inplay' : 'prematch');
+    await tennisBettingEngine.reassignBettingStrategy({
+      userId: uid,
+      product,
+      eventId: row.market,
+      strategyKey,
+      oldStrategyKey: row.strategyKey || null,
+    });
+    const data = await tradeRecords.updateTradeRecordStrategy(req.params.id, {
+      userId: uid,
+      strategyKey,
+      bucket: bk,
+    });
+    res.json({ ok: true, ...data, strategyKey, bucket: bk });
+  } catch (err) {
+    console.error('[tennis-monitor/engines/betting-orders/stop-group]', err);
+    res.status(500).json({ ok: false, error: err.message || '挂止损组失败' });
+  }
+});
+
 router.delete('/engines/betting-orders/:id', async (req, res) => {
   try {
     const tennisEngines = require('../services/tennisEngines');

@@ -139,7 +139,10 @@ function normalizeGroup(g) {
     : base.firstSetExcludeScore;
   return {
     id,
-    strategyKey: g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '',
+    strategyKey: (() => {
+      const sk = g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '';
+      return sk || id;
+    })(),
     name: g.name != null ? String(g.name).slice(0, 40) : '',
     joinPrev: String(g.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or',
     linkPrematch: g.linkPrematch === true,
@@ -248,7 +251,10 @@ function normalizeBettingGroup(g, kind = 'inplay') {
     : base.amountUsd;
   return {
     id,
-    strategyKey: g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '',
+    strategyKey: (() => {
+      const sk = g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '';
+      return sk || id;
+    })(),
     name: g.name != null ? String(g.name).slice(0, 40) : '',
     joinPrev: join === 'and' ? 'and' : 'or',
     amountUsd,

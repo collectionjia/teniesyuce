@@ -6,6 +6,13 @@ const tennisThreeBuckets = require('./tennisThreeBuckets');
 const tennisInplayTick = require('./tennisInplayTick');
 const tennisBettingEngine = require('./tennisBettingEngine');
 const store = require('./schedulerStore');
+const schedulerTelegram = require('./schedulerTelegram');
+
+function fireTelegramNotify(ctx) {
+  void schedulerTelegram.notifyRun(ctx).catch((e) => {
+    console.warn('[scheduler/telegram]', e?.message || e);
+  });
+}
 
 /** jobId -> 本地定时互斥（单进程）；manual 不占用 */
 const scheduleLocks = new Map();
@@ -110,13 +117,25 @@ async function executeJobType(job, params = {}) {
         return Number(bundle.live?.eventCount || bundle.events || (bundle.live?.matches || []).length || 0);
       }
 
+      let betting = null;
       for (const key of keys) {
         let bundle = await caches[key].getBundle();
         const before = countBundle(key, bundle);
+        let matched = false;
         if (bundle && (cfg.condition?.buckets?.[key]?.enabled)) {
           const full = cfg.condition?.buckets?.[key];
           let groups = full?.groups || [];
-          if (groupIndex != null && groups[groupIndex]) {
+          if (groupIndex != null) {
+            if (!groups[groupIndex]) {
+              metrics[key] = {
+                before,
+                after: before,
+                groupName: params.groupName || null,
+                groupIndex,
+                error: 'condition group not found',
+              };
+              continue;
+            }
             groups = [groups[groupIndex]];
           }
           const useBucket = { enabled: true, groups };
@@ -128,13 +147,30 @@ async function executeJobType(job, params = {}) {
             }
           }
         }
+        const after = countBundle(key, bundle);
+        matched = after > 0 && groupIndex != null && (key === 'prematch' || key === 'inplay');
         metrics[key] = {
           before,
-          after: countBundle(key, bundle),
+          after,
           groupName: params.groupName || null,
           groupIndex,
+          matched,
         };
+        if (matched) {
+          try {
+            betting = await tennisBettingEngine.runBettingPass({
+              amountUsd: Number(params.amountUsd ?? cfg.betting?.amountUsd ?? 1),
+              userId: params.userId ?? cfg.betting?.userId,
+              onlyBucket: key,
+              conditionGroupIndex: groupIndex,
+              mode: 'buy',
+            });
+          } catch (e) {
+            betting = { ok: false, error: e.message };
+          }
+        }
       }
+      if (betting) metrics.betting = betting;
       return { message: 'condition.query done', metrics };
     }
     case 'bet.scan': {
@@ -194,6 +230,7 @@ async function runJob(jobId, trigger = 'manual') {
     }
     const runId = await store.startRun({ jobId, trigger });
     await store.finishRun(runId, { status: 'skipped', message: gate.reason });
+    fireTelegramNotify({ job, trigger, status: 'skipped', message: gate.reason });
     return { accepted: true, runId, status: 'skipped', message: gate.reason };
   }
 
@@ -221,12 +258,18 @@ async function runJob(jobId, trigger = 'manual') {
           message: result.message || 'skipped',
           metrics: result.metrics || null,
         });
+        fireTelegramNotify({
+          job, trigger, status: 'skipped', message: result.message, metrics: result.metrics,
+        });
         return { accepted: true, runId, status: 'skipped', message: result.message };
       }
       await store.finishRun(runId, {
         status: 'success',
         message: result?.message || 'ok',
         metrics: result?.metrics || null,
+      });
+      fireTelegramNotify({
+        job, trigger, status: 'success', message: result?.message, metrics: result?.metrics,
       });
       return { accepted: true, runId, status: 'success', message: result?.message, metrics: result?.metrics };
     } catch (e) {
@@ -235,6 +278,7 @@ async function runJob(jobId, trigger = 'manual') {
         status: 'failed',
         error: e.message || String(e),
       });
+      fireTelegramNotify({ job, trigger, status: 'failed', error: e.message || String(e) });
       return { accepted: true, runId, status: 'failed', error: e.message || String(e) };
     } finally {
       if (trigger === 'schedule') {
@@ -252,6 +296,9 @@ async function runJob(jobId, trigger = 'manual') {
         // 只记超时状态，不解锁：等 work.finally 释放，避免超时后重叠跑 bet.scan
         try {
           await store.finishRun(runId, { status: 'timeout', error: `timeout ${job.timeoutSec}s` });
+          fireTelegramNotify({
+            job, trigger, status: 'timeout', error: `timeout ${job.timeoutSec}s`,
+          });
         } catch { /* ignore */ }
         resolve({ accepted: true, runId, status: 'timeout' });
       }, timeoutMs);
