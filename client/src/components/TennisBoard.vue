@@ -131,7 +131,9 @@ const {
   selectError,
   selectNotice,
   libraryGroups,
+  linkedLibraryGroups,
   productSelectCond,
+  productConditionGroupId,
   canEditConditionRules,
   conditionBucketLabel,
   canEditProductSelect,
@@ -143,6 +145,7 @@ const {
   addSelectRow,
   removeSelectRow,
   setSelectRowField,
+  setProductConditionGroupId,
   saveProductSelect,
   setConditionGroupField,
   addConditionGroup,
@@ -2046,6 +2049,9 @@ async function loadOnce({
     if (props.isMember && (isPrematchMode.value || isInplayMode.value || isSettledMode.value)) {
       qs.set('applyCondition', '1')
     }
+    if (props.productId != null && props.productId !== '') {
+      qs.set('productId', String(props.productId))
+    }
     const query = qs.toString()
     const res = await fetch(`${apiPath.value}/today${query ? `?${query}` : ''}`, {
       cache: 'no-store',
@@ -2342,7 +2348,9 @@ defineExpose({
       :select-loading="selectLoading"
       :select-saving="selectSaving"
       :product-select-cond="productSelectCond"
+      :product-condition-group-id="productConditionGroupId"
       :library-groups="libraryGroups"
+      :linked-library-groups="linkedLibraryGroups"
       :condition-group-label="conditionGroupLabel"
       :set-condition-group-field="setConditionGroupField"
       :remove-condition-group="removeConditionGroup"
@@ -2351,6 +2359,7 @@ defineExpose({
       :add-select-row="addSelectRow"
       :save-product-select="saveProductSelect"
       :set-select-row-field="setSelectRowField"
+      :set-product-condition-group-id="setProductConditionGroupId"
       :remove-select-row="removeSelectRow"
       :open-admin-engine="openAdminEngine"
     />

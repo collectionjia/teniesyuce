@@ -257,12 +257,24 @@ async function loadProductEngineGroups(bucket) {
   try {
     const data = await api.fetchTennisEngines()
     const groups = data?.condition?.buckets?.[bucket]?.groups || []
-    productEngineGroups.value = Array.isArray(groups) ? groups : []
+    const list = Array.isArray(groups) ? groups : []
+    productEngineGroups.value = bucket === 'prematch'
+      ? list.filter((g) => g?.linkPrematch === true)
+      : list
   } catch {
     productEngineGroups.value = []
   } finally {
     productEngineGroupsLoading.value = false
   }
+}
+
+function productConditionGroupId() {
+  return adminModal.form.conditionSelect?.[0]?.id || ''
+}
+
+function setProductConditionGroupId(id) {
+  const next = id != null && String(id).trim() ? String(id).trim() : ''
+  adminModal.form.conditionSelect = next ? [{ id: next, joinPrev: 'or' }] : []
 }
 
 function addProductSelectRow(field) {
@@ -4561,41 +4573,22 @@ function productEmbedUrl(product) {
                   <div v-if="productEngineGroupsLoading" class="text-xs text-slate-400">加载条件组…</div>
                   <div v-else-if="!productEngineGroups.length" class="text-xs text-amber-600">该桶暂无条件组，请先到条件引擎创建</div>
                   <template v-else>
-                    <div>
-                      <div class="flex items-center justify-between mb-1.5">
-                        <div class="text-xs text-slate-500">列表筛选条件（多选 + AND/OR）</div>
-                        <button type="button" class="text-xs text-primary-600" @click="addProductSelectRow('conditionSelect')">添加</button>
-                      </div>
-                      <div v-if="!(adminModal.form.conditionSelect || []).length" class="text-[11px] text-slate-400">未选择则不按产品条件筛选</div>
-                      <div
-                        v-for="(row, ri) in (adminModal.form.conditionSelect || [])"
-                        :key="'cs-' + ri"
-                        class="space-y-1 mb-2"
+                    <div v-if="productFormBucket(adminModal.form) === 'prematch'">
+                      <div class="text-xs text-slate-500 mb-1.5">未开赛列表筛选条件组</div>
+                      <select
+                        :value="productConditionGroupId()"
+                        class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
+                        :disabled="!productEngineGroups.length"
+                        @change="setProductConditionGroupId($event.target.value)"
                       >
-                        <select
-                          v-if="ri > 0"
-                          :value="row.joinPrev || 'or'"
-                          class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs"
-                          @change="setProductSelectField('conditionSelect', ri, 'joinPrev', $event.target.value)"
-                        >
-                          <option value="or">或 OR</option>
-                          <option value="and">且 AND</option>
-                        </select>
-                        <div class="flex gap-2">
-                          <select
-                            :value="row.id"
-                            class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
-                            @change="setProductSelectField('conditionSelect', ri, 'id', $event.target.value)"
-                          >
-                            <option
-                              v-for="(g, gi) in productEngineGroups"
-                              :key="g.id || gi"
-                              :value="g.id"
-                            >{{ conditionGroupLabel(g, gi) }}</option>
-                          </select>
-                          <button type="button" class="text-xs text-rose-500 px-2" @click="removeProductSelectRow('conditionSelect', ri)">删</button>
-                        </div>
-                      </div>
+                        <option value="">不按条件筛选</option>
+                        <option
+                          v-for="(g, gi) in productEngineGroups"
+                          :key="g.id || gi"
+                          :value="g.id"
+                        >{{ conditionGroupLabel(g, gi) }}</option>
+                      </select>
+                      <p class="text-[11px] text-slate-400 mt-1">仅显示条件引擎中勾选「关联未开赛」的组；选用后打开本产品页将按该组筛选</p>
                     </div>
                     <div>
                       <div class="flex items-center justify-between mb-1.5">

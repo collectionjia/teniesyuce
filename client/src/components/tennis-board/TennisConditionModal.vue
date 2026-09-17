@@ -19,7 +19,9 @@ defineProps({
   selectLoading: { type: Boolean, default: false },
   selectSaving: { type: Boolean, default: false },
   productSelectCond: { type: Array, default: () => [] },
+  productConditionGroupId: { type: String, default: '' },
   libraryGroups: { type: Array, default: () => [] },
+  linkedLibraryGroups: { type: Array, default: () => [] },
   conditionGroupLabel: { type: Function, required: true },
   setConditionGroupField: { type: Function, required: true },
   removeConditionGroup: { type: Function, required: true },
@@ -28,6 +30,7 @@ defineProps({
   addSelectRow: { type: Function, required: true },
   saveProductSelect: { type: Function, required: true },
   setSelectRowField: { type: Function, required: true },
+  setProductConditionGroupId: { type: Function, required: true },
   removeSelectRow: { type: Function, required: true },
   openAdminEngine: { type: Function, required: true },
 })
@@ -65,18 +68,19 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
             </div>
             <div v-for="(g, gi) in conditionGroups" :key="g.id || gi" class="admin-rule-group">
               <div class="admin-rule-head">
-                <select
-                  v-if="gi > 0"
-                  class="admin-rule-join"
-                  :value="g.joinPrev || 'or'"
-                  :disabled="rulesSaving"
-                  title="与上一组的连接"
-                  @change="setConditionGroupField(gi, 'joinPrev', $event.target.value)"
+                <label
+                  v-if="isPrematchMode"
+                  class="admin-toggle admin-rule-link"
+                  title="勾选后可在产品管理中挂载到未开赛产品"
                 >
-                  <option value="or">或 OR</option>
-                  <option value="and">且 AND</option>
-                </select>
-                <span v-else class="admin-rule-join-label">首组</span>
+                  <input
+                    type="checkbox"
+                    :checked="!!g.linkPrematch"
+                    :disabled="rulesSaving"
+                    @change="setConditionGroupField(gi, 'linkPrematch', $event.target.checked)"
+                  >
+                  <span>关联未开赛</span>
+                </label>
                 <input
                   class="admin-rule-name"
                   type="text"
@@ -161,44 +165,37 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
                 </template>
               </div>
             </div>
-            <p class="admin-rules-hint">组内字段「且」· 多组用「或 / 且」左结合连接。</p>
+            <p class="admin-rules-hint">各条件组相互独立；组内字段「且」。盘前组可勾选「关联未开赛」供产品挂载。</p>
 
-            <!-- 多组时：本产品选用哪些组（盘前/盘中一致） -->
-            <template v-if="canEditProductSelect && needsConditionGroupSelect">
-              <div class="admin-select-section-title">本产品选用条件组</div>
+            <template v-if="canEditProductSelect && isPrematchMode">
+              <div class="admin-select-section-title">本产品筛选条件组</div>
               <p v-if="selectError" class="admin-rules-msg err">{{ selectError }}</p>
               <p v-if="selectNotice" class="admin-rules-msg ok">{{ selectNotice }}</p>
               <div v-if="selectLoading" class="admin-rules-hint">加载挂载中…</div>
               <template v-else>
-                <div class="admin-rules-toggles">
-                  <button type="button" class="chip-btn" :disabled="selectSaving" @click="addSelectRow('cond')">添加一组</button>
+                <div class="admin-select-row-main">
+                  <select
+                    class="admin-rule-name"
+                    :value="productConditionGroupId"
+                    :disabled="selectSaving || !needsConditionGroupSelect"
+                    @change="setProductConditionGroupId($event.target.value)"
+                  >
+                    <option value="">不按条件筛选</option>
+                    <option
+                      v-for="(g, gi) in linkedLibraryGroups"
+                      :key="g.id || gi"
+                      :value="g.id"
+                    >{{ conditionGroupLabel(g, gi) }}</option>
+                  </select>
                   <button type="button" class="chip-btn active" :disabled="selectSaving" @click="saveProductSelect('condition')">
                     {{ selectSaving ? '保存中…' : '保存选用' }}
                   </button>
                 </div>
-                <div v-if="!productSelectCond.length" class="admin-rules-hint">多组时请选择本产品要用的组；未选则列表使用引擎全部组</div>
-                <div v-for="(row, ri) in productSelectCond" :key="'pcs-' + ri" class="admin-select-row">
-                  <select
-                    v-if="ri > 0"
-                    class="admin-rule-join"
-                    :value="row.joinPrev || 'or'"
-                    :disabled="selectSaving"
-                    @change="setSelectRowField('cond', ri, 'joinPrev', $event.target.value)"
-                  >
-                    <option value="or">或 OR</option>
-                    <option value="and">且 AND</option>
-                  </select>
-                  <div class="admin-select-row-main">
-                    <select class="admin-rule-name" :value="row.id" :disabled="selectSaving" @change="setSelectRowField('cond', ri, 'id', $event.target.value)">
-                      <option v-for="(g, gi) in libraryGroups" :key="g.id || gi" :value="g.id">{{ conditionGroupLabel(g, gi) }}</option>
-                    </select>
-                    <button type="button" class="chip-btn" :disabled="selectSaving" @click="removeSelectRow('cond', ri)">删</button>
-                  </div>
-                </div>
+                <p v-if="!needsConditionGroupSelect" class="admin-rules-hint">请先在上方创建并勾选「关联未开赛」的条件组</p>
+                <p v-else class="admin-rules-hint">选用后，打开本产品页将按该组条件筛选列表</p>
               </template>
             </template>
-            <p v-else-if="canEditProductSelect === false" class="admin-rules-hint">缺少产品 ID 时无法按产品选用多组</p>
-            <p v-else-if="canEditProductSelect && !needsConditionGroupSelect" class="admin-rules-hint">仅一组时无需再选用，列表直接用上方条件组。</p>
+            <p v-else-if="canEditProductSelect === false" class="admin-rules-hint">缺少产品 ID 时无法配置产品筛选条件</p>
           </template>
         </div>
       </div>

@@ -14,20 +14,29 @@ const JOB_TYPE_DEFS = {
     defaultTimeout: 300,
     label: '采集引擎 · 全量拆三桶',
     category: 'collect',
+    hidden: true,
   },
   'collect.top100': {
     engine: 'collect',
     requireEngineOn: 'collect',
     defaultTimeout: 900,
-    label: '采集引擎 · Top100 collect.py',
+    label: 'Top100 全量采集',
     category: 'collect',
+    intervalUnit: 'hour',
+    intervalPresets: [6, 12],
+    defaultIntervalSec: 6 * 3600,
+    defaultName: 'Top100 全量采集',
   },
   'collect.inplay_tick': {
     engine: 'collect',
     requireEngineOn: 'collect',
-    defaultTimeout: 60,
-    label: '采集引擎 · 盘中 tick',
+    defaultTimeout: 120,
+    label: '盘中比分刷新',
     category: 'collect',
+    intervalUnit: 'second',
+    intervalPresets: [30, 60],
+    defaultIntervalSec: 60,
+    defaultName: '盘中比分刷新',
   },
   'condition.query': {
     engine: 'condition',
@@ -42,6 +51,7 @@ const JOB_TYPE_DEFS = {
     defaultTimeout: 120,
     label: '投注引擎 · 扫描下单',
     category: 'betting',
+    hidden: true,
   },
   'bet.stop_loss': {
     engine: 'bet',
@@ -54,30 +64,30 @@ const JOB_TYPE_DEFS = {
 
 const PRESET_JOBS = [
   {
-    id: 'job_collect_full',
-    name: '采集全量拆三桶',
-    job_type: 'collect.full',
+    id: 'job_collect_top100',
+    name: 'Top100 全量采集',
+    job_type: 'collect.top100',
     engine: 'collect',
-    enabled: 1,
+    enabled: 0,
     schedule_mode: 'interval',
-    interval_sec: 120,
-    mutex_key: 'job_collect_full',
+    interval_sec: 6 * 3600,
+    mutex_key: 'job_collect_top100',
     skip_if_running: 1,
     require_engine_on: 'collect',
-    timeout_sec: 300,
+    timeout_sec: 900,
   },
   {
     id: 'job_collect_inplay_tick',
-    name: '盘中 tick',
+    name: '盘中比分刷新',
     job_type: 'collect.inplay_tick',
     engine: 'collect',
     enabled: 0,
     schedule_mode: 'interval',
-    interval_sec: 5,
+    interval_sec: 60,
     mutex_key: 'job_collect_inplay_tick',
     skip_if_running: 1,
     require_engine_on: 'collect',
-    timeout_sec: 60,
+    timeout_sec: 120,
   },
   {
     id: 'job_condition_query',
@@ -183,32 +193,35 @@ async function ensureTables() {
       );
     }
   } else {
-    // 已有库：仅补齐「条件引擎」预置（不存在才插入，不恢复用户已删任务）
-    const cond = PRESET_JOBS.find((j) => j.id === 'job_condition_query');
-    if (cond) {
+    // 已有库：补齐预置（不存在才插入，不恢复用户已删任务）
+    for (const presetId of ['job_collect_top100', 'job_collect_inplay_tick', 'job_condition_query']) {
+      const j = PRESET_JOBS.find((row) => row.id === presetId);
+      if (!j) continue;
       await pool.query(
         `INSERT IGNORE INTO scheduler_jobs
           (id, name, job_type, engine, enabled, schedule_mode, interval_sec,
            mutex_key, skip_if_running, require_engine_on, timeout_sec)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          cond.id,
-          cond.name,
-          cond.job_type,
-          cond.engine,
-          cond.enabled,
-          cond.schedule_mode,
-          cond.interval_sec,
-          cond.mutex_key,
-          cond.skip_if_running,
-          cond.require_engine_on,
-          cond.timeout_sec,
+          j.id,
+          j.name,
+          j.job_type,
+          j.engine,
+          j.enabled,
+          j.schedule_mode,
+          j.interval_sec,
+          j.mutex_key,
+          j.skip_if_running,
+          j.require_engine_on,
+          j.timeout_sec,
         ]
       );
     }
   }
-  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_inplay_tick'`);
-  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_top100'`);
+  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_full'`);
+  await pool.query(
+    `UPDATE scheduler_jobs SET name='盘中比分刷新' WHERE id='job_collect_inplay_tick' AND job_type='collect.inplay_tick'`,
+  );
   ready = true;
 }
 
@@ -287,6 +300,32 @@ function newJobId() {
   return `job_${crypto.randomBytes(8).toString('hex')}`;
 }
 
+function parseParamsJson(raw) {
+  if (raw == null) return null;
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return null;
+  }
+}
+
+function paramsGroupMatch(a, b) {
+  return String(a?.bucket ?? '') === String(b?.bucket ?? '')
+    && Number(a?.groupIndex) === Number(b?.groupIndex);
+}
+
+async function findDuplicateJobSlot(jobType, params) {
+  const [rows] = await pool.query('SELECT job_type, params_json FROM scheduler_jobs WHERE job_type=?', [jobType]);
+  if (String(jobType).startsWith('collect.')) {
+    return rows.length ? rows[0] : null;
+  }
+  for (const row of rows) {
+    const p = parseParamsJson(row.params_json);
+    if (paramsGroupMatch(p, params)) return row;
+  }
+  return null;
+}
+
 async function createJob(input = {}) {
   await ensureTables();
   const jobType = String(input.jobType || '').trim();
@@ -294,6 +333,16 @@ async function createJob(input = {}) {
   if (!def) {
     const err = new Error(`unsupported jobType: ${jobType}`);
     err.status = 400;
+    throw err;
+  }
+  const dup = await findDuplicateJobSlot(jobType, input.params);
+  if (dup) {
+    const err = new Error(
+      String(jobType).startsWith('collect.')
+        ? `任务类型 ${def.label || jobType} 已存在，无需重复添加`
+        : '该分组已存在调度任务，无需重复添加',
+    );
+    err.status = 409;
     throw err;
   }
   const scheduleMode = input.scheduleMode === 'daily' ? 'daily' : 'interval';
@@ -502,10 +551,12 @@ async function hasRunningSchedule(jobId) {
 }
 
 function listJobTypeDefs() {
-  return Object.entries(JOB_TYPE_DEFS).map(([jobType, def]) => ({
-    jobType,
-    ...def,
-  }));
+  return Object.entries(JOB_TYPE_DEFS)
+    .filter(([, def]) => !def.hidden)
+    .map(([jobType, def]) => ({
+      jobType,
+      ...def,
+    }));
 }
 
 const BUCKET_LABEL = {
@@ -518,13 +569,27 @@ const BUCKET_LABEL = {
  * 调度任务「名称」下拉选项：
  * - 采集：固定「采集」
  * - 条件：条件引擎各桶分组 name
- * - 投注：投注引擎各桶分组 name（买入扫描）
- * - 止损：投注引擎各桶分组 name（止损扫描，与买入共用组配置）
+ * - 止损：投注引擎各桶分组 name（止损扫描）
  */
 async function listNameOptions() {
   const tennisEngines = require('./tennisEngines');
   const cfg = await tennisEngines.getConfig();
-  const collect = [{ key: 'collect', value: '采集', label: '采集', category: 'collect' }];
+  const collect = [
+    {
+      key: 'collect:top100',
+      value: 'Top100 全量采集',
+      label: 'Top100 全量采集',
+      category: 'collect',
+      jobType: 'collect.top100',
+    },
+    {
+      key: 'collect:inplay',
+      value: '盘中比分刷新',
+      label: '盘中比分刷新',
+      category: 'collect',
+      jobType: 'collect.inplay_tick',
+    },
+  ];
 
   const condition = [];
   for (const bucket of ['prematch', 'inplay', 'settled']) {
@@ -543,33 +608,24 @@ async function listNameOptions() {
     });
   }
 
-  const betting = [];
   const stop = [];
   for (const bucket of ['prematch', 'inplay']) {
     const groups = cfg.betting?.buckets?.[bucket]?.groups || [];
     groups.forEach((g, groupIndex) => {
       const groupName = (g?.name && String(g.name).trim()) || `未命名组${groupIndex + 1}`;
-      const base = {
+      stop.push({
+        key: `stop:${bucket}:${groupIndex}`,
+        category: 'stop',
         value: groupName,
         label: `${BUCKET_LABEL[bucket] || bucket} · ${groupName}`,
         bucket,
         groupIndex,
         groupName,
-      };
-      betting.push({
-        ...base,
-        key: `betting:${bucket}:${groupIndex}`,
-        category: 'betting',
-      });
-      stop.push({
-        ...base,
-        key: `stop:${bucket}:${groupIndex}`,
-        category: 'stop',
       });
     });
   }
 
-  return { collect, condition, betting, stop };
+  return { collect, condition, stop };
 }
 
 module.exports = {

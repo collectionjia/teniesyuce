@@ -6,8 +6,10 @@ function wantApplyCondition(req) {
 
 async function bundleWithOptionalCondition(req, bucket, bundle) {
   if (!bundle || !wantApplyCondition(req)) return bundle;
+  const rawPid = req.query?.productId ?? req.query?.product_id;
+  const productId = rawPid != null && String(rawPid).trim() ? String(rawPid).trim() : null;
   const tennisConditionApply = require('./tennisConditionApply');
-  return tennisConditionApply.maybeApplyCondition(bucket, bundle);
+  return tennisConditionApply.maybeApplyCondition(bucket, bundle, productId);
 }
 
 module.exports = {

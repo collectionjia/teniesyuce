@@ -6,6 +6,7 @@ function emptyConditionGroup() {
     id: `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
     joinPrev: 'or',
+    linkPrematch: false,
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
@@ -64,7 +65,11 @@ export function useTennisConditionRules({
   const canEditProductSelect = computed(
     () => props.canEditRules && props.productId != null && props.productId !== '' && (isPrematchMode.value || isInplayMode.value),
   )
-  const needsConditionGroupSelect = computed(() => libraryGroups.value.length > 1)
+  const linkedLibraryGroups = computed(() => {
+    if (!isPrematchMode.value) return libraryGroups.value
+    return libraryGroups.value.filter((g) => g?.linkPrematch === true)
+  })
+  const needsConditionGroupSelect = computed(() => linkedLibraryGroups.value.length > 0)
 
   const rulesSummary = computed(() => {
     const n = conditionGroups.value.length
@@ -142,8 +147,9 @@ export function useTennisConditionRules({
 
   function addSelectRow(field) {
     const list = field === 'bet' ? [...productSelectBet.value] : [...productSelectCond.value]
-    const firstUnused = libraryGroups.value.find((g) => !list.some((r) => String(r.id) === String(g.id)))
-    const id = firstUnused?.id || libraryGroups.value[0]?.id || ''
+    const pool = isPrematchMode.value ? linkedLibraryGroups.value : libraryGroups.value
+    const firstUnused = pool.find((g) => !list.some((r) => String(r.id) === String(g.id)))
+    const id = firstUnused?.id || pool[0]?.id || ''
     if (!id) {
       selectError.value = `请先创建${conditionBucketLabel.value}条件组`
       return
@@ -159,6 +165,13 @@ export function useTennisConditionRules({
     if (list[0]) list[0] = { ...list[0], joinPrev: 'or' }
     if (field === 'bet') productSelectBet.value = list
     else productSelectCond.value = list
+  }
+
+  const productConditionGroupId = computed(() => productSelectCond.value[0]?.id || '')
+
+  function setProductConditionGroupId(id) {
+    const next = id != null && String(id).trim() ? String(id).trim() : ''
+    productSelectCond.value = next ? [{ id: next, joinPrev: 'or' }] : []
   }
 
   function setSelectRowField(field, index, key, value) {
@@ -207,9 +220,23 @@ export function useTennisConditionRules({
     }
   }
 
-  async function loadConditionRules() {
+  function hydrateConditionRulesFromCache() {
+    const cached = api.peekTennisEnginesCache?.({ allowStale: true })
+    if (!cached?.condition?.buckets) return false
+    const key = conditionBucketKey.value
+    const bucket = cached.condition.buckets[key] || {}
+    conditionBucketOn.value = !!bucket.enabled
+    const groups = Array.isArray(bucket.groups) ? bucket.groups : []
+    conditionGroups.value = groups.length
+      ? groups.map((g) => ({ ...emptyConditionGroup(), ...g, strongRankMax: 'all' }))
+      : [emptyConditionGroup()]
+    libraryGroups.value = groups
+    return true
+  }
+
+  async function loadConditionRules({ background = false } = {}) {
     if (!canEditConditionRules.value) return
-    rulesLoading.value = true
+    if (!background || !conditionGroups.value.length) rulesLoading.value = true
     rulesError.value = ''
     try {
       const cfg = await api.fetchTennisEngines()
@@ -236,7 +263,7 @@ export function useTennisConditionRules({
       g[key] = raw === 'and' ? 'and' : 'or'
     } else if (key === 'name') {
       g[key] = String(raw || '').slice(0, 40)
-    } else if (['requireWonFirstSet', 'firstSetExcludeEnabled'].includes(key)) {
+    } else if (['requireWonFirstSet', 'firstSetExcludeEnabled', 'linkPrematch'].includes(key)) {
       g[key] = !!raw
     } else {
       g[key] = raw
@@ -294,12 +321,12 @@ export function useTennisConditionRules({
     selectError.value = ''
     rulesNotice.value = ''
     rulesError.value = ''
-    // 先开弹窗，条件/产品选择后台加载
     conditionModalOpen.value = true
     if (canEditConditionRules.value) {
+      const hadCache = hydrateConditionRulesFromCache()
       void (async () => {
         await Promise.all([
-          loadConditionRules(),
+          loadConditionRules({ background: hadCache }),
           loadProductSelect(),
         ])
       })()
@@ -321,8 +348,10 @@ export function useTennisConditionRules({
     selectError,
     selectNotice,
     libraryGroups,
+    linkedLibraryGroups,
     productSnapshot,
     productSelectCond,
+    productConditionGroupId,
     productSelectBet,
     canEditConditionRules,
     conditionBucketKey,
@@ -338,6 +367,7 @@ export function useTennisConditionRules({
     addSelectRow,
     removeSelectRow,
     setSelectRowField,
+    setProductConditionGroupId,
     saveProductSelect,
     loadConditionRules,
     setConditionGroupField,

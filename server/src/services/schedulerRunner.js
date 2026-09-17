@@ -82,15 +82,11 @@ async function executeJobType(job, params = {}) {
       if (isVirtual) {
         return {
           skipped: true,
-          message: '虚拟(txt)模式跳过官网 tick / Polymarket 采集',
+          message: '虚拟(txt)模式跳过盘中比分刷新',
         };
       }
-      const cfg = await tennisEngines.getConfig();
-      if (cfg.collect?.inplay_tick_enabled === false) {
-        return { skipped: true, message: 'inplay_tick disabled in collect config' };
-      }
       const r = await tennisInplayTick.runInplayTick();
-      return { message: 'inplay tick done', metrics: r || {} };
+      return { message: '盘中比分刷新完成', metrics: r || {} };
     }
     case 'condition.query': {
       const tennisConditionApply = require('./tennisConditionApply');

@@ -411,6 +411,13 @@ export function invalidateTennisEnginesCache() {
   tennisEnginesCacheAt = 0
 }
 
+/** 读取本地引擎配置缓存（配置页可先展示再后台刷新） */
+export function peekTennisEnginesCache({ allowStale = false } = {}) {
+  if (!tennisEnginesCache) return null
+  if (!allowStale && (Date.now() - tennisEnginesCacheAt) >= TENNIS_ENGINES_TTL_MS) return null
+  return tennisEnginesCache
+}
+
 export async function fetchTennisEngines({ force = false } = {}) {
   if (
     !force

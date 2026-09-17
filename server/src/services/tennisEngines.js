@@ -8,7 +8,7 @@
  * 条件引擎 buckets：
  *   prematch|inplay|settled: { enabled, groups[] }
  *   groups = 条件组库（组间 AND/OR）；组内字段 AND
- *   组字段：id / name / joinPrev / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankGt / strongRankLt / gapMode
+ *   组字段：id / name / linkPrematch / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankGt / strongRankLt / gapMode
  *
  * 投注引擎 buckets：
  *   prematch|inplay: { enabled, groups[] }（买入 + 盘中止损规则）
@@ -34,8 +34,10 @@ function emptyGroup() {
   return {
     id: newGroupId(),
     name: '',
-    /** 与上一组连接：or | and（首组忽略） */
+    /** 与上一组连接：or | and（首组忽略，已废弃；组间独立） */
     joinPrev: 'or',
+    /** 盘前桶：允许未开赛产品挂载本组做列表筛选 */
+    linkPrematch: false,
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
@@ -140,6 +142,7 @@ function normalizeGroup(g) {
     strategyKey: g.strategyKey != null ? String(g.strategyKey).trim().slice(0, 48) : '',
     name: g.name != null ? String(g.name).slice(0, 40) : '',
     joinPrev: String(g.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or',
+    linkPrematch: g.linkPrematch === true,
     tour: g.tour != null ? g.tour : base.tour,
     pm: g.pm != null ? g.pm : base.pm,
     gapMin: g.gapMin != null ? g.gapMin : base.gapMin,

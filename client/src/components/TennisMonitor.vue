@@ -24,6 +24,8 @@ const isBettingOrStopPage = computed(() => isBettingPage.value || isStopPage.val
 const isConfigOnlyPage = computed(
   () => isConditionPage.value || isBettingPage.value || isStopPage.value,
 )
+/** 采集页全屏 loading；条件/投注/止损页仅引擎区异步加载 */
+const pageBlockingLoading = computed(() => !isConfigOnlyPage.value && loading.value)
 
 const pageTitle = computed(() => {
   if (isConditionPage.value) return '条件引擎'
@@ -50,6 +52,7 @@ function emptyConditionGroup() {
     id: `cg_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
     name: '',
     joinPrev: 'or',
+    linkPrematch: false,
     tour: 'all',
     pm: 'all',
     gapMin: 'all',
@@ -262,7 +265,12 @@ const scheduleSaving = ref(false)
 const dataSource = ref(null)
 const dataSourceSaving = ref(false)
 const engines = ref(null)
+const enginesLoading = ref(false)
 const enginesSaving = ref(false)
+const conditionSaving = ref(false)
+const bettingSaving = ref(false)
+const conditionDraftDirty = ref(false)
+const bettingDraftDirty = ref(false)
 const playerPage = ref(1)
 const livePage = ref(1)
 const logPage = ref(1)
@@ -379,7 +387,8 @@ const pageSub = computed(() => {
 watch(
   () => engines.value?.condition?.buckets,
   (buckets) => {
-    if (buckets) conditionDraft.value = cloneConditionBuckets(buckets)
+    if (!buckets || conditionDraftDirty.value) return
+    conditionDraft.value = cloneConditionBuckets(buckets)
   },
   { deep: true, immediate: true },
 )
@@ -387,7 +396,8 @@ watch(
 watch(
   () => engines.value?.betting?.buckets,
   (buckets) => {
-    if (buckets) bettingDraft.value = cloneBettingBuckets(buckets)
+    if (!buckets || bettingDraftDirty.value) return
+    bettingDraft.value = cloneBettingBuckets(buckets)
   },
   { deep: true, immediate: true },
 )
@@ -610,10 +620,29 @@ function formatMonitorError(raw) {
   if (low.includes('403') && (low.includes('forbidden') || low.includes('拒绝'))) {
     return '数据源拒绝访问（403），请检查代理 IP'
   }
-  if (low.includes('monitor unreachable') || low.includes('502')) {
+  if (
+    low.includes('monitor unreachable')
+    || low.includes('无法连接采集监控服务')
+    || low.includes('监控服务不可达')
+    || low.includes('监控服务响应超时')
+  ) {
     return '监控服务不可达，请确认采集服务是否运行'
   }
   return msg.replace(/sofascore/gi, '').replace(/\s{2,}/g, ' ').trim() || msg
+}
+
+/** 条件/投注/止损引擎配置（MySQL），与采集 monitor 无关 */
+function formatEngineConfigError(raw) {
+  const msg = String(raw || '').trim()
+  if (!msg) return '引擎配置加载失败，请检查后端与 MySQL'
+  const low = msg.toLowerCase()
+  if (low.includes('network error') || low.includes('econnrefused') || low.includes('failed to fetch')) {
+    return '无法连接后端服务，请确认 server 已启动'
+  }
+  if (/status code 50[234]/.test(low) || low.includes('bad gateway')) {
+    return '后端服务异常，请确认 server 已启动且 MySQL 可用'
+  }
+  return msg.replace(/sofascore/gi, '').replace(/\s{2,}/g, ' ').trim() || '引擎配置加载失败'
 }
 
 function fmtTime(v) {
@@ -688,10 +717,16 @@ async function loadDataSource() {
   }
 }
 
-async function loadEngines() {
-  const data = await api.fetchTennisEngines()
-  engines.value = data
-  return data
+async function loadEngines({ background = false, force = false } = {}) {
+  const showPanelLoading = isConfigOnlyPage.value && (!background || !engines.value)
+  if (showPanelLoading) enginesLoading.value = true
+  try {
+    const data = await api.fetchTennisEngines({ force })
+    engines.value = data
+    return data
+  } finally {
+    if (showPanelLoading) enginesLoading.value = false
+  }
 }
 
 async function loadLogs() {
@@ -723,11 +758,23 @@ async function refreshAll({ silent = false } = {}) {
   }
   try {
     if (isConfigOnlyPage.value) {
-      // 管理中心配置页：只拉引擎配置（约几百 ms），绝不碰 /status
-      await loadEngines()
-      if (!engines.value) {
-        error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
-      }
+      // 配置页只拉引擎配置；有缓存/草稿时后台刷新，不挡录入
+      const background = !!engines.value
+      void loadEngines({ background, force: !background })
+        .then(() => {
+          if (!engines.value) {
+            error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
+          } else if (!silent) {
+            const kept = conditionDraftDirty.value || bettingDraftDirty.value
+            showNotice(kept ? '已刷新（本地未保存修改已保留）' : '已刷新')
+          }
+        })
+        .catch((e) => {
+          error.value = formatEngineConfigError(e?.response?.data?.error || e?.message || '加载失败')
+        })
+        .finally(() => {
+          if (!silent) refreshing.value = false
+        })
       return
     }
 
@@ -758,7 +805,7 @@ async function refreshAll({ silent = false } = {}) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
   } finally {
     loading.value = false
-    refreshing.value = false
+    if (!isConfigOnlyPage.value) refreshing.value = false
   }
 }
 
@@ -910,16 +957,33 @@ async function onLivePollIntervalChange(event) {
 }
 
 async function patchEngines(patch) {
-  enginesSaving.value = true
+  const hasCondition = !!patch?.condition
+  const hasBetting = !!patch?.betting
+  if (hasCondition) conditionSaving.value = true
+  if (hasBetting) bettingSaving.value = true
+  if (!hasCondition && !hasBetting) enginesSaving.value = true
   error.value = ''
   try {
     engines.value = await api.updateTennisEngines(patch)
+    if (hasCondition) {
+      conditionDraftDirty.value = false
+      conditionDraft.value = cloneConditionBuckets(engines.value?.condition?.buckets)
+    }
+    if (hasBetting) {
+      bettingDraftDirty.value = false
+      bettingDraft.value = cloneBettingBuckets(engines.value?.betting?.buckets)
+    }
     showNotice('引擎配置已保存')
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新引擎失败')
+    const raw = e?.response?.data?.error || e?.message || '更新引擎失败'
+    error.value = (hasCondition || hasBetting)
+      ? formatEngineConfigError(raw)
+      : formatMonitorError(raw)
     await loadEngines().catch(() => {})
   } finally {
-    enginesSaving.value = false
+    if (hasCondition) conditionSaving.value = false
+    if (hasBetting) bettingSaving.value = false
+    if (!hasCondition && !hasBetting) enginesSaving.value = false
   }
 }
 
@@ -961,7 +1025,7 @@ function setGroupField(groupIndex, key, raw) {
     g[key] = raw === 'and' ? 'and' : 'or'
   } else if (key === 'name') {
     g[key] = String(raw || '').slice(0, 40)
-  } else if (['requireWonFirstSet', 'firstSetExcludeEnabled'].includes(key)) {
+  } else if (['requireWonFirstSet', 'firstSetExcludeEnabled', 'linkPrematch'].includes(key)) {
     g[key] = !!raw
   } else if (key === 'firstSetExcludeScore') {
     g[key] = String(raw || '').trim().slice(0, 12) || '7:5'
@@ -969,6 +1033,7 @@ function setGroupField(groupIndex, key, raw) {
     g[key] = raw
   }
   groups[groupIndex] = g
+  conditionDraftDirty.value = true
   conditionDraft.value = {
     ...conditionDraft.value,
     [tab]: { ...conditionDraft.value[tab], groups },
@@ -977,6 +1042,7 @@ function setGroupField(groupIndex, key, raw) {
 
 function setBucketEnabled(ev) {
   const tab = conditionTab.value
+  conditionDraftDirty.value = true
   conditionDraft.value = {
     ...conditionDraft.value,
     [tab]: { ...conditionDraft.value[tab], enabled: !!ev?.target?.checked },
@@ -986,6 +1052,7 @@ function setBucketEnabled(ev) {
 function addConditionGroup() {
   const tab = conditionTab.value
   const groups = [...(conditionDraft.value[tab].groups || []), emptyConditionGroup()]
+  conditionDraftDirty.value = true
   conditionDraft.value = {
     ...conditionDraft.value,
     [tab]: { ...conditionDraft.value[tab], groups },
@@ -996,12 +1063,12 @@ function removeConditionGroup(index) {
   const tab = conditionTab.value
   const groups = [...(conditionDraft.value[tab].groups || [])]
   groups.splice(index, 1)
+  conditionDraftDirty.value = true
   conditionDraft.value = {
     ...conditionDraft.value,
     [tab]: { ...conditionDraft.value[tab], groups },
   }
-  // 立即落库，避免刷新后又从 Redis 读回
-  saveConditionBucketAndEnable()
+  void saveConditionBucketAndEnable()
 }
 
 async function saveConditionBucketAndEnable() {
@@ -1052,6 +1119,7 @@ function setBettingGroupField(groupIndex, key, raw) {
     g.stopRules = [emptyStopRule()]
   }
   groups[groupIndex] = g
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
@@ -1084,6 +1152,7 @@ function setStopRuleField(groupIndex, ruleIndex, key, raw) {
   rules[ruleIndex] = r
   g.stopRules = rules
   groups[groupIndex] = g
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
@@ -1098,6 +1167,7 @@ function addStopRule(groupIndex) {
   g.stopRules = [...prev, emptyStopRule()]
   g.stopEnabled = true
   groups[groupIndex] = g
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
@@ -1112,15 +1182,17 @@ function removeStopRule(groupIndex, ruleIndex) {
   rules.splice(ruleIndex, 1)
   g.stopRules = rules
   groups[groupIndex] = g
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
   }
-  saveBettingBucketAndEnable()
+  void saveBettingBucketAndEnable()
 }
 
 function setBettingBucketEnabled(ev) {
   const tab = bettingTab.value
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], enabled: !!ev?.target?.checked },
@@ -1129,6 +1201,7 @@ function setBettingBucketEnabled(ev) {
 
 function setBettingBucketSimulate(ev) {
   const tab = bettingTab.value
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], simulate: !!ev?.target?.checked },
@@ -1158,12 +1231,14 @@ function setInplayEntryField(key, raw) {
     const s = String(raw ?? '').trim()
     entry.pmCentsMax = s === '' ? 'all' : (Number.isFinite(Number(s)) ? Number(s) : 'all')
   }
+  bettingDraftDirty.value = true
   bettingDraft.value = { ...bettingDraft.value, inplay: { ...cur, entry } }
 }
 
 function addBettingGroup() {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || []), emptyBettingGroup(tab)]
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
@@ -1174,12 +1249,12 @@ function removeBettingGroup(index) {
   const tab = bettingTab.value
   const groups = [...(bettingDraft.value[tab].groups || [])]
   groups.splice(index, 1)
+  bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
     [tab]: { ...bettingDraft.value[tab], groups },
   }
-  // 立即落库，避免刷新后又从 Redis 读回
-  saveBettingBucketAndEnable()
+  void saveBettingBucketAndEnable()
 }
 
 async function saveBettingBucketAndEnable() {
@@ -1408,6 +1483,12 @@ onMounted(() => {
     }
   } catch (_) { /* ignore */ }
 
+  if (isConfigOnlyPage.value) {
+    loading.value = false
+    const cached = api.peekTennisEnginesCache({ allowStale: true })
+    if (cached) engines.value = cached
+  }
+
   refreshAll()
   // 仅采集页轮询官网状态 / live；条件与投注页不打扰
   if (isCollectPage.value) {
@@ -1452,7 +1533,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-if="!loading" class="engine-panels">
+    <div v-if="!pageBlockingLoading" class="engine-panels">
       <section v-if="isCollectPage" class="engine-panel" id="engine-collect">
         <div class="engine-panel-head">
           <h3>采集引擎</h3>
@@ -1548,20 +1629,17 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <section v-if="isConditionPage && !engines" class="engine-panel">
+      <section v-if="isConditionPage" class="engine-panel" id="engine-condition">
         <div class="engine-panel-head">
           <h3>条件引擎</h3>
+          <span v-if="engines" class="engine-panel-tag">分桶开关 · 打开即筛列表</span>
+          <span v-else-if="enginesLoading" class="engine-panel-tag muted">加载中…</span>
         </div>
-        <p class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
-      </section>
-
-      <section v-if="isConditionPage && engines" class="engine-panel" id="engine-condition">
-        <div class="engine-panel-head">
-          <h3>条件引擎</h3>
-          <span class="engine-panel-tag">分桶开关 · 打开即筛列表</span>
-        </div>
+        <p v-if="enginesLoading && !engines" class="engines-note">配置加载中…</p>
+        <p v-else-if="!engines" class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
+        <template v-else>
         <p class="engines-note" style="margin:0 0 8px">
-          无总开关：某桶「打开」后，该产品列表即按本桶条件组筛选；多组之间可选「或 / 且」。
+          各条件组相互独立。盘前组可勾选「关联未开赛产品」；产品管理选用后，打开该未开赛产品页即按该组条件筛选列表。
         </p>
 
         <div class="condition-tabs" role="tablist">
@@ -1587,13 +1665,15 @@ onUnmounted(() => {
               <input
                 type="checkbox"
                 :checked="!!activeConditionBucket.enabled"
-                :disabled="enginesSaving"
                 @change="setBucketEnabled"
               >
               <span class="toggle-state" :class="{ off: !activeConditionBucket.enabled }">{{ activeConditionBucket.enabled ? '已开启' : '已关闭' }}</span>
             </label>
-            <button type="button" class="btn ghost" :disabled="enginesSaving" @click="addConditionGroup">加一组条件</button>
-            <button type="button" class="btn primary" :disabled="enginesSaving" @click="saveConditionBucketAndEnable">保存本桶</button>
+            <button type="button" class="btn ghost" @click="addConditionGroup">加一组条件</button>
+            <button type="button" class="btn primary" :disabled="conditionSaving" @click="saveConditionBucketAndEnable">
+              {{ conditionSaving ? '保存中…' : '保存本桶' }}
+            </button>
+            <span v-if="conditionDraftDirty" class="dirty-hint">有未保存修改</span>
           </div>
 
           <div
@@ -1610,32 +1690,30 @@ onUnmounted(() => {
                 :title="isConditionGroupCollapsed(gi) ? '展开' : '折叠'"
                 @click="toggleConditionGroup(gi)"
               >{{ isConditionGroupCollapsed(gi) ? '▸' : '▾' }}</button>
-              <select
-                v-if="gi > 0"
-                class="group-join-select"
-                :value="g.joinPrev || 'or'"
-                :disabled="enginesSaving"
-                title="与上一组的连接"
-                @change="setGroupField(gi, 'joinPrev', $event.target.value)"
+              <label
+                v-if="conditionTab === 'prematch'"
+                class="bf-check group-link-check"
+                title="勾选后可在产品管理中挂载到未开赛产品"
               >
-                <option value="or">或 OR</option>
-                <option value="and">且 AND</option>
-              </select>
-              <span v-else class="muted group-join-placeholder">首组</span>
+                <input
+                  type="checkbox"
+                  :checked="!!g.linkPrematch"
+                  @change="setGroupField(gi, 'linkPrematch', $event.target.checked)"
+                >
+                <span>关联未开赛</span>
+              </label>
               <input
                 class="group-name-input"
                 type="text"
                 maxlength="40"
                 :value="g.name || ''"
                 :placeholder="groupDisplayName(g, gi)"
-                :disabled="enginesSaving"
                 @change="setGroupField(gi, 'name', $event.target.value)"
               >
               <span class="muted">组内字段「且」</span>
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving"
                 @click="removeConditionGroup(gi)"
               >删除</button>
             </div>
@@ -1643,7 +1721,7 @@ onUnmounted(() => {
             <div class="betting-buy-fields">
               <label class="bf-field">
                 <span>巡回</span>
-                <select :value="g.tour || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'tour', $event.target.value)">
+                <select :value="g.tour || 'all'" @change="setGroupField(gi, 'tour', $event.target.value)">
                   <option value="all">全部</option>
                   <option value="ATP">男</option>
                   <option value="WTA">女</option>
@@ -1651,7 +1729,7 @@ onUnmounted(() => {
               </label>
               <label class="bf-field">
                 <span>PM</span>
-                <select :value="g.pm || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'pm', $event.target.value)">
+                <select :value="g.pm || 'all'" @change="setGroupField(gi, 'pm', $event.target.value)">
                   <option value="all">全部</option>
                   <option value="yes">有外链</option>
                   <option value="no">无外链</option>
@@ -1663,7 +1741,6 @@ onUnmounted(() => {
                   type="number"
                   :value="g.gapMin === 'all' || g.gapMin == null ? '' : g.gapMin"
                   placeholder="—"
-                  :disabled="enginesSaving"
                   @change="setGroupField(gi, 'gapMin', $event.target.value)"
                 >
               </label>
@@ -1674,7 +1751,6 @@ onUnmounted(() => {
                     type="number"
                     :value="g.rankDiffMin === 'all' || g.rankDiffMin == null ? '' : g.rankDiffMin"
                     placeholder="—"
-                    :disabled="enginesSaving"
                     @change="setGroupField(gi, 'rankDiffMin', $event.target.value)"
                   >
                 </label>
@@ -1684,7 +1760,6 @@ onUnmounted(() => {
                     type="number"
                     :value="g.rankDiffMax === 'all' || g.rankDiffMax == null ? '' : g.rankDiffMax"
                     placeholder="—"
-                    :disabled="enginesSaving"
                     @change="setGroupField(gi, 'rankDiffMax', $event.target.value)"
                   >
                 </label>
@@ -1696,7 +1771,6 @@ onUnmounted(() => {
                     type="number"
                     :value="g.strongRankGt === 'all' || g.strongRankGt == null ? '' : g.strongRankGt"
                     placeholder="—"
-                    :disabled="enginesSaving"
                     @change="setGroupField(gi, 'strongRankGt', $event.target.value)"
                   >
                 </label>
@@ -1707,14 +1781,13 @@ onUnmounted(() => {
                     type="number"
                     :value="g.strongRankLt === 'all' || g.strongRankLt == null ? '' : g.strongRankLt"
                     placeholder="—"
-                    :disabled="enginesSaving"
                     @change="setGroupField(gi, 'strongRankLt', $event.target.value)"
                   >
                 </label>
               </div>
               <label v-if="conditionTab === 'inplay'" class="bf-field">
                 <span>现差分档</span>
-                <select :value="g.gapMode || 'all'" :disabled="enginesSaving" @change="setGroupField(gi, 'gapMode', $event.target.value)">
+                <select :value="g.gapMode || 'all'" @change="setGroupField(gi, 'gapMode', $event.target.value)">
                   <option value="all">不限</option>
                   <option value="tier">分档达标</option>
                 </select>
@@ -1727,7 +1800,6 @@ onUnmounted(() => {
                 <input
                   type="checkbox"
                   :checked="!!g.requireWonFirstSet"
-                  :disabled="enginesSaving"
                   @change="setGroupField(gi, 'requireWonFirstSet', $event.target.checked)"
                 >
                 <span>赢首盘</span>
@@ -1740,7 +1812,6 @@ onUnmounted(() => {
                 <input
                   type="checkbox"
                   :checked="!!g.firstSetExcludeEnabled"
-                  :disabled="enginesSaving"
                   @change="setGroupField(gi, 'firstSetExcludeEnabled', $event.target.checked)"
                 >
                 <span>排除首盘</span>
@@ -1755,25 +1826,29 @@ onUnmounted(() => {
                   type="text"
                   :value="g.firstSetExcludeScore || '7:5'"
                   placeholder="7:5"
-                  :disabled="enginesSaving"
                   @change="setGroupField(gi, 'firstSetExcludeScore', $event.target.value)"
                 >
               </label>
             </div>
             <p class="condition-group-hint">
-              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可勾「赢首盘」并排除首盘局分（默认 7:5）。请到产品管理多选条件组并配置 AND/OR。
+              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可勾「赢首盘」并排除首盘局分（默认 7:5）。盘前组勾选「关联未开赛」后，到产品管理选用本组。
             </p>
             </div>
             </div>
           </div>
         </div>
+        </template>
       </section>
 
-      <section v-if="isBettingOrStopPage && engines" class="engine-panel" :id="isStopPage ? 'engine-stop' : 'engine-betting'">
+      <section v-if="isBettingOrStopPage" class="engine-panel" :id="isStopPage ? 'engine-stop' : 'engine-betting'">
         <div class="engine-panel-head">
           <h3>{{ isStopPage ? '止损引擎' : '投注引擎' }}</h3>
-          <span class="engine-panel-tag">{{ isStopPage ? '盘前/盘中 · 止损组 · 可挂调度' : '盘前/盘中 · 买入与止损' }}</span>
+          <span v-if="engines" class="engine-panel-tag">{{ isStopPage ? '盘前/盘中 · 止损组 · 可挂调度' : '盘前/盘中 · 买入与止损' }}</span>
+          <span v-else-if="enginesLoading" class="engine-panel-tag muted">加载中…</span>
         </div>
+        <p v-if="enginesLoading && !engines" class="engines-note">配置加载中…</p>
+        <p v-else-if="!engines" class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
+        <template v-else>
         <div class="settings-row engines-row">
           <label class="interval-select">
             <span>投注账号登录邮箱</span>
@@ -1781,7 +1856,6 @@ onUnmounted(() => {
               type="email"
               style="width: 14rem"
               :value="engines.betting?.userAccount || ''"
-              :disabled="enginesSaving"
               placeholder="登录邮箱"
               @change="onBettingUserAccountChange"
             >
@@ -1794,7 +1868,6 @@ onUnmounted(() => {
               step="0.01"
               style="width: 6.5rem"
               :value="engines.betting?.amountUsd ?? 1"
-              :disabled="enginesSaving"
               @change="onBettingAmountUsdChange"
             >
           </label>
@@ -1807,7 +1880,6 @@ onUnmounted(() => {
               step="1"
               style="width: 5.5rem"
               :value="engines.betting?.listPageRefreshIntervalSec ?? 0"
-              :disabled="enginesSaving"
               @change="onListPollIntervalChange('listPageRefreshIntervalSec', $event)"
             >
           </label>
@@ -1820,7 +1892,6 @@ onUnmounted(() => {
               step="1"
               style="width: 5.5rem"
               :value="engines.betting?.listAutoBetIntervalSec ?? 60"
-              :disabled="enginesSaving"
               @change="onListPollIntervalChange('listAutoBetIntervalSec', $event)"
             >
           </label>
@@ -1833,7 +1904,6 @@ onUnmounted(() => {
               step="1"
               style="width: 5.5rem"
               :value="engines.betting?.listStopLossIntervalSec ?? 60"
-              :disabled="enginesSaving"
               @change="onListPollIntervalChange('listStopLossIntervalSec', $event)"
             >
           </label>
@@ -1867,7 +1937,6 @@ onUnmounted(() => {
               <input
                 type="checkbox"
                 :checked="!!activeBettingBucket.enabled"
-                :disabled="enginesSaving"
                 @change="setBettingBucketEnabled"
               >
               <span class="toggle-state" :class="{ off: !activeBettingBucket.enabled }">{{ activeBettingBucket.enabled ? '已开启' : '已关闭' }}</span>
@@ -1877,13 +1946,15 @@ onUnmounted(() => {
               <input
                 type="checkbox"
                 :checked="!!activeBettingBucket.simulate"
-                :disabled="enginesSaving"
                 @change="setBettingBucketSimulate"
               >
               <span class="toggle-state" :class="{ off: !activeBettingBucket.simulate }">{{ activeBettingBucket.simulate ? '模拟' : '实盘' }}</span>
             </label>
-            <button type="button" class="btn ghost" :disabled="enginesSaving" @click="addBettingGroup">加一组</button>
-            <button type="button" class="btn primary" :disabled="enginesSaving" @click="saveBettingBucketAndEnable">保存本桶</button>
+            <button type="button" class="btn ghost" @click="addBettingGroup">加一组</button>
+            <button type="button" class="btn primary" :disabled="bettingSaving" @click="saveBettingBucketAndEnable">
+              {{ bettingSaving ? '保存中…' : '保存本桶' }}
+            </button>
+            <span v-if="bettingDraftDirty" class="dirty-hint">有未保存修改</span>
           </div>
 
           <div v-if="isBettingPage && bettingTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
@@ -1897,7 +1968,6 @@ onUnmounted(() => {
                 <input
                   type="checkbox"
                   :checked="!!activeBettingBucket.entry?.requireWonFirstSet"
-                  :disabled="enginesSaving"
                   @change="setInplayEntryField('requireWonFirstSet', $event.target.checked)"
                 >
               </label>
@@ -1910,7 +1980,6 @@ onUnmounted(() => {
                 <input
                   type="checkbox"
                   :checked="!!activeBettingBucket.entry?.firstSetExcludeEnabled"
-                  :disabled="enginesSaving"
                   @change="setInplayEntryField('firstSetExcludeEnabled', $event.target.checked)"
                 >
               </label>
@@ -1923,7 +1992,6 @@ onUnmounted(() => {
                   type="text"
                   :value="activeBettingBucket.entry?.firstSetExcludeScore || '7:5'"
                   placeholder="7:5"
-                  :disabled="enginesSaving"
                   @change="setInplayEntryField('firstSetExcludeScore', $event.target.value)"
                 >
               </label>
@@ -1934,7 +2002,6 @@ onUnmounted(() => {
                   max="99"
                   :value="activeBettingBucket.entry?.pmCentsMax === 'all' || activeBettingBucket.entry?.pmCentsMax == null || activeBettingBucket.entry?.pmCentsMax === '' ? '' : activeBettingBucket.entry.pmCentsMax"
                   placeholder="不限"
-                  :disabled="enginesSaving"
                   @change="setInplayEntryField('pmCentsMax', $event.target.value)"
                 >
               </label>
@@ -1949,7 +2016,6 @@ onUnmounted(() => {
             <div v-if="gi > 0" class="condition-join">
               <select
                 :value="g.joinPrev || 'or'"
-                :disabled="enginesSaving"
                 @change="setBettingGroupField(gi, 'joinPrev', $event.target.value)"
               >
                 <option value="or">或 OR</option>
@@ -1971,14 +2037,12 @@ onUnmounted(() => {
                 maxlength="40"
                 :value="g.name || ''"
                 :placeholder="groupDisplayName(g, gi)"
-                :disabled="enginesSaving"
                 @change="setBettingGroupField(gi, 'name', $event.target.value)"
               >
               <span class="muted">止损组</span>
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving"
                 @click="removeBettingGroup(gi)"
               >删除</button>
             </div>
@@ -1991,14 +2055,12 @@ onUnmounted(() => {
                 <input
                   type="checkbox"
                   :checked="g.stopEnabled !== false"
-                  :disabled="enginesSaving"
                   @change="setBettingGroupField(gi, 'stopEnabled', $event.target.checked)"
                 >
               </label>
               <button
                 type="button"
                 class="btn ghost sm"
-                :disabled="enginesSaving"
                 @click="addStopRule(gi)"
               >加一条止损</button>
             </div>
@@ -2011,7 +2073,7 @@ onUnmounted(() => {
               <div v-if="si > 0" class="condition-join">
                 <select
                   :value="sr.joinPrev || 'or'"
-                  :disabled="enginesSaving || g.stopEnabled === false"
+                  :disabled="g.stopEnabled === false"
                   @change="setStopRuleField(gi, si, 'joinPrev', $event.target.value)"
                 >
                   <option value="or">或 OR</option>
@@ -2026,13 +2088,13 @@ onUnmounted(() => {
                     maxlength="40"
                     :value="sr.name || ''"
                     :placeholder="stopRuleDisplayName(sr, si)"
-                    :disabled="enginesSaving || g.stopEnabled === false"
+                    :disabled="g.stopEnabled === false"
                     @change="setStopRuleField(gi, si, 'name', $event.target.value)"
                   >
                   <button
                     type="button"
                     class="btn ghost sm"
-                    :disabled="enginesSaving || g.stopEnabled === false || ensureStopRules(g).length <= 1"
+                    :disabled="g.stopEnabled === false || ensureStopRules(g).length <= 1"
                     @click="removeStopRule(gi, si)"
                   >删除</button>
                 </div>
@@ -2040,7 +2102,7 @@ onUnmounted(() => {
                   <label>赛制
                     <select
                       :value="sr.stopFormat || 'any'"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopFormat', $event.target.value)"
                     >
                       <option value="any">不限</option>
@@ -2055,7 +2117,7 @@ onUnmounted(() => {
                       max="5"
                       :value="sr.stopSetIndex === 'all' || sr.stopSetIndex == null || sr.stopSetIndex === '' ? '' : sr.stopSetIndex"
                       placeholder="不限"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopSetIndex', $event.target.value)"
                     >
                   </label>
@@ -2066,7 +2128,7 @@ onUnmounted(() => {
                       max="3"
                       :value="sr.stopStrongSets === 'all' || sr.stopStrongSets == null ? '' : sr.stopStrongSets"
                       placeholder="不限"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopStrongSets', $event.target.value)"
                     >
                   </label>
@@ -2077,7 +2139,7 @@ onUnmounted(() => {
                       max="3"
                       :value="sr.stopWeakSets === 'all' || sr.stopWeakSets == null ? '' : sr.stopWeakSets"
                       placeholder="不限"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopWeakSets', $event.target.value)"
                     >
                   </label>
@@ -2087,7 +2149,7 @@ onUnmounted(() => {
                       min="0"
                       :value="sr.stopGameLead === 'all' || sr.stopGameLead == null || sr.stopGameLead === '' ? '' : sr.stopGameLead"
                       placeholder="不限"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopGameLead', $event.target.value)"
                     >
                   </label>
@@ -2100,7 +2162,7 @@ onUnmounted(() => {
                       :value="sr.stopPmCentsMax === 'all' || sr.stopPmCentsMax == null || sr.stopPmCentsMax === '' ? '' : sr.stopPmCentsMax"
                       placeholder="不限"
                       title="买入侧 Polymarket 价格(¢)小于此值则触发；与局差满足其一即可；留空或不存在赔率时不参与判断"
-                      :disabled="enginesSaving || g.stopEnabled === false"
+                      :disabled="g.stopEnabled === false"
                       @change="setStopRuleField(gi, si, 'stopPmCentsMax', $event.target.value)"
                     >
                   </label>
@@ -2114,12 +2176,13 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
+        </template>
       </section>
     </div>
 
     <div v-if="notice" class="banner ok">{{ notice }}</div>
     <div v-if="error" class="banner err">{{ error }}</div>
-    <div v-if="loading" class="banner">加载中…</div>
+    <div v-if="pageBlockingLoading" class="banner">加载中…</div>
 
     <template v-else-if="isCollectPage">
       <details class="panel panel-fold stats-fold" :open="statsOpen" @toggle="statsOpen = $event.target.open">
@@ -2437,6 +2500,11 @@ onUnmounted(() => {
   font-size: 12px;
   color: #64748b;
   margin: 0.35rem 0 0.5rem;
+}
+.dirty-hint {
+  font-size: 11px;
+  color: #d97706;
+  font-weight: 600;
 }
 .engine-panels {
   display: flex;

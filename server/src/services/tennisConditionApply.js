@@ -269,21 +269,30 @@ function resolveGroupsFromProductSelect(libraryGroups, selectRows) {
   return out;
 }
 
-async function resolveBucketFilterGroups(bucketKey) {
+function linkedGroupsForBucket(bucketKey, library) {
+  const list = Array.isArray(library) ? library : [];
+  if (bucketKey === 'prematch') return list.filter((g) => g?.linkPrematch === true);
+  return list;
+}
+
+async function resolveBucketFilterGroups(bucketKey, productId = null) {
   const tennisEngines = require('./tennisEngines');
   const productService = require('./product');
   // 列表过滤：条件规则优先从 Redis 读（保存时已镜像），再对 Redis 赛程包做内存筛选
   const cfg = await tennisEngines.getConfigPreferRedis();
   const bucket = cfg.condition?.buckets?.[bucketKey];
-  // 不再看条件总开关：各桶「打开」即按该桶条件组过滤列表
   if (!bucket?.enabled) {
     return { ok: false, reason: 'bucket_off', cfg, bucket, groups: [] };
   }
-  const product = await productService.findOnlineProductForBucket(bucketKey);
   const library = bucket.groups || [];
+  let product = null;
+  if (productId) {
+    product = await productService.findProductById(productId);
+  } else {
+    product = await productService.findOnlineProductForBucket(bucketKey);
+  }
   if (product && Array.isArray(product.conditionSelect) && product.conditionSelect.length) {
     const groups = resolveGroupsFromProductSelect(library, product.conditionSelect);
-    // 产品挂了组但 id 对不上时，仍回退到引擎库全部组，避免「看似开了却不过滤」
     if (groups.length) {
       return {
         ok: true,
@@ -295,23 +304,29 @@ async function resolveBucketFilterGroups(bucketKey) {
       };
     }
   }
-  // 产品未配置选择（或挂载失效）：用条件引擎该桶全部组，保留各组 joinPrev（且/或）
-  const groups = library.map((g, i) => ({
-    ...g,
-    joinPrev: i === 0 ? 'or' : (String(g.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'),
-  }));
+  if (productId) {
+    return {
+      ok: true,
+      cfg,
+      bucket,
+      product,
+      groups: [],
+      source: 'product_no_selection',
+    };
+  }
+  const groups = linkedGroupsForBucket(bucketKey, library);
   return {
     ok: true,
     cfg,
     bucket,
     product,
-    groups,
-    source: groups.length ? 'engine_library_all' : 'no_groups',
+    groups: [],
+    source: groups.length ? 'engine_library_linked' : 'no_groups',
   };
 }
 
-async function maybeApplyCondition(product, bundle) {
-  const resolved = await resolveBucketFilterGroups(product);
+async function maybeApplyCondition(product, bundle, productId = null) {
+  const resolved = await resolveBucketFilterGroups(product, productId);
   if (!resolved.ok) {
     return {
       ...bundle,

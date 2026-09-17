@@ -97,6 +97,14 @@ function productBucket(product) {
   return null;
 }
 
+async function findProductById(id) {
+  await ensureProductColumns();
+  const pid = Number(id);
+  if (!Number.isFinite(pid) || pid <= 0) return null;
+  const [rows] = await pool.query('SELECT * FROM products WHERE id=? LIMIT 1', [pid]);
+  return rows[0] ? mapProductRow(rows[0]) : null;
+}
+
 /** 取某桶第一个 online 网球产品（全局配置源） */
 async function findOnlineProductForBucket(bucket) {
   await ensureProductColumns();
@@ -117,5 +125,6 @@ module.exports = {
   parseSelectJson,
   normalizeSelectInput,
   productBucket,
+  findProductById,
   findOnlineProductForBucket,
 };

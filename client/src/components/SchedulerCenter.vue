@@ -1,29 +1,29 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import * as api from '../api'
 
 const loading = ref(false)
 const status = ref(null)
 const jobs = ref([])
 const jobTypes = ref([])
-const nameOptions = ref({ collect: [], condition: [], betting: [], stop: [] })
+const nameOptions = ref({ collect: [], condition: [], stop: [] })
 const selectedJobId = ref('')
 const runs = ref([])
 const msg = ref('')
 const err = ref('')
-const logBox = ref(null)
 const autoRefreshLogs = ref(true)
 let logTimer = null
 
 const createOpen = ref(false)
+const logOpen = ref(false)
 const creating = ref(false)
 
 function defaultForm() {
   return {
-    nameKey: '',
-    jobType: 'collect.full',
+    nameKey: 'collect:top100',
+    jobType: 'collect.top100',
     scheduleMode: 'interval',
-    intervalSec: 60,
+    intervalSec: 6 * 3600,
     dailyTime: '09:00',
     enabled: true,
   }
@@ -31,33 +31,200 @@ function defaultForm() {
 
 const form = ref(defaultForm())
 
-const HIDDEN_JOB_TYPES = new Set(['collect.inplay_tick'])
+const HIDDEN_JOB_TYPES = new Set(['collect.full', 'bet.scan'])
+
+/** 任务类型展示名（覆盖 API 旧 label） */
+const JOB_TYPE_LABELS = {
+  'collect.top100': 'Top100 全量采集',
+  'collect.inplay_tick': '盘中比分刷新',
+  'condition.query': '条件引擎 · 查询筛选',
+  'bet.stop_loss': '止损引擎 · 持仓止损扫描',
+}
+
+const JOB_TYPE_META = {
+  'collect.top100': {
+    category: 'collect',
+    intervalUnit: 'hour',
+    intervalPresets: [6, 12],
+    defaultIntervalSec: 6 * 3600,
+    defaultName: 'Top100 全量采集',
+  },
+  'collect.inplay_tick': {
+    category: 'collect',
+    intervalUnit: 'second',
+    intervalPresets: [30, 60],
+    defaultIntervalSec: 60,
+    defaultName: '盘中比分刷新',
+  },
+}
+
+const DEFAULT_JOB_TYPES = [
+  { jobType: 'collect.top100', category: 'collect' },
+  { jobType: 'collect.inplay_tick', category: 'collect' },
+  { jobType: 'condition.query', category: 'condition' },
+  { jobType: 'bet.stop_loss', category: 'stop' },
+]
+
+function normalizeJobTypeDef(raw) {
+  const jobType = raw?.jobType || raw?.job_type
+  if (!jobType) return null
+  const meta = JOB_TYPE_META[jobType] || {}
+  return {
+    ...raw,
+    jobType,
+    ...meta,
+    label: JOB_TYPE_LABELS[jobType] || raw.label || jobType,
+    category: meta.category || raw.category || categoryOfJobTypeStatic(jobType),
+    hidden: raw.hidden || HIDDEN_JOB_TYPES.has(jobType),
+  }
+}
+
+function categoryOfJobTypeStatic(jobType) {
+  if (String(jobType).startsWith('collect')) return 'collect'
+  if (String(jobType).startsWith('condition')) return 'condition'
+  if (String(jobType) === 'bet.stop_loss' || String(jobType).startsWith('stop')) return 'stop'
+  return 'collect'
+}
+
+function displayJobTypeLabel(job) {
+  const jt = job?.jobType || job?.job_type
+  return JOB_TYPE_LABELS[jt] || job?.jobTypeLabel || jt || '—'
+}
 
 const jobTypeOptions = computed(() => {
-  const list = jobTypes.value.length
-    ? jobTypes.value
-    : [
-      { jobType: 'collect.full', label: '采集引擎 · 全量', category: 'collect' },
-      { jobType: 'collect.top100', label: '采集引擎 · Top100 collect.py', category: 'collect' },
-      { jobType: 'condition.query', label: '条件引擎 · 查询筛选', category: 'condition' },
-      { jobType: 'bet.scan', label: '投注引擎 · 扫描下单', category: 'betting' },
-      { jobType: 'bet.stop_loss', label: '止损引擎 · 持仓止损扫描', category: 'stop' },
-    ]
-  return list.filter((t) => !HIDDEN_JOB_TYPES.has(t.jobType))
+  const rawList = jobTypes.value.length ? jobTypes.value : DEFAULT_JOB_TYPES
+  const byType = new Map()
+  for (const raw of rawList) {
+    const t = normalizeJobTypeDef(raw)
+    if (t) byType.set(t.jobType, t)
+  }
+  for (const raw of DEFAULT_JOB_TYPES) {
+    if (!byType.has(raw.jobType)) {
+      const t = normalizeJobTypeDef(raw)
+      if (t) byType.set(t.jobType, t)
+    }
+  }
+  return [...byType.values()]
+    .map((t) => normalizeJobTypeDef(t))
+    .filter((t) => t && !t.hidden && !HIDDEN_JOB_TYPES.has(t.jobType))
 })
+
+const isCollectJobType = computed(() => categoryOfJobType(form.value.jobType) === 'collect')
+
+const collectIntervalPresets = computed(() => {
+  const def = jobTypeOptions.value.find((t) => t.jobType === form.value.jobType)
+  if (!def?.intervalPresets?.length) return []
+  const unit = def.intervalUnit || 'second'
+  return def.intervalPresets.map((n) => ({
+    sec: unit === 'hour' ? n * 3600 : n,
+    label: unit === 'hour' ? `${n} 小时` : `${n} 秒`,
+  }))
+})
+
+function jobTypeDef(jobType) {
+  return jobTypeOptions.value.find((t) => t.jobType === jobType)
+}
+
+function applyCollectDefaults(jobType) {
+  const def = jobTypeDef(jobType)
+  if (!def || categoryOfJobType(jobType) !== 'collect') return
+  const match = optionsForCategory('collect').find((o) => o.jobType === jobType)
+  form.value.nameKey = match?.key || form.value.nameKey
+  form.value.scheduleMode = 'interval'
+  form.value.intervalSec = def.defaultIntervalSec || form.value.intervalSec
+}
 
 const CATEGORY_LABELS = {
   collect: '采集引擎',
   condition: '条件引擎',
-  betting: '投注引擎',
   stop: '止损引擎',
 }
 
-const visibleJobs = computed(() => jobs.value.filter((j) => !HIDDEN_JOB_TYPES.has(j.jobType)))
+const CATEGORY_ORDER = ['collect', 'condition', 'stop']
+
+const DEFAULT_JOB_TYPE_BY_CATEGORY = {
+  collect: 'collect.top100',
+  condition: 'condition.query',
+  stop: 'bet.stop_loss',
+}
+
+const activeTab = ref('collect')
+
+const visibleJobs = computed(() => jobs.value.filter((j) => {
+  const jt = j.jobType || j.job_type
+  return !HIDDEN_JOB_TYPES.has(jt)
+}))
+
+function isCollectSlotTaken(jobType) {
+  return visibleJobs.value.some((j) => (j.jobType || j.job_type) === jobType)
+}
+
+function isGroupSlotTaken(jobType, bucket, groupIndex) {
+  return visibleJobs.value.some((j) => {
+    if ((j.jobType || j.job_type) !== jobType) return false
+    const p = j.params || {}
+    return String(p.bucket ?? '') === String(bucket ?? '')
+      && Number(p.groupIndex) === Number(groupIndex)
+  })
+}
+
+function isJobTypeCreatable(jobType) {
+  const cat = categoryOfJobTypeStatic(jobType)
+  if (cat === 'collect') return !isCollectSlotTaken(jobType)
+  const list = optionsForCategory(cat)
+  return list.some((o) => !isGroupSlotTaken(jobType, o.bucket, o.groupIndex))
+}
+
+const creatableJobTypeOptions = computed(() =>
+  jobTypeOptions.value.filter((t) => isJobTypeCreatable(t.jobType)),
+)
+
+const canCreateInActiveTab = computed(() =>
+  jobTypeOptions.value.some(
+    (t) => (t.category || categoryOfJobType(t.jobType)) === activeTab.value
+      && isJobTypeCreatable(t.jobType),
+  ),
+)
+
+const creatableJobTypeGroups = computed(() => {
+  const order = ['collect', 'condition', 'stop']
+  const map = { collect: [], condition: [], stop: [] }
+  for (const t of creatableJobTypeOptions.value) {
+    const cat = t.category || categoryOfJobType(t.jobType)
+    if (!map[cat]) map[cat] = []
+    map[cat].push(t)
+  }
+  return order
+    .filter((cat) => map[cat]?.length)
+    .map((cat) => ({ category: cat, label: CATEGORY_LABELS[cat] || cat, items: map[cat] }))
+})
+
+function jobCategory(job) {
+  const jt = job?.jobType || job?.job_type
+  return categoryOfJobType(jt)
+}
+
+const categoryTabs = computed(() =>
+  CATEGORY_ORDER.map((cat) => {
+    const list = visibleJobs.value.filter((j) => jobCategory(j) === cat)
+    return {
+      id: cat,
+      label: CATEGORY_LABELS[cat] || cat,
+      count: list.length,
+      enabledCount: list.filter((j) => j.enabled).length,
+    }
+  }),
+)
+
+const tabJobs = computed(() => visibleJobs.value.filter((j) => jobCategory(j) === activeTab.value))
+
+const activeTabLabel = computed(() => CATEGORY_LABELS[activeTab.value] || activeTab.value)
+
+const logJob = computed(() => visibleJobs.value.find((j) => j.id === selectedJobId.value) || null)
 
 const jobTypeGroups = computed(() => {
-  const order = ['collect', 'condition', 'betting', 'stop']
-  const map = { collect: [], condition: [], betting: [], stop: [] }
+  const order = ['collect', 'condition', 'stop']
+  const map = { collect: [], condition: [], stop: [] }
   for (const t of jobTypeOptions.value) {
     const cat = t.category || categoryOfJobType(t.jobType)
     if (!map[cat]) map[cat] = []
@@ -74,7 +241,6 @@ function categoryOfJobType(jobType) {
   if (String(jobType).startsWith('collect')) return 'collect'
   if (String(jobType).startsWith('condition')) return 'condition'
   if (String(jobType) === 'bet.stop_loss' || String(jobType).startsWith('stop')) return 'stop'
-  if (String(jobType).startsWith('bet')) return 'betting'
   return 'collect'
 }
 
@@ -82,11 +248,26 @@ function optionsForCategory(cat) {
   return nameOptions.value?.[cat] || []
 }
 
-const formNameOptions = computed(() => optionsForCategory(categoryOfJobType(form.value.jobType)))
-
-function pickDefaultNameKey(cat) {
+const formNameOptions = computed(() => {
+  const jt = form.value.jobType
+  const cat = categoryOfJobType(jt)
   const list = optionsForCategory(cat)
-  return list[0]?.key || ''
+  if (cat === 'collect') {
+    if (isCollectSlotTaken(jt)) return []
+    return list.filter((o) => o.jobType === jt)
+  }
+  return list.filter((o) => !isGroupSlotTaken(jt, o.bucket, o.groupIndex))
+})
+
+function pickDefaultNameKey(cat, jobType) {
+  const jt = jobType || form.value.jobType
+  const list = optionsForCategory(cat)
+  if (cat === 'collect') {
+    const hit = list.find((o) => o.jobType === jt && !isCollectSlotTaken(jt))
+    return hit?.key || ''
+  }
+  const hit = list.find((o) => !isGroupSlotTaken(jt, o.bucket, o.groupIndex))
+  return hit?.key || ''
 }
 
 function optionByKey(cat, key) {
@@ -107,7 +288,11 @@ function paramsFromOption(opt, cat) {
 watch(
   () => form.value.jobType,
   (jt) => {
-    form.value.nameKey = pickDefaultNameKey(categoryOfJobType(jt))
+    if (categoryOfJobType(jt) === 'collect') {
+      applyCollectDefaults(jt)
+    } else {
+      form.value.nameKey = pickDefaultNameKey(categoryOfJobType(jt), jt)
+    }
   },
 )
 
@@ -122,17 +307,23 @@ async function refresh() {
     status.value = st
     jobs.value = j.jobs || []
     jobTypes.value = j.jobTypes || []
-    nameOptions.value = j.nameOptions || { collect: [], condition: [], betting: [], stop: [] }
+    nameOptions.value = j.nameOptions || { collect: [], condition: [], stop: [] }
     if (!form.value.nameKey) {
-      form.value.nameKey = pickDefaultNameKey(categoryOfJobType(form.value.jobType))
+      form.value.nameKey = pickDefaultNameKey(
+        categoryOfJobType(form.value.jobType),
+        form.value.jobType,
+      )
     }
-    if (selectedJobId.value && !visibleJobs.value.find((x) => x.id === selectedJobId.value)) {
-      selectedJobId.value = visibleJobs.value[0]?.id || ''
+    if (selectedJobId.value) {
+      const selected = visibleJobs.value.find((x) => x.id === selectedJobId.value)
+      if (!selected) {
+        selectedJobId.value = ''
+        logOpen.value = false
+      } else if (logOpen.value) {
+        activeTab.value = jobCategory(selected)
+      }
     }
-    if (!selectedJobId.value && visibleJobs.value[0]) {
-      selectedJobId.value = visibleJobs.value[0].id
-    }
-    if (selectedJobId.value) await loadRuns()
+    if (logOpen.value && selectedJobId.value) await loadRuns()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '加载失败'
   } finally {
@@ -172,10 +363,30 @@ async function clearRuns() {
   }
 }
 
+function pickCreatableJobTypeForTab(tab) {
+  const hit = creatableJobTypeOptions.value.find(
+    (t) => (t.category || categoryOfJobType(t.jobType)) === tab,
+  )
+  return hit?.jobType || creatableJobTypeOptions.value[0]?.jobType || ''
+}
+
 function openCreateModal() {
+  if (!canCreateInActiveTab.value) {
+    err.value = `「${activeTabLabel.value}」下可添加的调度已全部创建`
+    return
+  }
   const next = defaultForm()
-  next.nameKey = pickDefaultNameKey(categoryOfJobType(next.jobType))
+  const jt = pickCreatableJobTypeForTab(activeTab.value)
+  if (!jt) {
+    err.value = '暂无可新增的任务类型'
+    return
+  }
+  next.jobType = jt
   form.value = next
+  applyCollectDefaults(next.jobType)
+  if (categoryOfJobType(next.jobType) !== 'collect') {
+    form.value.nameKey = pickDefaultNameKey(categoryOfJobType(next.jobType), next.jobType)
+  }
   createOpen.value = true
 }
 
@@ -187,34 +398,59 @@ async function createJob() {
   msg.value = ''
   err.value = ''
   const cat = categoryOfJobType(form.value.jobType)
-  const opt = optionByKey(cat, form.value.nameKey)
-  if (!form.value.nameKey || !opt) {
-    const tip = {
-      collect: '请选择名称',
-      condition: '请先在条件引擎配置分组，再选择名称',
-      betting: '请先在投注引擎配置分组，再选择名称',
-      stop: '请先在止损/投注引擎配置分组，再选择名称',
+  const isCollect = cat === 'collect'
+  const def = jobTypeDef(form.value.jobType)
+  let name = ''
+  let params = null
+  if (isCollect) {
+    if (isCollectSlotTaken(form.value.jobType)) {
+      err.value = `「${JOB_TYPE_LABELS[form.value.jobType] || form.value.jobType}」已存在，无需重复添加`
+      return
     }
-    err.value = tip[cat] || '请选择名称'
-    return
+    const opt = optionByKey('collect', form.value.nameKey)
+    name = opt?.value || def?.defaultName || def?.label || '采集'
+    params = { category: 'collect' }
+    if (!form.value.intervalSec || form.value.intervalSec <= 0) {
+      err.value = '请选择采集间隔'
+      return
+    }
+  } else {
+    const opt = optionByKey(cat, form.value.nameKey)
+    if (!form.value.nameKey || !opt) {
+      const tip = {
+        condition: '请先在条件引擎配置分组，再选择名称',
+        stop: '请先在止损引擎配置分组，再选择名称',
+      }
+      err.value = tip[cat] || '请选择名称'
+      return
+    }
+    if (isGroupSlotTaken(form.value.jobType, opt.bucket, opt.groupIndex)) {
+      err.value = `「${opt.label || opt.value}」已存在调度，无需重复添加`
+      return
+    }
+    name = opt.value
+    params = paramsFromOption(opt, cat)
   }
   creating.value = true
   try {
     const payload = {
-      name: opt.value,
+      name,
       jobType: form.value.jobType,
-      scheduleMode: form.value.scheduleMode,
+      scheduleMode: isCollect ? 'interval' : form.value.scheduleMode,
       enabled: form.value.enabled,
-      params: paramsFromOption(opt, cat),
+      params,
     }
-    if (form.value.scheduleMode === 'interval') {
+    if (payload.scheduleMode === 'interval') {
       payload.intervalSec = Number(form.value.intervalSec)
     } else {
       payload.dailyTime = form.value.dailyTime
     }
     const r = await api.createSchedulerJob(payload)
     msg.value = `已新增：${r.job?.name || r.job?.id}`
-    if (r.job?.id) selectedJobId.value = r.job.id
+    if (r.job?.id) {
+      activeTab.value = jobCategory(r.job)
+      selectedJobId.value = r.job.id
+    }
     createOpen.value = false
     await refresh()
   } catch (e) {
@@ -242,20 +478,26 @@ async function runNow(job) {
   try {
     const r = await api.runSchedulerJob(job.id)
     msg.value = `立即执行：${job.name} · ${r.status || 'ok'} · ${r.runId || ''}`
-    selectedJobId.value = job.id
-    await loadRuns()
-    await nextTick()
-    logBox.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    await openLogModal(job)
   } catch (e) {
     err.value = e?.response?.data?.error || e.message
   }
 }
 
-async function showLogs(job) {
+function closeLogModal() {
+  logOpen.value = false
+  stopLogTimer()
+}
+
+async function openLogModal(job) {
   selectedJobId.value = job.id
+  logOpen.value = true
   await loadRuns()
-  await nextTick()
-  logBox.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  startLogTimer()
+}
+
+async function showLogs(job) {
+  await openLogModal(job)
 }
 
 async function removeJob(job) {
@@ -265,7 +507,11 @@ async function removeJob(job) {
   try {
     await api.deleteSchedulerJob(job.id)
     msg.value = `已删除：${job.name}`
-    if (selectedJobId.value === job.id) selectedJobId.value = ''
+    if (selectedJobId.value === job.id) {
+      selectedJobId.value = ''
+      logOpen.value = false
+      stopLogTimer()
+    }
     await refresh()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '删除失败'
@@ -274,7 +520,11 @@ async function removeJob(job) {
 
 function scheduleText(job) {
   if (job.scheduleMode === 'daily') return `每天 ${job.dailyTime || job.cronExpr || '--'}（北京时间）`
-  return `每隔 ${job.intervalSec} 秒`
+  const sec = Number(job.intervalSec)
+  if (!Number.isFinite(sec) || sec <= 0) return '—'
+  if (sec % 3600 === 0 && sec >= 3600) return `每隔 ${sec / 3600} 小时`
+  if (sec % 60 === 0 && sec >= 60) return `每隔 ${sec / 60} 分钟`
+  return `每隔 ${sec} 秒`
 }
 
 function statusClass(s) {
@@ -287,9 +537,9 @@ function statusClass(s) {
 
 function startLogTimer() {
   stopLogTimer()
-  if (!autoRefreshLogs.value) return
+  if (!autoRefreshLogs.value || !logOpen.value) return
   logTimer = setInterval(() => {
-    if (selectedJobId.value) loadRuns()
+    if (selectedJobId.value && logOpen.value) loadRuns()
   }, 5000)
 }
 
@@ -301,17 +551,16 @@ function stopLogTimer() {
 }
 
 watch(autoRefreshLogs, startLogTimer)
-watch(selectedJobId, (id) => {
-  if (id) loadRuns()
-  else runs.value = []
+watch(logOpen, (open) => {
+  if (open) startLogTimer()
+  else stopLogTimer()
 })
-watch(createOpen, (open) => {
-  document.body.style.overflow = open ? 'hidden' : ''
+watch([createOpen, logOpen], ([create, log]) => {
+  document.body.style.overflow = create || log ? 'hidden' : ''
 })
 
 onMounted(() => {
   refresh()
-  startLogTimer()
 })
 onUnmounted(() => {
   stopLogTimer()
@@ -329,7 +578,13 @@ onUnmounted(() => {
         </div>
         <div class="head-actions">
           <button type="button" class="btn ghost" :disabled="loading" @click="refresh">刷新</button>
-          <button type="button" class="btn primary" @click="openCreateModal">新增任务</button>
+          <button
+            type="button"
+            class="btn primary"
+            :disabled="!canCreateInActiveTab"
+            :title="canCreateInActiveTab ? '新增当前分类下未创建的调度' : '当前分类可添加的调度已全部创建'"
+            @click="openCreateModal"
+          >新增任务</button>
         </div>
       </div>
       <div v-if="status" class="status-line">
@@ -345,106 +600,106 @@ onUnmounted(() => {
       <div class="jobs-head">
         <div class="sec-title">
           任务列表
-          <span class="count">{{ visibleJobs.length }}</span>
+          <span class="count">{{ tabJobs.length }}</span>
         </div>
       </div>
-      <div v-if="!visibleJobs.length" class="empty">暂无任务，点击右上角「新增任务」</div>
-      <div v-else class="jobs-table-wrap">
-        <table class="jobs-table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>类型</th>
-              <th>计划</th>
-              <th>状态</th>
-              <th class="col-actions">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="job in visibleJobs"
-              :key="job.id"
-              :class="{ active: selectedJobId === job.id }"
-              @click="selectedJobId = job.id"
-            >
-              <td class="col-name">
-                <div class="job-name">{{ job.name }}</div>
-                <div v-if="job.params?.bucket" class="job-sub">{{ job.params.bucket }}#{{ job.params.groupIndex }}</div>
-              </td>
-              <td class="col-type">{{ job.jobTypeLabel || job.jobType }}</td>
-              <td class="col-sched">{{ scheduleText(job) }}</td>
-              <td class="col-state">
-                <span class="badge" :class="job.enabled ? 'on' : 'off'">{{ job.enabled ? '启用' : '停用' }}</span>
-              </td>
-              <td class="col-actions" @click.stop>
-                <div class="job-actions">
-                  <button type="button" class="link-btn" @click="toggleJob(job, !job.enabled)">
-                    {{ job.enabled ? '停用' : '启用' }}
-                  </button>
-                  <button type="button" class="link-btn primary" @click="runNow(job)">执行</button>
-                  <button type="button" class="link-btn" @click="showLogs(job)">日志</button>
-                  <button type="button" class="link-btn danger" @click="removeJob(job)">删除</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="category-tabs" role="tablist" aria-label="任务分类">
+        <button
+          v-for="t in categoryTabs"
+          :key="t.id"
+          type="button"
+          class="category-tab"
+          :class="{ on: activeTab === t.id, enabled: t.enabledCount > 0 }"
+          role="tab"
+          :aria-selected="activeTab === t.id"
+          @click="activeTab = t.id"
+        >
+          {{ t.label }}
+          <span v-if="t.count" class="tab-count">{{ t.count }}</span>
+          <span class="dot" :class="{ on: t.enabledCount > 0 }" />
+        </button>
       </div>
-    </div>
-
-    <div ref="logBox" class="card log-card">
-      <div class="log-head">
-        <div class="sec-title">运行日志</div>
-        <div class="log-tools">
-          <select v-model="selectedJobId" class="job-select">
-            <option value="">选择任务</option>
-            <option v-for="j in visibleJobs" :key="j.id" :value="j.id">{{ j.name }}</option>
-          </select>
-          <label class="check inline">
-            <input v-model="autoRefreshLogs" type="checkbox" />
-            自动刷新
-          </label>
-          <button
-            type="button"
-            class="btn sm ghost"
-            :disabled="!selectedJobId"
-            @click="loadRuns"
-          >刷新日志</button>
-          <button
-            type="button"
-            class="btn sm danger"
-            :disabled="!selectedJobId || !runs.length"
-            @click="clearRuns"
-          >清空日志</button>
-        </div>
+      <div v-if="!tabJobs.length" class="empty">
+        {{ visibleJobs.length ? `「${activeTabLabel}」暂无任务` : '暂无任务' }}，点击右上角「新增任务」
       </div>
-      <div v-if="!selectedJobId" class="empty">请选择任务查看日志</div>
-      <div v-else-if="!runs.length" class="empty">暂无运行记录</div>
-      <div v-else class="log-scroll">
-        <table class="log-table">
-          <thead>
-            <tr>
-              <th>时间</th>
-              <th>触发</th>
-              <th>状态</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in runs" :key="r.runId">
-              <td class="nowrap">{{ r.startedAt }}</td>
-              <td>{{ r.trigger }}</td>
-              <td :class="statusClass(r.status)">{{ r.status }}</td>
-              <td class="msg" :title="r.error || r.message || r.runId">
-                {{ r.error || r.message || r.runId }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else class="jobs-grid">
+        <article
+          v-for="job in tabJobs"
+          :key="job.id"
+          class="job-card"
+          :class="{ on: job.enabled }"
+        >
+          <div class="job-card-top">
+            <span class="badge" :class="job.enabled ? 'on' : 'off'">{{ job.enabled ? '启用' : '停用' }}</span>
+          </div>
+          <div class="job-name">{{ job.name }}</div>
+          <div v-if="job.params?.bucket" class="job-sub">{{ job.params.bucket }}#{{ job.params.groupIndex }}</div>
+          <div class="job-type">{{ displayJobTypeLabel(job) }}</div>
+          <div class="job-sched">{{ scheduleText(job) }}</div>
+          <div class="job-actions">
+            <button type="button" class="link-btn" @click="toggleJob(job, !job.enabled)">
+              {{ job.enabled ? '停用' : '启用' }}
+            </button>
+            <button type="button" class="link-btn primary" @click="runNow(job)">执行</button>
+            <button type="button" class="link-btn" @click="showLogs(job)">日志</button>
+            <button type="button" class="link-btn danger" @click="removeJob(job)">删除</button>
+          </div>
+        </article>
       </div>
     </div>
 
     <Teleport to="body">
+      <div v-if="logOpen" class="modal-mask" @click.self="closeLogModal">
+        <div class="modal-panel log-modal" role="dialog" aria-modal="true" aria-label="运行日志">
+          <header class="modal-head">
+            <div>
+              <div class="modal-title">运行日志</div>
+              <div v-if="logJob" class="modal-sub">
+                {{ logJob.name }}
+                <span class="modal-sub-type">{{ displayJobTypeLabel(logJob) }}</span>
+              </div>
+            </div>
+            <button type="button" class="btn ghost sm" @click="closeLogModal">关闭</button>
+          </header>
+          <div class="modal-body log-modal-body">
+            <div class="log-tools">
+              <label class="check inline">
+                <input v-model="autoRefreshLogs" type="checkbox" />
+                自动刷新
+              </label>
+              <button type="button" class="btn sm ghost" @click="loadRuns">刷新</button>
+              <button
+                type="button"
+                class="btn sm danger"
+                :disabled="!runs.length"
+                @click="clearRuns"
+              >清空日志</button>
+            </div>
+            <div v-if="!runs.length" class="empty">暂无运行记录</div>
+            <div v-else class="log-scroll">
+              <table class="log-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>触发</th>
+                    <th>状态</th>
+                    <th>说明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="r in runs" :key="r.runId">
+                    <td class="nowrap">{{ r.startedAt }}</td>
+                    <td>{{ r.trigger }}</td>
+                    <td :class="statusClass(r.status)">{{ r.status }}</td>
+                    <td class="msg">{{ r.error || r.message || r.runId }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="createOpen" class="modal-mask" @click.self="closeCreateModal">
         <div class="modal-panel" role="dialog" aria-modal="true" aria-label="新增调度任务">
           <header class="modal-head">
@@ -456,35 +711,52 @@ onUnmounted(() => {
               <label>
                 <span>任务类型</span>
                 <select v-model="form.jobType">
-                  <optgroup v-for="g in jobTypeGroups" :key="g.category" :label="g.label">
+                  <optgroup v-for="g in creatableJobTypeGroups" :key="g.category" :label="g.label">
                     <option v-for="t in g.items" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
                   </optgroup>
                 </select>
               </label>
-              <label>
+              <label v-if="!isCollectJobType">
                 <span>名称</span>
                 <select v-model="form.nameKey" :disabled="!formNameOptions.length">
                   <option value="" disabled>
-                    {{ formNameOptions.length ? '请选择' : '暂无分组（请先在条件/投注引擎配置）' }}
+                    {{ formNameOptions.length ? '请选择' : '暂无分组（请先在条件/止损引擎配置）' }}
                   </option>
                   <option v-for="o in formNameOptions" :key="o.key" :value="o.key">{{ o.label }}</option>
                 </select>
               </label>
-              <label>
-                <span>时间方式</span>
-                <select v-model="form.scheduleMode">
-                  <option value="interval">每隔 N 秒</option>
-                  <option value="daily">每天定点（北京时间）</option>
-                </select>
-              </label>
-              <label v-if="form.scheduleMode === 'interval'">
-                <span>间隔（秒）</span>
-                <input v-model.number="form.intervalSec" type="number" min="1" />
-              </label>
-              <label v-else>
-                <span>每天时刻</span>
-                <input v-model="form.dailyTime" type="time" />
-              </label>
+              <template v-if="isCollectJobType">
+                <label class="span-full">
+                  <span>采集间隔</span>
+                  <div class="interval-chips">
+                    <button
+                      v-for="p in collectIntervalPresets"
+                      :key="p.sec"
+                      type="button"
+                      class="chip-btn"
+                      :class="{ active: form.intervalSec === p.sec }"
+                      @click="form.intervalSec = p.sec"
+                    >{{ p.label }}</button>
+                  </div>
+                </label>
+              </template>
+              <template v-else>
+                <label>
+                  <span>时间方式</span>
+                  <select v-model="form.scheduleMode">
+                    <option value="interval">每隔 N 秒</option>
+                    <option value="daily">每天定点（北京时间）</option>
+                  </select>
+                </label>
+                <label v-if="form.scheduleMode === 'interval'">
+                  <span>间隔（秒）</span>
+                  <input v-model.number="form.intervalSec" type="number" min="1" />
+                </label>
+                <label v-else>
+                  <span>每天时刻</span>
+                  <input v-model="form.dailyTime" type="time" />
+                </label>
+              </template>
             </div>
             <label class="check">
               <input v-model="form.enabled" type="checkbox" />
@@ -516,7 +788,7 @@ onUnmounted(() => {
   box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
 }
 .jobs-card {
-  padding: 12px 14px;
+  padding: 16px 18px;
 }
 .head-row {
   display: flex;
@@ -568,67 +840,132 @@ onUnmounted(() => {
 .jobs-head .sec-title {
   margin-bottom: 0;
 }
-.jobs-table-wrap {
-  overflow: auto;
-  border: 1px solid #f1f5f9;
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+  flex-wrap: wrap;
+}
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
   border-radius: 10px;
-}
-.jobs-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-.jobs-table th {
-  padding: 6px 8px;
-  text-align: left;
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
+  border: 1px solid #e2e8f0;
   background: #f8fafc;
-  white-space: nowrap;
-}
-.jobs-table td {
-  padding: 6px 8px;
-  border-top: 1px solid #f1f5f9;
-  vertical-align: middle;
-  color: #475569;
-}
-.jobs-table tbody tr {
-  cursor: pointer;
-}
-.jobs-table tbody tr:hover {
-  background: #f8fafc;
-}
-.jobs-table tbody tr.active {
-  background: #f0f7ff;
-}
-.col-name { min-width: 120px; }
-.col-type { min-width: 100px; color: #64748b; font-size: 11px; }
-.col-sched { min-width: 110px; color: #64748b; font-size: 11px; white-space: nowrap; }
-.col-state { width: 64px; }
-.col-actions { width: 1%; white-space: nowrap; }
-.job-name {
   font-size: 12px;
   font-weight: 650;
+  color: #64748b;
+  cursor: pointer;
+}
+.category-tab.on {
+  background: #fff;
   color: #0f172a;
-  line-height: 1.3;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.category-tab .tab-count {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+.category-tab.on .tab-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.category-tab .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #cbd5e1;
+  flex-shrink: 0;
+}
+.category-tab .dot.on {
+  background: #10b981;
+}
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 148px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.job-card.on {
+  background: #fff;
+  border-color: #bfdbfe;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);
+}
+.job-card:hover {
+  border-color: #cbd5e1;
+}
+.job-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 18px;
+}
+.job-name {
+  font-size: 14px;
+  font-weight: 650;
+  color: #0f172a;
+  line-height: 1.35;
 }
 .job-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
-  margin-top: 1px;
+  margin-top: -2px;
+}
+.job-type {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.35;
+}
+.job-sched {
+  font-size: 12px;
+  color: #475569;
+  font-weight: 600;
 }
 .job-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 8px;
-  justify-content: flex-end;
+  gap: 4px 10px;
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+@media (max-width: 960px) {
+  .jobs-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .jobs-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .link-btn {
   border: none;
   background: none;
-  padding: 0;
-  font-size: 11px;
+  padding: 2px 0;
+  font-size: 12px;
   font-weight: 600;
   color: #64748b;
   cursor: pointer;
@@ -658,6 +995,24 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+.modal-panel.log-modal {
+  width: min(960px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+}
+.modal-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+.modal-sub-type {
+  margin-left: 8px;
+  color: #94a3b8;
+}
+.log-modal-body {
+  gap: 10px;
+  min-height: 0;
 }
 .modal-head {
   display: flex;
@@ -700,6 +1055,30 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
+}
+.form-grid .span-full {
+  grid-column: 1 / -1;
+}
+.interval-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.chip-btn {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip-btn.active {
+  color: #2563eb;
+  background: #eff6ff;
+  border-color: #93c5fd;
 }
 @media (min-width: 640px) {
   .form-grid {
@@ -776,32 +1155,16 @@ select, input[type='number'], input[type='time'], .job-select {
   background: #f1f5f9;
   color: #64748b;
 }
-.log-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.log-head .sec-title {
-  margin-bottom: 0;
-}
 .log-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
-.job-select {
-  width: auto;
-  min-width: 140px;
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 8px;
-}
 .log-scroll {
-  max-height: 320px;
+  flex: 1;
+  min-height: 240px;
+  max-height: min(60vh, 520px);
   overflow: auto;
   border: 1px solid #f1f5f9;
   border-radius: 10px;
@@ -831,9 +1194,7 @@ select, input[type='number'], input[type='time'], .job-select {
   white-space: nowrap;
 }
 .log-table .msg {
-  max-width: 360px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 </style>
