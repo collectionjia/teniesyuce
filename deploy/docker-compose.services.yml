@@ -41,6 +41,7 @@ services:
     volumes:
       - ../server:/server:ro
       - ../scripts/tennis-monitor:/tennis-monitor:ro
+      - ../scripts/tennis-monitor/logs:/tennis-monitor/logs:rw
       - ../docks:/docks:ro
     ports:
       - "127.0.0.1:9101:9101"
