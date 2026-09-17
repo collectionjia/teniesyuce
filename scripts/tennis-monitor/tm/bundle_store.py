@@ -10,7 +10,9 @@ from typing import Any
 from tm.collectors.events import today_bj
 from tm.env import MONITOR_ROOT
 
-OUTPUT_DIR = MONITOR_ROOT / "output"
+OUTPUT_DIR = Path(
+    (os.environ.get("TENNIS_OUTPUT_DIR") or "").strip() or str(MONITOR_ROOT / "output")
+)
 BUNDLE_KEY = "tennis:bundle:full"
 META_KEY = "tennis:bundle:fetched_at"
 INPLAY_BUNDLE_KEY = "tennis:bundle:inplay"
@@ -120,12 +122,16 @@ def _load_redis_url_from_server_env() -> None:
             return
 
 
-def write_daily_bundle_file(bundle: dict[str, Any]) -> Path:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    path = OUTPUT_DIR / f"daily_bundle_{bundle.get('date') or today_bj()}.json"
-    path.write_text(json.dumps(bundle, ensure_ascii=False), encoding="utf-8")
-    bundle["bundle_file"] = path.name
-    return path
+def write_daily_bundle_file(bundle: dict[str, Any]) -> Path | None:
+    try:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        path = OUTPUT_DIR / f"daily_bundle_{bundle.get('date') or today_bj()}.json"
+        path.write_text(json.dumps(bundle, ensure_ascii=False), encoding="utf-8")
+        bundle["bundle_file"] = path.name
+        return path
+    except OSError as exc:
+        print(f"[bundle] output 落盘跳过（{exc}），继续写 Redis")
+        return None
 
 
 def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
@@ -301,8 +307,8 @@ def persist_collect_bundle(collect: dict[str, Any]) -> dict[str, Any]:
     path = write_daily_bundle_file(bundle)
     redis_result = write_bundle_redis(bundle)
     return {
-        "bundle_file": path.name,
-        "bundle_path": str(path),
+        "bundle_file": path.name if path else None,
+        "bundle_path": str(path) if path else None,
         "events": bundle.get("events"),
         "redis": redis_result,
     }
@@ -312,13 +318,18 @@ def persist_live_collect(collect: dict[str, Any]) -> dict[str, Any]:
     """仅写入 collect_live 独立 Redis（tennis:bundle:inplay），不触碰 tennis:bundle:full。"""
     match_date = collect.get("date") or today_bj()
     live_bundle = build_live_bundle_payload(collect)
-    live_path = OUTPUT_DIR / f"daily_live_bundle_{match_date}.json"
-    live_path.write_text(json.dumps(live_bundle, ensure_ascii=False), encoding="utf-8")
-    live_bundle["bundle_file"] = live_path.name
+    live_path: Path | None = None
+    try:
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        live_path = OUTPUT_DIR / f"daily_live_bundle_{match_date}.json"
+        live_path.write_text(json.dumps(live_bundle, ensure_ascii=False), encoding="utf-8")
+        live_bundle["bundle_file"] = live_path.name
+    except OSError as exc:
+        print(f"[bundle] live output 落盘跳过（{exc}），继续写 Redis")
     redis_result = write_live_bundle_redis(live_bundle)
     return {
-        "bundle_file": live_path.name,
-        "bundle_path": str(live_path),
+        "bundle_file": live_path.name if live_path else None,
+        "bundle_path": str(live_path) if live_path else None,
         "events": len(collect.get("events") or []),
         "redis": redis_result,
     }
