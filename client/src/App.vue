@@ -2476,6 +2476,13 @@ function tennisBoardMember(product) {
   return isActive(product.id)
 }
 
+/** 盘前/盘中：仅本产品订阅（或管理员）为会员视图；不受全局 tennisFilterEnabled 影响 */
+function tennisProductBoardMember(product) {
+  if (!product?.id) return false
+  if (role.value === 'admin') return true
+  return isActive(product.id)
+}
+
 function isTennisBoardHeaderProduct(product) {
   return (
     isTennisProduct(product)
@@ -3074,14 +3081,14 @@ function productEmbedUrl(product) {
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
-                <!-- 网球：登录用户统一看全量数据 -->
+                <!-- 盘前/盘中：未订阅本产品时与「网球」未订阅预览一致 -->
                 <div v-if="isTennisPrematchProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     ref="tennisBoardRef"
                     board-mode="prematch"
                     :show-filters="canShowTennisFilters"
-                    :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :is-member="tennisProductBoardMember(openedProduct)"
+                    :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"
                     :product-id="openedProduct.id"
                     @open-admin-engine="onOpenTennisAdminEngine"
@@ -3094,8 +3101,8 @@ function productEmbedUrl(product) {
                     ref="tennisBoardRef"
                     board-mode="inplay"
                     :show-filters="canShowTennisFilters"
-                    :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :is-member="tennisProductBoardMember(openedProduct)"
+                    :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"
                     :product-id="openedProduct.id"
                     @open-admin-engine="onOpenTennisAdminEngine"
