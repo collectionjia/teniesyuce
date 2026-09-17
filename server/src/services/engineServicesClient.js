@@ -39,7 +39,50 @@ async function request(service, method, path, body) {
   return data;
 }
 
+async function collectFullLocal(body = {}) {
+  const top100 = body.top100 !== false && body.all !== true;
+  const tennisDataSource = require('./tennisDataSource');
+  const pref = await tennisDataSource.get();
+  if (top100) {
+    if (pref === 'docks500') {
+      return { skipped: true, message: '虚拟(txt)模式跳过官网 Top100 采集' };
+    }
+    const tennisCollectRunner = require('./tennisCollectRunner');
+    if (tennisCollectRunner.isRunning()) {
+      return { skipped: true, message: 'collect.py already running' };
+    }
+    const started = tennisCollectRunner.startCollect({
+      matchDate: body.matchDate || body.date || null,
+      top100: true,
+    });
+    if (!started.ok) {
+      const err = new Error(started.error || 'collect.top100 start failed');
+      err.status = started.status || 500;
+      throw err;
+    }
+    return { message: 'collect.top100 started', metrics: started.last || {} };
+  }
+  const tennisThreeBuckets = require('./tennisThreeBuckets');
+  if (pref === 'docks500') {
+    const r = await tennisThreeBuckets.seedVirtualPrematchInplay({
+      txtName: body.txtName || '2026_500.txt',
+      prematchCount: body.prematchCount,
+      inplayCount: body.inplayCount,
+    });
+    if (!r.ok) throw new Error(r.error || 'virtual txt seed failed');
+    return { message: r.message || 'collect.full virtual txt done', metrics: r };
+  }
+  const split = await tennisThreeBuckets.splitFullToThreeBuckets();
+  const migP = await tennisThreeBuckets.migratePrematchByStartTime();
+  const migI = await tennisThreeBuckets.migrateInplayEnded();
+  return {
+    message: 'collect.full done',
+    metrics: { split, migratePrematch: migP, migrateInplay: migI },
+  };
+}
+
 async function collectFull(body = {}) {
+  if (!baseUrl('collect')) return collectFullLocal(body);
   return request('collect', 'POST', '/internal/collect/full', body);
 }
 
@@ -48,6 +91,16 @@ async function collectPartial(body = {}) {
 }
 
 async function collectStatus(query = {}) {
+  if (!baseUrl('collect')) {
+    const tennisCollectRunner = require('./tennisCollectRunner');
+    const st = tennisCollectRunner.statusPayload();
+    return {
+      ok: true,
+      sport: query.sport || 'tennis',
+      running: { full: tennisCollectRunner.isRunning(), live: tennisCollectRunner.isLiveRunning() },
+      collect: st,
+    };
+  }
   const qs = new URLSearchParams(query).toString();
   return request('collect', 'GET', `/internal/collect/status${qs ? `?${qs}` : ''}`);
 }

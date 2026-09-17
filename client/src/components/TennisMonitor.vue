@@ -801,10 +801,6 @@ async function waitCollectDone() {
 
 async function triggerCollect() {
   if (collecting.value || running.value) return
-  if (!collectEnabled.value) {
-    error.value = '采集已关闭，请先打开采集开关'
-    return
-  }
   collecting.value = true
   error.value = ''
   notice.value = ''
@@ -834,7 +830,12 @@ async function triggerCollect() {
       return
     }
     // 真实模式：官网 collect.py
-    await api.triggerTennisMonitorCollect({ fromTxt: false })
+    const r = await api.triggerTennisMonitorCollect({ fromTxt: false, top100: true })
+    if (r?.skipped) {
+      error.value = formatMonitorError(r.message || '采集已跳过')
+      return
+    }
+    showNotice(r?.message || 'Top100 采集已启动')
     await loadStatus()
     await loadLogs()
     if (running.value) await waitCollectDone()
@@ -1440,7 +1441,7 @@ onUnmounted(() => {
       <div class="actions-primary">
         <button type="button" class="btn ghost" :disabled="refreshing" @click="refreshAll()">刷新</button>
         <template v-if="isCollectPage">
-          <button type="button" class="btn primary" :disabled="collecting || running || !collectEnabled" @click="triggerCollect" :title="isVirtualSource ? '虚拟：只读 docks/2026_500.txt，不采官网' : '真实：运行 collect.py 采官网'">
+          <button type="button" class="btn primary" :disabled="collecting || running" @click="triggerCollect" :title="isVirtualSource ? '虚拟：只读 docks/2026_500.txt，不采官网' : '真实：运行 collect.py 采官网'">
             {{
               running ? '采集中…'
                 : collecting ? (isVirtualSource ? 'txt 造数中…' : '触发中…')

@@ -136,6 +136,29 @@ router.get('/status', async (_req, res) => {
       ? false
       : !!(body.top100_collect?.running || tennisCollectRunner.isRunning());
 
+    try {
+      const engineServices = require('../services/engineServicesClient');
+      const cst = await engineServices.collectStatus({ sport: 'tennis' });
+      const svcRunning = !!(cst?.running?.full || cst?.running?.live || cst?.collect?.running);
+      if (svcRunning) {
+        body.running = true;
+        body.top100_collect = {
+          ...(body.top100_collect || {}),
+          running: true,
+          last: cst?.collect?.last || body.top100_collect?.last,
+          status: cst?.collect?.last?.status || body.top100_collect?.status || 'running',
+        };
+      } else if (cst?.collect?.last) {
+        body.top100_collect = {
+          ...(body.top100_collect || {}),
+          last: cst.collect.last,
+          running: false,
+        };
+      }
+    } catch {
+      /* collect 微服务未配置或不可达时沿用本机 runner 状态 */
+    }
+
     // bundle 摘要：短超时，失败不影响 status 主体
     try {
       const bundle = await Promise.race([

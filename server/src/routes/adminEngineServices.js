@@ -32,9 +32,12 @@ router.post('/collect/full', async (req, res) => {
     const body = req.body || {};
     const data = await svc.collectFull({
       sport: body.sport || 'tennis',
-      top100: body.top100 === true,
+      top100: body.top100 !== false && body.all !== true,
       ...body,
     });
+    if (data?.skipped) {
+      return res.status(409).json({ ok: false, error: data.message || 'collect skipped', ...data });
+    }
     res.json({ ok: true, ...data });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.message });

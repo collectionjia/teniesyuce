@@ -232,9 +232,6 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
-  if (!isCollectEnabled()) {
-    return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last };
-  }
   if (!fs.existsSync(COLLECT_SCRIPT)) {
     return { ok: false, status: 500, error: `collect.py not found: ${COLLECT_SCRIPT}` };
   }

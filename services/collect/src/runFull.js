@@ -20,7 +20,7 @@ async function runFull(body = {}) {
   const isVirtual = (await tennisDataSource.get()) === 'docks500';
   const tennisThreeBuckets = svc('tennisThreeBuckets');
 
-  const isTop100 = body.top100 === true;
+  const isTop100 = body.top100 !== false && body.all !== true;
 
   if (isTop100) {
     if (isVirtual) {

@@ -1370,7 +1370,10 @@ async function triggerTop100Collect() {
   error.value = ''
   try {
     await saveCollectSchedule()
-    await api.triggerTennisMonitorCollect({ fromTxt: false })
+    const r = await api.triggerTennisMonitorCollect({ fromTxt: false, top100: true })
+    if (r?.skipped) {
+      throw new Error(r.message || '采集已跳过')
+    }
     collectModalOpen.value = false
     await refreshCollectStatus()
     const deadline = Date.now() + 10 * 60 * 1000
