@@ -7,5 +7,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PROFILE="${COMPOSE_SERVICES_PROFILE:-all}"
-echo "==> services profile=$PROFILE"
+echo "==> services profile=$PROFILE (compose: deploy/docker-compose.services.yml)"
+if [[ ! -f server/.env ]]; then
+  echo "missing server/.env"
+  exit 1
+fi
+if [[ ! -d server/node_modules ]]; then
+  echo "hint: npm install --omit=dev --prefix server"
+fi
 exec docker compose -f deploy/docker-compose.services.yml --profile "$PROFILE" "$@"

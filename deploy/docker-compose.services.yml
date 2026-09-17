@@ -1,74 +1,97 @@
-# 五引擎服务（build context = services/）
-# 部署顺序：先 core（docker-compose.core.yml），再本文件
+# 五引擎 Docker（与 yuce-prod core 同机；server 经 host.docker.internal:910x 访问）
 #   bash scripts/docker-deploy-services.sh up -d --build
-# server 容器通过 deploy/prod.env 的 SCHEDULER_URL=http://host.docker.internal:9105 连接 scheduler
-# 各服务 .env 需与 server/.env 共用 DB_* / REDIS_URL（可复制 server/.env 后改 PORT）
+# 依赖：server/.env 已配置；server/ 下已 npm install（挂载 node_modules）
 
 name: yuce-services
+
+networks:
+  yuce-prod:
+    external: true
+    name: yuce-prod_default
+
+x-service-common: &service-common
+  restart: unless-stopped
+  env_file:
+    - ../server/.env
+  networks:
+    - yuce-prod
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment: &service-env
+    SERVER_ROOT: /server
+    ENV_FILE: /server/.env
+    NODE_PATH: /server/node_modules
+    REDIS_URL: redis://redis:6379
+  volumes:
+    - ../server:/server:ro
 
 services:
   collect:
     profiles: ["collect", "all"]
+    <<: *service-common
     build:
-      context: ../services
-      dockerfile: collect/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../services/collect/.env
+      context: ..
+      dockerfile: services/collect/Dockerfile
     environment:
+      <<: *service-env
       PORT: 9101
+      TENNIS_MONITOR_DIR: /tennis-monitor
+      TENNIS_PYTHON: python3
+      DOCKS_DIR: /docks
+    volumes:
+      - ../server:/server:ro
+      - ../scripts/tennis-monitor:/tennis-monitor:ro
+      - ../docks:/docks:ro
     ports:
       - "127.0.0.1:9101:9101"
 
   rules:
     profiles: ["rules", "all"]
+    <<: *service-common
     build:
-      context: ../services
-      dockerfile: rules/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../services/rules/.env
+      context: ..
+      dockerfile: services/rules/Dockerfile
     environment:
+      <<: *service-env
       PORT: 9102
     ports:
       - "127.0.0.1:9102:9102"
 
   betting:
     profiles: ["betting", "all"]
+    <<: *service-common
     build:
-      context: ../services
-      dockerfile: betting/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../services/betting/.env
+      context: ..
+      dockerfile: services/betting/Dockerfile
     environment:
+      <<: *service-env
       PORT: 9103
     ports:
       - "127.0.0.1:9103:9103"
 
   stop-loss:
     profiles: ["stop-loss", "all"]
+    <<: *service-common
     build:
-      context: ../services
-      dockerfile: stop-loss/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../services/stop-loss/.env
+      context: ..
+      dockerfile: services/stop-loss/Dockerfile
     environment:
+      <<: *service-env
       PORT: 9104
     ports:
       - "127.0.0.1:9104:9104"
 
   scheduler:
     profiles: ["scheduler", "all"]
+    <<: *service-common
     build:
-      context: ../services
-      dockerfile: scheduler/Dockerfile
-    restart: unless-stopped
-    env_file:
-      - ../services/scheduler/.env
+      context: ..
+      dockerfile: services/scheduler/Dockerfile
     environment:
+      <<: *service-env
       PORT: 9105
+      EXECUTOR_MODE: http
+      SCHEDULER_LOOP_ENABLED: "1"
       COLLECT_URL: http://collect:9101
       RULES_URL: http://rules:9102
       BETTING_URL: http://betting:9103

@@ -8,7 +8,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-ENV_FILE="${SERVER_ENV_FILE:-$ROOT/server/.env.test}"
+ENV_FILE="${SERVER_ENV_FILE:-$ROOT/server/.env}"
 LOG_DIR="${YUCE_LOG_DIR:-$ROOT/logs/services}"
 ACTION="${1:-restart}"
 
@@ -75,10 +75,10 @@ start_one() {
     export ENV_FILE="$ENV_FILE"
     export SERVER_ROOT="$ROOT/server"
     export PORT="$port"
-    # 宿主机进程：直连本机 MySQL / Redis
-    export DB_HOST="${DB_HOST_HOST:-127.0.0.1}"
-    export DB_PORT="${DB_PORT_HOST:-3306}"
-    export REDIS_URL="${REDIS_URL_HOST:-redis://127.0.0.1:${REDIS_HOST_PORT:-9015}}"
+    # 宿主机：仅显式设置时覆盖（145 外部 MySQL 等走 ENV_FILE；Redis 生产常设 REDIS_URL_HOST）
+    if [[ -n "${DB_HOST_HOST:-}" ]]; then export DB_HOST="$DB_HOST_HOST"; fi
+    if [[ -n "${DB_PORT_HOST:-}" ]]; then export DB_PORT="$DB_PORT_HOST"; fi
+    if [[ -n "${REDIS_URL_HOST:-}" ]]; then export REDIS_URL="$REDIS_URL_HOST"; fi
     if [[ "$name" == scheduler ]]; then
       export EXECUTOR_MODE=http
       export COLLECT_URL=http://127.0.0.1:9101

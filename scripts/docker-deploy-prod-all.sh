@@ -23,19 +23,25 @@ REDIS_PORT="${REDIS_HOST_PORT:-9016}"
 echo "==> [1/3] Docker 生产栈 (web :${WEB_PORT:-9001}, redis :${REDIS_PORT})"
 bash scripts/docker-deploy.sh prod up -d --build "${EXTRA[@]}"
 
-echo "==> [2/3] 宿主机五引擎 (9101-9105, 本机 MySQL + Redis:${REDIS_PORT})"
-export SERVER_ENV_FILE="$ROOT/server/.env"
-export REDIS_URL_HOST="redis://127.0.0.1:${REDIS_PORT}"
-export DB_PORT_HOST="${DB_PORT_HOST:-3306}"
-bash scripts/deploy-host-services.sh restart
+echo "==> [2/4] 停掉宿主机五引擎（若曾 npm 启动）"
+bash scripts/deploy-host-services.sh stop 2>/dev/null || true
 
-echo "==> [3/3] 健康检查"
-sleep 5
+echo "==> [3/4] server node_modules（供容器 NODE_PATH 挂载）"
+if [[ ! -d server/node_modules ]]; then
+  npm install --omit=dev --prefix server
+fi
+
+echo "==> [4/4] Docker 五引擎 (9101-9105, 接入 yuce-prod 网络 Redis)"
+bash scripts/docker-deploy-services.sh up -d --build "${EXTRA[@]}"
+
+echo "==> 健康检查"
+sleep 6
 curl -sf "http://127.0.0.1:${WEB_PORT:-9001}/api/health" && echo "  web :${WEB_PORT:-9001} ok" || echo "  web :${WEB_PORT:-9001} FAIL"
-curl -sf "http://127.0.0.1:${WEB_PORT:-9001}/api/admin/engines/overview" >/dev/null 2>&1 \
-  && echo "  engines overview ok" || echo "  engines overview skip (需 admin JWT)"
-bash scripts/deploy-host-services.sh status
+for p in 9101 9102 9103 9104 9105; do
+  curl -sf "http://127.0.0.1:${p}/health" >/dev/null && echo "  engine :${p} ok" || echo "  engine :${p} FAIL"
+done
+bash scripts/docker-deploy-services.sh ps
 
 echo ""
 echo "生产: http://127.0.0.1:${WEB_PORT:-9001}/ (对外域名见 APP_PUBLIC_URL)"
-echo "日志: logs/services/*.log"
+echo "五引擎: bash scripts/docker-deploy-services.sh logs -f scheduler"
