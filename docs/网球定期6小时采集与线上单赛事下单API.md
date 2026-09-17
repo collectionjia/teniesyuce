@@ -28,7 +28,7 @@
 | 接口类型 | 鉴权方式 |
 |----------|----------|
 | 健康检查 | 无需登录 |
-| 采集数据（盘前 / 盘中 / 盘后） | **无需 JWT**，公开读 Redis 快照 |
+| 采集数据（盘前 / 盘中 / 盘后 / 单场进行中） | **无需 JWT**，公开读 Redis 快照 |
 | 单场 / 批量 买入 / 卖出 | **无需 JWT**；请求体带 `email`（= `users.account`）定位钱包 |
 
 共性：
@@ -64,7 +64,8 @@ curl -s 'https://www.yuce.bid/api/health'
 | 桶 | 说明 | HTTP |
 |----|------|------|
 | 盘前 | 未开赛 | `GET /api/tennis-prematch/today` |
-| 盘中 | 进行中 | `GET /api/tennis-inplay/today` |
+| 盘中 | 进行中（列表） | `GET /api/tennis-inplay/today` |
+| 盘中 | 进行中（单场） | `GET /api/tennis-inplay/match/:eventId` |
 | 盘后 | 已结束 | `GET /api/tennis-settled/today` |
 
 共性：
@@ -155,21 +156,31 @@ curl -s 'https://www.yuce.bid/api/tennis-prematch/today'
 }
 ```
 
-### 3.2 盘中 · `GET /api/tennis-inplay/today`
+### 3.2 盘中列表 · `GET /api/tennis-inplay/today`
 
 ```bash
 curl -s 'https://www.yuce.bid/api/tennis-inplay/today'
 ```
 
-场次主要在 `live.matches`，常见多比分：
+列表包含 **已过开赛时间** 的场次（盘前 / 盘中 / 盘后 Redis 桶合并去重）。每场带标识字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `pastStart` | boolean | 当前时间 ≥ `startTimestamp` |
+| `inPlay` | boolean | **真正比赛中**（`statusType` 为进行中，且未结束） |
+
+**只有 `inPlay: true` 才算「比赛中」**；`pastStart: true` 但 `inPlay: false` 表示已结束、延期未开、或状态尚未更新为进行中。
+
+响应额外字段：`inPlayCount` = 列表中 `inPlay: true` 的场次数。
 
 ```json
 {
   "ok": true,
   "source": "tennis-collect-live",
-  "events": 1,
+  "events": 2,
+  "inPlayCount": 1,
   "live": {
-    "eventCount": 1,
+    "eventCount": 2,
     "matches": [
       {
         "id": 12345679,
@@ -178,14 +189,122 @@ curl -s 'https://www.yuce.bid/api/tennis-inplay/today'
         "scoreText": "6-4 3-2",
         "home": "Player A",
         "away": "Player B",
-        "homePlayer": { "id": 1, "name": "Player A", "rank": 20 },
-        "awayPlayer": { "id": 2, "name": "Player B", "rank": 55 },
-        "startTimestamp": 1758060000
+        "startTimestamp": 1758060000,
+        "pastStart": true,
+        "inPlay": true
+      },
+      {
+        "id": 12345680,
+        "status": "Ended",
+        "statusType": "finished",
+        "startTimestamp": 1758050000,
+        "pastStart": true,
+        "inPlay": false
       }
     ]
   }
 }
 ```
+
+### 3.2.1 单场 · `GET /api/tennis-inplay/match/:eventId`
+
+按比赛 ID 读取单场快照（跨 `inplay` / `prematch` / `settled` Redis 桶查找），**无需登录**。
+
+**命中条件**：`startTimestamp` 已过 **或** `inPlay: true`。未到开赛时间则 `found: false`。
+
+| 项 | 说明 |
+|----|------|
+| Method | `GET` |
+| 路径 | `/api/tennis-inplay/match/{eventId}` |
+| 鉴权 | 无 |
+| 数据来源 | Redis 快照（不在请求时实时打 Sofascore） |
+| `inPlay` | 顶层与 `event` 内均有；`true` = 真正比赛中 |
+| `pastStart` | 是否已过开赛时间 |
+| `bucket` | 数据来源桶：`inplay` / `prematch` / `settled` |
+
+```bash
+curl -s 'https://www.yuce.bid/api/tennis-inplay/match/12345679'
+```
+
+**找到比赛时（HTTP 200）**
+
+```json
+{
+  "ok": true,
+  "found": true,
+  "sport": "tennis",
+  "product": "tennis-inplay",
+  "eventId": "12345679",
+  "bucket": "inplay",
+  "pastStart": true,
+  "inPlay": true,
+  "date": "2026-09-17",
+  "fetched_at": "2026-09-17T08:30:00.000Z",
+  "source": "tennis-collect-live",
+  "dataSource": "collect_live",
+  "serverTime": 1758100000,
+  "event": {
+    "id": 12345679,
+    "pastStart": true,
+    "inPlay": true,
+    "status": "2nd set",
+    "statusType": "inprogress",
+    "scoreText": "6-4 3-2",
+    "home": "Player A",
+    "away": "Player B",
+    "homePlayer": { "id": 1, "name": "Player A", "rank": 20 },
+    "awayPlayer": { "id": 2, "name": "Player B", "rank": 55 },
+    "startTimestamp": 1758060000,
+    "tournament": "US Open",
+    "roundLabel": "QF"
+  },
+  "rankingsByPlayer": {
+    "1": { "current": 20, "previous": 21, "best": 5 },
+    "2": { "current": 55, "previous": 58, "best": 12 }
+  },
+  "odds": {
+    "full_time": {
+      "home": { "decimal": 1.72 },
+      "away": { "decimal": 2.10 }
+    }
+  },
+  "polymarket": {
+    "home_price": 0.58,
+    "away_price": 0.42,
+    "url": "https://polymarket.com/..."
+  },
+  "oddsByEvent": { "12345679": { "full_time": { "home": { "decimal": 1.72 }, "away": { "decimal": 2.10 } } } },
+  "polymarketByEvent": { "12345679": { "home_price": 0.58, "away_price": 0.42 } },
+  "birthYearByPlayer": { "1": 1995, "2": 1998 },
+  "member": true,
+  "tradeSimulate": false
+}
+```
+
+**未找到或暂无盘中数据（仍 HTTP 200）**
+
+```json
+{
+  "ok": true,
+  "found": false,
+  "empty": true,
+  "sport": "tennis",
+  "product": "tennis-inplay",
+  "eventId": "12345679",
+  "inPlay": false,
+  "pastStart": false,
+  "message": "未找到该比赛，或未到开赛时间",
+  "serverTime": 1758100000
+}
+```
+
+说明：
+
+- `eventId` 与列表接口、`POST /api/tennis/orders/buy` 的 `eventId` 相同
+- 对接方判断「是否比赛中」**只看 `inPlay`**，不要仅用开赛时间推断
+- 已结束但已过开赛时间的场次可能返回 `found: true, inPlay: false`（来自 `settled` 桶）
+- 未开赛请查 `GET /api/tennis-prematch/today`
+- 对外对接**不要**传 `applyCondition=1`（站内条件筛选用）
 
 ### 3.3 盘后 · `GET /api/tennis-settled/today`
 
@@ -205,6 +324,8 @@ curl -s 'https://www.yuce.bid/api/tennis-settled/today'
 | `home` / `away` | string | 球员名 |
 | `homePlayer` / `awayPlayer` | object | `id`、`name`、`rank`、`bestRank` 等 |
 | `status` / `statusType` | string | 状态文案 / 类型 |
+| `pastStart` | boolean | 已过开赛时间（盘中接口） |
+| `inPlay` | boolean | **真正比赛中**；非 `true` 则不是进行中 |
 | `startTimestamp` | number | Unix 秒 |
 | `startTime` | string | 如 `"03:00"` |
 | `scoreText` | string | 比分 |
@@ -576,7 +697,16 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 
 ## 7. 完整调用样例
 
-### 7.1 读盘前 → 邮箱单场模拟买入
+### 7.1 读单场进行中
+
+```bash
+BASE='https://www.yuce.bid'
+EVENT_ID='12345679'
+
+curl -s "$BASE/api/tennis-inplay/match/$EVENT_ID"
+```
+
+### 7.2 读盘前 → 邮箱单场模拟买入
 
 ```bash
 BASE='https://www.yuce.bid'
@@ -595,7 +725,7 @@ curl -s -X POST "$BASE/api/tennis/orders/buy" \
   }'
 ```
 
-### 7.2 邮箱批量买入两场
+### 7.3 邮箱批量买入两场
 
 ```bash
 curl -s -X POST "$BASE/api/tennis/orders/batch" \
@@ -612,7 +742,7 @@ curl -s -X POST "$BASE/api/tennis/orders/batch" \
   }'
 ```
 
-### 7.3 从盘前响应取 eventId（Python）
+### 7.4 从盘前响应取 eventId（Python）
 
 ```python
 import json
@@ -643,6 +773,7 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 | 邮箱下单公共逻辑 | `server/src/services/tennisOrdersPublic.js` |
 | 单场 / 统一批量 | `server/src/routes/tennisOrders.js` |
 | 盘前批量 | `server/src/routes/tennisPrematch.js` → `/trade/batch` |
+| 盘中列表 / 单场 | `server/src/routes/tennisInplay.js` → `/today` · `/match/:eventId` |
 | 盘中批量 | `server/src/routes/tennisInplay.js` → `/trade/batch` |
 | 全量采集脚本 | `scripts/tennis-monitor/collect.py` |
 | 进行中采集 | `scripts/tennis-monitor/collect_live.py` |

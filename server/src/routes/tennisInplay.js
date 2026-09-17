@@ -7,7 +7,14 @@ const {
   attachUserFromEmailBody,
   resolveTradeSimulatePublic,
 } = require('../services/tennisOrdersPublic');
-const { bundleWithOptionalCondition } = require('../services/tennisTodayQuery');
+const { bundleWithOptionalCondition, wantApplyCondition } = require('../services/tennisTodayQuery');
+const {
+  lookupMatchByEventId,
+  buildPublicMatchPayload,
+  findEventInBundle,
+  listInplayEligibleEvents,
+  enrichEvent,
+} = require('../services/tennisInplayMatchQuery');
 
 const router = Router();
 
@@ -74,11 +81,74 @@ function emptyInplayBundle() {
   };
 }
 
-/** 盘中采集列表：公开读数（无需 JWT） */
+/** 单场：开赛时间已过即可返回；inPlay=true 才表示真正比赛中（无需 JWT） */
+router.get('/match/:eventId', async (req, res) => {
+  try {
+    const eventId = String(req.params.eventId || req.query?.eventId || '').trim();
+    if (!eventId) {
+      return res.status(400).json({ ok: false, error: 'eventId 不能为空' });
+    }
+    const serverTime = Math.floor(Date.now() / 1000);
+    const row = await lookupMatchByEventId(eventId);
+    if (!row) {
+      return res.json({
+        ok: true,
+        found: false,
+        empty: true,
+        sport: 'tennis',
+        product: 'tennis-inplay',
+        eventId,
+        inPlay: false,
+        pastStart: false,
+        message: '未找到该比赛，或未到开赛时间',
+        serverTime,
+      });
+    }
+    if (wantApplyCondition(req) && row.inPlay) {
+      const wrapped = await bundleWithOptionalCondition(req, 'inplay', {
+        ...sanitizeCollectLiveBundle(row.bundle),
+        live: { matches: [row.event], eventCount: 1 },
+      });
+      const filtered = findEventInBundle(wrapped, eventId);
+      const tagged = filtered ? enrichEvent(filtered, serverTime) : null;
+      if (!tagged || !tagged.inPlay) {
+        return res.json({
+          ok: true,
+          found: false,
+          empty: true,
+          sport: 'tennis',
+          product: 'tennis-inplay',
+          eventId,
+          inPlay: false,
+          pastStart: row.pastStart,
+          message: '该比赛未通过条件筛选或不在进行中',
+          serverTime,
+        });
+      }
+      row.event = tagged;
+      row.inPlay = tagged.inPlay;
+      row.pastStart = tagged.pastStart;
+    }
+    res.json({
+      ...buildPublicMatchPayload(row),
+      member: true,
+      tradeSimulate: await tennisDataSource.shouldSimulateTrades(),
+    });
+  } catch (err) {
+    console.error('[tennis-inplay/match]', err);
+    res.status(500).json({
+      ok: false,
+      error: err.message || 'failed to load tennis inplay match',
+    });
+  }
+});
+
+/** 盘中列表：开赛已过均可列出；inPlay=true 才表示真正比赛中（无需 JWT） */
 router.get('/today', async (req, res) => {
   try {
     const raw = await tennisInplayCache.getBundle();
-    if (!raw) {
+    const { events: eligible, serverTime } = await listInplayEligibleEvents();
+    if (!raw && !eligible.length) {
       let bettingEntry = null;
       try {
         const tennisEngines = require('../services/tennisEngines');
@@ -92,8 +162,22 @@ router.get('/today', async (req, res) => {
         tradeSimulate: await tennisDataSource.shouldSimulateTrades(),
       });
     }
-    let full = sanitizeCollectLiveBundle(raw);
+    let full = raw ? sanitizeCollectLiveBundle(raw) : emptyInplayBundle();
+    full.live = {
+      ...(full.live || {}),
+      matches: eligible,
+      eventCount: eligible.length,
+    };
+    full.events = eligible.length;
+    full.serverTime = serverTime;
+    full.inPlayCount = eligible.filter((e) => e.inPlay).length;
     full = await bundleWithOptionalCondition(req, 'inplay', full);
+    if (Array.isArray(full.live?.matches)) {
+      full.live.matches = full.live.matches.map((m) => enrichEvent(m, serverTime));
+      full.live.eventCount = full.live.matches.length;
+      full.events = full.live.matches.length;
+      full.inPlayCount = full.live.matches.filter((e) => e.inPlay).length;
+    }
     let bettingEntry = null;
     try {
       const tennisEngines = require('../services/tennisEngines');

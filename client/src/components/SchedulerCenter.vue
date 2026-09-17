@@ -15,14 +15,21 @@ const logBox = ref(null)
 const autoRefreshLogs = ref(true)
 let logTimer = null
 
-const form = ref({
-  nameKey: '',
-  jobType: 'collect.full',
-  scheduleMode: 'interval',
-  intervalSec: 60,
-  dailyTime: '09:00',
-  enabled: true,
-})
+const createOpen = ref(false)
+const creating = ref(false)
+
+function defaultForm() {
+  return {
+    nameKey: '',
+    jobType: 'collect.full',
+    scheduleMode: 'interval',
+    intervalSec: 60,
+    dailyTime: '09:00',
+    enabled: true,
+  }
+}
+
+const form = ref(defaultForm())
 
 const HIDDEN_JOB_TYPES = new Set(['collect.inplay_tick'])
 
@@ -165,6 +172,17 @@ async function clearRuns() {
   }
 }
 
+function openCreateModal() {
+  const next = defaultForm()
+  next.nameKey = pickDefaultNameKey(categoryOfJobType(next.jobType))
+  form.value = next
+  createOpen.value = true
+}
+
+function closeCreateModal() {
+  createOpen.value = false
+}
+
 async function createJob() {
   msg.value = ''
   err.value = ''
@@ -180,6 +198,7 @@ async function createJob() {
     err.value = tip[cat] || '请选择名称'
     return
   }
+  creating.value = true
   try {
     const payload = {
       name: opt.value,
@@ -196,9 +215,12 @@ async function createJob() {
     const r = await api.createSchedulerJob(payload)
     msg.value = `已新增：${r.job?.name || r.job?.id}`
     if (r.job?.id) selectedJobId.value = r.job.id
+    createOpen.value = false
     await refresh()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message
+  } finally {
+    creating.value = false
   }
 }
 
@@ -283,12 +305,18 @@ watch(selectedJobId, (id) => {
   if (id) loadRuns()
   else runs.value = []
 })
+watch(createOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
 
 onMounted(() => {
   refresh()
   startLogTimer()
 })
-onUnmounted(stopLogTimer)
+onUnmounted(() => {
+  stopLogTimer()
+  document.body.style.overflow = ''
+})
 </script>
 
 <template>
@@ -297,9 +325,12 @@ onUnmounted(stopLogTimer)
       <div class="head-row">
         <div>
           <div class="title">调度中心</div>
-          <p class="sub">新增任务 · 立即执行 · 查看运行日志</p>
+          <p class="sub">管理定时任务 · 立即执行 · 查看运行日志</p>
         </div>
-        <button type="button" class="btn ghost" :disabled="loading" @click="refresh">刷新</button>
+        <div class="head-actions">
+          <button type="button" class="btn ghost" :disabled="loading" @click="refresh">刷新</button>
+          <button type="button" class="btn primary" @click="openCreateModal">新增任务</button>
+        </div>
       </div>
       <div v-if="status" class="status-line">
         调度循环：
@@ -310,69 +341,54 @@ onUnmounted(stopLogTimer)
       <p v-if="err" class="tip fail">{{ err }}</p>
     </div>
 
-    <div class="card">
-      <div class="sec-title">新增任务</div>
-      <div class="form-grid">
-        <label>
-          <span>任务类型</span>
-          <select v-model="form.jobType">
-            <optgroup v-for="g in jobTypeGroups" :key="g.category" :label="g.label">
-              <option v-for="t in g.items" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
-            </optgroup>
-          </select>
-        </label>
-        <label>
-          <span>名称</span>
-          <select v-model="form.nameKey" :disabled="!formNameOptions.length">
-            <option value="" disabled>
-              {{ formNameOptions.length ? '请选择' : '暂无分组（请先在条件/投注引擎配置）' }}
-            </option>
-            <option v-for="o in formNameOptions" :key="o.key" :value="o.key">{{ o.label }}</option>
-          </select>
-        </label>
-        <label>
-          <span>时间方式</span>
-          <select v-model="form.scheduleMode">
-            <option value="interval">每隔 N 秒</option>
-            <option value="daily">每天定点（北京时间）</option>
-          </select>
-        </label>
-        <label v-if="form.scheduleMode === 'interval'">
-          <span>间隔（秒）</span>
-          <input v-model.number="form.intervalSec" type="number" min="1" />
-        </label>
-        <label v-else>
-          <span>每天时刻</span>
-          <input v-model="form.dailyTime" type="time" />
-        </label>
+    <div class="card jobs-card">
+      <div class="jobs-head">
+        <div class="sec-title">
+          任务列表
+          <span class="count">{{ visibleJobs.length }}</span>
+        </div>
       </div>
-      <label class="check">
-        <input v-model="form.enabled" type="checkbox" />
-        创建并启用
-      </label>
-      <button type="button" class="btn primary" @click="createJob">新增任务</button>
-    </div>
-
-    <div class="card">
-      <div class="sec-title">任务列表</div>
-      <div v-if="!visibleJobs.length" class="empty">暂无任务，请先新增</div>
-      <div v-for="job in visibleJobs" :key="job.id" class="job" :class="{ active: selectedJobId === job.id }">
-        <div class="job-main">
-          <div class="job-name">{{ job.name }}</div>
-          <div class="job-meta">
-            {{ job.jobTypeLabel || job.jobType }} · {{ scheduleText(job) }}
-            <span v-if="job.params?.bucket"> · {{ job.params.bucket }}#{{ job.params.groupIndex }}</span>
-          </div>
-        </div>
-        <span class="badge" :class="job.enabled ? 'on' : 'off'">{{ job.enabled ? '启用' : '停用' }}</span>
-        <div class="job-actions">
-          <button type="button" class="btn sm ghost" @click="toggleJob(job, !job.enabled)">
-            {{ job.enabled ? '停用' : '启用' }}
-          </button>
-          <button type="button" class="btn sm primary" @click="runNow(job)">立即执行</button>
-          <button type="button" class="btn sm ghost" @click="showLogs(job)">看日志</button>
-          <button type="button" class="btn sm danger" @click="removeJob(job)">删除</button>
-        </div>
+      <div v-if="!visibleJobs.length" class="empty">暂无任务，点击右上角「新增任务」</div>
+      <div v-else class="jobs-table-wrap">
+        <table class="jobs-table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th>计划</th>
+              <th>状态</th>
+              <th class="col-actions">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="job in visibleJobs"
+              :key="job.id"
+              :class="{ active: selectedJobId === job.id }"
+              @click="selectedJobId = job.id"
+            >
+              <td class="col-name">
+                <div class="job-name">{{ job.name }}</div>
+                <div v-if="job.params?.bucket" class="job-sub">{{ job.params.bucket }}#{{ job.params.groupIndex }}</div>
+              </td>
+              <td class="col-type">{{ job.jobTypeLabel || job.jobType }}</td>
+              <td class="col-sched">{{ scheduleText(job) }}</td>
+              <td class="col-state">
+                <span class="badge" :class="job.enabled ? 'on' : 'off'">{{ job.enabled ? '启用' : '停用' }}</span>
+              </td>
+              <td class="col-actions" @click.stop>
+                <div class="job-actions">
+                  <button type="button" class="link-btn" @click="toggleJob(job, !job.enabled)">
+                    {{ job.enabled ? '停用' : '启用' }}
+                  </button>
+                  <button type="button" class="link-btn primary" @click="runNow(job)">执行</button>
+                  <button type="button" class="link-btn" @click="showLogs(job)">日志</button>
+                  <button type="button" class="link-btn danger" @click="removeJob(job)">删除</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -427,6 +443,63 @@ onUnmounted(stopLogTimer)
         </table>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div v-if="createOpen" class="modal-mask" @click.self="closeCreateModal">
+        <div class="modal-panel" role="dialog" aria-modal="true" aria-label="新增调度任务">
+          <header class="modal-head">
+            <div class="modal-title">新增任务</div>
+            <button type="button" class="btn ghost sm" @click="closeCreateModal">关闭</button>
+          </header>
+          <div class="modal-body">
+            <div class="form-grid">
+              <label>
+                <span>任务类型</span>
+                <select v-model="form.jobType">
+                  <optgroup v-for="g in jobTypeGroups" :key="g.category" :label="g.label">
+                    <option v-for="t in g.items" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
+                  </optgroup>
+                </select>
+              </label>
+              <label>
+                <span>名称</span>
+                <select v-model="form.nameKey" :disabled="!formNameOptions.length">
+                  <option value="" disabled>
+                    {{ formNameOptions.length ? '请选择' : '暂无分组（请先在条件/投注引擎配置）' }}
+                  </option>
+                  <option v-for="o in formNameOptions" :key="o.key" :value="o.key">{{ o.label }}</option>
+                </select>
+              </label>
+              <label>
+                <span>时间方式</span>
+                <select v-model="form.scheduleMode">
+                  <option value="interval">每隔 N 秒</option>
+                  <option value="daily">每天定点（北京时间）</option>
+                </select>
+              </label>
+              <label v-if="form.scheduleMode === 'interval'">
+                <span>间隔（秒）</span>
+                <input v-model.number="form.intervalSec" type="number" min="1" />
+              </label>
+              <label v-else>
+                <span>每天时刻</span>
+                <input v-model="form.dailyTime" type="time" />
+              </label>
+            </div>
+            <label class="check">
+              <input v-model="form.enabled" type="checkbox" />
+              创建并启用
+            </label>
+          </div>
+          <footer class="modal-foot">
+            <button type="button" class="btn ghost" :disabled="creating" @click="closeCreateModal">取消</button>
+            <button type="button" class="btn primary" :disabled="creating" @click="createJob">
+              {{ creating ? '创建中…' : '确认新增' }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -442,11 +515,20 @@ onUnmounted(stopLogTimer)
   padding: 16px;
   box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
 }
+.jobs-card {
+  padding: 12px 14px;
+}
 .head-row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+}
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .title {
   font-weight: 700;
@@ -461,6 +543,150 @@ onUnmounted(stopLogTimer)
   font-weight: 650;
   font-size: 13px;
   margin-bottom: 10px;
+}
+.sec-title .count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+.jobs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.jobs-head .sec-title {
+  margin-bottom: 0;
+}
+.jobs-table-wrap {
+  overflow: auto;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+.jobs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.jobs-table th {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f8fafc;
+  white-space: nowrap;
+}
+.jobs-table td {
+  padding: 6px 8px;
+  border-top: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #475569;
+}
+.jobs-table tbody tr {
+  cursor: pointer;
+}
+.jobs-table tbody tr:hover {
+  background: #f8fafc;
+}
+.jobs-table tbody tr.active {
+  background: #f0f7ff;
+}
+.col-name { min-width: 120px; }
+.col-type { min-width: 100px; color: #64748b; font-size: 11px; }
+.col-sched { min-width: 110px; color: #64748b; font-size: 11px; white-space: nowrap; }
+.col-state { width: 64px; }
+.col-actions { width: 1%; white-space: nowrap; }
+.job-name {
+  font-size: 12px;
+  font-weight: 650;
+  color: #0f172a;
+  line-height: 1.3;
+}
+.job-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  justify-content: flex-end;
+}
+.link-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+}
+.link-btn:hover { color: #2563eb; }
+.link-btn.primary { color: #2563eb; }
+.link-btn.danger { color: #e11d48; }
+.link-btn.danger:hover { color: #be123c; }
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 16px max(12px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.modal-panel {
+  width: min(520px, calc(100vw - 32px));
+  margin: auto 0;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.modal-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.modal-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.modal-body .check {
+  margin: 0;
+}
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  border-top: 1px solid #e2e8f0;
 }
 .tip {
   font-size: 12px;
@@ -536,37 +762,11 @@ select, input[type='number'], input[type='time'], .job-select {
   font-size: 12px;
   border-radius: 8px;
 }
-.job {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-  border: 1px solid #f1f5f9;
-  border-radius: 12px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.job.active {
-  border-color: #bfdbfe;
-  background: #f8fbff;
-}
-.job-main {
-  flex: 1 1 180px;
-  min-width: 0;
-}
-.job-name {
-  font-size: 13px;
-  font-weight: 650;
-}
-.job-meta {
-  font-size: 11px;
-  color: #94a3b8;
-  margin-top: 2px;
-}
 .badge {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 2px 6px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 .badge.on {
   background: #ecfdf5;
@@ -575,11 +775,6 @@ select, input[type='number'], input[type='time'], .job-select {
 .badge.off {
   background: #f1f5f9;
   color: #64748b;
-}
-.job-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }
 .log-head {
   display: flex;
