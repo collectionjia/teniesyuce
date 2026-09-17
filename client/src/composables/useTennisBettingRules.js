@@ -143,8 +143,7 @@ export function useTennisBettingRules({
             stopRules: ensureStopRules(g).map((r) => softenLegacyStopRule({ ...emptyStopRule(), ...r })),
           }))
         : [emptyBettingGroup(key)]
-      const stake = Number(bettingGroups.value.find((g) => Number(g.amountUsd) >= 1)?.amountUsd)
-      if (stake >= 1) batchAmountUsd.value = String(stake)
+      // 列表批量/自动投注金额独立默认 1 元，不跟引擎投注组 amountUsd 联动
       await getSyncListAutoBetFromBucket()({ fromSave: false })
     } catch (e) {
       betRulesError.value = e?.response?.data?.error || e?.message || '加载投注止损失败'
@@ -273,8 +272,6 @@ export function useTennisBettingRules({
       betRulesNotice.value = key === 'inplay'
         ? `${bettingBucketLabel.value}条件已保存（有未平仓持仓且条件命中时会自动卖出）`
         : `${bettingBucketLabel.value}止损条件已保存`
-      const stake = Number(bettingGroups.value.find((g) => Number(g.amountUsd) >= 1)?.amountUsd)
-      if (stake >= 1) batchAmountUsd.value = String(stake)
       await getSyncListAutoBetFromBucket()({ fromSave: true })
       setTimeout(() => { betRulesNotice.value = '' }, 2500)
     } catch (e) {

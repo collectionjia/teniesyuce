@@ -6,7 +6,6 @@ const { auth } = require('../middleware/auth');
 const store = require('../services/schedulerStore');
 const schedulerClient = require('../services/schedulerClient');
 const engineApiKeys = require('../services/engineApiKeys');
-const tennisEngines = require('../services/tennisEngines');
 
 const router = express.Router();
 router.use(auth(['admin']));
@@ -74,14 +73,6 @@ router.patch('/scheduler/jobs/:id', async (req, res) => {
     };
     if (body.params !== undefined) patch.params = body.params;
     const job = await store.updateJob(req.params.id, patch);
-    if (req.params.id === 'job_collect_inplay_tick' && body.intervalSec != null) {
-      const sec = Number(body.intervalSec);
-      if ([1, 2, 5, 10].includes(sec)) {
-        await tennisEngines.setConfig({
-          collect: { inplay_tick_interval_sec: sec },
-        });
-      }
-    }
     res.json({ ok: true, job });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.message });

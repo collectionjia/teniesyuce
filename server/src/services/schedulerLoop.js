@@ -3,7 +3,6 @@
  */
 const store = require('./schedulerStore');
 const { runJob } = require('./schedulerRunner');
-const tennisEngines = require('./tennisEngines');
 
 let started = false;
 let tickTimer = null;
@@ -26,16 +25,6 @@ function shanghaiNowParts() {
     hour: Number(parts.hour === '24' ? 0 : parts.hour),
     minute: Number(parts.minute),
   };
-}
-
-async function alignTickJobFromConfig() {
-  try {
-    const cfg = await tennisEngines.getConfig();
-    const sec = Number(cfg.collect?.inplay_tick_interval_sec || 5);
-    await store.syncTickIntervalFromEngines(sec);
-  } catch (e) {
-    console.warn('[scheduler] align tick', e.message);
-  }
 }
 
 async function pollOnce() {
@@ -83,7 +72,6 @@ async function start() {
   started = true;
   try {
     await store.ensureTables();
-    await alignTickJobFromConfig();
   } catch (e) {
     console.error('[scheduler] ensure', e.message);
   }
@@ -113,4 +101,4 @@ async function status() {
   };
 }
 
-module.exports = { start, stop, isRunning, status, alignTickJobFromConfig, pollOnce };
+module.exports = { start, stop, isRunning, status, pollOnce };

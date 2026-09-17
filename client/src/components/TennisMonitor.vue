@@ -262,12 +262,6 @@ const dataSource = ref(null)
 const dataSourceSaving = ref(false)
 const engines = ref(null)
 const enginesSaving = ref(false)
-const TICK_OPTIONS = [
-  { sec: 1, label: '1 秒' },
-  { sec: 2, label: '2 秒' },
-  { sec: 5, label: '5 秒' },
-  { sec: 10, label: '10 秒' },
-]
 const playerPage = ref(1)
 const livePage = ref(1)
 const logPage = ref(1)
@@ -278,14 +272,6 @@ const metricsOpen = ref(false)
 const PLAYER_PAGE_SIZE = 15
 const LIVE_PAGE_SIZE = 12
 const LOG_PAGE_SIZE = 60
-
-const INTERVAL_OPTIONS = [
-  { hours: 0, label: '关闭定时' },
-  { hours: 2, label: '2 小时' },
-  { hours: 4, label: '4 小时' },
-  { hours: 6, label: '6 小时' },
-  { hours: 12, label: '12 小时' },
-]
 
 const HORIZON_OPTIONS = [
   { days: 1, label: '今天(1天)' },
@@ -324,14 +310,6 @@ const liveMatches = computed(() => {
 })
 const bundle = computed(() => status.value?.latest_bundle || {})
 const cronLines = computed(() => (status.value?.cron || []).filter((l) => l && !String(l).startsWith('#')))
-const collectIntervalHours = computed(() => {
-  const hours = Number(schedule.value?.interval_hours ?? status.value?.schedule?.interval_hours)
-  return INTERVAL_OPTIONS.some((o) => o.hours === hours) ? hours : 6
-})
-const collectIntervalLabel = computed(() => {
-  const opt = INTERVAL_OPTIONS.find((o) => o.hours === collectIntervalHours.value)
-  return opt?.label || (collectIntervalHours.value <= 0 ? '关闭定时' : `每 ${collectIntervalHours.value} 小时`)
-})
 const collectHorizonDays = computed(() => {
   const days = Number(schedule.value?.collect_horizon_days ?? status.value?.schedule?.collect_horizon_days)
   return HORIZON_OPTIONS.some((o) => o.days === days) ? days : 1
@@ -395,7 +373,7 @@ const pageSub = computed(() => {
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
       : `${master} · 各桶均未打开 · 账号 ${account || '未设'}`
   }
-  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · 范围 ${collectHorizonLabel.value} · Top100 ${collectIntervalLabel.value} · Redis ${tennisDataSourceLabel.value}`
+  return `${collectEnabled.value ? '采集已开启' : '采集已关闭'} · 范围 ${collectHorizonLabel.value} · Redis ${tennisDataSourceLabel.value}`
 })
 
 watch(
@@ -875,23 +853,6 @@ function playerLiveScoreText(m, side) {
   return String(raw)
 }
 
-async function onIntervalChange(event) {
-  const hours = Number(event.target.value)
-  if (!INTERVAL_OPTIONS.some((o) => o.hours === hours) || hours === collectIntervalHours.value) return
-  scheduleSaving.value = true
-  error.value = ''
-  try {
-    const data = await api.updateTennisMonitorSchedule({ interval_hours: hours })
-    schedule.value = data
-    await loadStatus()
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新频度失败')
-    event.target.value = String(collectIntervalHours.value)
-  } finally {
-    scheduleSaving.value = false
-  }
-}
-
 async function onHorizonChange(event) {
   const days = Number(event.target.value)
   if (!HORIZON_OPTIONS.some((o) => o.days === days) || days === collectHorizonDays.value) return
@@ -963,9 +924,6 @@ async function patchEngines(patch) {
 
 function onTickEnabledChange(ev) {
   patchEngines({ collect: { inplay_tick_enabled: !!ev?.target?.checked } })
-}
-function onTickIntervalChange(ev) {
-  patchEngines({ collect: { inplay_tick_interval_sec: Number(ev?.target?.value) } })
 }
 function onBettingUserAccountChange(ev) {
   const account = String(ev?.target?.value || '').trim()
@@ -1618,28 +1576,6 @@ onUnmounted(() => {
               <option v-for="opt in HORIZON_OPTIONS" :key="opt.days" :value="opt.days">
                 {{ opt.label }}
               </option>
-            </select>
-          </label>
-          <label class="interval-select">
-            <span>Top100 频度</span>
-            <select
-              :value="collectIntervalHours"
-              :disabled="scheduleSaving || loading || running"
-              @change="onIntervalChange"
-            >
-              <option v-for="opt in INTERVAL_OPTIONS" :key="opt.hours" :value="opt.hours">
-                {{ opt.label }}
-              </option>
-            </select>
-          </label>
-          <label class="interval-select">
-            <span>tick 间隔</span>
-            <select
-              :value="engines?.collect?.inplay_tick_interval_sec ?? 5"
-              :disabled="enginesSaving || !engines"
-              @change="onTickIntervalChange"
-            >
-              <option v-for="opt in TICK_OPTIONS" :key="opt.sec" :value="opt.sec">{{ opt.label }}</option>
             </select>
           </label>
           <button type="button" class="btn ghost" :disabled="enginesSaving || !engines" @click="onSplitBuckets">拆三桶</button>
@@ -2307,7 +2243,7 @@ onUnmounted(() => {
 
       <details v-if="cronLines.length || schedule" class="panel panel-fold" :open="cronOpen" @toggle="cronOpen = $event.target.open">
         <summary class="panel-h row fold-summary">
-          <span>定时任务 · {{ collectIntervalLabel }}</span>
+          <span>定时任务</span>
           <span class="muted panel-meta">{{ cronOpen ? '收起' : '展开' }}</span>
         </summary>
         <div class="cron-list">

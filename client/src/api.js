@@ -379,7 +379,7 @@ export async function fetchTennisMonitorSchedule() {
 }
 
 export async function updateTennisMonitorSchedule(payload) {
-  const body = typeof payload === 'number' ? { interval_hours: payload } : payload
+  const body = payload
   const { data } = await api.post('/admin/tennis-monitor/schedule', body)
   return data
 }

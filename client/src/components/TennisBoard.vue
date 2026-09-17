@@ -1160,10 +1160,8 @@ function shouldInplayStopLoss(m) {
 }
 
 function resolveBatchStakeUsd() {
-  const fromGroup = Number(bettingGroups.value.find((g) => Number(g.amountUsd) >= 1)?.amountUsd)
-  if (fromGroup >= 1) return fromGroup
   const fromInput = Number(batchAmountUsd.value)
-  return fromInput >= 1 ? fromInput : 0
+  return fromInput >= 1 ? fromInput : 1
 }
 
 function passesInplayAutoBet(m) {
@@ -1288,7 +1286,7 @@ async function submitBatchTrade({ auto = false } = {}) {
   }
   const amount = resolveBatchStakeUsd()
   if (!(amount >= 1)) {
-    batchError.value = '每场金额至少 $1（请在投注设置组内填写投入$）'
+    batchError.value = '每场金额至少 1 元'
     return
   }
   batchSubmitting.value = true

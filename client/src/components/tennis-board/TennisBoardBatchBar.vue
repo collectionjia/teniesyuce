@@ -37,7 +37,7 @@ const emit = defineEmits(['update:batchAmountUsd'])
         </label>
         <span class="batch-count">{{ selectedCount }}</span>
         <label class="batch-amount">
-          <span>$</span>
+          <span>元</span>
           <input :value="batchAmountUsd" @input="emit('update:batchAmountUsd', $event.target.value)" type="number" min="1" step="1" inputmode="decimal" />
         </label>
         <button
@@ -45,7 +45,7 @@ const emit = defineEmits(['update:batchAmountUsd'])
           class="batch-btn"
           :disabled="batchSubmitting || selectedCount === 0"
           @click="submitBatchTrade()"
-        >{{ batchSubmitting ? '…' : '批量' }}</button>
+        >{{ batchSubmitting ? '…' : '批量手动下单' }}</button>
         <button
           v-if="selectedCount"
           type="button"

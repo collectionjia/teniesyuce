@@ -69,7 +69,6 @@ router.get('/collect/status', async (req, res) => {
     ok(res, req, {
       enabled: cfg.collect?.enabled !== false,
       inplayTickEnabled: cfg.collect?.inplay_tick_enabled !== false,
-      inplayTickIntervalSec: cfg.collect?.inplay_tick_interval_sec,
       bucketCounts: await bucketCounts(),
       lastFullRun: fullLast,
       lastTickRun: tickLast,

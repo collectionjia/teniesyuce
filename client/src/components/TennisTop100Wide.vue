@@ -1251,27 +1251,13 @@ const collectRunning = ref(false)
 const collectModalOpen = ref(false)
 const collectSaving = ref(false)
 const collectModalError = ref('')
-const prematchIntervalHours = ref(6)
 const collectHorizonDays = ref(1)
-const inplayTickSec = ref(5)
 const inplayFieldsSelected = ref(['score', 'odds'])
 
-const PREMATCH_INTERVAL_OPTS = [
-  { hours: 0, label: '关闭定时' },
-  { hours: 2, label: '2 小时' },
-  { hours: 4, label: '4 小时' },
-  { hours: 6, label: '6 小时' },
-  { hours: 12, label: '12 小时' },
-]
 const COLLECT_HORIZON_OPTS = [
   { days: 1, label: '1 天（今天）' },
   { days: 2, label: '2 天（今天起）' },
   { days: 5, label: '5 天（今天起）' },
-]
-const INPLAY_TICK_OPTS = [
-  { sec: 2, label: '2 秒' },
-  { sec: 5, label: '5 秒' },
-  { sec: 10, label: '10 秒' },
 ]
 const INPLAY_FIELD_OPTS = [
   { key: 'score', label: '比分' },
@@ -1306,9 +1292,6 @@ async function refreshCollectStatus() {
   try {
     const st = await api.fetchTennisMonitorStatus()
     collectRunning.value = !!(st?.top100_collect?.running || st?.running)
-    const sch = st?.schedule || {}
-    const h = Number(sch.interval_hours)
-    if (PREMATCH_INTERVAL_OPTS.some((o) => o.hours === h)) prematchIntervalHours.value = h
   } catch {
     /* ignore */
   }
@@ -1318,8 +1301,6 @@ async function loadInplayTickSettings() {
   try {
     const eng = await api.fetchTennisEngines()
     const c = eng?.collect || {}
-    const sec = Number(c.inplay_tick_interval_sec)
-    inplayTickSec.value = INPLAY_TICK_OPTS.some((o) => o.sec === sec) ? sec : 5
     const f = c.inplay_tick_fields || {}
     const picked = []
     if (f.score !== false) picked.push('score')
@@ -1336,8 +1317,6 @@ async function openCollectModal() {
   collectModalOpen.value = true
   try {
     const sch = await api.fetchTennisMonitorSchedule()
-    const h = Number(sch?.interval_hours)
-    prematchIntervalHours.value = PREMATCH_INTERVAL_OPTS.some((o) => o.hours === h) ? h : 6
     const days = Number(sch?.collect_horizon_days)
     collectHorizonDays.value = COLLECT_HORIZON_OPTS.some((o) => o.days === days) ? days : 1
   } catch {
@@ -1349,26 +1328,20 @@ async function openCollectModal() {
 
 async function saveCollectSchedule() {
   const data = await api.updateTennisMonitorSchedule({
-    interval_hours: Number(prematchIntervalHours.value),
     collect_horizon_days: Number(collectHorizonDays.value),
   })
-  const h = Number(data?.interval_hours)
-  if (PREMATCH_INTERVAL_OPTS.some((o) => o.hours === h)) prematchIntervalHours.value = h
   const days = Number(data?.collect_horizon_days)
   if (COLLECT_HORIZON_OPTS.some((o) => o.days === days)) collectHorizonDays.value = days
 
   const eng = await api.updateTennisEngines({
     collect: {
       inplay_tick_enabled: true,
-      inplay_tick_interval_sec: Number(inplayTickSec.value),
       inplay_tick_fields: {
         score: (inplayFieldsSelected.value || []).includes('score'),
         odds: (inplayFieldsSelected.value || []).includes('odds'),
       },
     },
   })
-  const sec = Number(eng?.collect?.inplay_tick_interval_sec)
-  if (INPLAY_TICK_OPTS.some((o) => o.sec === sec)) inplayTickSec.value = sec
   const f = eng?.collect?.inplay_tick_fields || {}
   const picked = []
   if (f.score !== false) picked.push('score')
@@ -1786,20 +1759,6 @@ onUnmounted(stopPoll)
             </select>
             <span class="ccollect-hint">从今天起拉多少天的赛事</span>
           </label>
-          <label class="ccollect-field">
-            <span class="ccollect-k">未开赛采集时间</span>
-            <select v-model.number="prematchIntervalHours" :disabled="collectSaving || collecting">
-              <option v-for="o in PREMATCH_INTERVAL_OPTS" :key="o.hours" :value="o.hours">{{ o.label }}</option>
-            </select>
-            <span class="ccollect-hint">定时全量拉未开赛（Top100）</span>
-          </label>
-          <div class="ccollect-field">
-            <span class="ccollect-k">比赛中采集时间</span>
-            <select v-model.number="inplayTickSec" :disabled="collectSaving || collecting">
-              <option v-for="o in INPLAY_TICK_OPTS" :key="o.sec" :value="o.sec">{{ o.label }}</option>
-            </select>
-            <span class="ccollect-hint">盘中 tick 间隔（调度刷新）</span>
-          </div>
           <div class="ccollect-field">
             <span class="ccollect-k">比赛中采集字段</span>
             <div class="ccollect-ms" :class="{ open: inplayFieldsOpen, disabled: collectSaving || collecting }" @click.stop>

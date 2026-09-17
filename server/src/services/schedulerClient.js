@@ -56,16 +56,4 @@ async function runJob(jobId, trigger = 'manual') {
   return rest;
 }
 
-async function alignTickFromConfig() {
-  if (!baseUrl()) {
-    const store = require('./schedulerStore');
-    const tennisEngines = require('./tennisEngines');
-    const cfg = await tennisEngines.getConfig();
-    const sec = Number(cfg?.collect?.inplay_tick_interval_sec || 5);
-    await store.syncTickIntervalFromEngines(sec);
-    return;
-  }
-  await schedulerFetch('/internal/scheduler/align-tick', { method: 'POST', body: '{}' });
-}
-
-module.exports = { baseUrl, isRemote: () => !!baseUrl(), status, runJob, alignTickFromConfig };
+module.exports = { baseUrl, isRemote: () => !!baseUrl(), status, runJob };

@@ -71,7 +71,7 @@ const PRESET_JOBS = [
     name: '盘中 tick',
     job_type: 'collect.inplay_tick',
     engine: 'collect',
-    enabled: 1,
+    enabled: 0,
     schedule_mode: 'interval',
     interval_sec: 5,
     mutex_key: 'job_collect_inplay_tick',
@@ -207,6 +207,8 @@ async function ensureTables() {
       );
     }
   }
+  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_inplay_tick'`);
+  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_top100'`);
   ready = true;
 }
 
@@ -499,17 +501,6 @@ async function hasRunningSchedule(jobId) {
   return rows.length > 0;
 }
 
-async function syncTickIntervalFromEngines(intervalSec) {
-  await ensureTables();
-  const n = Number(intervalSec);
-  if (![1, 2, 5, 10].includes(n)) return;
-  await pool.query(
-    `UPDATE scheduler_jobs SET interval_sec=?, updated_at=NOW()
-     WHERE id='job_collect_inplay_tick' AND schedule_mode='interval'`,
-    [n]
-  );
-}
-
 function listJobTypeDefs() {
   return Object.entries(JOB_TYPE_DEFS).map(([jobType, def]) => ({
     jobType,
@@ -549,7 +540,6 @@ module.exports = {
   clearRuns,
   getRun,
   hasRunningSchedule,
-  syncTickIntervalFromEngines,
   listJobTypeDefs,
   listNameOptions,
   JOB_TYPE_DEFS,

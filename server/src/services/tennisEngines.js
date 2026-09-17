@@ -21,7 +21,6 @@ const pool = require('../db');
 
 const CONFIG_KEY = 'tennis:engines:config';
 const MYSQL_CONFIG_ID = 'default';
-const ALLOWED_TICK_SEC = [1, 2, 5, 10];
 const BUCKET_KEYS = ['prematch', 'inplay', 'settled'];
 const BETTING_BUCKET_KEYS = ['prematch', 'inplay'];
 
@@ -334,7 +333,6 @@ const DEFAULT_CONFIG = {
   collect: {
     enabled: true,
     inplay_tick_enabled: true,
-    inplay_tick_interval_sec: 5,
     inplay_tick_fields: {
       score: true,
       odds: true,
@@ -500,9 +498,6 @@ function normalizeCollect(c = {}) {
   return {
     enabled: c.enabled !== false,
     inplay_tick_enabled: c.inplay_tick_enabled !== false,
-    inplay_tick_interval_sec: Number(c.inplay_tick_interval_sec) > 0
-      ? Number(c.inplay_tick_interval_sec)
-      : base.inplay_tick_interval_sec,
     inplay_tick_fields: {
       score: fields.score !== false,
       odds: fields.odds !== false,
@@ -765,15 +760,6 @@ async function setConfig(patch) {
   if (patch?.betting) {
     await resolveBettingUser(patch.betting, next.betting);
   }
-  if (next.collect?.inplay_tick_interval_sec != null) {
-    const n = Number(next.collect.inplay_tick_interval_sec);
-    if (!ALLOWED_TICK_SEC.includes(n)) {
-      const err = new Error(`inplay_tick_interval_sec must be one of ${ALLOWED_TICK_SEC.join(',')}`);
-      err.status = 400;
-      throw err;
-    }
-    next.collect.inplay_tick_interval_sec = n;
-  }
   try {
     await saveConfigToMysql(next);
   } catch (e) {
@@ -788,15 +774,6 @@ async function setConfig(patch) {
 
 async function writeConfig(cfg) {
   const next = normalizeConfig(cfg);
-  if (next.collect?.inplay_tick_interval_sec != null) {
-    const n = Number(next.collect.inplay_tick_interval_sec);
-    if (!ALLOWED_TICK_SEC.includes(n)) {
-      const err = new Error(`inplay_tick_interval_sec must be one of ${ALLOWED_TICK_SEC.join(',')}`);
-      err.status = 400;
-      throw err;
-    }
-    next.collect.inplay_tick_interval_sec = n;
-  }
   try {
     await saveConfigToMysql(next);
   } catch (e) {
@@ -968,7 +945,6 @@ module.exports = {
   setConfig,
   writeConfig,
   DEFAULT_CONFIG,
-  ALLOWED_TICK_SEC,
   CONFIG_KEY,
   BUCKET_KEYS,
   BETTING_BUCKET_KEYS,

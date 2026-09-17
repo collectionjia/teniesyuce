@@ -30,7 +30,6 @@ SCHEDULE_FILE = APP_DIR / "config" / "schedule.json"
 HOST = os.environ.get("SOFA_MONITOR_HOST", "0.0.0.0")
 PORT = int(os.environ.get("SOFA_MONITOR_PORT", "9004"))
 TOKEN = (os.environ.get("SOFA_MONITOR_TOKEN") or "sofascore-monitor-2026").strip()
-ALLOWED_COLLECT_INTERVALS = (0, 2, 4, 6, 12)
 ALLOWED_LIVE_POLL_INTERVALS = (0, 60, 120, 300)
 ALLOWED_COLLECT_HORIZON_DAYS = (1, 2, 3, 5)
 LIVE_INTERVAL_SEC = int(os.environ.get("LIVE_POLL_INTERVAL_SEC", "300"))
@@ -101,7 +100,6 @@ def _cron_lines() -> list[str]:
 
 def _read_schedule_config() -> dict[str, Any]:
     defaults: dict[str, Any] = {
-        "interval_hours": 6,
         "collect_enabled": True,
         "live_poll_interval_sec": LIVE_INTERVAL_SEC if LIVE_INTERVAL_SEC in ALLOWED_LIVE_POLL_INTERVALS else 300,
         "collect_horizon_days": 1,
@@ -109,10 +107,6 @@ def _read_schedule_config() -> dict[str, Any]:
     if SCHEDULE_FILE.exists():
         try:
             data = json.loads(SCHEDULE_FILE.read_text(encoding="utf-8"))
-            hours_raw = data.get("interval_hours")
-            hours = int(hours_raw if hours_raw is not None else defaults["interval_hours"])
-            if hours not in ALLOWED_COLLECT_INTERVALS:
-                hours = defaults["interval_hours"]
             enabled = data.get("collect_enabled")
             collect_enabled = defaults["collect_enabled"] if enabled is None else bool(enabled)
             live_sec_raw = data.get("live_poll_interval_sec")
@@ -124,7 +118,6 @@ def _read_schedule_config() -> dict[str, Any]:
             if horizon not in ALLOWED_COLLECT_HORIZON_DAYS:
                 horizon = defaults["collect_horizon_days"]
             return {
-                "interval_hours": hours,
                 "collect_enabled": collect_enabled,
                 "live_poll_interval_sec": live_sec,
                 "collect_horizon_days": horizon,
@@ -136,7 +129,8 @@ def _read_schedule_config() -> dict[str, Any]:
 
 def _write_schedule_config(cfg: dict[str, Any]) -> None:
     SCHEDULE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SCHEDULE_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    next_cfg = {k: v for k, v in cfg.items() if k != "interval_hours"}
+    SCHEDULE_FILE.write_text(json.dumps(next_cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def _collect_enabled() -> bool:
@@ -151,11 +145,7 @@ def _collect_disabled_message() -> str:
     return "采集已关闭，请在管理页打开采集开关"
 
 
-def _cron_expr_for_interval(hours: int) -> str:
-    return f"0 */{hours} * * *"
-
-
-def _apply_collect_schedule(interval_hours: int, *, enabled: bool = True) -> list[str]:
+def _clear_top100_collect_cron() -> None:
     marker = "# sofascore-top100-collect"
     try:
         raw = subprocess.check_output(["crontab", "-l"], text=True, stderr=subprocess.DEVNULL)
@@ -180,45 +170,23 @@ def _apply_collect_schedule(interval_hours: int, *, enabled: bool = True) -> lis
         if "run_collect" in line or "run_top100_collect" in line or "monitor_server" in line:
             continue
         kept.append(line)
-    if not enabled or interval_hours <= 0:
-        payload = "\n".join(kept).rstrip("\n") + ("\n" if kept else "")
-        subprocess.run(["crontab", "-"], input=payload, text=True, check=False)
-        return []
-    python = str(APP_DIR / "venv" / "bin" / "python")
-    if not Path(python).exists():
-        python = "python3"
-    cron_line = (
-        f"{_cron_expr_for_interval(interval_hours)} cd {APP_DIR} && {python} -c "
-        "\"from tm.server import run_top100_collect; run_top100_collect('cron')\""
-    )
-    block = [marker, "CRON_TZ=Asia/Shanghai", cron_line]
-    payload = "\n".join(kept + ([""] if kept else []) + block).rstrip("\n") + "\n"
+    payload = "\n".join(kept).rstrip("\n") + ("\n" if kept else "")
     subprocess.run(["crontab", "-"], input=payload, text=True, check=False)
-    return block
 
 
 def _schedule_payload() -> dict[str, Any]:
     cfg = _read_schedule_config()
-    hours = int(cfg["interval_hours"])
     live_sec = _live_interval_sec()
     horizon = int(cfg.get("collect_horizon_days") or 1)
     horizon_labels = {1: "今天(1天)", 2: "今天起2天", 3: "今天起3天", 5: "今天起5天"}
     return {
         "ok": True,
-        "interval_hours": hours,
         "collect_enabled": bool(cfg.get("collect_enabled", True)),
         "live_poll_interval_sec": live_sec,
         "collect_horizon_days": horizon,
         "collect_target": "top100",
-        "allowed_intervals": list(ALLOWED_COLLECT_INTERVALS),
         "allowed_live_poll_intervals": list(ALLOWED_LIVE_POLL_INTERVALS),
         "allowed_collect_horizon_days": list(ALLOWED_COLLECT_HORIZON_DAYS),
-        "cron_line": (
-            f"{_cron_expr_for_interval(hours)} top100-collect"
-            if cfg.get("collect_enabled", True) and hours > 0
-            else ""
-        ),
-        "label": "关闭定时" if hours <= 0 else f"每 {hours} 小时 Top100",
         "collect_horizon_label": horizon_labels.get(horizon) or f"今天起{horizon}天",
         "live_poll_label": (
             "关闭"
@@ -230,11 +198,6 @@ def _schedule_payload() -> dict[str, Any]:
 
 def _update_schedule(body: dict[str, Any]) -> dict[str, Any]:
     cfg = _read_schedule_config()
-    if "interval_hours" in body and body.get("interval_hours") is not None:
-        hours = int(body["interval_hours"])
-        if hours not in ALLOWED_COLLECT_INTERVALS:
-            raise ValueError(f"interval_hours must be one of {ALLOWED_COLLECT_INTERVALS}")
-        cfg["interval_hours"] = hours
     if "collect_enabled" in body:
         cfg["collect_enabled"] = bool(body["collect_enabled"])
     if "live_poll_interval_sec" in body and body.get("live_poll_interval_sec") is not None:
@@ -248,13 +211,8 @@ def _update_schedule(body: dict[str, Any]) -> dict[str, Any]:
             raise ValueError(f"collect_horizon_days must be one of {ALLOWED_COLLECT_HORIZON_DAYS}")
         cfg["collect_horizon_days"] = horizon
     _write_schedule_config(cfg)
-    cron_on = bool(cfg.get("collect_enabled", True)) and int(cfg["interval_hours"]) > 0
-    _apply_collect_schedule(int(cfg["interval_hours"]), enabled=cron_on)
+    _clear_top100_collect_cron()
     return _schedule_payload()
-
-
-def _set_collect_schedule(interval_hours: int) -> dict[str, Any]:
-    return _update_schedule({"interval_hours": interval_hours})
 
 
 def _group_scheduled(events: list[dict]) -> dict[str, Any]:

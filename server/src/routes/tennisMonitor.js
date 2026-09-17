@@ -731,11 +731,7 @@ router.get('/engines', async (_req, res) => {
   try {
     const tennisEngines = require('../services/tennisEngines');
     const cfg = await tennisEngines.getConfig();
-    res.json({
-      ok: true,
-      ...cfg,
-      allowed_tick_intervals: tennisEngines.ALLOWED_TICK_SEC,
-    });
+    res.json({ ok: true, ...cfg });
   } catch (err) {
     console.error('[tennis-monitor/engines]', err);
     res.status(500).json({ ok: false, error: err.message || 'engines failed' });
@@ -886,23 +882,7 @@ router.post('/engines', async (req, res) => {
   try {
     const tennisEngines = require('../services/tennisEngines');
     const cfg = await tennisEngines.setConfig(req.body || {});
-    try {
-      const store = require('../services/schedulerStore');
-      const schedulerClient = require('../services/schedulerClient');
-      if (cfg.collect?.inplay_tick_interval_sec != null) {
-        await store.syncTickIntervalFromEngines(cfg.collect.inplay_tick_interval_sec);
-      }
-      // 采集总开关 / tick 开关：同步盘中 tick 任务 enabled
-      if (cfg.collect) {
-        const tickOn =
-          cfg.collect.enabled !== false && cfg.collect.inplay_tick_enabled !== false;
-        await store.setJobEnabled('job_collect_inplay_tick', tickOn);
-      }
-      await schedulerClient.alignTickFromConfig();
-    } catch (e) {
-      console.warn('[tennis-monitor/engines] scheduler sync', e.message);
-    }
-    res.json({ ok: true, ...cfg, allowed_tick_intervals: tennisEngines.ALLOWED_TICK_SEC });
+    res.json({ ok: true, ...cfg });
   } catch (err) {
     console.error('[tennis-monitor/engines]', err);
     res.status(err.status || 500).json({ ok: false, error: err.message || 'update engines failed' });

@@ -27,7 +27,6 @@ const COLLECT_LIVE_SCRIPT = path.join(MONITOR_DIR, 'collect_live.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
 
-const ALLOWED_COLLECT_INTERVALS = [0, 2, 4, 6, 12];
 const ALLOWED_LIVE_POLL_INTERVALS = [0, 60, 120, 300];
 const ALLOWED_COLLECT_HORIZON_DAYS = [1, 2, 3, 5];
 
@@ -50,7 +49,6 @@ function isCollectEnabled() {
 
 function readScheduleConfig() {
   const defaults = {
-    interval_hours: 6,
     collect_enabled: true,
     live_poll_interval_sec: 300,
     collect_horizon_days: 1,
@@ -58,15 +56,12 @@ function readScheduleConfig() {
   try {
     if (!fs.existsSync(SCHEDULE_FILE)) return { ...defaults };
     const data = JSON.parse(fs.readFileSync(SCHEDULE_FILE, 'utf8'));
-    let hours = Number(data.interval_hours ?? defaults.interval_hours);
-    if (!ALLOWED_COLLECT_INTERVALS.includes(hours)) hours = defaults.interval_hours;
     let liveSec = Number(data.live_poll_interval_sec ?? defaults.live_poll_interval_sec);
     if (!ALLOWED_LIVE_POLL_INTERVALS.includes(liveSec)) liveSec = defaults.live_poll_interval_sec;
     let horizon = Number(data.collect_horizon_days ?? defaults.collect_horizon_days);
     if (!ALLOWED_COLLECT_HORIZON_DAYS.includes(horizon)) horizon = defaults.collect_horizon_days;
     const enabled = data.collect_enabled;
     return {
-      interval_hours: hours,
       collect_enabled: enabled === undefined ? defaults.collect_enabled : !!enabled,
       live_poll_interval_sec: liveSec,
       collect_horizon_days: horizon,
@@ -78,28 +73,26 @@ function readScheduleConfig() {
 }
 
 function writeScheduleConfig(cfg) {
+  const next = { ...cfg };
+  delete next.interval_hours;
   fs.mkdirSync(path.dirname(SCHEDULE_FILE), { recursive: true });
-  fs.writeFileSync(SCHEDULE_FILE, `${JSON.stringify(cfg, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(SCHEDULE_FILE, `${JSON.stringify(next, null, 2)}\n`, 'utf8');
 }
 
 function schedulePayload() {
   const cfg = readScheduleConfig();
-  const hours = cfg.interval_hours;
   const liveSec = cfg.live_poll_interval_sec;
   const horizon = cfg.collect_horizon_days;
   const labels = { 0: '关闭', 60: '1 分钟', 120: '2 分钟', 300: '5 分钟' };
   const horizonLabels = { 1: '今天(1天)', 2: '今天起2天', 3: '今天起3天', 5: '今天起5天' };
   return {
     ok: true,
-    interval_hours: hours,
     collect_enabled: cfg.collect_enabled !== false,
     live_poll_interval_sec: liveSec,
     collect_horizon_days: horizon,
-    allowed_intervals: ALLOWED_COLLECT_INTERVALS,
     allowed_live_poll_intervals: ALLOWED_LIVE_POLL_INTERVALS,
     allowed_collect_horizon_days: ALLOWED_COLLECT_HORIZON_DAYS,
-    cron: cfg.collect_enabled && hours > 0 ? `0 */${hours} * * *` : null,
-    note: 'Docker 无 9004 时由 server 读写 config/schedule.json（定时需另配 cron/宿主机）',
+    note: 'Docker 无 9004 时由 server 读写 config/schedule.json',
     live_poll_label: labels[liveSec] || `${liveSec} 秒`,
     collect_horizon_label: horizonLabels[horizon] || `今天起${horizon}天`,
     source: 'local',
@@ -108,15 +101,6 @@ function schedulePayload() {
 
 function updateSchedule(body = {}) {
   const cfg = readScheduleConfig();
-  if (body.interval_hours != null) {
-    const hours = Number(body.interval_hours);
-    if (!ALLOWED_COLLECT_INTERVALS.includes(hours)) {
-      const err = new Error(`interval_hours must be one of ${ALLOWED_COLLECT_INTERVALS.join(',')}`);
-      err.status = 400;
-      throw err;
-    }
-    cfg.interval_hours = hours;
-  }
   if (Object.prototype.hasOwnProperty.call(body, 'collect_enabled')) {
     cfg.collect_enabled = !!body.collect_enabled;
   }
@@ -139,41 +123,7 @@ function updateSchedule(body = {}) {
     cfg.collect_horizon_days = horizon;
   }
   writeScheduleConfig(cfg);
-  // 把「未开赛采集间隔」同步到调度任务 collect.top100（小时 → 秒）
-  setImmediate(() => {
-    syncTop100CollectJob(cfg).catch((e) => {
-      console.warn('[tennisCollectRunner] syncTop100CollectJob', e.message || e);
-    });
-  });
   return schedulePayload();
-}
-
-async function syncTop100CollectJob(cfg) {
-  const store = require('./schedulerStore');
-  await store.ensureTables();
-  const hours = Number(cfg.interval_hours);
-  const enabled = cfg.collect_enabled !== false && hours > 0;
-  const intervalSec = hours > 0 ? Math.round(hours * 3600) : 6 * 3600;
-  const id = 'job_collect_top100';
-  const existing = await store.getJob(id);
-  const body = {
-    name: '网球·Top100采集(collect.py)',
-    scheduleMode: 'interval',
-    intervalSec,
-    enabled,
-    timeoutSec: 900,
-    params: { top100: true },
-  };
-  if (existing) {
-    await store.updateJob(id, body);
-    return;
-  }
-  if (!enabled) return;
-  await store.createJob({
-    id,
-    jobType: 'collect.top100',
-    ...body,
-  });
 }
 
 function nowIso() {
@@ -522,7 +472,6 @@ module.exports = {
   livePayload,
   schedulePayload,
   updateSchedule,
-  syncTop100CollectJob,
   readScheduleConfig,
   recentLogs,
   isRunning: () => running,

@@ -33,15 +33,6 @@ app.get('/internal/scheduler/jobs', internalAuth, async (_req, res) => {
   res.json({ ok: true, jobs });
 });
 
-app.post('/internal/scheduler/align-tick', internalAuth, async (_req, res) => {
-  try {
-    await loop.alignTickJobFromConfig();
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
 app.post('/internal/scheduler/run/:jobId', internalAuth, async (req, res) => {
   try {
     const r = await runJob(req.params.jobId, 'manual');
