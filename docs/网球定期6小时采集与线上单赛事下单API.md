@@ -72,6 +72,7 @@ curl -s 'https://www.yuce.bid/api/health'
 - Method：`GET`
 - **无需 Header 鉴权**
 - 无数据时仍 **HTTP 200**，`empty: true`，`events: 0`
+- **返回采集写入 Redis 的原始快照**，不套产品「条件组」筛选（条件筛选仅用于站内订阅页展示，不影响本接口）
 
 ### 3.1 盘前 · `GET /api/tennis-prematch/today`
 

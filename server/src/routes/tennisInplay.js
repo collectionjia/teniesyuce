@@ -92,8 +92,6 @@ router.get('/today', async (_req, res) => {
       });
     }
     let full = sanitizeCollectLiveBundle(raw);
-    const tennisConditionApply = require('../services/tennisConditionApply');
-    full = await tennisConditionApply.maybeApplyCondition('inplay', full);
     let bettingEntry = null;
     try {
       const tennisEngines = require('../services/tennisEngines');

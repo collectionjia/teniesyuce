@@ -29,8 +29,6 @@ router.get('/today', async (_req, res) => {
     if (!full) {
       return res.json({ ...emptySettledBundle(), member: true });
     }
-    const tennisConditionApply = require('../services/tennisConditionApply');
-    full = await tennisConditionApply.maybeApplyCondition('settled', full);
     res.json({ ...full, member: true, source: full.source || 'redis-settled' });
   } catch (err) {
     console.error('[tennis-settled/today]', err);

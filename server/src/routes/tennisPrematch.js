@@ -33,8 +33,6 @@ router.get('/today', async (_req, res) => {
     if (!full) {
       return res.json({ ...emptyPrematchBundle(), member: true });
     }
-    const tennisConditionApply = require('../services/tennisConditionApply');
-    full = await tennisConditionApply.maybeApplyCondition('prematch', full);
     const tennisDataSource = require('../services/tennisDataSource');
     res.json({
       ...full,
