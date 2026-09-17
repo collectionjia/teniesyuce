@@ -25,7 +25,7 @@ if [[ ! -f server/.env ]]; then
   exit 1
 fi
 
-echo "==> [1/5] 更新代码"
+echo "==> [1/6] 更新代码"
 if [[ -n "$SKIP_PULL" ]]; then
   echo "    已跳过 git pull"
 elif git pull --ff-only origin main; then
@@ -53,6 +53,8 @@ bash scripts/docker-deploy-services.sh up -d --build
 
 echo "==> [5/6] 健康检查"
 sleep 6
+# shellcheck disable=SC1091
+source deploy/prod.env
 WEB_PORT="${WEB_PORT:-9001}"
 if curl -sf "http://127.0.0.1:${WEB_PORT}/api/health" >/dev/null; then
   echo "    web  :${WEB_PORT} ok"
@@ -68,7 +70,7 @@ for p in 9101 9102 9103 9104 9105; do
 done
 
 echo "==> [6/6] 服务状态"
-docker compose -f docker-compose.core.yml ps
+bash scripts/docker-deploy.sh prod ps
 docker compose -f deploy/docker-compose.services.yml --profile all ps
 
 echo ""

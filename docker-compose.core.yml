@@ -65,6 +65,7 @@ services:
         condition: service_started
       redis:
         condition: service_healthy
+        required: false  # 测试栈不启 with-redis profile 时跳过 redis 依赖
     expose:
       - "3001"
 
