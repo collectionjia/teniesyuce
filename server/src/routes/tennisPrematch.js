@@ -6,6 +6,7 @@ const {
   attachUserFromEmailBody,
   resolveTradeSimulatePublic,
 } = require('../services/tennisOrdersPublic');
+const { bundleWithOptionalCondition } = require('../services/tennisTodayQuery');
 
 const router = Router();
 
@@ -27,12 +28,13 @@ function emptyPrematchBundle() {
   };
 }
 
-router.get('/today', async (_req, res) => {
+router.get('/today', async (req, res) => {
   try {
     let full = await tennisPrematchCache.getBundle();
     if (!full) {
       return res.json({ ...emptyPrematchBundle(), member: true });
     }
+    full = await bundleWithOptionalCondition(req, 'prematch', full);
     const tennisDataSource = require('../services/tennisDataSource');
     res.json({
       ...full,

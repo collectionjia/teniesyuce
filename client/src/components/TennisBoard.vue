@@ -2044,7 +2044,12 @@ async function loadOnce({
   }
   try {
     const token = localStorage.getItem('token') || ''
-    const res = await fetch(`${apiPath.value}/today`, {
+    const qs = new URLSearchParams()
+    if (props.isMember && (isPrematchMode.value || isInplayMode.value || isSettledMode.value)) {
+      qs.set('applyCondition', '1')
+    }
+    const query = qs.toString()
+    const res = await fetch(`${apiPath.value}/today${query ? `?${query}` : ''}`, {
       cache: 'no-store',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })

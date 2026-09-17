@@ -2,6 +2,7 @@ const { Router } = require('express');
 const { auth } = require('../middleware/auth');
 const tennisSettledCache = require('../services/tennisSettledCache');
 const tennisSettledStats = require('../services/tennisSettledStats');
+const { bundleWithOptionalCondition } = require('../services/tennisTodayQuery');
 
 const router = Router();
 
@@ -23,12 +24,13 @@ function emptySettledBundle() {
   };
 }
 
-router.get('/today', async (_req, res) => {
+router.get('/today', async (req, res) => {
   try {
     let full = await tennisSettledCache.getBundle();
     if (!full) {
       return res.json({ ...emptySettledBundle(), member: true });
     }
+    full = await bundleWithOptionalCondition(req, 'settled', full);
     res.json({ ...full, member: true, source: full.source || 'redis-settled' });
   } catch (err) {
     console.error('[tennis-settled/today]', err);

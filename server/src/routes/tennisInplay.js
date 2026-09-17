@@ -7,6 +7,7 @@ const {
   attachUserFromEmailBody,
   resolveTradeSimulatePublic,
 } = require('../services/tennisOrdersPublic');
+const { bundleWithOptionalCondition } = require('../services/tennisTodayQuery');
 
 const router = Router();
 
@@ -74,7 +75,7 @@ function emptyInplayBundle() {
 }
 
 /** 盘中采集列表：公开读数（无需 JWT） */
-router.get('/today', async (_req, res) => {
+router.get('/today', async (req, res) => {
   try {
     const raw = await tennisInplayCache.getBundle();
     if (!raw) {
@@ -92,6 +93,7 @@ router.get('/today', async (_req, res) => {
       });
     }
     let full = sanitizeCollectLiveBundle(raw);
+    full = await bundleWithOptionalCondition(req, 'inplay', full);
     let bettingEntry = null;
     try {
       const tennisEngines = require('../services/tennisEngines');
