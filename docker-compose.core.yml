@@ -40,9 +40,7 @@ services:
       PORT: 3001
       APP_ENV: ${APP_ENV:-production}
       SOFA_MONITOR_ENV_FILE: ${SOFA_MONITOR_ENV_FILE:-}
-      # 生产 deploy/prod.env 可设 COMPOSE_DB_* / COMPOSE_REDIS_URL；测试留空则用 env_file
-      DB_HOST: ${COMPOSE_DB_HOST:-}
-      DB_PORT: ${COMPOSE_DB_PORT:-}
+      # 生产 deploy/prod.env 设 COMPOSE_REDIS_URL=redis://redis:6379；DB 始终读 env_file
       REDIS_URL: ${COMPOSE_REDIS_URL:-}
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3

@@ -21,8 +21,7 @@ patch() {
 }
 
 # server 容器内由 deploy/prod.env 的 COMPOSE_* 再覆盖；此处写宿主机视角，供非 Docker 工具读取
-patch DB_HOST host.docker.internal
-patch DB_PORT 3306
+# DB 保留 server/.env 原值（145 等为外部 MySQL，勿改 host.docker.internal）
 patch SOFA_MONITOR_URL http://host.docker.internal:9004
 patch SCHEDULER_URL http://host.docker.internal:9105
 patch COLLECT_URL http://host.docker.internal:9101
@@ -30,6 +29,6 @@ patch RULES_URL http://host.docker.internal:9102
 patch BETTING_URL http://host.docker.internal:9103
 patch STOP_LOSS_URL http://host.docker.internal:9104
 
-echo "ok: $TARGET patched for prod Docker (MySQL host.docker.internal:3306)"
-echo "note: server 容器 Redis 用 compose 内 redis://redis:6379 (见 deploy/prod.env COMPOSE_REDIS_URL)"
+echo "ok: $TARGET patched for prod Docker (五引擎 URL + monitor)"
+echo "note: DB 不修改；Redis 用 deploy/prod.env COMPOSE_REDIS_URL=redis://redis:6379"
 echo "note: 五引擎宿主机 Redis 用 127.0.0.1:\${REDIS_HOST_PORT:-9016}"
