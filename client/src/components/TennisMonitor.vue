@@ -1305,6 +1305,11 @@ function toggleTier(key) {
   tierFilter.value = { ...tierFilter.value, [key]: !tierFilter.value[key] }
 }
 
+function openPoolView(tour) {
+  tab.value = tour
+  poolFilterOpen.value = true
+}
+
 function tierFilterSummary() {
   const on = TIER_OPTIONS.filter((o) => tierFilter.value[o.key]).map((o) => o.label)
   return on.length ? on.join(' · ') : '未选'
@@ -1343,9 +1348,10 @@ watch([tab, topPoolMax, tierFilter, onlyWithMatches], () => {
   playerPage.value = 1
   expanded.value = {}
 })
-watch(tab, () => {
+watch(tab, (t) => {
   livePage.value = 1
   logPage.value = 1
+  if (t !== 'atp' && t !== 'wta') poolFilterOpen.value = false
 })
 watch(players, (list) => {
   if (playerPage.value > Math.max(1, Math.ceil(list.length / PLAYER_PAGE_SIZE))) {
@@ -2175,21 +2181,11 @@ onUnmounted(() => {
       </details>
 
       <div class="tabs">
-        <button type="button" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
-        <button type="button" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
+        <button type="button" :class="{ on: tab === 'atp' }" @click="openPoolView('atp')">ATP</button>
+        <button type="button" :class="{ on: tab === 'wta' }" @click="openPoolView('wta')">WTA</button>
         <button type="button" :class="{ on: tab === 'live' }" @click="tab = 'live'">进行中</button>
         <button type="button" :class="{ on: tab === 'logs' }" @click="tab = 'logs'">日志</button>
         <button type="button" class="link" :disabled="busy || running" @click="refreshTop100">重拉 Top100</button>
-      </div>
-
-      <div v-if="tab === 'atp' || tab === 'wta'" class="filter-bar-compact">
-        <button type="button" class="btn ghost filter-open-btn" @click="poolFilterOpen = true">
-          筛选
-          <span class="filter-open-sub">{{ poolFilterSummary }}</span>
-        </button>
-        <span class="pool-meta">
-          {{ tab.toUpperCase() }} · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场
-        </span>
       </div>
 
       <div v-if="tab === 'live'" class="panel">
@@ -2244,83 +2240,7 @@ onUnmounted(() => {
         </template>
       </div>
 
-      <div v-else-if="tab === 'atp' || tab === 'wta'" class="panel">
-        <div class="panel-h row">
-          <span class="panel-title">{{ tab.toUpperCase() }} Top{{ topPoolMax }} · {{ top100Board?.date || '—' }}</span>
-          <span class="muted panel-meta">
-            <template v-if="top100Board?.loading">拉取中…<span v-if="top100LoadingSec"> · 已 {{ top100LoadingSec }}s</span></template>
-            <template v-else>更新 {{ fmtTime(top100Board?.fetched_at) }}</template>
-          </span>
-        </div>
-
-        <div v-if="top100Board?.error" class="banner err">{{ formatMonitorError(top100Board.error) }}</div>
-        <div v-else-if="top100Board?.loading && !players.length" class="empty">
-          正在拉取 Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
-        </div>
-        <div v-else-if="!players.length" class="empty">
-          <template v-if="rawPoolPlayers.length && (onlyWithMatches || tierFilterActive())">
-            暂无符合筛选的球员（池内 {{ rawPoolPlayers.length }} 人）
-            <div class="hint">可取消「仅有赛事」或调整 500/1000/大满贯 筛选</div>
-          </template>
-          <template v-else>暂无 Top{{ topPoolMax }} 球员数据</template>
-        </div>
-
-        <template v-else>
-          <div class="pager">
-            <span class="pager-info">第 {{ playerPage }} / {{ playerPageCount }} 页 · {{ playerPageLabel() }} · 每页 {{ PLAYER_PAGE_SIZE }} 人</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
-            </div>
-          </div>
-          <div class="plist">
-          <div v-for="p in pagedPlayers" :key="p.id" class="player">
-            <button type="button" class="player-h" @click="toggle(p.id)">
-              <span class="rank">#{{ p.rank }}</span>
-              <span class="player-main">
-                <span class="name">{{ p.name }}</span>
-                <span class="meta">{{ p.country || '—' }} · {{ p.points ?? '—' }} pts</span>
-              </span>
-              <span class="mc" :class="{ hot: (p.matchCount || 0) > 0 }">{{ p.matchCount || 0 }} 场</span>
-            </button>
-            <div v-if="expanded[p.id]" class="matches">
-              <div v-if="!(p.matches || []).length" class="empty tiny">今日无比赛</div>
-              <a
-                v-for="m in p.matches || []"
-                :key="m.id"
-                class="match"
-                :href="sofaTennisMatchUrl(m)"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div class="m-top">
-                  <span class="st">{{ m.status || m.statusRaw || '—' }}</span>
-                  <span>{{ m.startTime || '—' }}</span>
-                </div>
-                <div class="m-mid">
-                  vs {{ m.opponent || '—' }}
-                  <span v-if="m.opponentRank" class="rk">#{{ m.opponentRank }}</span>
-                </div>
-                <div class="m-bot">
-                  <span>{{ m.tournament || '—' }}</span>
-                  <span v-if="m.level" class="lv">{{ m.level }}</span>
-                  <span>{{ m.round || '' }}</span>
-                </div>
-              </a>
-            </div>
-          </div>
-          </div>
-          <div class="pager pager-bottom">
-            <span class="pager-info">{{ playerPageLabel() }}</span>
-            <div class="pager-actions">
-              <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
-              <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <div v-else class="panel">
+      <div v-else-if="tab === 'logs'" class="panel">
         <div class="panel-h row">
           <span>采集日志</span>
           <span class="muted truncate">{{ logs?.file || logs?.log_file || status?.latest_log || '—' }}</span>
@@ -2344,35 +2264,119 @@ onUnmounted(() => {
     </template>
 
     <div v-if="poolFilterOpen" class="pool-filter-mask" @click.self="poolFilterOpen = false">
-      <div class="pool-filter-panel" role="dialog" aria-modal="true" aria-label="球员筛选">
+      <div class="pool-filter-panel" role="dialog" aria-modal="true" :aria-label="`${tab.toUpperCase()} 球员`">
         <header class="pool-filter-head">
-          <h4>筛选</h4>
+          <div class="pool-filter-title">
+            <div class="pool-tour-tabs">
+              <button type="button" class="pool-tour-btn" :class="{ on: tab === 'atp' }" @click="tab = 'atp'">ATP</button>
+              <button type="button" class="pool-tour-btn" :class="{ on: tab === 'wta' }" @click="tab = 'wta'">WTA</button>
+            </div>
+            <div class="pool-filter-sub">
+              Top{{ topPoolMax }} · {{ top100Board?.date || '—' }}
+              <span class="muted"> · {{ poolSummary.players }} 人 · {{ poolSummary.matches }} 场</span>
+            </div>
+          </div>
           <button type="button" class="btn ghost" @click="poolFilterOpen = false">关闭</button>
         </header>
         <div class="pool-filter-body">
-          <div class="pool-bar">
-            <span class="pool-label">排名池</span>
-            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
-            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
-            <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+          <div class="pool-filters">
+            <div class="pool-bar">
+              <span class="pool-label">排名池</span>
+              <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="topPoolMax = '20'">Top20</button>
+              <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="topPoolMax = '50'">Top50</button>
+              <button type="button" class="chip-btn" :class="{ active: topPoolMax === '100' }" @click="topPoolMax = '100'">Top100</button>
+            </div>
+            <div class="pool-bar">
+              <span class="pool-label">赛事</span>
+              <button
+                v-for="opt in TIER_OPTIONS"
+                :key="opt.key"
+                type="button"
+                class="chip-btn"
+                :class="{ active: tierFilter[opt.key] }"
+                @click="toggleTier(opt.key)"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
+            <label class="match-only">
+              <input v-model="onlyWithMatches" type="checkbox">
+              <span>仅有赛事</span>
+            </label>
           </div>
-          <div class="pool-bar">
-            <span class="pool-label">赛事</span>
-            <button
-              v-for="opt in TIER_OPTIONS"
-              :key="opt.key"
-              type="button"
-              class="chip-btn"
-              :class="{ active: tierFilter[opt.key] }"
-              @click="toggleTier(opt.key)"
-            >
-              {{ opt.label }}
-            </button>
+
+          <div class="pool-results">
+            <div class="pool-results-meta muted">
+              <template v-if="top100Board?.loading">拉取中…<span v-if="top100LoadingSec"> · 已 {{ top100LoadingSec }}s</span></template>
+              <template v-else>更新 {{ fmtTime(top100Board?.fetched_at) }} · {{ poolFilterSummary }}</template>
+            </div>
+
+            <div v-if="top100Board?.error" class="banner err">{{ formatMonitorError(top100Board.error) }}</div>
+            <div v-else-if="top100Board?.loading && !players.length" class="empty">
+              正在拉取 Top{{ topPoolMax }}…<span v-if="top100LoadingSec">（已 {{ top100LoadingSec }} 秒，通常 1～3 分钟）</span>
+            </div>
+            <div v-else-if="!players.length" class="empty">
+              <template v-if="rawPoolPlayers.length && (onlyWithMatches || tierFilterActive())">
+                暂无符合筛选的球员（池内 {{ rawPoolPlayers.length }} 人）
+                <div class="hint">可取消「仅有赛事」或调整赛事级别筛选</div>
+              </template>
+              <template v-else>暂无 Top{{ topPoolMax }} 球员数据</template>
+            </div>
+
+            <template v-else>
+              <div class="pager">
+                <span class="pager-info">第 {{ playerPage }} / {{ playerPageCount }} 页 · {{ playerPageLabel() }} · 每页 {{ PLAYER_PAGE_SIZE }} 人</span>
+                <div class="pager-actions">
+                  <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
+                  <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
+                </div>
+              </div>
+              <div class="plist">
+                <div v-for="p in pagedPlayers" :key="p.id" class="player">
+                  <button type="button" class="player-h" @click="toggle(p.id)">
+                    <span class="rank">#{{ p.rank }}</span>
+                    <span class="player-main">
+                      <span class="name">{{ p.name }}</span>
+                      <span class="meta">{{ p.country || '—' }} · {{ p.points ?? '—' }} pts</span>
+                    </span>
+                    <span class="mc" :class="{ hot: (p.matchCount || 0) > 0 }">{{ p.matchCount || 0 }} 场</span>
+                  </button>
+                  <div v-if="expanded[p.id]" class="matches">
+                    <div v-if="!(p.matches || []).length" class="empty tiny">今日无比赛</div>
+                    <a
+                      v-for="m in p.matches || []"
+                      :key="m.id"
+                      class="match"
+                      :href="sofaTennisMatchUrl(m)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <div class="m-top">
+                        <span class="st">{{ m.status || m.statusRaw || '—' }}</span>
+                        <span>{{ m.startTime || '—' }}</span>
+                      </div>
+                      <div class="m-mid">
+                        vs {{ m.opponent || '—' }}
+                        <span v-if="m.opponentRank" class="rk">#{{ m.opponentRank }}</span>
+                      </div>
+                      <div class="m-bot">
+                        <span>{{ m.tournament || '—' }}</span>
+                        <span v-if="m.level" class="lv">{{ m.level }}</span>
+                        <span>{{ m.round || '' }}</span>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div class="pager pager-bottom">
+                <span class="pager-info">{{ playerPageLabel() }}</span>
+                <div class="pager-actions">
+                  <button type="button" class="pager-btn" :disabled="playerPage <= 1" @click="setPlayerPage(playerPage - 1)">上一页</button>
+                  <button type="button" class="pager-btn" :disabled="playerPage >= playerPageCount" @click="setPlayerPage(playerPage + 1)">下一页</button>
+                </div>
+              </div>
+            </template>
           </div>
-          <label class="match-only">
-            <input v-model="onlyWithMatches" type="checkbox">
-            <span>仅有赛事</span>
-          </label>
         </div>
         <footer class="pool-filter-foot">
           <button type="button" class="btn primary" @click="poolFilterOpen = false">完成</button>
@@ -2960,30 +2964,41 @@ onUnmounted(() => {
   display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
   padding: 0 2px;
 }
-.filter-bar-compact {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-  padding: 0 2px;
-}
-.filter-open-btn { display: inline-flex; align-items: center; gap: 6px; }
-.filter-open-sub { font-weight: 600; color: #64748b; }
 .pool-filter-mask {
   position: fixed; inset: 0; z-index: 1200;
   background: rgba(15, 23, 42, 0.45);
   display: flex; align-items: center; justify-content: center; padding: 16px;
 }
 .pool-filter-panel {
-  width: min(420px, 100%); background: #fff; border-radius: 14px;
+  width: min(720px, 100%); max-height: min(88vh, 900px); background: #fff; border-radius: 14px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2); overflow: hidden;
+  display: flex; flex-direction: column;
 }
 .pool-filter-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding: 12px 14px; border-bottom: 1px solid #e2e8f0;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  padding: 12px 14px; border-bottom: 1px solid #e2e8f0; flex-shrink: 0;
 }
-.pool-filter-head h4 { margin: 0; font-size: 0.95rem; color: #0f172a; }
-.pool-filter-body { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
+.pool-filter-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pool-filter-sub { font-size: 0.72rem; color: #64748b; font-weight: 600; }
+.pool-tour-tabs { display: flex; gap: 6px; }
+.pool-tour-btn {
+  border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b;
+  border-radius: 999px; padding: 4px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+}
+.pool-tour-btn.on { background: #4f46e5; border-color: #4f46e5; color: #fff; }
+.pool-filter-body {
+  display: flex; flex-direction: column; gap: 12px; padding: 14px;
+  overflow: auto; flex: 1 1 auto; min-height: 0;
+}
+.pool-filters {
+  display: flex; flex-direction: column; gap: 10px;
+  padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;
+}
+.pool-results { display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.pool-results-meta { font-size: 0.72rem; font-weight: 600; }
 .pool-filter-foot {
   display: flex; justify-content: flex-end; gap: 8px;
-  padding: 10px 14px 14px; border-top: 1px solid #e2e8f0;
+  padding: 10px 14px 14px; border-top: 1px solid #e2e8f0; flex-shrink: 0;
 }
 .pool-label { font-size: 0.72rem; font-weight: 700; color: #94a3b8; margin-right: 2px; white-space: nowrap; }
 .pool-meta { margin-left: auto; font-size: 0.72rem; color: #64748b; font-weight: 600; text-align: right; }
