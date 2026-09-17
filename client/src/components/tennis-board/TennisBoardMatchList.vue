@@ -31,6 +31,7 @@ defineProps({
   isMatchLive: { type: Function, required: true },
   pickSide: { type: Function, required: true },
   listRankOf: { type: Function, required: true },
+  listBestOf: { type: Function, required: true },
   matchHomeName: { type: Function, required: true },
   matchAwayName: { type: Function, required: true },
   liveSetCells: { type: Function, required: true },
@@ -87,6 +88,7 @@ defineProps({
           :is-match-live="isMatchLive"
           :pick-side="pickSide"
           :list-rank-of="listRankOf"
+          :list-best-of="listBestOf"
           :match-home-name="matchHomeName"
           :match-away-name="matchAwayName"
           :live-set-cells="liveSetCells"

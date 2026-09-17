@@ -1,4 +1,4 @@
-# 2026-02-09 · 62 matches · Dallas, Rotterdam
+# 2026-02-09 · 62 matches · Dallas, Rotterdam · from 2026_500.txt
 2026-02-09	Dallas	F	Hard	Ben Shelton	bt	Taylor Fritz	3-6 6-3 7-5	peak_diff 1
 2026-02-09	Dallas	QF	Hard	Ben Shelton	bt	Miomir Kecmanovic	5-7 6-3 6-4	peak_diff 22
 2026-02-09	Dallas	QF	Hard	Denis Shapovalov	bt	Alejandro Davidovich Fokina	5-7 6-4 6-3	peak_diff 4

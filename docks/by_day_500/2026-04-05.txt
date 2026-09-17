@@ -1,0 +1,56 @@
+# 2026-04-05 · 55 matches · Monte Carlo Masters · from 2026_all_gs_1000_500.txt
+2026-04-05	Monte Carlo Masters	F	Clay	Jannik Sinner	bt	Carlos Alcaraz	7-6(5) 6-3	peak_diff 0
+2026-04-05	Monte Carlo Masters	QF	Clay	Alexander Zverev	bt	Joao Fonseca	7-5 6-7(3) 6-3	peak_diff 22
+2026-04-05	Monte Carlo Masters	QF	Clay	Carlos Alcaraz	bt	Alexander Bublik	6-3 6-0	peak_diff 9
+2026-04-05	Monte Carlo Masters	QF	Clay	Jannik Sinner	bt	Felix Auger Aliassime	6-3 6-4	peak_diff 3
+2026-04-05	Monte Carlo Masters	QF	Clay	Valentin Vacherot	bt	Alex De Minaur	6-4 3-6 6-3	peak_diff 10
+2026-04-05	Monte Carlo Masters	R16	Clay	Alex De Minaur	bt	Alexander Blockx	7-5 7-6(4)	peak_diff 30
+2026-04-05	Monte Carlo Masters	R16	Clay	Alexander Bublik	bt	Jiri Lehecka	6-2 7-5	peak_diff 2
+2026-04-05	Monte Carlo Masters	R16	Clay	Alexander Zverev	bt	Zizou Bergs	6-2 7-5	peak_diff 36
+2026-04-05	Monte Carlo Masters	R16	Clay	Carlos Alcaraz	bt	Tomas Martin Etcheverry	6-1 4-6 6-3	peak_diff 24
+2026-04-05	Monte Carlo Masters	R16	Clay	Felix Auger Aliassime	bt	Casper Ruud	7-5 2-2 RET	peak_diff 2
+2026-04-05	Monte Carlo Masters	R16	Clay	Jannik Sinner	bt	Tomas Machac	6-1 6-7(3) 6-3	peak_diff 19
+2026-04-05	Monte Carlo Masters	R16	Clay	Joao Fonseca	bt	Matteo Berrettini	6-3 6-2	peak_diff 18
+2026-04-05	Monte Carlo Masters	R16	Clay	Valentin Vacherot	bt	Hubert Hurkacz	6-7(4) 6-3 6-4	peak_diff 10
+2026-04-05	Monte Carlo Masters	R32	Clay	Alex De Minaur	bt	Cameron Norrie	7-6(5) 2-6 6-2	peak_diff 2
+2026-04-05	Monte Carlo Masters	R32	Clay	Alexander Blockx	bt	Flavio Cobolli	6-3 6-3	peak_diff 26
+2026-04-05	Monte Carlo Masters	R32	Clay	Alexander Bublik	bt	Gael Monfils	6-4 6-4	peak_diff 1
+2026-04-05	Monte Carlo Masters	R32	Clay	Alexander Zverev	bt	Cristian Garin	4-6 6-4 7-5	peak_diff 15
+2026-04-05	Monte Carlo Masters	R32	Clay	Carlos Alcaraz	bt	Sebastian Baez	6-1 6-3	peak_diff 17
+2026-04-05	Monte Carlo Masters	R32	Clay	Casper Ruud	bt	Corentin Moutet	7-5 6-3	peak_diff 28
+2026-04-05	Monte Carlo Masters	R32	Clay	Felix Auger Aliassime	bt	Marin Cilic	7-6(4) 6-3	peak_diff 9
+2026-04-05	Monte Carlo Masters	R32	Clay	Hubert Hurkacz	bt	Fabian Marozsan	6-2 6-3	peak_diff 30
+2026-04-05	Monte Carlo Masters	R32	Clay	Jannik Sinner	bt	Ugo Humbert	6-3 6-0	peak_diff 12
+2026-04-05	Monte Carlo Masters	R32	Clay	Jiri Lehecka	bt	Alejandro Tabilo	4-6 7-6(4) 6-3	peak_diff 7
+2026-04-05	Monte Carlo Masters	R32	Clay	Joao Fonseca	bt	Arthur Rinderknech	7-5 4-6 6-3	peak_diff 0
+2026-04-05	Monte Carlo Masters	R32	Clay	Matteo Berrettini	bt	Daniil Medvedev	6-0 6-0	peak_diff 5
+2026-04-05	Monte Carlo Masters	R32	Clay	Tomas Machac	bt	Francisco Cerundolo	7-6(2) 6-3	peak_diff 2
+2026-04-05	Monte Carlo Masters	R32	Clay	Tomas Martin Etcheverry	bt	Terence Atmane	3-6 6-3 6-2	peak_diff 16
+2026-04-05	Monte Carlo Masters	R32	Clay	Valentin Vacherot	bt	Lorenzo Musetti	7-6(6) 7-5	peak_diff 11
+2026-04-05	Monte Carlo Masters	R32	Clay	Zizou Bergs	bt	Andrey Rublev	6-4 6-1	peak_diff 33
+2026-04-05	Monte Carlo Masters	R64	Clay	Alejandro Tabilo	bt	Marton Fucsovics	6-4 6-3	peak_diff 16
+2026-04-05	Monte Carlo Masters	R64	Clay	Alexander Blockx	bt	Denis Shapovalov	6-4 4-6 6-3	peak_diff 26
+2026-04-05	Monte Carlo Masters	R64	Clay	Andrey Rublev	bt	Nuno Borges	6-4 1-6 6-1	peak_diff 25
+2026-04-05	Monte Carlo Masters	R64	Clay	Arthur Rinderknech	bt	Karen Khachanov	7-5 6-2	peak_diff 15
+2026-04-05	Monte Carlo Masters	R64	Clay	Cameron Norrie	bt	Miomir Kecmanovic	6-2 4-6 7-6(0)	peak_diff 19
+2026-04-05	Monte Carlo Masters	R64	Clay	Casper Ruud	bt	Alexei Popyrin	6-3 6-4	peak_diff 17
+2026-04-05	Monte Carlo Masters	R64	Clay	Corentin Moutet	bt	Alexandre Muller	6-4 6-1	peak_diff 8
+2026-04-05	Monte Carlo Masters	R64	Clay	Cristian Garin	bt	Matteo Arnaldi	6-2 6-4	peak_diff 12
+2026-04-05	Monte Carlo Masters	R64	Clay	Fabian Marozsan	bt	Damir Dzumhur	6-2 6-1	peak_diff 18
+2026-04-05	Monte Carlo Masters	R64	Clay	Flavio Cobolli	bt	Francisco Comesana	7-5 2-6 6-3	peak_diff 44
+2026-04-05	Monte Carlo Masters	R64	Clay	Francisco Cerundolo	bt	Stefanos Tsitsipas	7-5 6-4	peak_diff 15
+2026-04-05	Monte Carlo Masters	R64	Clay	Gael Monfils	bt	Tallon Griekspoor	6-7(7) 6-1 6-4	peak_diff 12
+2026-04-05	Monte Carlo Masters	R64	Clay	Hubert Hurkacz	bt	Luciano Darderi	7-6(4) 5-7 6-1	peak_diff 10
+2026-04-05	Monte Carlo Masters	R64	Clay	Jiri Lehecka	bt	Emilio Nava	7-6(1) 6-7(8) 6-2	peak_diff 62
+2026-04-05	Monte Carlo Masters	R64	Clay	Joao Fonseca	bt	Gabriel Diallo	6-2 6-3	peak_diff 9
+2026-04-05	Monte Carlo Masters	R64	Clay	Marin Cilic	bt	Alexander Shevchenko	6-1 6-3	peak_diff 32
+2026-04-05	Monte Carlo Masters	R64	Clay	Matteo Berrettini	bt	Roberto Bautista Agut	4-0 RET	peak_diff 3
+2026-04-05	Monte Carlo Masters	R64	Clay	Sebastian Baez	bt	Stan Wawrinka	7-5 7-5	peak_diff 5
+2026-04-05	Monte Carlo Masters	R64	Clay	Terence Atmane	bt	Ethan Quinn	6-1 6-4	peak_diff 7
+2026-04-05	Monte Carlo Masters	R64	Clay	Tomas Machac	bt	Daniel Altmaier	6-4 1-6 6-3	peak_diff 24
+2026-04-05	Monte Carlo Masters	R64	Clay	Tomas Martin Etcheverry	bt	Grigor Dimitrov	6-4 2-6 6-3	peak_diff 16
+2026-04-05	Monte Carlo Masters	R64	Clay	Ugo Humbert	bt	Moise Kouame	6-3 7-5	peak_diff 203
+2026-04-05	Monte Carlo Masters	R64	Clay	Valentin Vacherot	bt	Juan Manuel Cerundolo	5-7 6-2 6-1	peak_diff 29
+2026-04-05	Monte Carlo Masters	R64	Clay	Zizou Bergs	bt	Adrian Mannarino	6-4 6-3	peak_diff 21
+2026-04-05	Monte Carlo Masters	SF	Clay	Carlos Alcaraz	bt	Valentin Vacherot	6-4 6-4	peak_diff 15
+2026-04-05	Monte Carlo Masters	SF	Clay	Jannik Sinner	bt	Alexander Zverev	6-1 6-4	peak_diff 1

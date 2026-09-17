@@ -2,15 +2,10 @@
  * YUCE 后端入口：Express API。
  * 网球列表：collect.py → Redis → GET /api/tennis/today（默认不连 9004 monitor）。
  */
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
-require('dotenv').config({
-  path: process.env.ENV_FILE
-    ? path.resolve(process.cwd(), process.env.ENV_FILE)
-    : path.resolve(__dirname, '..', '.env'),
-});
+require('./loadEnv').loadEnv();
 
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
@@ -34,6 +29,7 @@ const tennisSettledRoutes = require('./routes/tennisSettled');
 const tennisOrdersRoutes = require('./routes/tennisOrders');
 const engineApiRoutes = require('./routes/engineApi');
 const adminSchedulerRoutes = require('./routes/adminScheduler');
+const adminEngineServicesRoutes = require('./routes/adminEngineServices');
 
 const app = express();
 app.use(cors());
@@ -47,11 +43,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/agent', agentRoutes);
-app.use('/api/admin', adminRoutes);
-// 管理员：网球采集监控、BTC 看板配置
+// 管理员子路由（须在 /api/admin 通用路由之前挂载）
 app.use('/api/admin/tennis-monitor', tennisMonitorRoutes);
 app.use('/api/admin/btc-board', btcAdminRoutes);
+app.use('/api/admin/engines', adminEngineServicesRoutes);
 app.use('/api/admin', adminSchedulerRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/engine', engineApiRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/embed', embedRoutes);
@@ -80,18 +77,13 @@ app.listen(PORT, () => {
     try {
       const tennisRedis = require('./services/tennisRedis');
       await tennisRedis.warmOnStartup();
-      try {
-        const schedulerLoop = require('./services/schedulerLoop');
-        await schedulerLoop.start();
-      } catch (err) {
-        console.error('[scheduler] start failed:', err.message);
-        try {
-          const tennisInplayTickLoop = require('./services/tennisInplayTickLoop');
-          tennisInplayTickLoop.start();
-          console.warn('[scheduler] fallback: tennisInplayTickLoop started');
-        } catch (e2) {
-          console.error('[tennis/tick-loop] start failed:', e2.message);
-        }
+      const schedulerClient = require('./services/schedulerClient');
+      if (schedulerClient.isRemote()) {
+        console.log('[scheduler] external service:', schedulerClient.baseUrl());
+      } else {
+        console.warn(
+          '[scheduler] SCHEDULER_URL not set — no embedded loop (start services/scheduler :9105)',
+        );
       }
       try {
         const engineApiKeys = require('./services/engineApiKeys');

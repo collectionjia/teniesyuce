@@ -1,0 +1,56 @@
+# 2026-02-08 · 55 matches · Doha · from 2026_all_gs_1000_500.txt
+2026-02-08	Doha	F	Hard	Karolina Muchova	bt	Victoria Mboko	6-4 7-5	peak_diff 1
+2026-02-08	Doha	QF	Hard	Jelena Ostapenko	bt	Elisabetta Cocciaretto	7-5 6-4	peak_diff 24
+2026-02-08	Doha	QF	Hard	Karolina Muchova	bt	Anna Kalinskaya	6-3 6-4	peak_diff 3
+2026-02-08	Doha	QF	Hard	Maria Sakkari	bt	Iga Swiatek	2-6 6-4 7-5	peak_diff 2
+2026-02-08	Doha	QF	Hard	Victoria Mboko	bt	Elena Rybakina	7-5 4-6 6-4	peak_diff 7
+2026-02-08	Doha	R16	Hard	Anna Kalinskaya	bt	Elina Svitolina	6-4 6-3	peak_diff 8
+2026-02-08	Doha	R16	Hard	Elena Rybakina	bt	Qinwen Zheng	4-6 6-2 7-5	peak_diff 2
+2026-02-08	Doha	R16	Hard	Elisabetta Cocciaretto	bt	Ann Li	7-6(5) 5-7 6-4	peak_diff 0
+2026-02-08	Doha	R16	Hard	Iga Swiatek	bt	Daria Kasatkina	5-7 6-1 6-1	peak_diff 7
+2026-02-08	Doha	R16	Hard	Jelena Ostapenko	bt	Camila Osorio	6-3 6-1	peak_diff 28
+2026-02-08	Doha	R16	Hard	Karolina Muchova	bt	Karolina Pliskova	5-2 RET	peak_diff 7
+2026-02-08	Doha	R16	Hard	Maria Sakkari	bt	Varvara Gracheva	7-6(3) 6-0	peak_diff 36
+2026-02-08	Doha	R16	Hard	Victoria Mboko	bt	Mirra Andreeva	6-3 3-6 7-6(5)	peak_diff 4
+2026-02-08	Doha	R32	Hard	Ann Li	bt	Magdalena Frech	6-3 6-4	peak_diff 7
+2026-02-08	Doha	R32	Hard	Anna Kalinskaya	bt	Emma Navarro	7-5 2-6 6-2	peak_diff 3
+2026-02-08	Doha	R32	Hard	Camila Osorio	bt	Katerina Siniakova	6-2 5-7 6-3	peak_diff 6
+2026-02-08	Doha	R32	Hard	Daria Kasatkina	bt	Elise Mertens	6-4 6-0	peak_diff 4
+2026-02-08	Doha	R32	Hard	Elena Rybakina	bt	Xin Yu Wang	6-2 6-4	peak_diff 28
+2026-02-08	Doha	R32	Hard	Elina Svitolina	bt	Dayana Yastremska	6-1 6-4	peak_diff 18
+2026-02-08	Doha	R32	Hard	Elisabetta Cocciaretto	bt	Coco Gauff	6-4 6-2	peak_diff 27
+2026-02-08	Doha	R32	Hard	Iga Swiatek	bt	Janice Tjen	6-0 6-3	peak_diff 35
+2026-02-08	Doha	R32	Hard	Jelena Ostapenko	bt	Ekaterina Alexandrova	6-4 6-2	peak_diff 5
+2026-02-08	Doha	R32	Hard	Karolina Muchova	bt	Tereza Valentova	6-1 6-4	peak_diff 34
+2026-02-08	Doha	R32	Hard	Karolina Pliskova	bt	Amanda Anisimova	5-7 7-6(3) 4-1 RET	peak_diff 2
+2026-02-08	Doha	R32	Hard	Maria Sakkari	bt	Jasmine Paolini	6-4 6-2	peak_diff 1
+2026-02-08	Doha	R32	Hard	Mirra Andreeva	bt	Magda Linette	7-6(0) 6-1	peak_diff 14
+2026-02-08	Doha	R32	Hard	Qinwen Zheng	bt	Alycia Parks	7-6(4) 3-6 6-2	peak_diff 36
+2026-02-08	Doha	R32	Hard	Varvara Gracheva	bt	Linda Noskova	6-2 2-6 7-5	peak_diff 27
+2026-02-08	Doha	R32	Hard	Victoria Mboko	bt	Vera Zvonareva	6-4 6-4	peak_diff 7
+2026-02-08	Doha	R64	Hard	Alycia Parks	bt	Diana Shnaider	1-6 6-4 7-6(5)	peak_diff 29
+2026-02-08	Doha	R64	Hard	Ann Li	bt	Leylah Fernandez	6-4 6-3	peak_diff 16
+2026-02-08	Doha	R64	Hard	Anna Kalinskaya	bt	Jessica Bouzas Maneiro	6-2 6-1	peak_diff 29
+2026-02-08	Doha	R64	Hard	Camila Osorio	bt	Emma Raducanu	2-6 6-4 2-0 RET	peak_diff 23
+2026-02-08	Doha	R64	Hard	Daria Kasatkina	bt	Moyuka Uchijima	4-6 6-3 6-0	peak_diff 39
+2026-02-08	Doha	R64	Hard	Dayana Yastremska	bt	Cristina Bucsa	6-4 4-6 7-6(5)	peak_diff 9
+2026-02-08	Doha	R64	Hard	Elisabetta Cocciaretto	bt	Elsa Jacquemot	7-6(4) 6-2	peak_diff 24
+2026-02-08	Doha	R64	Hard	Elise Mertens	bt	Anastasia Pavlyuchenkova	6-2 6-1	peak_diff 1
+2026-02-08	Doha	R64	Hard	Emma Navarro	bt	Tatjana Maria	7-5 6-1	peak_diff 28
+2026-02-08	Doha	R64	Hard	Janice Tjen	bt	Beatriz Haddad Maia	6-0 6-1	peak_diff 26
+2026-02-08	Doha	R64	Hard	Jelena Ostapenko	bt	Anastasia Zakharova	6-7(6) 6-3 6-4	peak_diff 60
+2026-02-08	Doha	R64	Hard	Karolina Muchova	bt	Jaqueline Cristian	6-2 6-3	peak_diff 20
+2026-02-08	Doha	R64	Hard	Karolina Pliskova	bt	Solana Sierra	6-1 6-2	peak_diff 55
+2026-02-08	Doha	R64	Hard	Katerina Siniakova	bt	Clara Tauson	6-4 6-1	peak_diff 15
+2026-02-08	Doha	R64	Hard	Linda Noskova	bt	Maya Joint	6-4 6-0	peak_diff 16
+2026-02-08	Doha	R64	Hard	Magda Linette	bt	Sonay Kartal	6-4 3-6 6-3	peak_diff 25
+2026-02-08	Doha	R64	Hard	Magdalena Frech	bt	Liudmila Samsonova	6-3 4-6 7-6(7)	peak_diff 10
+2026-02-08	Doha	R64	Hard	Maria Sakkari	bt	Zeynep Sonmez	6-1 6-3	peak_diff 56
+2026-02-08	Doha	R64	Hard	Qinwen Zheng	bt	Sofia Kenin	4-6 6-1 6-2	peak_diff 0
+2026-02-08	Doha	R64	Hard	Tereza Valentova	bt	Alexandra Eala	7-6(6) 6-1	peak_diff 13
+2026-02-08	Doha	R64	Hard	Varvara Gracheva	bt	Laura Siegemund	7-6(3) 6-4	peak_diff 12
+2026-02-08	Doha	R64	Hard	Vera Zvonareva	bt	Peyton Stearns	2-6 6-2 6-3	peak_diff 26
+2026-02-08	Doha	R64	Hard	Victoria Mboko	bt	Marie Bouzkova	7-5 6-2	peak_diff 15
+2026-02-08	Doha	R64	Hard	Xin Yu Wang	bt	Emiliana Arango	6-1 7-5	peak_diff 16
+2026-02-08	Doha	SF	Hard	Karolina Muchova	bt	Maria Sakkari	3-6 6-4 6-1	peak_diff 5
+2026-02-08	Doha	SF	Hard	Victoria Mboko	bt	Jelena Ostapenko	6-3 6-2	peak_diff 4

@@ -1,0 +1,96 @@
+# 2026-04-22 · 95 matches · Madrid Masters · from 2026_all_gs_1000_500.txt
+2026-04-22	Madrid Masters	F	Clay	Jannik Sinner	bt	Alexander Zverev	6-1 6-2	peak_diff 1
+2026-04-22	Madrid Masters	QF	Clay	Alexander Blockx	bt	Casper Ruud	6-4 6-4	peak_diff 34
+2026-04-22	Madrid Masters	QF	Clay	Alexander Zverev	bt	Flavio Cobolli	6-1 6-4	peak_diff 8
+2026-04-22	Madrid Masters	QF	Clay	Arthur Fils	bt	Jiri Lehecka	6-3 6-4	peak_diff 2
+2026-04-22	Madrid Masters	QF	Clay	Jannik Sinner	bt	Rafael Jodar	6-2 7-6(0)	peak_diff 22
+2026-04-22	Madrid Masters	R128	Clay	Adam Walton	bt	Martin Landaluce	6-2 6-3	peak_diff 16
+2026-04-22	Madrid Masters	R128	Clay	Adolfo Daniel Vallejo	bt	Grigor Dimitrov	6-4 6-4	peak_diff 61
+2026-04-22	Madrid Masters	R128	Clay	Alejandro Tabilo	bt	Valentin Royer	6-2 6-4	peak_diff 35
+2026-04-22	Madrid Masters	R128	Clay	Alexander Blockx	bt	Cristian Garin	4-6 7-5 7-5	peak_diff 19
+2026-04-22	Madrid Masters	R128	Clay	Benjamin Bonzi	bt	Titouan Droguet	6-7(4) 7-6(4) 6-4	peak_diff 65
+2026-04-22	Madrid Masters	R128	Clay	Camilo Ugo Carabelli	bt	Gael Monfils	6-3 6-4	peak_diff 34
+2026-04-22	Madrid Masters	R128	Clay	Damir Dzumhur	bt	Mattia Bellucci	6-2 6-4	peak_diff 9
+2026-04-22	Madrid Masters	R128	Clay	Daniel Merida Aguilar	bt	Marco Trungelliti	6-4 1-6 7-6(6)	peak_diff 6
+2026-04-22	Madrid Masters	R128	Clay	Dino Prizmic	bt	Matteo Berrettini	6-3 6-4	peak_diff 64
+2026-04-22	Madrid Masters	R128	Clay	Dusan Lajovic	bt	Lorenzo Sonego	6-3 7-6(1)	peak_diff 2
+2026-04-22	Madrid Masters	R128	Clay	Elmer Moller	bt	Federico Cina	6-4 7-6(4)	peak_diff 81
+2026-04-22	Madrid Masters	R128	Clay	Emilio Nava	bt	Jenson Brooksby	6-3 7-5	peak_diff 41
+2026-04-22	Madrid Masters	R128	Clay	Fabian Marozsan	bt	Ethan Quinn	7-6(5) 7-6(6)	peak_diff 12
+2026-04-22	Madrid Masters	R128	Clay	Hubert Hurkacz	bt	Jaime Faria	6-3 6-3	peak_diff 81
+2026-04-22	Madrid Masters	R128	Clay	Ignacio Buse	bt	Adrian Mannarino	6-4 6-2	peak_diff 14
+2026-04-22	Madrid Masters	R128	Clay	Jan Lennard Struff	bt	Alexandre Muller	7-6(3) 6-0	peak_diff 17
+2026-04-22	Madrid Masters	R128	Clay	Jaume Munar	bt	Alexander Shevchenko	6-4 6-1	peak_diff 12
+2026-04-22	Madrid Masters	R128	Clay	Juan Manuel Cerundolo	bt	Daniel Altmaier	6-4 6-4	peak_diff 1
+2026-04-22	Madrid Masters	R128	Clay	Mariano Navone	bt	Nuno Borges	6-3 6-4	peak_diff 1
+2026-04-22	Madrid Masters	R128	Clay	Marin Cilic	bt	Zizou Bergs	4-6 6-3 6-4	peak_diff 25
+2026-04-22	Madrid Masters	R128	Clay	Martin Damm	bt	Alexei Popyrin	7-6(7) 6-4	peak_diff 23
+2026-04-22	Madrid Masters	R128	Clay	Nicolai Budkov Kjaer	bt	Reilly Opelka	5-3 RET	peak_diff 104
+2026-04-22	Madrid Masters	R128	Clay	Pablo Carreno Busta	bt	Marton Fucsovics	4-6 7-6(5) 6-2	peak_diff 24
+2026-04-22	Madrid Masters	R128	Clay	Rafael Jodar	bt	Jesper De Jong	2-6 7-5 6-4	peak_diff 48
+2026-04-22	Madrid Masters	R128	Clay	Sebastian Ofner	bt	Nikoloz Basilashvili	7-6(5) 7-6(0)	peak_diff 19
+2026-04-22	Madrid Masters	R128	Clay	Stefanos Tsitsipas	bt	Patrick Kypson	3-6 7-6(6) 7-6(4)	peak_diff 86
+2026-04-22	Madrid Masters	R128	Clay	Terence Atmane	bt	Miomir Kecmanovic	6-4 7-5	peak_diff 14
+2026-04-22	Madrid Masters	R128	Clay	Thiago Agustin Tirante	bt	Roberto Bautista Agut	6-2 6-4	peak_diff 43
+2026-04-22	Madrid Masters	R128	Clay	Tomas Machac	bt	Francisco Comesana	3-6 7-6(3) 6-3	peak_diff 34
+2026-04-22	Madrid Masters	R128	Clay	Vilius Gaubas	bt	Sebastian Baez	7-5 6-1	peak_diff 83
+2026-04-22	Madrid Masters	R128	Clay	Vit Kopriva	bt	Zhizhen Zhang	6-2 6-0	peak_diff 24
+2026-04-22	Madrid Masters	R128	Clay	Yannick Hanfmann	bt	Marcos Giron	6-4 6-7(3) 7-5	peak_diff 8
+2026-04-22	Madrid Masters	R16	Clay	Alexander Blockx	bt	Francisco Cerundolo	7-6(8) 6-2	peak_diff 18
+2026-04-22	Madrid Masters	R16	Clay	Alexander Zverev	bt	Jakub Mensik	6-4 6-7(4) 6-3	peak_diff 10
+2026-04-22	Madrid Masters	R16	Clay	Arthur Fils	bt	Tomas Martin Etcheverry	6-3 6-4	peak_diff 11
+2026-04-22	Madrid Masters	R16	Clay	Casper Ruud	bt	Stefanos Tsitsipas	6-7(4) 7-6(2) 7-6(3)	peak_diff 1
+2026-04-22	Madrid Masters	R16	Clay	Flavio Cobolli	bt	Daniil Medvedev	6-3 5-7 6-4	peak_diff 9
+2026-04-22	Madrid Masters	R16	Clay	Jannik Sinner	bt	Cameron Norrie	6-2 7-5	peak_diff 7
+2026-04-22	Madrid Masters	R16	Clay	Jiri Lehecka	bt	Lorenzo Musetti	6-3 6-3	peak_diff 7
+2026-04-22	Madrid Masters	R16	Clay	Rafael Jodar	bt	Vit Kopriva	7-5 6-0	peak_diff 32
+2026-04-22	Madrid Masters	R32	Clay	Alexander Blockx	bt	Felix Auger Aliassime	7-6(3) 6-3	peak_diff 32
+2026-04-22	Madrid Masters	R32	Clay	Alexander Zverev	bt	Terence Atmane	6-3 7-6(2)	peak_diff 39
+2026-04-22	Madrid Masters	R32	Clay	Arthur Fils	bt	Emilio Nava	7-6(2) 6-3	peak_diff 60
+2026-04-22	Madrid Masters	R32	Clay	Cameron Norrie	bt	Thiago Agustin Tirante	7-5 7-6(5)	peak_diff 44
+2026-04-22	Madrid Masters	R32	Clay	Casper Ruud	bt	Alejandro Davidovich Fokina	6-3 6-1	peak_diff 12
+2026-04-22	Madrid Masters	R32	Clay	Daniil Medvedev	bt	Nicolai Budkov Kjaer	6-3 6-2	peak_diff 120
+2026-04-22	Madrid Masters	R32	Clay	Flavio Cobolli	bt	Adolfo Daniel Vallejo	6-3 6-2	peak_diff 60
+2026-04-22	Madrid Masters	R32	Clay	Francisco Cerundolo	bt	Luciano Darderi	6-2 6-3	peak_diff 2
+2026-04-22	Madrid Masters	R32	Clay	Jakub Mensik	bt	Karen Khachanov	6-4 7-6(11)	peak_diff 3
+2026-04-22	Madrid Masters	R32	Clay	Jannik Sinner	bt	Elmer Moller	6-2 6-3	peak_diff 101
+2026-04-22	Madrid Masters	R32	Clay	Jiri Lehecka	bt	Alex Michelsen	6-4 6-2	peak_diff 18
+2026-04-22	Madrid Masters	R32	Clay	Lorenzo Musetti	bt	Tallon Griekspoor	6-4 7-5	peak_diff 16
+2026-04-22	Madrid Masters	R32	Clay	Rafael Jodar	bt	Joao Fonseca	7-6(4) 4-6 6-1	peak_diff 1
+2026-04-22	Madrid Masters	R32	Clay	Stefanos Tsitsipas	bt	Daniel Merida Aguilar	6-4 6-2	peak_diff 79
+2026-04-22	Madrid Masters	R32	Clay	Tomas Martin Etcheverry	bt	Dino Prizmic	2-6 6-4 6-3	peak_diff 45
+2026-04-22	Madrid Masters	R32	Clay	Vit Kopriva	bt	Arthur Rinderknech	6-4 3-6 0-0 RET	peak_diff 31
+2026-04-22	Madrid Masters	R64	Clay	Adolfo Daniel Vallejo	bt	Learner Tien	6-4 6-3	peak_diff 52
+2026-04-22	Madrid Masters	R64	Clay	Alejandro Davidovich Fokina	bt	Pablo Carreno Busta	6-3 6-3	peak_diff 3
+2026-04-22	Madrid Masters	R64	Clay	Alex Michelsen	bt	Jan Lennard Struff	6-2 6-1	peak_diff 9
+2026-04-22	Madrid Masters	R64	Clay	Alexander Blockx	bt	Brandon Nakashima	3-6 6-3 6-4	peak_diff 7
+2026-04-22	Madrid Masters	R64	Clay	Alexander Zverev	bt	Mariano Navone	6-1 3-6 6-3	peak_diff 27
+2026-04-22	Madrid Masters	R64	Clay	Arthur Fils	bt	Ignacio Buse	6-7(4) 7-6(3) 7-5	peak_diff 17
+2026-04-22	Madrid Masters	R64	Clay	Arthur Rinderknech	bt	Dusan Lajovic	6-3 6-2	peak_diff 1
+2026-04-22	Madrid Masters	R64	Clay	Cameron Norrie	bt	Tomas Machac	6-2 6-7(6) 7-6(5)	peak_diff 12
+2026-04-22	Madrid Masters	R64	Clay	Casper Ruud	bt	Jaume Munar	6-0 6-1	peak_diff 31
+2026-04-22	Madrid Masters	R64	Clay	Daniel Merida Aguilar	bt	Corentin Moutet	6-3 6-4	peak_diff 52
+2026-04-22	Madrid Masters	R64	Clay	Daniil Medvedev	bt	Fabian Marozsan	6-2 6-7(3) 6-4	peak_diff 35
+2026-04-22	Madrid Masters	R64	Clay	Dino Prizmic	bt	Ben Shelton	6-4 6-7(4) 7-6(5)	peak_diff 65
+2026-04-22	Madrid Masters	R64	Clay	Elmer Moller	bt	Gabriel Diallo	7-5 3-3 RET	peak_diff 69
+2026-04-22	Madrid Masters	R64	Clay	Emilio Nava	bt	Valentin Vacherot	6-7(5) 7-6(1) 6-3	peak_diff 58
+2026-04-22	Madrid Masters	R64	Clay	Felix Auger Aliassime	bt	Vilius Gaubas	6-3 6-4	peak_diff 97
+2026-04-22	Madrid Masters	R64	Clay	Flavio Cobolli	bt	Camilo Ugo Carabelli	6-7(7) 6-1 6-4	peak_diff 33
+2026-04-22	Madrid Masters	R64	Clay	Francisco Cerundolo	bt	Yannick Hanfmann	6-1 7-5	peak_diff 27
+2026-04-22	Madrid Masters	R64	Clay	Jakub Mensik	bt	Martin Damm	6-3 6-4	peak_diff 30
+2026-04-22	Madrid Masters	R64	Clay	Jannik Sinner	bt	Benjamin Bonzi	6-7(6) 6-1 6-4	peak_diff 41
+2026-04-22	Madrid Masters	R64	Clay	Jiri Lehecka	bt	Alejandro Tabilo	3-6 7-6(3) 6-4	peak_diff 7
+2026-04-22	Madrid Masters	R64	Clay	Joao Fonseca	bt	Marin Cilic	W/O	peak_diff 11
+2026-04-22	Madrid Masters	R64	Clay	Karen Khachanov	bt	Adam Walton	6-2 6-3	peak_diff 65
+2026-04-22	Madrid Masters	R64	Clay	Lorenzo Musetti	bt	Hubert Hurkacz	6-4 7-6(4)	peak_diff 1
+2026-04-22	Madrid Masters	R64	Clay	Luciano Darderi	bt	Juan Manuel Cerundolo	6-1 6-3	peak_diff 29
+2026-04-22	Madrid Masters	R64	Clay	Nicolai Budkov Kjaer	bt	Denis Shapovalov	6-2 6-1	peak_diff 111
+2026-04-22	Madrid Masters	R64	Clay	Rafael Jodar	bt	Alex De Minaur	6-3 6-1	peak_diff 17
+2026-04-22	Madrid Masters	R64	Clay	Stefanos Tsitsipas	bt	Alexander Bublik	6-2 7-5	peak_diff 7
+2026-04-22	Madrid Masters	R64	Clay	Tallon Griekspoor	bt	Damir Dzumhur	6-3 6-4	peak_diff 33
+2026-04-22	Madrid Masters	R64	Clay	Terence Atmane	bt	Ugo Humbert	7-6(3) 7-6(5)	peak_diff 28
+2026-04-22	Madrid Masters	R64	Clay	Thiago Agustin Tirante	bt	Tommy Paul	7-5 6-4	peak_diff 44
+2026-04-22	Madrid Masters	R64	Clay	Tomas Martin Etcheverry	bt	Sebastian Ofner	6-4 6-4	peak_diff 12
+2026-04-22	Madrid Masters	R64	Clay	Vit Kopriva	bt	Andrey Rublev	6-3 6-4	peak_diff 50
+2026-04-22	Madrid Masters	SF	Clay	Alexander Zverev	bt	Alexander Blockx	6-2 7-5	peak_diff 34
+2026-04-22	Madrid Masters	SF	Clay	Jannik Sinner	bt	Arthur Fils	6-2 6-4	peak_diff 13

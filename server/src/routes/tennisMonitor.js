@@ -103,17 +103,23 @@ router.get('/status', async (_req, res) => {
     const tennisDataSource = require('../services/tennisDataSource');
     const pref = await tennisDataSource.get();
     let body = { ok: true, monitor_optional: true, data_source: pref };
+    const localCollect = tennisCollectRunner.isCollectAvailable();
 
-    // 虚拟模式：不探测官网 monitor
+    // 虚拟模式 / 本机已有 collect runner：不探测远端 monitor（本地常 3–6s 超时）
     if (pref === 'docks500') {
       body.monitor_skipped = true;
       body.virtual = true;
       body.txtSource = '2026_500.txt';
       body.message = '虚拟(txt)模式：不连接官网采集服务';
+    } else if (localCollect) {
+      body.monitor_skipped = true;
+      body.monitor_local = true;
     } else {
       try {
-        const proxied = await monitorFetch('/status', { timeoutMs: 3000 });
-        if (proxied.body && typeof proxied.body === 'object') body = { ...proxied.body, ok: true, data_source: pref };
+        const proxied = await monitorFetch('/status', { timeoutMs: 800 });
+        if (proxied.body && typeof proxied.body === 'object') {
+          body = { ...proxied.body, ok: true, data_source: pref };
+        }
       } catch (err) {
         body.monitor_error = friendlyMonitorError(err);
         body.monitor_skipped = true;
@@ -123,22 +129,31 @@ router.get('/status', async (_req, res) => {
     body.live_poll = tennisCollectRunner.livePayload();
     body.top100_collect = pref === 'docks500'
       ? { status: 'virtual-txt', script: 'docks/2026_500.txt', running: false }
-      : (tennisCollectRunner.isCollectAvailable()
+      : (localCollect
         ? tennisCollectRunner.statusPayload()
         : (body.top100_collect || { status: 'remote', script: `${MONITOR_BASE}/collect` }));
     body.running = pref === 'docks500'
       ? false
       : !!(body.top100_collect?.running || tennisCollectRunner.isRunning());
-    const bundle = await tennisCache.getBundle();
-    if (bundle) {
-      body.latest_bundle = {
-        ok: true,
-        date: bundle.date,
-        event_count: bundle.events,
-        bundle_file: bundle.bundle_file || null,
-        fetched_at: bundle.fetched_at,
-        source: bundle.source || bundle.dataSource || null,
-      };
+
+    // bundle 摘要：短超时，失败不影响 status 主体
+    try {
+      const bundle = await Promise.race([
+        tennisCache.getBundle(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('bundle timeout')), 1200)),
+      ]);
+      if (bundle) {
+        body.latest_bundle = {
+          ok: true,
+          date: bundle.date,
+          event_count: bundle.events,
+          bundle_file: bundle.bundle_file || null,
+          fetched_at: bundle.fetched_at,
+          source: bundle.source || bundle.dataSource || null,
+        };
+      }
+    } catch {
+      body.latest_bundle_skipped = true;
     }
     res.json(body);
   } catch (err) {
@@ -371,30 +386,23 @@ router.post('/collect', async (req, res) => {
       });
     }
 
-    const tennisCollectRunner = require('../services/tennisCollectRunner');
-    if (!tennisCollectRunner.isCollectAvailable()) {
-      return res.status(503).json({
-        ok: false,
-        error:
-          '未找到 collect.py。Docker 部署请确认已挂载 scripts/tennis-monitor 并 rebuild server；'
-          + `路径: ${tennisCollectRunner.getCollectScript()}`,
-      });
-    }
+    const engineServices = require('../services/engineServicesClient');
     const matchDate = req.body?.date || req.body?.match_date || null;
     const top100 = req.body?.top100 !== false && req.body?.all !== true;
-    const started = tennisCollectRunner.startCollect({ matchDate, top100 });
-    if (!started.ok) {
-      return res.status(started.status || 409).json({
-        ok: false,
-        error: started.error || 'collect failed',
-        last: started.last,
-      });
+    const data = await engineServices.collectFull({
+      sport: 'tennis',
+      top100,
+      matchDate,
+      date: matchDate,
+    });
+    if (data.skipped) {
+      return res.status(409).json({ ok: false, error: data.message || 'collect skipped', ...data });
     }
     res.status(202).json({
       ok: true,
-      message: 'collect.py started',
-      last: started.last,
-      script: 'scripts/tennis-monitor/collect.py',
+      message: data.message || 'collect started',
+      metrics: data.metrics || null,
+      service: 'collect',
     });
   } catch (err) {
     console.error('[tennis-monitor/collect]', err);
@@ -879,8 +887,8 @@ router.post('/engines', async (req, res) => {
     const tennisEngines = require('../services/tennisEngines');
     const cfg = await tennisEngines.setConfig(req.body || {});
     try {
-      const schedulerLoop = require('../services/schedulerLoop');
       const store = require('../services/schedulerStore');
+      const schedulerClient = require('../services/schedulerClient');
       if (cfg.collect?.inplay_tick_interval_sec != null) {
         await store.syncTickIntervalFromEngines(cfg.collect.inplay_tick_interval_sec);
       }
@@ -890,11 +898,9 @@ router.post('/engines', async (req, res) => {
           cfg.collect.enabled !== false && cfg.collect.inplay_tick_enabled !== false;
         await store.setJobEnabled('job_collect_inplay_tick', tickOn);
       }
-      await schedulerLoop.alignTickJobFromConfig();
+      await schedulerClient.alignTickFromConfig();
     } catch (e) {
       console.warn('[tennis-monitor/engines] scheduler sync', e.message);
-      const tennisInplayTickLoop = require('../services/tennisInplayTickLoop');
-      tennisInplayTickLoop.resyncFromConfig().catch(() => {});
     }
     res.json({ ok: true, ...cfg, allowed_tick_intervals: tennisEngines.ALLOWED_TICK_SEC });
   } catch (err) {
@@ -903,16 +909,18 @@ router.post('/engines', async (req, res) => {
   }
 });
 
-router.post('/engines/split-buckets', async (_req, res) => {
+router.post('/engines/split-buckets', async (req, res) => {
   try {
-    const tennisThreeBuckets = require('../services/tennisThreeBuckets');
-    const r = await tennisThreeBuckets.splitFullToThreeBuckets();
-    await tennisThreeBuckets.migratePrematchByStartTime();
-    await tennisThreeBuckets.migrateInplayEnded();
-    res.json(r);
+    const engineServices = require('../services/engineServicesClient');
+    const data = await engineServices.collectFull({
+      sport: 'tennis',
+      top100: false,
+      ...(req.body || {}),
+    });
+    res.json({ ok: true, ...data, service: 'collect' });
   } catch (err) {
     console.error('[tennis-monitor/split-buckets]', err);
-    res.status(500).json({ ok: false, error: err.message || 'split failed' });
+    res.status(err.status || 500).json({ ok: false, error: err.message || 'split failed' });
   }
 });
 

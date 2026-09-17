@@ -56,8 +56,9 @@ bash scripts/deploy-server.sh --logs server
 | 文件 | 说明 |
 |------|------|
 | `docker-compose.core.yml` | redis + btc-board + server + web |
+| `deploy/docker-compose.services.yml` | 五引擎 collect/rules/betting/stop-loss/scheduler |
 | `deploy/test.env` | 测试：`yuce-test`，web `9018`，**不启 redis**，用 `server/.env.test` |
-| `deploy/prod.env` | 生产：`yuce-prod`，web `80`，`COMPOSE_PROFILES=with-redis` |
+| `deploy/prod.env` | 生产：`yuce-prod`，web `9001`，`COMPOSE_PROFILES=with-redis`，`SCHEDULER_URL` |
 
 ```bash
 # 改端口：编辑对应 env 里的 WEB_PORT / BOARD_PORT / REDIS_HOST_PORT
@@ -66,8 +67,70 @@ bash scripts/docker-deploy.sh prod up -d --build
 
 bash scripts/docker-deploy.sh test ps
 curl -s http://127.0.0.1:9018/api/health   # 测试默认
-curl -s http://127.0.0.1/api/health        # 生产默认 80
+curl -s http://127.0.0.1:9001/api/health   # 生产默认 9001
 ```
+
+### 215 测试环境（本机 MySQL / Redis）
+
+测试栈 **不启 compose 内 redis**；`server/.env.test` 里 DB/Redis 应指向 **215 宿主机本机**（Docker 容器用 `host.docker.internal`，勿写公网 IP）。
+
+```bash
+cd /opt/yuce
+git pull
+
+# 首次：从 server/.env 生成本机库配置
+bash scripts/init-env-test.sh
+nano server/.env.test   # 确认 DB_PASSWORD、JWT_SECRET
+
+# 采集代理（可选）
+cp scripts/tennis-monitor/env.monitor.test.example scripts/tennis-monitor/monitor.env.test
+
+# 一键：core Docker(test) + 宿主机五引擎
+chmod +x scripts/*.sh
+bash scripts/docker-deploy-test-all.sh
+
+# 验收
+curl -s http://127.0.0.1:9018/api/health
+bash scripts/deploy-host-services.sh status
+```
+
+| 组件 | 连接方式 |
+|------|----------|
+| server 容器 → MySQL | `host.docker.internal:3306` |
+| server 容器 → Redis | `host.docker.internal:9015` |
+| 五引擎(宿主机) → MySQL/Redis | `127.0.0.1:3306` / `127.0.0.1:9015` |
+| server 容器 → 五引擎 | `host.docker.internal:9101–9105` |
+
+若 MySQL 仅监听 `9016`，把 `server/.env.test` 的 `DB_PORT` 改为 `9016`。
+
+### 215 生产环境
+
+生产栈启用 **compose 内 Redis**（宿主机 `127.0.0.1:9016`）；MySQL 仍连 **215 宿主机本机**。
+
+```bash
+cd /opt/yuce
+git pull
+
+# 首次或迁移：补丁 server/.env 为 Docker 本机地址（不覆盖密码）
+bash scripts/init-env-prod-docker.sh
+nano server/.env
+
+# 采集代理（可选）
+cp scripts/tennis-monitor/env.monitor.prod.example scripts/tennis-monitor/monitor.env.prod
+
+# 一键：core Docker(prod) + 宿主机五引擎
+chmod +x scripts/*.sh
+bash scripts/docker-deploy-prod-all.sh
+
+curl -s http://127.0.0.1:9001/api/health
+bash scripts/deploy-host-services.sh status
+```
+
+| 组件 | 连接方式 |
+|------|----------|
+| server 容器 → MySQL | `host.docker.internal:3306` |
+| server 容器 → Redis | `redis://redis:6379`（compose 内） |
+| 五引擎(宿主机) → MySQL/Redis | `127.0.0.1:3306` / `127.0.0.1:9016` |
 
 同机可同时跑测试+生产（项目名与端口不同）。`server/.env` 仍是 DB/Redis/密钥等业务配置。
 

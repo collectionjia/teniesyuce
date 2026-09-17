@@ -1,0 +1,96 @@
+# 2026-03-18 · 95 matches · Miami Masters · from 2026_all_gs_1000_500.txt
+2026-03-18	Miami Masters	F	Hard	Jannik Sinner	bt	Jiri Lehecka	6-4 6-4	peak_diff 11
+2026-03-18	Miami Masters	QF	Hard	Alexander Zverev	bt	Francisco Cerundolo	6-1 6-2	peak_diff 16
+2026-03-18	Miami Masters	QF	Hard	Arthur Fils	bt	Tommy Paul	6-7(3) 7-6(4) 7-6(6)	peak_diff 6
+2026-03-18	Miami Masters	QF	Hard	Jannik Sinner	bt	Frances Tiafoe	6-2 6-2	peak_diff 9
+2026-03-18	Miami Masters	QF	Hard	Jiri Lehecka	bt	Martin Landaluce	7-6(1) 7-5	peak_diff 46
+2026-03-18	Miami Masters	R128	Hard	Adam Walton	bt	Sebastian Baez	6-2 6-2	peak_diff 56
+2026-03-18	Miami Masters	R128	Hard	Adrian Mannarino	bt	Zhizhen Zhang	6-3 6-2	peak_diff 14
+2026-03-18	Miami Masters	R128	Hard	Alejandro Tabilo	bt	Francisco Comesana	6-4 6-2	peak_diff 35
+2026-03-18	Miami Masters	R128	Hard	Alex Michelsen	bt	Mattia Bellucci	6-2 6-1	peak_diff 33
+2026-03-18	Miami Masters	R128	Hard	Alexander Shevchenko	bt	Matteo Arnaldi	7-6(5) 6-7(5) 6-2	peak_diff 16
+2026-03-18	Miami Masters	R128	Hard	Arthur Cazaux	bt	Tomas Barrios Vera	7-5 6-4	peak_diff 35
+2026-03-18	Miami Masters	R128	Hard	Botic Van De Zandschulp	bt	Denis Shapovalov	7-5 6-3	peak_diff 12
+2026-03-18	Miami Masters	R128	Hard	Camilo Ugo Carabelli	bt	Giovanni Mpetshi Perricard	2-6 6-3 7-6(3)	peak_diff 14
+2026-03-18	Miami Masters	R128	Hard	Damir Dzumhur	bt	Ignacio Buse	6-7(6) 7-6(6) 6-1	peak_diff 23
+2026-03-18	Miami Masters	R128	Hard	Darwin Blanch	bt	Jan Lennard Struff	6-3 3-6 6-3	peak_diff 198
+2026-03-18	Miami Masters	R128	Hard	Ethan Quinn	bt	Hubert Hurkacz	6-2 6-4	peak_diff 42
+2026-03-18	Miami Masters	R128	Hard	Gabriel Diallo	bt	Yibing Wu	6-2 7-6(3)	peak_diff 21
+2026-03-18	Miami Masters	R128	Hard	Joao Fonseca	bt	Fabian Marozsan	6-4 3-6 6-2	peak_diff 12
+2026-03-18	Miami Masters	R128	Hard	Kamil Majchrzak	bt	Miomir Kecmanovic	4-6 6-3 6-1	peak_diff 26
+2026-03-18	Miami Masters	R128	Hard	Mariano Navone	bt	Nikoloz Basilashvili	7-6(7) 6-3	peak_diff 11
+2026-03-18	Miami Masters	R128	Hard	Marin Cilic	bt	Alexei Popyrin	6-4 6-4	peak_diff 6
+2026-03-18	Miami Masters	R128	Hard	Martin Damm	bt	Jacob Fearnley	6-0 0-0 RET	peak_diff 7
+2026-03-18	Miami Masters	R128	Hard	Martin Landaluce	bt	Marcos Giron	6-3 7-6(6)	peak_diff 21
+2026-03-18	Miami Masters	R128	Hard	Marton Fucsovics	bt	Christopher Oconnell	7-6(6) 6-3	peak_diff 18
+2026-03-18	Miami Masters	R128	Hard	Matteo Berrettini	bt	Alexandre Muller	6-4 6-2	peak_diff 32
+2026-03-18	Miami Masters	R128	Hard	Moise Kouame	bt	Zachary Svajda	5-7 6-4 6-4	peak_diff 154
+2026-03-18	Miami Masters	R128	Hard	Quentin Halys	bt	Liam Draxl	6-7(4) 6-1 6-1	peak_diff 67
+2026-03-18	Miami Masters	R128	Hard	Rafael Jodar	bt	Yannick Hanfmann	6-4 4-6 6-1	peak_diff 22
+2026-03-18	Miami Masters	R128	Hard	Raphael Collignon	bt	Grigor Dimitrov	7-6(3) 4-6 7-6(6)	peak_diff 42
+2026-03-18	Miami Masters	R128	Hard	Rei Sakamoto	bt	Aleksandar Kovacevic	6-4 3-6 7-6(7)	peak_diff 95
+2026-03-18	Miami Masters	R128	Hard	Reilly Opelka	bt	Nuno Borges	6-7(6) 6-2 7-6(5)	peak_diff 13
+2026-03-18	Miami Masters	R128	Hard	Roberto Bautista Agut	bt	James Duckworth	7-6(3) 7-6(4)	peak_diff 37
+2026-03-18	Miami Masters	R128	Hard	Stefanos Tsitsipas	bt	Arthur Fery	6-1 7-6(4)	peak_diff 138
+2026-03-18	Miami Masters	R128	Hard	Terence Atmane	bt	Daniel Altmaier	6-4 6-2	peak_diff 3
+2026-03-18	Miami Masters	R128	Hard	Thiago Agustin Tirante	bt	Valentin Royer	7-5 6-7(9) 7-6(5)	peak_diff 2
+2026-03-18	Miami Masters	R128	Hard	Tomas Machac	bt	Emilio Nava	2-6 6-4 6-1	peak_diff 54
+2026-03-18	Miami Masters	R128	Hard	Zizou Bergs	bt	Jenson Brooksby	7-5 6-2	peak_diff 5
+2026-03-18	Miami Masters	R16	Hard	Alexander Zverev	bt	Quentin Halys	7-6(4) 7-6(1)	peak_diff 44
+2026-03-18	Miami Masters	R16	Hard	Arthur Fils	bt	Valentin Vacherot	6-4 6-7(4) 6-4	peak_diff 2
+2026-03-18	Miami Masters	R16	Hard	Frances Tiafoe	bt	Terence Atmane	6-4 1-6 6-4	peak_diff 31
+2026-03-18	Miami Masters	R16	Hard	Francisco Cerundolo	bt	Ugo Humbert	6-4 6-3	peak_diff 5
+2026-03-18	Miami Masters	R16	Hard	Jannik Sinner	bt	Alex Michelsen	7-5 7-6(4)	peak_diff 29
+2026-03-18	Miami Masters	R16	Hard	Jiri Lehecka	bt	Taylor Fritz	6-4 6-7(4) 6-2	peak_diff 8
+2026-03-18	Miami Masters	R16	Hard	Martin Landaluce	bt	Sebastian Korda	2-6 7-6(6) 6-4	peak_diff 43
+2026-03-18	Miami Masters	R16	Hard	Tommy Paul	bt	Tomas Martin Etcheverry	6-1 6-3	peak_diff 17
+2026-03-18	Miami Masters	R32	Hard	Alex Michelsen	bt	Alejandro Tabilo	3-6 6-3 6-4	peak_diff 11
+2026-03-18	Miami Masters	R32	Hard	Alexander Zverev	bt	Marin Cilic	6-2 5-7 6-4	peak_diff 11
+2026-03-18	Miami Masters	R32	Hard	Arthur Fils	bt	Stefanos Tsitsipas	6-0 6-1	peak_diff 11
+2026-03-18	Miami Masters	R32	Hard	Frances Tiafoe	bt	Jakub Mensik	7-6(4) 4-6 7-6(11)	peak_diff 2
+2026-03-18	Miami Masters	R32	Hard	Francisco Cerundolo	bt	Daniil Medvedev	6-0 4-6 7-5	peak_diff 17
+2026-03-18	Miami Masters	R32	Hard	Jannik Sinner	bt	Corentin Moutet	6-1 6-4	peak_diff 29
+2026-03-18	Miami Masters	R32	Hard	Jiri Lehecka	bt	Ethan Quinn	6-3 7-6(6)	peak_diff 36
+2026-03-18	Miami Masters	R32	Hard	Martin Landaluce	bt	Karen Khachanov	6-3 7-6(2)	peak_diff 49
+2026-03-18	Miami Masters	R32	Hard	Quentin Halys	bt	Kamil Majchrzak	7-6(4) 6-1	peak_diff 7
+2026-03-18	Miami Masters	R32	Hard	Sebastian Korda	bt	Carlos Alcaraz	6-3 5-7 6-4	peak_diff 14
+2026-03-18	Miami Masters	R32	Hard	Taylor Fritz	bt	Reilly Opelka	6-3 6-4	peak_diff 13
+2026-03-18	Miami Masters	R32	Hard	Terence Atmane	bt	Felix Auger Aliassime	6-3 1-6 6-3	peak_diff 37
+2026-03-18	Miami Masters	R32	Hard	Tomas Martin Etcheverry	bt	Rafael Jodar	7-5 6-4	peak_diff 2
+2026-03-18	Miami Masters	R32	Hard	Tommy Paul	bt	Raphael Collignon	6-2 3-6 7-6(5)	peak_diff 43
+2026-03-18	Miami Masters	R32	Hard	Ugo Humbert	bt	Alexander Shevchenko	6-4 7-6(2)	peak_diff 32
+2026-03-18	Miami Masters	R32	Hard	Valentin Vacherot	bt	Matteo Berrettini	7-6(5) 6-4	peak_diff 10
+2026-03-18	Miami Masters	R64	Hard	Alejandro Tabilo	bt	Andrey Rublev	6-7(5) 6-2 6-4	peak_diff 14
+2026-03-18	Miami Masters	R64	Hard	Alex Michelsen	bt	Cameron Norrie	7-5 6-7(4) 6-4	peak_diff 22
+2026-03-18	Miami Masters	R64	Hard	Alexander Shevchenko	bt	Ben Shelton	6-7(3) 7-6(3) 6-3	peak_diff 40
+2026-03-18	Miami Masters	R64	Hard	Alexander Zverev	bt	Martin Damm	6-2 6-4	peak_diff 40
+2026-03-18	Miami Masters	R64	Hard	Arthur Fils	bt	Darwin Blanch	6-2 6-3	peak_diff 205
+2026-03-18	Miami Masters	R64	Hard	Carlos Alcaraz	bt	Joao Fonseca	6-4 6-4	peak_diff 23
+2026-03-18	Miami Masters	R64	Hard	Corentin Moutet	bt	Tomas Machac	6-0 1-6 6-4	peak_diff 10
+2026-03-18	Miami Masters	R64	Hard	Daniil Medvedev	bt	Rei Sakamoto	6-7(10) 6-3 6-1	peak_diff 148
+2026-03-18	Miami Masters	R64	Hard	Ethan Quinn	bt	Casper Ruud	6-4 7-6(7)	peak_diff 46
+2026-03-18	Miami Masters	R64	Hard	Felix Auger Aliassime	bt	Marton Fucsovics	7-6(3) 7-5	peak_diff 31
+2026-03-18	Miami Masters	R64	Hard	Frances Tiafoe	bt	Arthur Cazaux	7-6(1) 6-1	peak_diff 48
+2026-03-18	Miami Masters	R64	Hard	Francisco Cerundolo	bt	Thiago Agustin Tirante	6-4 6-2	peak_diff 34
+2026-03-18	Miami Masters	R64	Hard	Jakub Mensik	bt	Adam Walton	3-6 6-2 6-4	peak_diff 62
+2026-03-18	Miami Masters	R64	Hard	Jannik Sinner	bt	Damir Dzumhur	6-3 6-3	peak_diff 53
+2026-03-18	Miami Masters	R64	Hard	Jiri Lehecka	bt	Moise Kouame	6-2 7-5	peak_diff 204
+2026-03-18	Miami Masters	R64	Hard	Kamil Majchrzak	bt	Learner Tien	6-2 4-6 6-2	peak_diff 35
+2026-03-18	Miami Masters	R64	Hard	Karen Khachanov	bt	Roberto Bautista Agut	6-3 6-3	peak_diff 0
+2026-03-18	Miami Masters	R64	Hard	Marin Cilic	bt	Brandon Nakashima	2-6 6-4 7-6(7)	peak_diff 16
+2026-03-18	Miami Masters	R64	Hard	Martin Landaluce	bt	Luciano Darderi	6-3 6-7(4) 6-4	peak_diff 42
+2026-03-18	Miami Masters	R64	Hard	Matteo Berrettini	bt	Alexander Bublik	6-4 6-4	peak_diff 4
+2026-03-18	Miami Masters	R64	Hard	Quentin Halys	bt	Alejandro Davidovich Fokina	7-6(8) 6-4	peak_diff 32
+2026-03-18	Miami Masters	R64	Hard	Rafael Jodar	bt	Aleksandar Vukic	6-1 6-2	peak_diff 25
+2026-03-18	Miami Masters	R64	Hard	Raphael Collignon	bt	Flavio Cobolli	7-5 6-3	peak_diff 41
+2026-03-18	Miami Masters	R64	Hard	Reilly Opelka	bt	Jack Draper	7-6(3) 7-6(0)	peak_diff 13
+2026-03-18	Miami Masters	R64	Hard	Sebastian Korda	bt	Camilo Ugo Carabelli	6-0 6-3	peak_diff 28
+2026-03-18	Miami Masters	R64	Hard	Stefanos Tsitsipas	bt	Alex De Minaur	6-3 7-6(3)	peak_diff 3
+2026-03-18	Miami Masters	R64	Hard	Taylor Fritz	bt	Botic Van De Zandschulp	6-3 6-7(2) 6-3	peak_diff 18
+2026-03-18	Miami Masters	R64	Hard	Terence Atmane	bt	Arthur Rinderknech	7-6(4) 6-3	peak_diff 17
+2026-03-18	Miami Masters	R64	Hard	Tomas Martin Etcheverry	bt	Zizou Bergs	7-6(5) 7-6(3)	peak_diff 13
+2026-03-18	Miami Masters	R64	Hard	Tommy Paul	bt	Adrian Mannarino	6-2 2-6 6-4	peak_diff 9
+2026-03-18	Miami Masters	R64	Hard	Ugo Humbert	bt	Gabriel Diallo	6-1 6-4	peak_diff 20
+2026-03-18	Miami Masters	R64	Hard	Valentin Vacherot	bt	Mariano Navone	6-3 6-4	peak_diff 13
+2026-03-18	Miami Masters	SF	Hard	Jannik Sinner	bt	Alexander Zverev	6-3 7-6(4)	peak_diff 1
+2026-03-18	Miami Masters	SF	Hard	Jiri Lehecka	bt	Arthur Fils	6-2 6-2	peak_diff 2

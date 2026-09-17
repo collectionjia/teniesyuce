@@ -1,0 +1,191 @@
+# 2026-03-04 · 190 matches · Indian Wells, Indian Wells Masters · from 2026_all_gs_1000_500.txt
+2026-03-04	Indian Wells	F	Hard	Aryna Sabalenka	bt	Elena Rybakina	3-6 6-3 7-6(6)	peak_diff 1
+2026-03-04	Indian Wells	QF	Hard	Aryna Sabalenka	bt	Victoria Mboko	7-6(0) 6-4	peak_diff 8
+2026-03-04	Indian Wells	QF	Hard	Elena Rybakina	bt	Jessica Pegula	6-1 7-6(4)	peak_diff 1
+2026-03-04	Indian Wells	QF	Hard	Elina Svitolina	bt	Iga Swiatek	6-2 4-6 6-4	peak_diff 2
+2026-03-04	Indian Wells	QF	Hard	Linda Noskova	bt	Talia Gibson	6-2 4-6 6-2	peak_diff 43
+2026-03-04	Indian Wells	R128	Hard	Ajla Tomljanovic	bt	Elena Gabriela Ruse	7-5 6-2	peak_diff 19
+2026-03-04	Indian Wells	R128	Hard	Anastasia Potapova	bt	Marina Stakusic	4-6 6-1 7-5	peak_diff 93
+2026-03-04	Indian Wells	R128	Hard	Anastasia Zakharova	bt	Ella Seidel	6-2 6-2	peak_diff 13
+2026-03-04	Indian Wells	R128	Hard	Anna Blinkova	bt	Dalma Galfi	6-4 7-5	peak_diff 44
+2026-03-04	Indian Wells	R128	Hard	Anna Bondar	bt	Elsa Jacquemot	7-6(5) 7-5	peak_diff 3
+2026-03-04	Indian Wells	R128	Hard	Antonia Ruzic	bt	Jennifer Brady	3-6 6-4 6-2	peak_diff 38
+2026-03-04	Indian Wells	R128	Hard	Ashlyn Krueger	bt	Magda Linette	6-1 6-4	peak_diff 10
+2026-03-04	Indian Wells	R128	Hard	Camila Osorio	bt	Sloane Stephens	6-4 6-1	peak_diff 30
+2026-03-04	Indian Wells	R128	Hard	Cristina Bucsa	bt	Darja Vidmanova	6-4 6-0	peak_diff 71
+2026-03-04	Indian Wells	R128	Hard	Dayana Yastremska	bt	Shuai Zhang	6-3 6-2	peak_diff 1
+2026-03-04	Indian Wells	R128	Hard	Diane Parry	bt	Venus Williams	6-3 6-7(4) 6-1	peak_diff 47
+2026-03-04	Indian Wells	R128	Hard	Donna Vekic	bt	Tereza Valentova	7-6(4) 7-6(4)	peak_diff 25
+2026-03-04	Indian Wells	R128	Hard	Hailey Baptiste	bt	Emiliana Arango	2-6 6-2 6-3	peak_diff 21
+2026-03-04	Indian Wells	R128	Hard	Himeno Sakatsume	bt	Alycia Parks	6-4 6-3	peak_diff 87
+2026-03-04	Indian Wells	R128	Hard	Jaqueline Cristian	bt	Janice Tjen	4-6 6-4 7-6(6)	peak_diff 8
+2026-03-04	Indian Wells	R128	Hard	Jessica Bouzas Maneiro	bt	Beatriz Haddad Maia	6-1 6-7(5) 6-1	peak_diff 30
+2026-03-04	Indian Wells	R128	Hard	Kamilla Rakhimova	bt	Bianca Andreescu	6-7(6) 6-0 6-1	peak_diff 56
+2026-03-04	Indian Wells	R128	Hard	Katerina Siniakova	bt	Sofia Kenin	1-6 6-4 6-1	peak_diff 23
+2026-03-04	Indian Wells	R128	Hard	Katie Volynets	bt	Rebecca Sramkova	6-1 0-0 RET	peak_diff 23
+2026-03-04	Indian Wells	R128	Hard	Kayla Day	bt	Francesca Jones	6-3 6-1	peak_diff 19
+2026-03-04	Indian Wells	R128	Hard	Kimberly Birrell	bt	Oksana Selekhmeteva	6-1 6-4	peak_diff 11
+2026-03-04	Indian Wells	R128	Hard	Laura Siegemund	bt	Petra Marcinko	3-6 6-3 6-4	peak_diff 23
+2026-03-04	Indian Wells	R128	Hard	Lilli Tagger	bt	Varvara Gracheva	6-2 6-4	peak_diff 47
+2026-03-04	Indian Wells	R128	Hard	Solana Sierra	bt	Peyton Stearns	7-5 7-5	peak_diff 28
+2026-03-04	Indian Wells	R128	Hard	Sonay Kartal	bt	Lanlana Tararudee	6-4 6-4	peak_diff 50
+2026-03-04	Indian Wells	R128	Hard	Sorana Cirstea	bt	Tatjana Maria	6-4 4-6 6-3	peak_diff 18
+2026-03-04	Indian Wells	R128	Hard	Storm Hunter	bt	Magdalena Frech	3-6 7-5 6-3	peak_diff 92
+2026-03-04	Indian Wells	R128	Hard	Talia Gibson	bt	Ann Li	6-3 7-5	peak_diff 26
+2026-03-04	Indian Wells	R128	Hard	Taylor Townsend	bt	Marie Bouzkova	6-2 6-1	peak_diff 22
+2026-03-04	Indian Wells	R128	Hard	Victoria Jimenez Kasintseva	bt	Caty Mcnally	6-2 6-7(4) 6-4	peak_diff 35
+2026-03-04	Indian Wells	R128	Hard	Yulia Putintseva	bt	Paula Badosa	6-4 6-2	peak_diff 18
+2026-03-04	Indian Wells	R128	Hard	Zeynep Sonmez	bt	Mccartney Kessler	7-6(7) 6-0	peak_diff 29
+2026-03-04	Indian Wells	R16	Hard	Aryna Sabalenka	bt	Naomi Osaka	6-2 6-4	peak_diff 0
+2026-03-04	Indian Wells	R16	Hard	Elena Rybakina	bt	Sonay Kartal	6-4 4-3 RET	peak_diff 42
+2026-03-04	Indian Wells	R16	Hard	Elina Svitolina	bt	Katerina Siniakova	6-1 1-1 RET	peak_diff 24
+2026-03-04	Indian Wells	R16	Hard	Iga Swiatek	bt	Karolina Muchova	6-2 6-0	peak_diff 7
+2026-03-04	Indian Wells	R16	Hard	Jessica Pegula	bt	Belinda Bencic	6-3 7-6(5)	peak_diff 1
+2026-03-04	Indian Wells	R16	Hard	Linda Noskova	bt	Alexandra Eala	6-2 6-0	peak_diff 17
+2026-03-04	Indian Wells	R16	Hard	Talia Gibson	bt	Jasmine Paolini	7-5 2-6 6-1	peak_diff 51
+2026-03-04	Indian Wells	R16	Hard	Victoria Mboko	bt	Amanda Anisimova	6-4 6-1	peak_diff 6
+2026-03-04	Indian Wells	R32	Hard	Alexandra Eala	bt	Coco Gauff	6-2 2-0 RET	peak_diff 27
+2026-03-04	Indian Wells	R32	Hard	Amanda Anisimova	bt	Emma Raducanu	6-1 6-1	peak_diff 7
+2026-03-04	Indian Wells	R32	Hard	Aryna Sabalenka	bt	Jaqueline Cristian	6-4 6-1	peak_diff 27
+2026-03-04	Indian Wells	R32	Hard	Belinda Bencic	bt	Elise Mertens	6-2 6-3	peak_diff 8
+2026-03-04	Indian Wells	R32	Hard	Elena Rybakina	bt	Marta Kostyuk	6-4 6-4	peak_diff 10
+2026-03-04	Indian Wells	R32	Hard	Elina Svitolina	bt	Ashlyn Krueger	6-4 6-2	peak_diff 26
+2026-03-04	Indian Wells	R32	Hard	Iga Swiatek	bt	Maria Sakkari	6-3 6-2	peak_diff 2
+2026-03-04	Indian Wells	R32	Hard	Jasmine Paolini	bt	Ajla Tomljanovic	7-5 5-7 6-1	peak_diff 28
+2026-03-04	Indian Wells	R32	Hard	Jessica Pegula	bt	Jelena Ostapenko	4-6 6-3 6-2	peak_diff 2
+2026-03-04	Indian Wells	R32	Hard	Karolina Muchova	bt	Antonia Ruzic	6-0 6-3	peak_diff 43
+2026-03-04	Indian Wells	R32	Hard	Katerina Siniakova	bt	Mirra Andreeva	4-6 7-6(5) 6-3	peak_diff 22
+2026-03-04	Indian Wells	R32	Hard	Linda Noskova	bt	Sorana Cirstea	6-7(5) 6-4 6-4	peak_diff 6
+2026-03-04	Indian Wells	R32	Hard	Naomi Osaka	bt	Camila Osorio	6-1 3-6 6-1	peak_diff 32
+2026-03-04	Indian Wells	R32	Hard	Sonay Kartal	bt	Madison Keys	2-6 6-2 6-3	peak_diff 39
+2026-03-04	Indian Wells	R32	Hard	Talia Gibson	bt	Clara Tauson	7-6(2) 4-6 6-4	peak_diff 43
+2026-03-04	Indian Wells	R32	Hard	Victoria Mboko	bt	Anna Kalinskaya	6-4 6-1	peak_diff 2
+2026-03-04	Indian Wells	R64	Hard	Ajla Tomljanovic	bt	Xin Yu Wang	6-3 6-1	peak_diff 2
+2026-03-04	Indian Wells	R64	Hard	Alexandra Eala	bt	Dayana Yastremska	7-5 4-6 7-5	peak_diff 8
+2026-03-04	Indian Wells	R64	Hard	Amanda Anisimova	bt	Anna Blinkova	5-7 6-1 6-0	peak_diff 32
+2026-03-04	Indian Wells	R64	Hard	Anna Kalinskaya	bt	Zeynep Sonmez	6-4 7-6(4)	peak_diff 48
+2026-03-04	Indian Wells	R64	Hard	Antonia Ruzic	bt	Qinwen Zheng	6-4 7-5	peak_diff 47
+2026-03-04	Indian Wells	R64	Hard	Aryna Sabalenka	bt	Himeno Sakatsume	6-4 6-2	peak_diff 126
+2026-03-04	Indian Wells	R64	Hard	Ashlyn Krueger	bt	Liudmila Samsonova	3-6 7-5 6-2	peak_diff 17
+2026-03-04	Indian Wells	R64	Hard	Belinda Bencic	bt	Storm Hunter	6-3 6-2	peak_diff 110
+2026-03-04	Indian Wells	R64	Hard	Camila Osorio	bt	Iva Jovic	4-6 7-6(4) 6-3	peak_diff 17
+2026-03-04	Indian Wells	R64	Hard	Clara Tauson	bt	Yulia Putintseva	7-6(9) 6-2	peak_diff 8
+2026-03-04	Indian Wells	R64	Hard	Coco Gauff	bt	Kamilla Rakhimova	6-3 7-6(5)	peak_diff 58
+2026-03-04	Indian Wells	R64	Hard	Elena Rybakina	bt	Hailey Baptiste	7-6(5) 2-6 6-2	peak_diff 23
+2026-03-04	Indian Wells	R64	Hard	Elina Svitolina	bt	Laura Siegemund	7-6(5) 4-6 6-3	peak_diff 24
+2026-03-04	Indian Wells	R64	Hard	Elise Mertens	bt	Cristina Bucsa	6-2 6-1	peak_diff 18
+2026-03-04	Indian Wells	R64	Hard	Emma Raducanu	bt	Anastasia Zakharova	6-1 6-3	peak_diff 55
+2026-03-04	Indian Wells	R64	Hard	Iga Swiatek	bt	Kayla Day	6-0 7-6(2)	peak_diff 83
+2026-03-04	Indian Wells	R64	Hard	Jaqueline Cristian	bt	Maya Joint	0-6 6-2 7-5	peak_diff 0
+2026-03-04	Indian Wells	R64	Hard	Jasmine Paolini	bt	Anastasia Potapova	6-7(5) 6-2 6-3	peak_diff 17
+2026-03-04	Indian Wells	R64	Hard	Jelena Ostapenko	bt	Katie Volynets	6-4 7-6(5)	peak_diff 51
+2026-03-04	Indian Wells	R64	Hard	Jessica Pegula	bt	Donna Vekic	4-6 6-2 6-3	peak_diff 14
+2026-03-04	Indian Wells	R64	Hard	Karolina Muchova	bt	Anna Bondar	7-5 6-2	peak_diff 42
+2026-03-04	Indian Wells	R64	Hard	Katerina Siniakova	bt	Leylah Fernandez	5-7 6-4 7-6(1)	peak_diff 14
+2026-03-04	Indian Wells	R64	Hard	Linda Noskova	bt	Jessica Bouzas Maneiro	6-3 6-3	peak_diff 28
+2026-03-04	Indian Wells	R64	Hard	Madison Keys	bt	Diane Parry	6-4 6-3	peak_diff 43
+2026-03-04	Indian Wells	R64	Hard	Maria Sakkari	bt	Lilli Tagger	7-5 6-0	peak_diff 83
+2026-03-04	Indian Wells	R64	Hard	Marta Kostyuk	bt	Taylor Townsend	6-3 6-2	peak_diff 34
+2026-03-04	Indian Wells	R64	Hard	Mirra Andreeva	bt	Solana Sierra	6-0 6-0	peak_diff 51
+2026-03-04	Indian Wells	R64	Hard	Naomi Osaka	bt	Victoria Jimenez Kasintseva	7-5 6-2	peak_diff 88
+2026-03-04	Indian Wells	R64	Hard	Sonay Kartal	bt	Emma Navarro	6-1 3-6 7-6(2)	peak_diff 36
+2026-03-04	Indian Wells	R64	Hard	Sorana Cirstea	bt	Diana Shnaider	6-2 7-6(0)	peak_diff 7
+2026-03-04	Indian Wells	R64	Hard	Talia Gibson	bt	Ekaterina Alexandrova	6-3 7-5	peak_diff 45
+2026-03-04	Indian Wells	R64	Hard	Victoria Mboko	bt	Kimberly Birrell	6-4 7-6(5)	peak_diff 51
+2026-03-04	Indian Wells	SF	Hard	Aryna Sabalenka	bt	Linda Noskova	6-3 6-4	peak_diff 11
+2026-03-04	Indian Wells	SF	Hard	Elena Rybakina	bt	Elina Svitolina	7-5 6-4	peak_diff 1
+2026-03-04	Indian Wells Masters	F	Hard	Jannik Sinner	bt	Daniil Medvedev	7-6(6) 7-6(4)	peak_diff 0
+2026-03-04	Indian Wells Masters	QF	Hard	Alexander Zverev	bt	Arthur Fils	6-2 6-3	peak_diff 12
+2026-03-04	Indian Wells Masters	QF	Hard	Carlos Alcaraz	bt	Cameron Norrie	6-3 6-4	peak_diff 7
+2026-03-04	Indian Wells Masters	QF	Hard	Daniil Medvedev	bt	Jack Draper	6-1 7-5	peak_diff 3
+2026-03-04	Indian Wells Masters	QF	Hard	Jannik Sinner	bt	Learner Tien	6-1 6-2	peak_diff 17
+2026-03-04	Indian Wells Masters	R128	Hard	Adam Walton	bt	Quentin Halys	6-3 6-3	peak_diff 28
+2026-03-04	Indian Wells Masters	R128	Hard	Alejandro Tabilo	bt	Rafael Jodar	6-1 6-2	peak_diff 4
+2026-03-04	Indian Wells Masters	R128	Hard	Aleksandar Kovacevic	bt	Hubert Hurkacz	7-6(6) 7-6(4)	peak_diff 48
+2026-03-04	Indian Wells Masters	R128	Hard	Alex Michelsen	bt	Daniel Merida Aguilar	6-3 6-4	peak_diff 52
+2026-03-04	Indian Wells Masters	R128	Hard	Alexander Shevchenko	bt	Sho Shimabukuro	6-4 3-6 6-2	peak_diff 58
+2026-03-04	Indian Wells Masters	R128	Hard	Benjamin Bonzi	bt	Valentin Royer	6-4 6-3	peak_diff 12
+2026-03-04	Indian Wells Masters	R128	Hard	Camilo Ugo Carabelli	bt	Martin Damm	7-6(5) 6-3	peak_diff 1
+2026-03-04	Indian Wells Masters	R128	Hard	Dalibor Svrcina	bt	James Duckworth	6-2 6-4	peak_diff 40
+2026-03-04	Indian Wells Masters	R128	Hard	Denis Shapovalov	bt	Stefanos Tsitsipas	6-2 3-6 6-4	peak_diff 7
+2026-03-04	Indian Wells Masters	R128	Hard	Dino Prizmic	bt	Tristan Schoolkate	7-6(5) 3-6 7-5	peak_diff 25
+2026-03-04	Indian Wells Masters	R128	Hard	Gabriel Diallo	bt	Mattia Bellucci	7-6(5) 6-4	peak_diff 30
+2026-03-04	Indian Wells Masters	R128	Hard	Gael Monfils	bt	Alexis Galarneau	6-3 6-4	peak_diff 144
+2026-03-04	Indian Wells Masters	R128	Hard	Grigor Dimitrov	bt	Terence Atmane	6-4 5-7 6-4	peak_diff 32
+2026-03-04	Indian Wells Masters	R128	Hard	Jacob Fearnley	bt	Damir Dzumhur	6-3 6-3	peak_diff 5
+2026-03-04	Indian Wells Masters	R128	Hard	Jenson Brooksby	bt	Alexei Popyrin	6-3 6-4	peak_diff 14
+2026-03-04	Indian Wells Masters	R128	Hard	Joao Fonseca	bt	Raphael Collignon	7-6(2) 6-4	peak_diff 27
+2026-03-04	Indian Wells Masters	R128	Hard	Juan Manuel Cerundolo	bt	Botic Van De Zandschulp	7-6(3) 6-7(5) 6-3	peak_diff 23
+2026-03-04	Indian Wells Masters	R128	Hard	Kamil Majchrzak	bt	Giovanni Mpetshi Perricard	6-3 1-6 7-5	peak_diff 24
+2026-03-04	Indian Wells Masters	R128	Hard	Mackenzie Mcdonald	bt	Matteo Arnaldi	6-0 6-1	peak_diff 8
+2026-03-04	Indian Wells Masters	R128	Hard	Marcos Giron	bt	Mariano Navone	4-6 7-5 6-3	peak_diff 8
+2026-03-04	Indian Wells Masters	R128	Hard	Marton Fucsovics	bt	Christopher Oconnell	7-5 6-3	peak_diff 18
+2026-03-04	Indian Wells Masters	R128	Hard	Matteo Berrettini	bt	Adrian Mannarino	4-6 7-5 7-5	peak_diff 11
+2026-03-04	Indian Wells Masters	R128	Hard	Miomir Kecmanovic	bt	Daniel Altmaier	6-3 1-0 RET	peak_diff 17
+2026-03-04	Indian Wells Masters	R128	Hard	Nuno Borges	bt	Emilio Nava	7-6(9) 7-5	peak_diff 44
+2026-03-04	Indian Wells Masters	R128	Hard	Reilly Opelka	bt	Ethan Quinn	7-5 7-6(3)	peak_diff 31
+2026-03-04	Indian Wells Masters	R128	Hard	Rinky Hijikata	bt	Francesco Maestrelli	7-6(5) 6-4	peak_diff 46
+2026-03-04	Indian Wells Masters	R128	Hard	Roberto Bautista Agut	bt	Fabian Marozsan	6-4 6-7(2) 6-4	peak_diff 27
+2026-03-04	Indian Wells Masters	R128	Hard	Sebastian Baez	bt	Chun Hsin Tseng	6-3 6-2	peak_diff 65
+2026-03-04	Indian Wells Masters	R128	Hard	Sebastian Korda	bt	Francisco Comesana	7-5 6-0	peak_diff 39
+2026-03-04	Indian Wells Masters	R128	Hard	Vit Kopriva	bt	Michael Zheng	7-6(1) 7-5	peak_diff 90
+2026-03-04	Indian Wells Masters	R128	Hard	Zachary Svajda	bt	Marin Cilic	7-6(5) 6-4	peak_diff 49
+2026-03-04	Indian Wells Masters	R128	Hard	Zizou Bergs	bt	Jan Lennard Struff	6-3 6-4	peak_diff 17
+2026-03-04	Indian Wells Masters	R16	Hard	Alexander Zverev	bt	Frances Tiafoe	6-3 6-4	peak_diff 8
+2026-03-04	Indian Wells Masters	R16	Hard	Arthur Fils	bt	Felix Auger Aliassime	6-3 7-6(9)	peak_diff 10
+2026-03-04	Indian Wells Masters	R16	Hard	Cameron Norrie	bt	Rinky Hijikata	6-4 6-2	peak_diff 54
+2026-03-04	Indian Wells Masters	R16	Hard	Carlos Alcaraz	bt	Casper Ruud	6-1 7-6(2)	peak_diff 1
+2026-03-04	Indian Wells Masters	R16	Hard	Daniil Medvedev	bt	Alex Michelsen	6-2 6-4	peak_diff 29
+2026-03-04	Indian Wells Masters	R16	Hard	Jack Draper	bt	Novak Djokovic	4-6 6-4 7-6(5)	peak_diff 3
+2026-03-04	Indian Wells Masters	R16	Hard	Jannik Sinner	bt	Joao Fonseca	7-6(6) 7-6(4)	peak_diff 23
+2026-03-04	Indian Wells Masters	R16	Hard	Learner Tien	bt	Alejandro Davidovich Fokina	4-6 6-1 7-6(4)	peak_diff 4
+2026-03-04	Indian Wells Masters	R32	Hard	Alejandro Davidovich Fokina	bt	Jakub Mensik	6-2 4-6 6-2	peak_diff 2
+2026-03-04	Indian Wells Masters	R32	Hard	Alex Michelsen	bt	Taylor Fritz	6-4 7-6(6)	peak_diff 26
+2026-03-04	Indian Wells Masters	R32	Hard	Alexander Zverev	bt	Brandon Nakashima	7-6(2) 5-7 6-4	peak_diff 27
+2026-03-04	Indian Wells Masters	R32	Hard	Arthur Fils	bt	Marton Fucsovics	6-3 7-5	peak_diff 21
+2026-03-04	Indian Wells Masters	R32	Hard	Cameron Norrie	bt	Alex De Minaur	6-4 6-4	peak_diff 2
+2026-03-04	Indian Wells Masters	R32	Hard	Carlos Alcaraz	bt	Arthur Rinderknech	6-7(6) 6-3 6-2	peak_diff 23
+2026-03-04	Indian Wells Masters	R32	Hard	Casper Ruud	bt	Valentin Vacherot	3-6 6-3 6-4	peak_diff 14
+2026-03-04	Indian Wells Masters	R32	Hard	Daniil Medvedev	bt	Sebastian Baez	6-4 6-0	peak_diff 17
+2026-03-04	Indian Wells Masters	R32	Hard	Felix Auger Aliassime	bt	Gabriel Diallo	6-7(5) 6-3 6-3	peak_diff 29
+2026-03-04	Indian Wells Masters	R32	Hard	Frances Tiafoe	bt	Flavio Cobolli	6-1 6-2	peak_diff 0
+2026-03-04	Indian Wells Masters	R32	Hard	Jack Draper	bt	Francisco Cerundolo	6-1 7-5	peak_diff 14
+2026-03-04	Indian Wells Masters	R32	Hard	Jannik Sinner	bt	Denis Shapovalov	6-3 6-2	peak_diff 9
+2026-03-04	Indian Wells Masters	R32	Hard	Joao Fonseca	bt	Tommy Paul	6-2 6-3	peak_diff 16
+2026-03-04	Indian Wells Masters	R32	Hard	Learner Tien	bt	Ben Shelton	7-6(3) 4-6 6-3	peak_diff 13
+2026-03-04	Indian Wells Masters	R32	Hard	Novak Djokovic	bt	Aleksandar Kovacevic	6-4 1-6 6-4	peak_diff 53
+2026-03-04	Indian Wells Masters	R32	Hard	Rinky Hijikata	bt	Alexander Bublik	6-7(3) 7-6(3) 6-3	peak_diff 52
+2026-03-04	Indian Wells Masters	R64	Hard	Alejandro Davidovich Fokina	bt	Zachary Svajda	7-6(0) 6-2	peak_diff 48
+2026-03-04	Indian Wells Masters	R64	Hard	Aleksandar Kovacevic	bt	Corentin Moutet	6-1 6-4	peak_diff 24
+2026-03-04	Indian Wells Masters	R64	Hard	Alex De Minaur	bt	Sebastian Korda	4-6 6-4 6-4	peak_diff 9
+2026-03-04	Indian Wells Masters	R64	Hard	Alex Michelsen	bt	Ugo Humbert	7-5 6-7(5) 7-6(6)	peak_diff 17
+2026-03-04	Indian Wells Masters	R64	Hard	Alexander Bublik	bt	Vit Kopriva	3-6 7-6(3) 6-2	peak_diff 45
+2026-03-04	Indian Wells Masters	R64	Hard	Alexander Zverev	bt	Matteo Berrettini	6-3 6-4	peak_diff 4
+2026-03-04	Indian Wells Masters	R64	Hard	Arthur Fils	bt	Dino Prizmic	6-2 3-2 RET	peak_diff 56
+2026-03-04	Indian Wells Masters	R64	Hard	Arthur Rinderknech	bt	Juan Manuel Cerundolo	W/O	peak_diff 21
+2026-03-04	Indian Wells Masters	R64	Hard	Ben Shelton	bt	Reilly Opelka	6-7(3) 7-6(4) 6-3	peak_diff 12
+2026-03-04	Indian Wells Masters	R64	Hard	Brandon Nakashima	bt	Camilo Ugo Carabelli	6-3 6-4	peak_diff 14
+2026-03-04	Indian Wells Masters	R64	Hard	Cameron Norrie	bt	Mackenzie Mcdonald	6-2 6-3	peak_diff 29
+2026-03-04	Indian Wells Masters	R64	Hard	Carlos Alcaraz	bt	Grigor Dimitrov	6-2 6-3	peak_diff 8
+2026-03-04	Indian Wells Masters	R64	Hard	Casper Ruud	bt	Alexander Shevchenko	6-1 7-6(4)	peak_diff 43
+2026-03-04	Indian Wells Masters	R64	Hard	Daniil Medvedev	bt	Alejandro Tabilo	6-4 6-2	peak_diff 18
+2026-03-04	Indian Wells Masters	R64	Hard	Denis Shapovalov	bt	Tomas Martin Etcheverry	6-3 2-6 7-6(5)	peak_diff 15
+2026-03-04	Indian Wells Masters	R64	Hard	Felix Auger Aliassime	bt	Gael Monfils	6-7(5) 6-3 6-4	peak_diff 5
+2026-03-04	Indian Wells Masters	R64	Hard	Flavio Cobolli	bt	Miomir Kecmanovic	3-6 6-3 6-4	peak_diff 17
+2026-03-04	Indian Wells Masters	R64	Hard	Frances Tiafoe	bt	Jenson Brooksby	6-4 6-2	peak_diff 23
+2026-03-04	Indian Wells Masters	R64	Hard	Francisco Cerundolo	bt	Benjamin Bonzi	6-4 5-7 7-6(5)	peak_diff 24
+2026-03-04	Indian Wells Masters	R64	Hard	Gabriel Diallo	bt	Andrey Rublev	6-7(4) 7-6(1) 6-3	peak_diff 28
+2026-03-04	Indian Wells Masters	R64	Hard	Jack Draper	bt	Roberto Bautista Agut	3-6 6-3 6-2	peak_diff 5
+2026-03-04	Indian Wells Masters	R64	Hard	Jakub Mensik	bt	Marcos Giron	7-5 7-6(4)	peak_diff 25
+2026-03-04	Indian Wells Masters	R64	Hard	Jannik Sinner	bt	Dalibor Svrcina	6-1 6-1	peak_diff 85
+2026-03-04	Indian Wells Masters	R64	Hard	Joao Fonseca	bt	Karen Khachanov	4-6 7-6(7) 6-4	peak_diff 15
+2026-03-04	Indian Wells Masters	R64	Hard	Learner Tien	bt	Adam Walton	7-6(3) 7-6(8)	peak_diff 56
+2026-03-04	Indian Wells Masters	R64	Hard	Marton Fucsovics	bt	Lorenzo Musetti	7-5 6-1	peak_diff 30
+2026-03-04	Indian Wells Masters	R64	Hard	Novak Djokovic	bt	Kamil Majchrzak	4-6 6-1 6-2	peak_diff 52
+2026-03-04	Indian Wells Masters	R64	Hard	Rinky Hijikata	bt	Luciano Darderi	4-6 6-2 6-4	peak_diff 46
+2026-03-04	Indian Wells Masters	R64	Hard	Sebastian Baez	bt	Jiri Lehecka	6-4 6-1	peak_diff 6
+2026-03-04	Indian Wells Masters	R64	Hard	Taylor Fritz	bt	Jacob Fearnley	6-3 6-7(8) 6-1	peak_diff 45
+2026-03-04	Indian Wells Masters	R64	Hard	Tommy Paul	bt	Zizou Bergs	6-1 6-2	peak_diff 30
+2026-03-04	Indian Wells Masters	R64	Hard	Valentin Vacherot	bt	Nuno Borges	7-5 7-5	peak_diff 14
+2026-03-04	Indian Wells Masters	SF	Hard	Daniil Medvedev	bt	Carlos Alcaraz	6-3 7-6(3)	peak_diff 0
+2026-03-04	Indian Wells Masters	SF	Hard	Jannik Sinner	bt	Alexander Zverev	6-2 6-4	peak_diff 1

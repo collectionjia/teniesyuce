@@ -6,12 +6,13 @@
     "tournaments": [
       "Dallas",
       "Rotterdam"
-    ]
+    ],
+    "txtSource": "2026_500.txt"
   },
   "bundle": {
     "sport": "tennis",
     "date": "2026-02-09",
-    "fetched_at": "2026-09-10T10:19:46.520Z",
+    "fetched_at": "2026-09-17T05:09:08.463Z",
     "source": "docks500",
     "upstream": "docks500",
     "dataSource": "docks500",
@@ -20,7 +21,7 @@
     "exclude_ended": false,
     "update": {
       "message": "docks/2026_500 · 2026-02-09 · 62 场",
-      "at": "2026-09-10T10:19:46.520Z"
+      "at": "2026-09-17T05:09:08.463Z"
     },
     "scheduled": {
       "tournaments": [

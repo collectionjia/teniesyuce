@@ -1,0 +1,15 @@
+{
+  "name": "@yuce/stop-loss-service",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "redis": "^4.7.1"
+  }
+}

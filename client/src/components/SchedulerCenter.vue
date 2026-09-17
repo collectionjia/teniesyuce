@@ -1,17 +1,19 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as api from '../api'
 
 const loading = ref(false)
 const status = ref(null)
 const jobs = ref([])
 const jobTypes = ref([])
-const nameOptions = ref({ collect: [], condition: [], betting: [] })
+const nameOptions = ref({ collect: [], condition: [], betting: [], stop: [] })
 const selectedJobId = ref('')
 const runs = ref([])
 const msg = ref('')
 const err = ref('')
-const editDraft = ref({})
+const logBox = ref(null)
+const autoRefreshLogs = ref(true)
+let logTimer = null
 
 const form = ref({
   nameKey: '',
@@ -22,65 +24,15 @@ const form = ref({
   enabled: true,
 })
 
-const listPoll = ref({
-  listAutoBetIntervalSec: 60,
-  listStopLossIntervalSec: 60,
-  listPageRefreshIntervalSec: 0,
-  saving: false,
-})
-
-async function loadListPoll() {
-  try {
-    const cfg = await api.fetchTennisEngines()
-    const bet = cfg?.betting || {}
-    listPoll.value.listAutoBetIntervalSec = Number(bet.listAutoBetIntervalSec) || 60
-    listPoll.value.listStopLossIntervalSec = Number(bet.listStopLossIntervalSec) || 60
-    const pageN = Number(bet.listPageRefreshIntervalSec)
-    listPoll.value.listPageRefreshIntervalSec = Number.isFinite(pageN) && pageN > 0
-      ? Math.max(10, Math.min(600, Math.round(pageN)))
-      : 0
-  } catch {
-    /* keep defaults */
-  }
-}
-
-async function saveListPoll() {
-  msg.value = ''
-  err.value = ''
-  listPoll.value.saving = true
-  try {
-    const autoSec = Math.max(10, Math.min(600, Math.round(Number(listPoll.value.listAutoBetIntervalSec) || 60)))
-    const stopSec = Math.max(10, Math.min(600, Math.round(Number(listPoll.value.listStopLossIntervalSec) || 60)))
-    let pageSec = Number(listPoll.value.listPageRefreshIntervalSec)
-    if (!Number.isFinite(pageSec) || pageSec <= 0) pageSec = 0
-    else pageSec = Math.max(10, Math.min(600, Math.round(pageSec)))
-    await api.updateTennisEngines({
-      betting: {
-        listAutoBetIntervalSec: autoSec,
-        listStopLossIntervalSec: stopSec,
-        listPageRefreshIntervalSec: pageSec,
-      },
-    })
-    listPoll.value.listAutoBetIntervalSec = autoSec
-    listPoll.value.listStopLossIntervalSec = stopSec
-    listPoll.value.listPageRefreshIntervalSec = pageSec
-    msg.value = pageSec > 0
-      ? `已保存列表轮询：页面 ${pageSec}s · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
-      : `已保存列表轮询：页面刷新关 · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
-  } catch (e) {
-    err.value = e?.response?.data?.error || e.message || '保存轮询间隔失败'
-  } finally {
-    listPoll.value.saving = false
-  }
-}
-
 const jobTypeOptions = computed(() => {
   if (jobTypes.value.length) return jobTypes.value
   return [
     { jobType: 'collect.full', label: '采集引擎 · 全量拆三桶', category: 'collect' },
+    { jobType: 'collect.top100', label: '采集引擎 · Top100 collect.py', category: 'collect' },
     { jobType: 'collect.inplay_tick', label: '采集引擎 · 盘中 tick', category: 'collect' },
     { jobType: 'condition.query', label: '条件引擎 · 查询筛选', category: 'condition' },
     { jobType: 'bet.scan', label: '投注引擎 · 扫描下单', category: 'betting' },
+    { jobType: 'bet.stop_loss', label: '止损引擎 · 持仓止损扫描', category: 'stop' },
   ]
 })
 
@@ -88,11 +40,12 @@ const CATEGORY_LABELS = {
   collect: '采集引擎',
   condition: '条件引擎',
   betting: '投注引擎',
+  stop: '止损引擎',
 }
 
 const jobTypeGroups = computed(() => {
-  const order = ['collect', 'condition', 'betting']
-  const map = { collect: [], condition: [], betting: [] }
+  const order = ['collect', 'condition', 'betting', 'stop']
+  const map = { collect: [], condition: [], betting: [], stop: [] }
   for (const t of jobTypeOptions.value) {
     const cat = t.category || categoryOfJobType(t.jobType)
     if (!map[cat]) map[cat] = []
@@ -108,6 +61,7 @@ function categoryOfJobType(jobType) {
   if (t?.category) return t.category
   if (String(jobType).startsWith('collect')) return 'collect'
   if (String(jobType).startsWith('condition')) return 'condition'
+  if (String(jobType) === 'bet.stop_loss' || String(jobType).startsWith('stop')) return 'stop'
   if (String(jobType).startsWith('bet')) return 'betting'
   return 'collect'
 }
@@ -138,34 +92,11 @@ function paramsFromOption(opt, cat) {
   }
 }
 
-function nameKeyFromJob(job) {
-  const cat = categoryOfJobType(job.jobType)
-  const p = job.params || {}
-  if (cat === 'collect') return optionsForCategory('collect')[0]?.key || 'collect'
-  if (p.bucket != null && p.groupIndex != null) {
-    return `${cat}:${p.bucket}:${p.groupIndex}`
-  }
-  const hit = optionsForCategory(cat).find((o) => o.value === job.name || o.groupName === job.name)
-  return hit?.key || ''
-}
-
-function draftFor(job) {
-  if (!editDraft.value[job.id]) {
-    editDraft.value[job.id] = {
-      scheduleMode: job.scheduleMode || 'interval',
-      intervalSec: job.intervalSec || 60,
-      dailyTime: job.dailyTime || job.cronExpr || '09:00',
-      nameKey: nameKeyFromJob(job),
-    }
-  }
-  return editDraft.value[job.id]
-}
-
 watch(
   () => form.value.jobType,
   (jt) => {
     form.value.nameKey = pickDefaultNameKey(categoryOfJobType(jt))
-  }
+  },
 )
 
 async function refresh() {
@@ -179,12 +110,10 @@ async function refresh() {
     status.value = st
     jobs.value = j.jobs || []
     jobTypes.value = j.jobTypes || []
-    nameOptions.value = j.nameOptions || { collect: [], condition: [], betting: [] }
+    nameOptions.value = j.nameOptions || { collect: [], condition: [], betting: [], stop: [] }
     if (!form.value.nameKey) {
       form.value.nameKey = pickDefaultNameKey(categoryOfJobType(form.value.jobType))
     }
-    editDraft.value = {}
-    for (const job of jobs.value) draftFor(job)
     if (selectedJobId.value && !jobs.value.find((x) => x.id === selectedJobId.value)) {
       selectedJobId.value = jobs.value[0]?.id || ''
     }
@@ -192,7 +121,6 @@ async function refresh() {
       selectedJobId.value = jobs.value[0].id
     }
     if (selectedJobId.value) await loadRuns()
-    await loadListPoll()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '加载失败'
   } finally {
@@ -206,7 +134,7 @@ async function loadRuns() {
     return
   }
   try {
-    const data = await api.fetchSchedulerRuns(selectedJobId.value, { limit: 20 })
+    const data = await api.fetchSchedulerRuns(selectedJobId.value, { limit: 50 })
     runs.value = data.runs || []
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '日志加载失败'
@@ -238,9 +166,13 @@ async function createJob() {
   const cat = categoryOfJobType(form.value.jobType)
   const opt = optionByKey(cat, form.value.nameKey)
   if (!form.value.nameKey || !opt) {
-    err.value = cat === 'collect'
-      ? '请选择名称'
-      : `请先在${cat === 'condition' ? '条件' : '投注'}引擎配置分组，再选择名称`
+    const tip = {
+      collect: '请选择名称',
+      condition: '请先在条件引擎配置分组，再选择名称',
+      betting: '请先在投注引擎配置分组，再选择名称',
+      stop: '请先在止损/投注引擎配置分组，再选择名称',
+    }
+    err.value = tip[cat] || '请选择名称'
     return
   }
   try {
@@ -258,6 +190,7 @@ async function createJob() {
     }
     const r = await api.createSchedulerJob(payload)
     msg.value = `已新增：${r.job?.name || r.job?.id}`
+    if (r.job?.id) selectedJobId.value = r.job.id
     await refresh()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message
@@ -276,41 +209,26 @@ async function toggleJob(job, enabled) {
   }
 }
 
-async function saveJob(job) {
-  msg.value = ''
-  const d = draftFor(job)
-  const cat = categoryOfJobType(job.jobType)
-  const opt = optionByKey(cat, d.nameKey)
-  if (!d.nameKey || !opt) {
-    err.value = '请选择名称'
-    return
-  }
-  try {
-    const payload = {
-      name: opt.value,
-      scheduleMode: d.scheduleMode,
-      params: paramsFromOption(opt, cat),
-    }
-    if (d.scheduleMode === 'interval') payload.intervalSec = Number(d.intervalSec)
-    else payload.dailyTime = d.dailyTime
-    await api.patchSchedulerJob(job.id, payload)
-    msg.value = `已保存：${opt.value}`
-    await refresh()
-  } catch (e) {
-    err.value = e?.response?.data?.error || e.message
-  }
-}
-
 async function runNow(job) {
   msg.value = ''
+  err.value = ''
   try {
     const r = await api.runSchedulerJob(job.id)
     msg.value = `立即执行：${job.name} · ${r.status || 'ok'} · ${r.runId || ''}`
     selectedJobId.value = job.id
     await loadRuns()
+    await nextTick()
+    logBox.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   } catch (e) {
     err.value = e?.response?.data?.error || e.message
   }
+}
+
+async function showLogs(job) {
+  selectedJobId.value = job.id
+  await loadRuns()
+  await nextTick()
+  logBox.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 async function removeJob(job) {
@@ -333,246 +251,170 @@ function scheduleText(job) {
 }
 
 function statusClass(s) {
-  if (s === 'success') return 'text-emerald-600'
-  if (s === 'failed' || s === 'timeout') return 'text-rose-600'
-  if (s === 'skipped') return 'text-amber-600'
-  if (s === 'running') return 'text-sky-600'
-  return 'text-slate-500'
+  if (s === 'success') return 'ok'
+  if (s === 'failed' || s === 'timeout') return 'fail'
+  if (s === 'skipped') return 'skip'
+  if (s === 'running') return 'run'
+  return ''
 }
 
-onMounted(refresh)
+function startLogTimer() {
+  stopLogTimer()
+  if (!autoRefreshLogs.value) return
+  logTimer = setInterval(() => {
+    if (selectedJobId.value) loadRuns()
+  }, 5000)
+}
+
+function stopLogTimer() {
+  if (logTimer) {
+    clearInterval(logTimer)
+    logTimer = null
+  }
+}
+
+watch(autoRefreshLogs, startLogTimer)
+watch(selectedJobId, (id) => {
+  if (id) loadRuns()
+  else runs.value = []
+})
+
+onMounted(() => {
+  refresh()
+  startLogTimer()
+})
+onUnmounted(stopLogTimer)
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-2">
-      <div class="flex items-center justify-between gap-2">
+  <div class="sched">
+    <div class="card head">
+      <div class="head-row">
         <div>
-          <div class="font-semibold">调度中心</div>
-          <p class="text-xs text-slate-400 mt-0.5">
-            支持三种引擎：采集 / 条件 / 投注。名称：采集固定「采集」；条件与投注选引擎分组名。
-          </p>
+          <div class="title">调度中心</div>
+          <p class="sub">新增任务 · 立即执行 · 查看运行日志</p>
         </div>
-        <button
-          type="button"
-          class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600"
-          :disabled="loading"
-          @click="refresh"
-        >刷新</button>
+        <button type="button" class="btn ghost" :disabled="loading" @click="refresh">刷新</button>
       </div>
-      <div v-if="status" class="text-xs text-slate-500">
+      <div v-if="status" class="status-line">
         调度循环：
-        <span :class="status.running ? 'text-emerald-600' : 'text-rose-600'">
-          {{ status.running ? '运行中' : '未启动' }}
-        </span>
+        <span :class="status.running ? 'ok' : 'fail'">{{ status.running ? '运行中' : '未启动' }}</span>
         · 任务 {{ status.enabledCount }}/{{ status.jobCount }} 启用
       </div>
-      <p v-if="msg" class="text-xs text-emerald-600">{{ msg }}</p>
-      <p v-if="err" class="text-xs text-rose-600">{{ err }}</p>
+      <p v-if="msg" class="tip ok">{{ msg }}</p>
+      <p v-if="err" class="tip fail">{{ err }}</p>
     </div>
 
-    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-      <div>
-        <div class="font-semibold text-sm">列表页轮询（投注引擎）</div>
-        <p class="text-xs text-slate-400 mt-0.5">盘前/盘中：页面刷新（0=关）/ 自动投注 / 止损（10–600 秒）</p>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
-        <label class="block">
-          <div class="text-xs text-slate-400 mb-1">页面刷新(秒)</div>
-          <input
-            v-model.number="listPoll.listPageRefreshIntervalSec"
-            type="number"
-            min="0"
-            max="600"
-            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
-            title="0=关闭"
-          >
-        </label>
-        <label class="block">
-          <div class="text-xs text-slate-400 mb-1">自动投注刷新(秒)</div>
-          <input
-            v-model.number="listPoll.listAutoBetIntervalSec"
-            type="number"
-            min="10"
-            max="600"
-            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
-          >
-        </label>
-        <label class="block">
-          <div class="text-xs text-slate-400 mb-1">止损刷新(秒)</div>
-          <input
-            v-model.number="listPoll.listStopLossIntervalSec"
-            type="number"
-            min="10"
-            max="600"
-            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
-          >
-        </label>
-        <button
-          type="button"
-          class="text-sm px-3 py-2 rounded-xl bg-slate-800 text-white disabled:opacity-50"
-          :disabled="listPoll.saving"
-          @click="saveListPoll"
-        >{{ listPoll.saving ? '保存中…' : '保存间隔' }}</button>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-      <div class="font-semibold text-sm">新增任务</div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div>
-          <div class="text-xs text-slate-400 mb-1">目标类型</div>
-          <select v-model="form.jobType" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+    <div class="card">
+      <div class="sec-title">新增任务</div>
+      <div class="form-grid">
+        <label>
+          <span>任务类型</span>
+          <select v-model="form.jobType">
             <optgroup v-for="g in jobTypeGroups" :key="g.category" :label="g.label">
               <option v-for="t in g.items" :key="t.jobType" :value="t.jobType">{{ t.label }}</option>
             </optgroup>
           </select>
-        </div>
-        <div>
-          <div class="text-xs text-slate-400 mb-1">名称</div>
-          <select
-            v-model="form.nameKey"
-            class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
-            :disabled="!formNameOptions.length"
-          >
+        </label>
+        <label>
+          <span>名称</span>
+          <select v-model="form.nameKey" :disabled="!formNameOptions.length">
             <option value="" disabled>
               {{ formNameOptions.length ? '请选择' : '暂无分组（请先在条件/投注引擎配置）' }}
             </option>
             <option v-for="o in formNameOptions" :key="o.key" :value="o.key">{{ o.label }}</option>
           </select>
-        </div>
-        <div>
-          <div class="text-xs text-slate-400 mb-1">时间方式</div>
-          <select v-model="form.scheduleMode" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+        </label>
+        <label>
+          <span>时间方式</span>
+          <select v-model="form.scheduleMode">
             <option value="interval">每隔 N 秒</option>
             <option value="daily">每天定点（北京时间）</option>
           </select>
-        </div>
-        <div v-if="form.scheduleMode === 'interval'">
-          <div class="text-xs text-slate-400 mb-1">间隔（秒）</div>
-          <input v-model.number="form.intervalSec" type="number" min="1" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-        </div>
-        <div v-else>
-          <div class="text-xs text-slate-400 mb-1">每天时刻 HH:mm</div>
-          <input v-model="form.dailyTime" type="time" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
-        </div>
+        </label>
+        <label v-if="form.scheduleMode === 'interval'">
+          <span>间隔（秒）</span>
+          <input v-model.number="form.intervalSec" type="number" min="1" />
+        </label>
+        <label v-else>
+          <span>每天时刻</span>
+          <input v-model="form.dailyTime" type="time" />
+        </label>
       </div>
-      <label class="flex items-center gap-2 text-xs text-slate-600">
-        <input v-model="form.enabled" type="checkbox" class="rounded" />
-        创建后立即启用
+      <label class="check">
+        <input v-model="form.enabled" type="checkbox" />
+        创建并启用
       </label>
-      <button
-        type="button"
-        class="w-full sm:w-auto px-4 py-2 rounded-xl bg-primary-600 text-white text-sm"
-        @click="createJob"
-      >新增任务</button>
+      <button type="button" class="btn primary" @click="createJob">新增任务</button>
     </div>
 
-    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-      <div class="font-semibold text-sm">任务列表</div>
-      <div v-if="!jobs.length" class="text-xs text-slate-400">暂无任务</div>
-      <div
-        v-for="job in jobs"
-        :key="job.id"
-        class="border border-slate-100 rounded-xl p-3 space-y-2"
-      >
-        <div class="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <div class="text-sm font-medium">{{ job.name }}</div>
-            <div class="text-[11px] text-slate-400 mt-0.5">
-              {{ job.jobTypeLabel || job.jobType }}
-              · {{ scheduleText(job) }}
-              <span v-if="job.params?.bucket"> · {{ job.params.bucket }}#{{ job.params.groupIndex }}</span>
-            </div>
-          </div>
-          <span
-            class="text-[11px] px-2 py-0.5 rounded-full"
-            :class="job.enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'"
-          >{{ job.enabled ? '启用' : '停用' }}</span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <div>
-            <div class="text-[11px] text-slate-400 mb-0.5">名称</div>
-            <select
-              v-model="draftFor(job).nameKey"
-              class="w-full border border-slate-200 rounded-lg px-2 py-1 text-sm"
-            >
-              <option
-                v-for="o in optionsForCategory(categoryOfJobType(job.jobType))"
-                :key="o.key"
-                :value="o.key"
-              >{{ o.label }}</option>
-            </select>
-          </div>
-          <div>
-            <div class="text-[11px] text-slate-400 mb-0.5">时间方式</div>
-            <select v-model="draftFor(job).scheduleMode" class="w-full border border-slate-200 rounded-lg px-2 py-1 text-sm">
-              <option value="interval">每隔 N 秒</option>
-              <option value="daily">每天定点</option>
-            </select>
-          </div>
-          <div v-if="draftFor(job).scheduleMode === 'interval'">
-            <div class="text-[11px] text-slate-400 mb-0.5">间隔（秒）</div>
-            <input v-model.number="draftFor(job).intervalSec" type="number" min="1" class="w-full border border-slate-200 rounded-lg px-2 py-1 text-sm" />
-          </div>
-          <div v-else>
-            <div class="text-[11px] text-slate-400 mb-0.5">每天 HH:mm</div>
-            <input v-model="draftFor(job).dailyTime" type="time" class="w-full border border-slate-200 rounded-lg px-2 py-1 text-sm" />
+    <div class="card">
+      <div class="sec-title">任务列表</div>
+      <div v-if="!jobs.length" class="empty">暂无任务，请先新增</div>
+      <div v-for="job in jobs" :key="job.id" class="job" :class="{ active: selectedJobId === job.id }">
+        <div class="job-main">
+          <div class="job-name">{{ job.name }}</div>
+          <div class="job-meta">
+            {{ job.jobTypeLabel || job.jobType }} · {{ scheduleText(job) }}
+            <span v-if="job.params?.bucket"> · {{ job.params.bucket }}#{{ job.params.groupIndex }}</span>
           </div>
         </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button type="button" class="text-xs px-2.5 py-1 rounded-lg border border-slate-200" @click="saveJob(job)">保存</button>
-          <button type="button" class="text-xs px-2.5 py-1 rounded-lg border border-slate-200" @click="toggleJob(job, !job.enabled)">
+        <span class="badge" :class="job.enabled ? 'on' : 'off'">{{ job.enabled ? '启用' : '停用' }}</span>
+        <div class="job-actions">
+          <button type="button" class="btn sm ghost" @click="toggleJob(job, !job.enabled)">
             {{ job.enabled ? '停用' : '启用' }}
           </button>
-          <button type="button" class="text-xs px-2.5 py-1 rounded-lg bg-primary-600 text-white" @click="runNow(job)">立即执行</button>
-          <button type="button" class="text-xs px-2.5 py-1 rounded-lg border border-slate-200" @click="selectedJobId = job.id; loadRuns()">看日志</button>
-          <button type="button" class="text-xs px-2.5 py-1 rounded-lg text-rose-600 border border-rose-100" @click="removeJob(job)">删除</button>
+          <button type="button" class="btn sm primary" @click="runNow(job)">立即执行</button>
+          <button type="button" class="btn sm ghost" @click="showLogs(job)">看日志</button>
+          <button type="button" class="btn sm danger" @click="removeJob(job)">删除</button>
         </div>
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl p-4 shadow-sm space-y-2">
-      <div class="flex items-center justify-between gap-2 flex-wrap">
-        <div class="font-semibold text-sm">运行日志</div>
-        <div class="flex items-center gap-2">
-          <select
-            v-model="selectedJobId"
-            class="text-xs border border-slate-200 rounded-lg px-2 py-1"
-            @change="loadRuns"
-          >
+    <div ref="logBox" class="card log-card">
+      <div class="log-head">
+        <div class="sec-title">运行日志</div>
+        <div class="log-tools">
+          <select v-model="selectedJobId" class="job-select">
             <option value="">选择任务</option>
             <option v-for="j in jobs" :key="j.id" :value="j.id">{{ j.name }}</option>
           </select>
+          <label class="check inline">
+            <input v-model="autoRefreshLogs" type="checkbox" />
+            自动刷新
+          </label>
           <button
             type="button"
-            class="text-xs px-2.5 py-1 rounded-lg text-rose-600 border border-rose-100 disabled:opacity-40"
+            class="btn sm ghost"
+            :disabled="!selectedJobId"
+            @click="loadRuns"
+          >刷新日志</button>
+          <button
+            type="button"
+            class="btn sm danger"
             :disabled="!selectedJobId || !runs.length"
             @click="clearRuns"
-          >
-            清空日志
-          </button>
+          >清空日志</button>
         </div>
       </div>
-      <div v-if="!runs.length" class="text-xs text-slate-400">暂无记录</div>
-      <div class="overflow-x-auto">
-        <table v-if="runs.length" class="w-full text-xs text-left">
-          <thead class="text-slate-400">
+      <div v-if="!selectedJobId" class="empty">请选择任务查看日志</div>
+      <div v-else-if="!runs.length" class="empty">暂无运行记录</div>
+      <div v-else class="log-scroll">
+        <table class="log-table">
+          <thead>
             <tr>
-              <th class="py-1 pr-2">时间</th>
-              <th class="py-1 pr-2">触发</th>
-              <th class="py-1 pr-2">状态</th>
-              <th class="py-1">说明</th>
+              <th>时间</th>
+              <th>触发</th>
+              <th>状态</th>
+              <th>说明</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="r in runs" :key="r.runId" class="border-t border-slate-50">
-              <td class="py-1.5 pr-2 whitespace-nowrap">{{ r.startedAt }}</td>
-              <td class="py-1.5 pr-2">{{ r.trigger }}</td>
-              <td class="py-1.5 pr-2" :class="statusClass(r.status)">{{ r.status }}</td>
-              <td class="py-1.5 text-slate-500 truncate max-w-[220px]" :title="r.error || r.message">
+            <tr v-for="r in runs" :key="r.runId">
+              <td class="nowrap">{{ r.startedAt }}</td>
+              <td>{{ r.trigger }}</td>
+              <td :class="statusClass(r.status)">{{ r.status }}</td>
+              <td class="msg" :title="r.error || r.message || r.runId">
                 {{ r.error || r.message || r.runId }}
               </td>
             </tr>
@@ -582,3 +424,216 @@ onMounted(refresh)
     </div>
   </div>
 </template>
+
+<style scoped>
+.sched {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 6%);
+}
+.head-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.title {
+  font-weight: 700;
+  font-size: 15px;
+}
+.sub, .status-line, .empty {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+.sec-title {
+  font-weight: 650;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.tip {
+  font-size: 12px;
+  margin-top: 8px;
+}
+.tip.ok, .ok { color: #059669; }
+.tip.fail, .fail { color: #e11d48; }
+.skip { color: #d97706; }
+.run { color: #0284c7; }
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+label span {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+select, input[type='number'], input[type='time'], .job-select {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  background: #fff;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+  margin: 10px 0;
+}
+.check.inline {
+  margin: 0;
+  white-space: nowrap;
+}
+.btn {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn.primary {
+  background: #2563eb;
+  color: #fff;
+}
+.btn.ghost {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+.btn.danger {
+  background: #fff;
+  border: 1px solid #fecdd3;
+  color: #e11d48;
+}
+.btn.sm {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.job {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.job.active {
+  border-color: #bfdbfe;
+  background: #f8fbff;
+}
+.job-main {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+.job-name {
+  font-size: 13px;
+  font-weight: 650;
+}
+.job-meta {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.badge.on {
+  background: #ecfdf5;
+  color: #047857;
+}
+.badge.off {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.log-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.log-head .sec-title {
+  margin-bottom: 0;
+}
+.log-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.job-select {
+  width: auto;
+  min-width: 140px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.log-scroll {
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+}
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  text-align: left;
+}
+.log-table th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+.log-table td {
+  padding: 6px 8px;
+  border-top: 1px solid #f8fafc;
+  color: #475569;
+  vertical-align: top;
+}
+.log-table .nowrap {
+  white-space: nowrap;
+}
+.log-table .msg {
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>

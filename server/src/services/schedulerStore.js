@@ -47,8 +47,8 @@ const JOB_TYPE_DEFS = {
     engine: 'bet',
     requireEngineOn: 'betting',
     defaultTimeout: 120,
-    label: '投注引擎 · 止损检查',
-    category: 'betting',
+    label: '止损引擎 · 持仓止损扫描',
+    category: 'stop',
   },
 };
 
@@ -527,7 +527,8 @@ const BUCKET_LABEL = {
  * 调度任务「名称」下拉选项：
  * - 采集：固定「采集」
  * - 条件：条件引擎各桶分组 name
- * - 投注：投注引擎各桶分组 name
+ * - 投注：投注引擎各桶分组 name（买入扫描）
+ * - 止损：投注引擎各桶分组 name（止损扫描，与买入共用组配置）
  */
 async function listNameOptions() {
   const tennisEngines = require('./tennisEngines');
@@ -552,23 +553,32 @@ async function listNameOptions() {
   }
 
   const betting = [];
+  const stop = [];
   for (const bucket of ['prematch', 'inplay']) {
     const groups = cfg.betting?.buckets?.[bucket]?.groups || [];
     groups.forEach((g, groupIndex) => {
       const groupName = (g?.name && String(g.name).trim()) || `未命名组${groupIndex + 1}`;
-      betting.push({
-        key: `betting:${bucket}:${groupIndex}`,
+      const base = {
         value: groupName,
         label: `${BUCKET_LABEL[bucket] || bucket} · ${groupName}`,
-        category: 'betting',
         bucket,
         groupIndex,
         groupName,
+      };
+      betting.push({
+        ...base,
+        key: `betting:${bucket}:${groupIndex}`,
+        category: 'betting',
+      });
+      stop.push({
+        ...base,
+        key: `stop:${bucket}:${groupIndex}`,
+        category: 'stop',
       });
     });
   }
 
-  return { collect, condition, betting };
+  return { collect, condition, betting, stop };
 }
 
 module.exports = {

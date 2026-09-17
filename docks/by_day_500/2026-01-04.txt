@@ -1,4 +1,4 @@
-# 2026-01-04 · 47 matches · Brisbane
+# 2026-01-04 · 47 matches · Brisbane · from 2026_500.txt
 2026-01-04	Brisbane	F	Hard	Aryna Sabalenka	bt	Marta Kostyuk	6-4 6-3	peak_diff 11
 2026-01-04	Brisbane	QF	Hard	Aryna Sabalenka	bt	Madison Keys	6-3 6-3	peak_diff 4
 2026-01-04	Brisbane	QF	Hard	Jessica Pegula	bt	Liudmila Samsonova	6-3 7-6(3)	peak_diff 9

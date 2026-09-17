@@ -1,12 +1,6 @@
-const path = require('path');
 const mysql = require('mysql2/promise');
 
-// ENV_FILE=.env.test 时走测试库；默认仍加载 server/.env
-require('dotenv').config({
-  path: process.env.ENV_FILE
-    ? path.resolve(process.cwd(), process.env.ENV_FILE)
-    : path.resolve(__dirname, '..', '.env'),
-});
+require('./loadEnv').loadEnv();
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,

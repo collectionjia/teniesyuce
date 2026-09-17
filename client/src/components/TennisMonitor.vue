@@ -4,11 +4,11 @@ import * as api from '../api'
 import { sofaTennisMatchUrl } from '../utils/sofaMatchUrl'
 
 const props = defineProps({
-  /** collect | condition | betting — 管理中心三个独立页面 */
+  /** collect | condition | betting | stop — 管理中心独立页面 */
   enginePage: {
     type: String,
     default: 'collect',
-    validator: (v) => ['collect', 'condition', 'betting'].includes(v),
+    validator: (v) => ['collect', 'condition', 'betting', 'stop'].includes(v),
   },
 })
 
@@ -17,10 +17,18 @@ const emit = defineEmits(['open-docks-editor', 'open-top100-wide'])
 const isCollectPage = computed(() => props.enginePage === 'collect')
 const isConditionPage = computed(() => props.enginePage === 'condition')
 const isBettingPage = computed(() => props.enginePage === 'betting')
+const isStopPage = computed(() => props.enginePage === 'stop')
+/** 投注与止损共用 betting 配置草稿 */
+const isBettingOrStopPage = computed(() => isBettingPage.value || isStopPage.value)
+/** 条件/投注/止损：只改规则，不拉采集 status / top100 / live 等 */
+const isConfigOnlyPage = computed(
+  () => isConditionPage.value || isBettingPage.value || isStopPage.value,
+)
 
 const pageTitle = computed(() => {
   if (isConditionPage.value) return '条件引擎'
   if (isBettingPage.value) return '投注引擎'
+  if (isStopPage.value) return '止损引擎'
   return '采集引擎'
 })
 
@@ -372,13 +380,17 @@ const pageSub = computed(() => {
       .map((k) => ({ prematch: '盘前', inplay: '盘中', settled: '盘后' }[k]))
     return on.length ? `已开：${on.join('、')}` : '各桶均未打开（打开后列表按该桶条件组筛选）'
   }
-  if (isBettingPage.value) {
+  if (isBettingPage.value || isStopPage.value) {
     const b = engines.value?.betting?.buckets || {}
     const on = ['prematch', 'inplay']
       .filter((k) => b[k]?.enabled)
       .map((k) => ({ prematch: '盘前', inplay: '盘中' }[k]))
     const master = engines.value?.betting?.enabled ? '总开关开' : '总开关关'
     const account = engines.value?.betting?.userAccount || engines.value?.betting?.userId
+    if (isStopPage.value) {
+      const groups = ['prematch', 'inplay'].reduce((n, k) => n + (b[k]?.groups?.length || 0), 0)
+      return `止损组 ${groups} · 账号 ${account || '未设'} · 与投注引擎共用配置`
+    }
     return on.length
       ? `${master} · 已开：${on.join('、')} · 账号 ${account || '未设'}`
       : `${master} · 各桶均未打开 · 账号 ${account || '未设'}`
@@ -713,34 +725,37 @@ async function refreshAll({ silent = false } = {}) {
     notice.value = ''
   }
   try {
-    // 条件 / 投注页不依赖官网采集数据，避免 top100/live 超时导致整页打不开
-    const tasks = (isConditionPage.value || isBettingPage.value)
-      ? [
-          loadEngines(),
-          loadDataSource().catch(() => {}),
-          loadStatus().catch(() => {}),
-        ]
-      : [
-          loadStatus(),
-          loadTop100(false),
-          loadLive(),
-          loadLogs(),
-          loadSchedule(),
-          loadDataSource(),
-          loadEngines(),
-        ]
-    const results = await Promise.allSettled(tasks)
-    const failed = results.find((r) => r.status === 'rejected')
+    if (isConfigOnlyPage.value) {
+      // 管理中心配置页：只拉引擎配置（约几百 ms），绝不碰 /status
+      await loadEngines()
+      if (!engines.value) {
+        error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
+      }
+      return
+    }
+
+    // 采集页：先出本地配置，status 后台补（避免卡在探测官网 monitor）
+    const essential = await Promise.allSettled([
+      loadEngines(),
+      loadDataSource(),
+      loadSchedule(),
+    ])
+    loading.value = false
+    refreshing.value = false
+
+    const heavy = await Promise.allSettled([
+      loadStatus(),
+      loadTop100(false),
+      loadLive(),
+      loadLogs(),
+    ])
+    const failed = [...essential, ...heavy].find((r) => r.status === 'rejected')
     if (failed && !silent) {
       const reason = failed.reason
       const msg = reason?.response?.data?.error || reason?.message || ''
       if (msg && !/9004|监控服务|monitor/i.test(msg)) {
         error.value = formatMonitorError(msg)
       }
-    }
-    // 条件/投注：引擎加载失败也给出可见提示，避免空白页
-    if ((isConditionPage.value || isBettingPage.value) && !engines.value) {
-      error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
     }
   } catch (e) {
     error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
@@ -1444,7 +1459,7 @@ onMounted(() => {
       if (isConditionPage.value && ['prematch', 'inplay', 'settled'].includes(bucket)) {
         conditionTab.value = bucket
       }
-      if (isBettingPage.value && ['prematch', 'inplay'].includes(bucket)) {
+      if ((isBettingPage.value || isStopPage.value) && ['prematch', 'inplay'].includes(bucket)) {
         bettingTab.value = bucket
       }
     }
@@ -1854,10 +1869,10 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <section v-if="isBettingPage && engines" class="engine-panel" id="engine-betting">
+      <section v-if="isBettingOrStopPage && engines" class="engine-panel" :id="isStopPage ? 'engine-stop' : 'engine-betting'">
         <div class="engine-panel-head">
-          <h3>投注引擎</h3>
-          <span class="engine-panel-tag">盘前/盘中 · 止损组</span>
+          <h3>{{ isStopPage ? '止损引擎' : '投注引擎' }}</h3>
+          <span class="engine-panel-tag">{{ isStopPage ? '盘前/盘中 · 止损组 · 可挂调度' : '盘前/盘中 · 买入与止损' }}</span>
         </div>
         <div class="settings-row engines-row">
           <label class="interval-select">
@@ -1871,7 +1886,7 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label class="interval-select">
+          <label v-if="isBettingPage" class="interval-select">
             <span>默认金额 (USD)</span>
             <input
               type="number"
@@ -1883,7 +1898,7 @@ onUnmounted(() => {
               @change="onBettingAmountUsdChange"
             >
           </label>
-          <label class="interval-select" title="盘前/盘中列表按间隔自动刷新赛程；0=关闭">
+          <label v-if="isBettingPage" class="interval-select" title="盘前/盘中列表按间隔自动刷新赛程；0=关闭">
             <span>页面刷新(秒)</span>
             <input
               type="number"
@@ -1896,7 +1911,7 @@ onUnmounted(() => {
               @change="onListPollIntervalChange('listPageRefreshIntervalSec', $event)"
             >
           </label>
-          <label class="interval-select" title="列表页开启自动投注后，刷新赛程并尝试买入的间隔">
+          <label v-if="isBettingPage" class="interval-select" title="列表页开启自动投注后，刷新赛程并尝试买入的间隔">
             <span>自动投注刷新(秒)</span>
             <input
               type="number"
@@ -1909,7 +1924,7 @@ onUnmounted(() => {
               @change="onListPollIntervalChange('listAutoBetIntervalSec', $event)"
             >
           </label>
-          <label class="interval-select" title="列表页开启自动投注后，检查止损/卖出的间隔">
+          <label class="interval-select" title="列表页开启自动投注后，检查止损/卖出的间隔；调度请用「止损引擎」任务">
             <span>止损刷新(秒)</span>
             <input
               type="number"
@@ -1922,7 +1937,11 @@ onUnmounted(() => {
               @change="onListPollIntervalChange('listStopLossIntervalSec', $event)"
             >
           </label>
-          <span class="engines-note" style="margin:0">各桶打开即投注；列表轮询 10–600 秒（页面刷新可填 0 关闭），改后刷新列表页生效</span>
+          <span class="engines-note" style="margin:0">
+            {{ isStopPage
+              ? '止损组与投注引擎共用；保存后可在调度中心添加「止损引擎」任务'
+              : '各桶打开即投注；列表轮询 10–600 秒（页面刷新可填 0 关闭），改后刷新列表页生效' }}
+          </span>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -1943,7 +1962,7 @@ onUnmounted(() => {
 
         <div class="condition-tab-panel">
           <div class="settings-row engines-row">
-            <label class="collect-toggle">
+            <label v-if="isBettingPage" class="collect-toggle">
               <span>{{ BETTING_TABS.find(t => t.id === bettingTab)?.label }}打开</span>
               <input
                 type="checkbox"
@@ -1953,7 +1972,7 @@ onUnmounted(() => {
               >
               <span class="toggle-state" :class="{ off: !activeBettingBucket.enabled }">{{ activeBettingBucket.enabled ? '已开启' : '已关闭' }}</span>
             </label>
-            <label v-if="bettingTab !== 'inplay'" class="collect-toggle" title="调度/引擎侧默认；列表用户各自打开「自动投注」才会按规则下单">
+            <label v-if="isBettingPage && bettingTab !== 'inplay'" class="collect-toggle" title="调度/引擎侧默认；列表用户各自打开「自动投注」才会按规则下单">
               <span>模拟投注</span>
               <input
                 type="checkbox"
@@ -1967,7 +1986,7 @@ onUnmounted(() => {
             <button type="button" class="btn primary" :disabled="enginesSaving" @click="saveBettingBucketAndEnable">保存本桶</button>
           </div>
 
-          <div v-if="bettingTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
+          <div v-if="isBettingPage && bettingTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
             <div class="condition-group-head">
               <div class="condition-group-title">盘中自动买入条件</div>
               <div class="condition-group-hint">列表「自动投注」与调度买入共用；默认即原写死规则，可改</div>
@@ -2189,7 +2208,7 @@ onUnmounted(() => {
               </div>
             </div>
             <p class="condition-group-hint">
-              组内可加多条条件，条间选且/或；未填字段表示不限制。局差与 PM 满足其一即可。不投入金额（买入金额用上方「金额$」）。买入条件请在产品管理中选择条件组。
+              组内可加多条条件，条间选且/或；未填字段表示不限制。局差与 PM 满足其一即可。调度请用「止损引擎 · 持仓止损扫描」。
             </p>
             </div>
             </div>

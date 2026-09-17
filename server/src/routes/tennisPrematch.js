@@ -1,36 +1,13 @@
 const { Router } = require('express');
-const { auth } = require('../middleware/auth');
 const tennisPrematchCache = require('../services/tennisPrematchCache');
-const btcWallet = require('../services/btcWallet');
 const tennisTrade = require('../services/tennisTrade');
 const tennisDataSource = require('../services/tennisDataSource');
+const {
+  attachUserFromEmailBody,
+  resolveTradeSimulatePublic,
+} = require('../services/tennisOrdersPublic');
 
 const router = Router();
-
-async function requireWallet(req, res, next) {
-  try {
-    const ok = await btcWallet.userHasWalletAccess(req.user);
-    if (!ok) return res.status(403).json({ error: '未开通 BTC 虚拟投注权限，无法批量下单' });
-    next();
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: '权限校验失败' });
-  }
-}
-
-async function resolveTradeSimulate(req, res, next) {
-  try {
-    // 虚拟采集(docks500)强制模拟；真实采集时由前端「模拟投注」开关决定
-    const forceSim = await tennisDataSource.shouldSimulateTrades();
-    const wantSim = forceSim || !!(req.body && (req.body.simulate === true || req.body.simulate === 1 || req.body.simulate === '1'));
-    req.tradeSimulate = wantSim;
-    if (req.tradeSimulate) return next();
-    return requireWallet(req, res, next);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: '交易模式校验失败' });
-  }
-}
 
 function emptyPrematchBundle() {
   return {
@@ -50,7 +27,7 @@ function emptyPrematchBundle() {
   };
 }
 
-router.get('/today', auth(), async (_req, res) => {
+router.get('/today', async (_req, res) => {
   try {
     let full = await tennisPrematchCache.getBundle();
     if (!full) {
@@ -74,33 +51,43 @@ router.get('/today', auth(), async (_req, res) => {
   }
 });
 
-router.post('/trade/batch', auth(), resolveTradeSimulate, async (req, res) => {
+router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
     const { orders, amountUsd } = req.body || {};
-    const result = await tennisTrade.placeBatchOrders(req.user.id, {
+    const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
       orders,
       amountUsd,
       product: 'tennis-prematch',
       simulate: !!req.tradeSimulate,
     });
-    res.json(result);
+    res.json({
+      ...result,
+      email: req.tennisUser.account,
+      userId: req.tennisUser.id,
+      product: 'tennis-prematch',
+    });
   } catch (e) {
     console.error('[tennis-prematch/trade/batch]', e);
     res.status(400).json({ ok: false, error: e.message || '批量下单失败' });
   }
 });
 
-router.post('/trade/sell', auth(), resolveTradeSimulate, async (req, res) => {
+router.post('/trade/sell', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
     const { eventId, side, shares } = req.body || {};
-    const result = await tennisTrade.placeSellOrder(req.user.id, {
+    const result = await tennisTrade.placeSellOrder(req.tennisUser.id, {
       eventId,
       side,
       shares,
       product: 'tennis-prematch',
       simulate: !!req.tradeSimulate,
     });
-    res.json(result);
+    res.json({
+      ...result,
+      email: req.tennisUser.account,
+      userId: req.tennisUser.id,
+      product: 'tennis-prematch',
+    });
   } catch (e) {
     console.error('[tennis-prematch/trade/sell]', e);
     res.status(400).json({ ok: false, error: e.message || '止损平仓失败' });

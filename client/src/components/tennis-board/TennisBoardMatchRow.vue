@@ -23,6 +23,7 @@ defineProps({
   isMatchLive: { type: Function, required: true },
   pickSide: { type: Function, required: true },
   listRankOf: { type: Function, required: true },
+  listBestOf: { type: Function, required: true },
   matchHomeName: { type: Function, required: true },
   matchAwayName: { type: Function, required: true },
   liveSetCells: { type: Function, required: true },
@@ -78,7 +79,13 @@ defineProps({
           <div v-if="isMatchLive(m)" class="matchup is-live-board">
             <div class="matchup-line">
               <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
-                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
+                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">
+                  #{{ listRankOf(m, 'home') }}<span
+                    v-if="listBestOf(m, 'home') != null"
+                    class="list-best"
+                    :class="{ up: listBestOf(m, 'home') < listRankOf(m, 'home') }"
+                  >({{ listBestOf(m, 'home') }})</span>
+                </span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
               </span>
@@ -95,7 +102,13 @@ defineProps({
             <span class="vs-row">VS</span>
             <div class="matchup-line">
               <span class="name live-player-bottom" :class="{ pick: isMember && pickSide(m) === 'away', 'live-side': true }">
-                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
+                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">
+                  #{{ listRankOf(m, 'away') }}<span
+                    v-if="listBestOf(m, 'away') != null"
+                    class="list-best"
+                    :class="{ up: listBestOf(m, 'away') < listRankOf(m, 'away') }"
+                  >({{ listBestOf(m, 'away') }})</span>
+                </span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
               </span>
@@ -113,7 +126,13 @@ defineProps({
           <div v-else class="matchup is-stacked">
             <div class="matchup-line">
               <span class="name" :class="{ pick: isMember && pickSide(m) === 'home' }">
-                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">#{{ listRankOf(m, 'home') }}</span>
+                <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">
+                  #{{ listRankOf(m, 'home') }}<span
+                    v-if="listBestOf(m, 'home') != null"
+                    class="list-best"
+                    :class="{ up: listBestOf(m, 'home') < listRankOf(m, 'home') }"
+                  >({{ listBestOf(m, 'home') }})</span>
+                </span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
               </span>
@@ -121,7 +140,13 @@ defineProps({
             <span class="vs-row">VS</span>
             <div class="matchup-line">
               <span class="name" :class="{ pick: isMember && pickSide(m) === 'away' }">
-                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">#{{ listRankOf(m, 'away') }}</span>
+                <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">
+                  #{{ listRankOf(m, 'away') }}<span
+                    v-if="listBestOf(m, 'away') != null"
+                    class="list-best"
+                    :class="{ up: listBestOf(m, 'away') < listRankOf(m, 'away') }"
+                  >({{ listBestOf(m, 'away') }})</span>
+                </span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
               </span>
@@ -394,6 +419,13 @@ defineProps({
   font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.list-best {
+  color: inherit;
+  font-weight: 700;
+}
+.list-best.up {
+  color: #16a34a;
 }
 .pick-tag {
   display: inline-flex;

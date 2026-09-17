@@ -7,8 +7,7 @@ const crypto = require('crypto');
 const { engineApiKeyAuth } = require('../middleware/engineApiKey');
 const tennisEngines = require('../services/tennisEngines');
 const store = require('../services/schedulerStore');
-const { runJob } = require('../services/schedulerRunner');
-const schedulerLoop = require('../services/schedulerLoop');
+const schedulerClient = require('../services/schedulerClient');
 const tennisPrematchCache = require('../services/tennisPrematchCache');
 const tennisInplayCache = require('../services/tennisInplayCache');
 const tennisSettledCache = require('../services/tennisSettledCache');
@@ -94,7 +93,7 @@ router.get('/collect/health', async (req, res) => {
 
 router.post('/collect/full/run', async (req, res) => {
   try {
-    const r = await runJob('job_collect_full', 'manual');
+    const r = await schedulerClient.runJob('job_collect_full', 'manual');
     ok(res, req, { accepted: true, ...r, jobId: 'job_collect_full', status: r.status || 'queued' });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'COLLECT_FULL_RUN_FAILED');
@@ -103,7 +102,7 @@ router.post('/collect/full/run', async (req, res) => {
 
 router.post('/collect/inplay-tick/run', async (req, res) => {
   try {
-    const r = await runJob('job_collect_inplay_tick', 'manual');
+    const r = await schedulerClient.runJob('job_collect_inplay_tick', 'manual');
     ok(res, req, { accepted: true, ...r, jobId: 'job_collect_inplay_tick' });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'COLLECT_TICK_RUN_FAILED');
@@ -339,7 +338,7 @@ router.put('/betting/amount', async (req, res) => {
 
 router.post('/betting/scan/run', async (req, res) => {
   try {
-    const r = await runJob('job_bet_scan', 'manual');
+    const r = await schedulerClient.runJob('job_bet_scan', 'manual');
     ok(res, req, { accepted: true, ...r, jobId: 'job_bet_scan' });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'BETTING_SCAN_FAILED');
@@ -348,9 +347,9 @@ router.post('/betting/scan/run', async (req, res) => {
 
 router.post('/betting/stop-loss/run', async (req, res) => {
   try {
-    // P0：与 scan 同实现
-    const r = await runJob('job_bet_scan', 'manual');
-    ok(res, req, { accepted: true, ...r, jobId: 'job_bet_scan', note: 'stop-loss folded into bet.scan' });
+    const engineServices = require('../services/engineServicesClient');
+    const data = await engineServices.stopLossScan(req.body || {});
+    ok(res, req, { accepted: true, ...data, service: 'stop-loss' });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'BETTING_STOP_LOSS_FAILED');
   }
@@ -359,7 +358,7 @@ router.post('/betting/stop-loss/run', async (req, res) => {
 // —— 调度 ——
 router.get('/scheduler/status', async (req, res) => {
   try {
-    ok(res, req, await schedulerLoop.status());
+    ok(res, req, await schedulerClient.status());
   } catch (e) {
     fail(res, req, 500, e.message, 'SCHEDULER_STATUS_FAILED');
   }
@@ -463,7 +462,7 @@ router.post('/scheduler/jobs/:id/disable', async (req, res) => {
 
 router.post('/scheduler/jobs/:id/run', async (req, res) => {
   try {
-    const r = await runJob(req.params.id, 'manual');
+    const r = await schedulerClient.runJob(req.params.id, 'manual');
     ok(res, req, { accepted: true, jobId: req.params.id, ...r });
   } catch (e) {
     fail(res, req, e.status || 500, e.message, 'SCHEDULER_RUN_FAILED');

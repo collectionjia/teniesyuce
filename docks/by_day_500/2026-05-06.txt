@@ -1,0 +1,96 @@
+# 2026-05-06 · 95 matches · Rome Masters · from 2026_all_gs_1000_500.txt
+2026-05-06	Rome Masters	F	Clay	Jannik Sinner	bt	Casper Ruud	6-4 6-4	peak_diff 1
+2026-05-06	Rome Masters	QF	Clay	Casper Ruud	bt	Karen Khachanov	6-1 1-6 6-2	peak_diff 7
+2026-05-06	Rome Masters	QF	Clay	Daniil Medvedev	bt	Martin Landaluce	1-6 6-4 7-5	peak_diff 57
+2026-05-06	Rome Masters	QF	Clay	Jannik Sinner	bt	Andrey Rublev	6-2 6-4	peak_diff 4
+2026-05-06	Rome Masters	QF	Clay	Luciano Darderi	bt	Rafael Jodar	7-6(5) 5-7 6-0	peak_diff 7
+2026-05-06	Rome Masters	R128	Clay	Alejandro Tabilo	bt	Pablo Carreno Busta	6-2 6-1	peak_diff 8
+2026-05-06	Rome Masters	R128	Clay	Aleksandar Vukic	bt	Patrick Kypson	6-3 5-7 6-0	peak_diff 41
+2026-05-06	Rome Masters	R128	Clay	Alexander Blockx	bt	Federico Cina	4-6 6-1 6-3	peak_diff 147
+2026-05-06	Rome Masters	R128	Clay	Alexander Shevchenko	bt	Camilo Ugo Carabelli	6-3 4-6 7-6(5)	peak_diff 2
+2026-05-06	Rome Masters	R128	Clay	Alexei Popyrin	bt	Matteo Berrettini	6-2 6-3	peak_diff 13
+2026-05-06	Rome Masters	R128	Clay	Andrea Pellegrino	bt	Luca Nardi	4-6 6-3 6-3	peak_diff 42
+2026-05-06	Rome Masters	R128	Clay	Botic Van De Zandschulp	bt	Alexandre Muller	7-5 6-3	peak_diff 16
+2026-05-06	Rome Masters	R128	Clay	Cristian Garin	bt	Juan Manuel Cerundolo	7-6(2) 7-5	peak_diff 28
+2026-05-06	Rome Masters	R128	Clay	Damir Dzumhur	bt	Adrian Mannarino	6-4 6-0	peak_diff 37
+2026-05-06	Rome Masters	R128	Clay	Daniel Altmaier	bt	Zhizhen Zhang	4-6 7-6(3) 6-4	peak_diff 13
+2026-05-06	Rome Masters	R128	Clay	Dino Prizmic	bt	Marton Fucsovics	6-4 6-3	peak_diff 35
+2026-05-06	Rome Masters	R128	Clay	Giovanni Mpetshi Perricard	bt	Jacob Fearnley	7-6(6) 4-6 6-2	peak_diff 20
+2026-05-06	Rome Masters	R128	Clay	Hamad Medjedovic	bt	Valentin Royer	6-4 6-3	peak_diff 2
+2026-05-06	Rome Masters	R128	Clay	Ignacio Buse	bt	Lorenzo Sonego	6-3 6-3	peak_diff 10
+2026-05-06	Rome Masters	R128	Clay	Jan Lennard Struff	bt	Francisco Comesana	6-2 6-4	peak_diff 33
+2026-05-06	Rome Masters	R128	Clay	Mariano Navone	bt	Denis Shapovalov	6-4 6-2	peak_diff 19
+2026-05-06	Rome Masters	R128	Clay	Marin Cilic	bt	Marcos Giron	7-5 6-4	peak_diff 24
+2026-05-06	Rome Masters	R128	Clay	Matteo Arnaldi	bt	Jaume Munar	6-3 3-6 6-3	peak_diff 4
+2026-05-06	Rome Masters	R128	Clay	Mattia Bellucci	bt	Roman Andres Burruchaga	6-4 6-4	peak_diff 7
+2026-05-06	Rome Masters	R128	Clay	Miomir Kecmanovic	bt	Dalibor Svrcina	6-2 6-3	peak_diff 59
+2026-05-06	Rome Masters	R128	Clay	Nikoloz Basilashvili	bt	Daniel Merida Aguilar	6-4 2-6 6-3	peak_diff 64
+2026-05-06	Rome Masters	R128	Clay	Nuno Borges	bt	Jesper De Jong	6-3 6-0	peak_diff 41
+2026-05-06	Rome Masters	R128	Clay	Pablo Llamas Ruiz	bt	Ethan Quinn	6-3 5-7 6-3	peak_diff 72
+2026-05-06	Rome Masters	R128	Clay	Roberto Bautista Agut	bt	Francesco Maestrelli	6-3 7-6(2)	peak_diff 99
+2026-05-06	Rome Masters	R128	Clay	Sebastian Baez	bt	Jenson Brooksby	6-3 7-6(8)	peak_diff 15
+2026-05-06	Rome Masters	R128	Clay	Sebastian Ofner	bt	Alex Michelsen	6-3 6-3	peak_diff 7
+2026-05-06	Rome Masters	R128	Clay	Terence Atmane	bt	Zizou Bergs	6-3 6-4	peak_diff 3
+2026-05-06	Rome Masters	R128	Clay	Thiago Agustin Tirante	bt	Gianluca Cadenasso	6-7(5) 6-4 6-0	peak_diff 141
+2026-05-06	Rome Masters	R128	Clay	Tomas Machac	bt	Stefanos Tsitsipas	6-4 7-6(4)	peak_diff 17
+2026-05-06	Rome Masters	R128	Clay	Vit Kopriva	bt	Fabian Marozsan	6-3 6-3	peak_diff 19
+2026-05-06	Rome Masters	R128	Clay	Yannick Hanfmann	bt	Hubert Hurkacz	6-7(3) 7-6(2) 6-2	peak_diff 39
+2026-05-06	Rome Masters	R128	Clay	Zachary Svajda	bt	Marco Trungelliti	0-6 6-4 7-6(4)	peak_diff 14
+2026-05-06	Rome Masters	R16	Clay	Andrey Rublev	bt	Nikoloz Basilashvili	3-6 7-6(5) 6-2	peak_diff 13
+2026-05-06	Rome Masters	R16	Clay	Casper Ruud	bt	Lorenzo Musetti	6-3 6-1	peak_diff 3
+2026-05-06	Rome Masters	R16	Clay	Daniil Medvedev	bt	Thiago Agustin Tirante	6-3 6-2	peak_diff 51
+2026-05-06	Rome Masters	R16	Clay	Jannik Sinner	bt	Andrea Pellegrino	6-2 6-3	peak_diff 108
+2026-05-06	Rome Masters	R16	Clay	Karen Khachanov	bt	Dino Prizmic	6-1 7-6(2)	peak_diff 61
+2026-05-06	Rome Masters	R16	Clay	Luciano Darderi	bt	Alexander Zverev	1-6 7-6(10) 6-0	peak_diff 14
+2026-05-06	Rome Masters	R16	Clay	Martin Landaluce	bt	Hamad Medjedovic	7-5 6-4	peak_diff 2
+2026-05-06	Rome Masters	R16	Clay	Rafael Jodar	bt	Learner Tien	6-1 6-4	peak_diff 5
+2026-05-06	Rome Masters	R32	Clay	Alexander Zverev	bt	Alexander Blockx	6-1 6-4	peak_diff 34
+2026-05-06	Rome Masters	R32	Clay	Andrea Pellegrino	bt	Frances Tiafoe	7-6(8) 6-1	peak_diff 99
+2026-05-06	Rome Masters	R32	Clay	Andrey Rublev	bt	Alejandro Davidovich Fokina	6-4 6-4	peak_diff 9
+2026-05-06	Rome Masters	R32	Clay	Casper Ruud	bt	Jiri Lehecka	6-3 6-4	peak_diff 10
+2026-05-06	Rome Masters	R32	Clay	Daniil Medvedev	bt	Pablo Llamas Ruiz	3-6 6-4 6-2	peak_diff 119
+2026-05-06	Rome Masters	R32	Clay	Dino Prizmic	bt	Ugo Humbert	6-1 7-5	peak_diff 57
+2026-05-06	Rome Masters	R32	Clay	Hamad Medjedovic	bt	Mariano Navone	4-6 6-3 6-4	peak_diff 27
+2026-05-06	Rome Masters	R32	Clay	Jannik Sinner	bt	Alexei Popyrin	6-2 6-0	peak_diff 18
+2026-05-06	Rome Masters	R32	Clay	Karen Khachanov	bt	Botic Van De Zandschulp	5-7 6-4 6-4	peak_diff 13
+2026-05-06	Rome Masters	R32	Clay	Learner Tien	bt	Alexander Bublik	4-6 6-3 7-5	peak_diff 8
+2026-05-06	Rome Masters	R32	Clay	Lorenzo Musetti	bt	Francisco Cerundolo	7-6(7) 6-4	peak_diff 13
+2026-05-06	Rome Masters	R32	Clay	Luciano Darderi	bt	Tommy Paul	3-6 6-3 6-2	peak_diff 8
+2026-05-06	Rome Masters	R32	Clay	Martin Landaluce	bt	Mattia Bellucci	6-4 6-3	peak_diff 5
+2026-05-06	Rome Masters	R32	Clay	Nikoloz Basilashvili	bt	Brandon Nakashima	7-6(5) 6-4	peak_diff 11
+2026-05-06	Rome Masters	R32	Clay	Rafael Jodar	bt	Matteo Arnaldi	6-1 4-6 6-3	peak_diff 6
+2026-05-06	Rome Masters	R32	Clay	Thiago Agustin Tirante	bt	Flavio Cobolli	6-3 6-4	peak_diff 42
+2026-05-06	Rome Masters	R64	Clay	Alejandro Davidovich Fokina	bt	Cristian Garin	7-6(2) 6-4	peak_diff 3
+2026-05-06	Rome Masters	R64	Clay	Alexander Blockx	bt	Tallon Griekspoor	6-7(5) 6-3 6-4	peak_diff 15
+2026-05-06	Rome Masters	R64	Clay	Alexander Bublik	bt	Sebastian Baez	6-1 6-2	peak_diff 8
+2026-05-06	Rome Masters	R64	Clay	Alexander Zverev	bt	Daniel Altmaier	7-5 6-3	peak_diff 42
+2026-05-06	Rome Masters	R64	Clay	Alexei Popyrin	bt	Jakub Mensik	6-3 2-6 6-4	peak_diff 7
+2026-05-06	Rome Masters	R64	Clay	Andrea Pellegrino	bt	Arthur Fils	4-0 RET	peak_diff 95
+2026-05-06	Rome Masters	R64	Clay	Andrey Rublev	bt	Miomir Kecmanovic	6-4 6-4	peak_diff 22
+2026-05-06	Rome Masters	R64	Clay	Botic Van De Zandschulp	bt	Aleksandar Kovacevic	2-6 6-2 7-6(5)	peak_diff 32
+2026-05-06	Rome Masters	R64	Clay	Brandon Nakashima	bt	Roberto Bautista Agut	6-4 6-0	peak_diff 20
+2026-05-06	Rome Masters	R64	Clay	Casper Ruud	bt	Zachary Svajda	6-1 6-3	peak_diff 60
+2026-05-06	Rome Masters	R64	Clay	Daniil Medvedev	bt	Tomas Machac	W/O	peak_diff 19
+2026-05-06	Rome Masters	R64	Clay	Dino Prizmic	bt	Novak Djokovic	2-6 6-2 6-4	peak_diff 69
+2026-05-06	Rome Masters	R64	Clay	Flavio Cobolli	bt	Terence Atmane	7-6(1) 6-3	peak_diff 31
+2026-05-06	Rome Masters	R64	Clay	Frances Tiafoe	bt	Ignacio Buse	6-7(5) 6-3 6-2	peak_diff 21
+2026-05-06	Rome Masters	R64	Clay	Francisco Cerundolo	bt	Alejandro Tabilo	6-0 6-2	peak_diff 1
+2026-05-06	Rome Masters	R64	Clay	Hamad Medjedovic	bt	Joao Fonseca	3-6 6-3 7-6(1)	peak_diff 32
+2026-05-06	Rome Masters	R64	Clay	Jannik Sinner	bt	Sebastian Ofner	6-3 6-4	peak_diff 36
+2026-05-06	Rome Masters	R64	Clay	Jiri Lehecka	bt	Jan Lennard Struff	7-6(4) 6-3	peak_diff 9
+2026-05-06	Rome Masters	R64	Clay	Karen Khachanov	bt	Alexander Shevchenko	6-4 6-4	peak_diff 36
+2026-05-06	Rome Masters	R64	Clay	Learner Tien	bt	Damir Dzumhur	6-2 6-1	peak_diff 36
+2026-05-06	Rome Masters	R64	Clay	Lorenzo Musetti	bt	Giovanni Mpetshi Perricard	6-4 6-4	peak_diff 24
+2026-05-06	Rome Masters	R64	Clay	Luciano Darderi	bt	Yannick Hanfmann	6-4 6-4	peak_diff 29
+2026-05-06	Rome Masters	R64	Clay	Mariano Navone	bt	Felix Auger Aliassime	7-6(4) 7-6(5)	peak_diff 25
+2026-05-06	Rome Masters	R64	Clay	Martin Landaluce	bt	Marin Cilic	6-4 6-4	peak_diff 45
+2026-05-06	Rome Masters	R64	Clay	Matteo Arnaldi	bt	Alex De Minaur	4-6 7-6(5) 6-4	peak_diff 23
+2026-05-06	Rome Masters	R64	Clay	Mattia Bellucci	bt	Tomas Martin Etcheverry	5-7 6-2 6-3	peak_diff 38
+2026-05-06	Rome Masters	R64	Clay	Nikoloz Basilashvili	bt	Ben Shelton	6-4 6-7(5) 6-3	peak_diff 13
+2026-05-06	Rome Masters	R64	Clay	Pablo Llamas Ruiz	bt	Corentin Moutet	6-4 3-6 7-6(4)	peak_diff 90
+2026-05-06	Rome Masters	R64	Clay	Rafael Jodar	bt	Nuno Borges	7-6(4) 6-4	peak_diff 7
+2026-05-06	Rome Masters	R64	Clay	Thiago Agustin Tirante	bt	Cameron Norrie	6-3 7-5	peak_diff 44
+2026-05-06	Rome Masters	R64	Clay	Tommy Paul	bt	Aleksandar Vukic	6-4 6-2	peak_diff 40
+2026-05-06	Rome Masters	R64	Clay	Ugo Humbert	bt	Vit Kopriva	6-3 6-2	peak_diff 42
+2026-05-06	Rome Masters	SF	Clay	Casper Ruud	bt	Luciano Darderi	6-1 6-1	peak_diff 14
+2026-05-06	Rome Masters	SF	Clay	Jannik Sinner	bt	Daniil Medvedev	6-2 5-7 6-4	peak_diff 0

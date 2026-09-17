@@ -61,13 +61,15 @@ cp server/.env.example server/.env
 # 测试环境（默认 web :9018）
 bash scripts/docker-deploy.sh test up -d --build
 
-# 生产环境（默认 web :80）
+# 生产环境（默认 web :9001）
 bash scripts/docker-deploy.sh prod up -d --build
 ```
 
 健康检查：`GET /api/health` → `{"ok":true}`
 
 对外引擎接口前缀：`/api/engine/*`（需 API Key：`X-Api-Key` 或 `Authorization: Bearer eng_...`）。
+
+访问：测试 `http://IP:9018/`，生产 `http://IP:9001/`。
 
 ## 仓库
 

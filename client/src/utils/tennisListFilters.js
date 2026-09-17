@@ -1,7 +1,7 @@
 /**
  * 三产品列表条件过滤（文档 §四）
  * 现差 = 弱者现排 − 强者现排
- * 排差 = 现弱历史最高排名 − 现强历史最高排名
+ * 排差（历史最高排位差）= 强者现排名 − 弱者历史最高排名
  */
 
 export const FILTER_KEYS = {
@@ -82,7 +82,7 @@ export function rankMetrics(m, rankingsByPlayer = {}) {
   const strongBest = bestRank(strongPlayer, rankingsByPlayer)
   const weakBest = bestRank(weakPlayer, rankingsByPlayer)
   const gap = weakRank - strongRank
-  const rankDiff = (weakBest != null && strongBest != null) ? weakBest - strongBest : null
+  const rankDiff = weakBest != null ? strongRank - weakBest : null
   return { ready: true, gap, rankDiff, strongRank, weakBest, strongBest, homeR, awayR }
 }
 

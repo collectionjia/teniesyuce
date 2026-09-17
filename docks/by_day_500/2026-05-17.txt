@@ -1,4 +1,4 @@
-# 2026-05-17 · 58 matches · Hamburg, Strasbourg
+# 2026-05-17 · 58 matches · Hamburg, Strasbourg · from 2026_500.txt
 2026-05-17	Hamburg	F	Clay	Ignacio Buse	bt	Tommy Paul	7-6(6) 4-6 6-3	peak_diff 23
 2026-05-17	Hamburg	QF	Clay	Aleksandar Kovacevic	bt	Camilo Ugo Carabelli	6-4 6-7(10) 6-2	peak_diff 11
 2026-05-17	Hamburg	QF	Clay	Alex De Minaur	bt	Luciano Darderi	6-0 6-3	peak_diff 10

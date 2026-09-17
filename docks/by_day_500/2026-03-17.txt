@@ -1,0 +1,96 @@
+# 2026-03-17 · 95 matches · Miami · from 2026_all_gs_1000_500.txt
+2026-03-17	Miami	F	Hard	Aryna Sabalenka	bt	Coco Gauff	6-2 4-6 6-3	peak_diff 1
+2026-03-17	Miami	QF	Hard	Aryna Sabalenka	bt	Hailey Baptiste	6-4 6-4	peak_diff 24
+2026-03-17	Miami	QF	Hard	Coco Gauff	bt	Belinda Bencic	6-3 1-6 6-3	peak_diff 2
+2026-03-17	Miami	QF	Hard	Elena Rybakina	bt	Jessica Pegula	2-6 6-3 6-4	peak_diff 1
+2026-03-17	Miami	QF	Hard	Karolina Muchova	bt	Victoria Mboko	7-5 7-6(5)	peak_diff 1
+2026-03-17	Miami	R128	Hard	Ajla Tomljanovic	bt	Simona Waltert	6-3 6-4	peak_diff 49
+2026-03-17	Miami	R128	Hard	Alycia Parks	bt	Sinja Kraus	7-5 7-6(4)	peak_diff 52
+2026-03-17	Miami	R128	Hard	Anastasia Zakharova	bt	Anna Bondar	5-7 6-3 6-1	peak_diff 15
+2026-03-17	Miami	R128	Hard	Ann Li	bt	Kimberly Birrell	6-2 2-6 6-3	peak_diff 31
+2026-03-17	Miami	R128	Hard	Anna Blinkova	bt	Sofia Kenin	3-6 6-1 6-3	peak_diff 31
+2026-03-17	Miami	R128	Hard	Camila Osorio	bt	Katerina Siniakova	6-1 6-4	peak_diff 6
+2026-03-17	Miami	R128	Hard	Caty Mcnally	bt	Rebeka Masarova	6-2 7-5	peak_diff 8
+2026-03-17	Miami	R128	Hard	Dayana Yastremska	bt	Ashlyn Krueger	2-6 6-4 7-5	peak_diff 8
+2026-03-17	Miami	R128	Hard	Elena Gabriela Ruse	bt	Antonia Ruzic	7-5 7-6(3)	peak_diff 0
+2026-03-17	Miami	R128	Hard	Elisabetta Cocciaretto	bt	Darja Semenistaja	6-4 6-1	peak_diff 58
+2026-03-17	Miami	R128	Hard	Elsa Jacquemot	bt	Darja Vidmanova	6-7(5) 7-5 7-5	peak_diff 48
+2026-03-17	Miami	R128	Hard	Elvina Kalieva	bt	Dalma Galfi	6-3 6-7(5) 7-6(5)	peak_diff 55
+2026-03-17	Miami	R128	Hard	Emerson Jones	bt	Linda Fruhvirtova	3-6 7-6(3) 7-6(4)	peak_diff 80
+2026-03-17	Miami	R128	Hard	Francesca Jones	bt	Venus Williams	7-5 7-5	peak_diff 64
+2026-03-17	Miami	R128	Hard	Hailey Baptiste	bt	Tatjana Maria	7-5 6-2	peak_diff 11
+2026-03-17	Miami	R128	Hard	Kamilla Rakhimova	bt	Solana Sierra	6-1 6-3	peak_diff 4
+2026-03-17	Miami	R128	Hard	Katie Boulter	bt	Jessica Bouzas Maneiro	7-6(9) 6-4	peak_diff 17
+2026-03-17	Miami	R128	Hard	Laura Siegemund	bt	Petra Marcinko	6-4 6-4	peak_diff 23
+2026-03-17	Miami	R128	Hard	Lilli Tagger	bt	Ella Seidel	6-7(8) 6-4 7-5	peak_diff 8
+2026-03-17	Miami	R128	Hard	Magda Linette	bt	Varvara Gracheva	2-6 6-2 6-0	peak_diff 20
+2026-03-17	Miami	R128	Hard	Mccartney Kessler	bt	Magdalena Frech	2-6 6-4 6-2	peak_diff 8
+2026-03-17	Miami	R128	Hard	Oksana Selekhmeteva	bt	Emiliana Arango	6-3 4-6 6-3	peak_diff 25
+2026-03-17	Miami	R128	Hard	Paula Badosa	bt	Aliaksandra Sasnovich	7-5 6-3	peak_diff 27
+2026-03-17	Miami	R128	Hard	Peyton Stearns	bt	Viktorija Golubic	7-6(6) 6-4	peak_diff 7
+2026-03-17	Miami	R128	Hard	Sloane Stephens	bt	Jennifer Brady	6-4 6-2	peak_diff 10
+2026-03-17	Miami	R128	Hard	Sorana Cirstea	bt	Shuai Zhang	6-3 6-4	peak_diff 4
+2026-03-17	Miami	R128	Hard	Talia Gibson	bt	Sara Bejlek	6-1 6-0	peak_diff 21
+2026-03-17	Miami	R128	Hard	Taylor Townsend	bt	Lulu Sun	7-6(5) 6-3	peak_diff 7
+2026-03-17	Miami	R128	Hard	Tereza Valentova	bt	Katie Volynets	6-2 6-4	peak_diff 14
+2026-03-17	Miami	R128	Hard	Yulia Putintseva	bt	Janice Tjen	3-6 6-3 6-4	peak_diff 16
+2026-03-17	Miami	R128	Hard	Yuliia Starodubtseva	bt	Eva Lys	6-1 6-4	peak_diff 14
+2026-03-17	Miami	R128	Hard	Zeynep Sonmez	bt	Beatriz Haddad Maia	6-3 6-2	peak_diff 49
+2026-03-17	Miami	R16	Hard	Aryna Sabalenka	bt	Qinwen Zheng	6-3 6-4	peak_diff 3
+2026-03-17	Miami	R16	Hard	Belinda Bencic	bt	Amanda Anisimova	6-2 6-2	peak_diff 1
+2026-03-17	Miami	R16	Hard	Coco Gauff	bt	Sorana Cirstea	6-4 3-6 6-2	peak_diff 16
+2026-03-17	Miami	R16	Hard	Elena Rybakina	bt	Talia Gibson	6-2 6-2	peak_diff 53
+2026-03-17	Miami	R16	Hard	Hailey Baptiste	bt	Jelena Ostapenko	6-3 6-4	peak_diff 20
+2026-03-17	Miami	R16	Hard	Jessica Pegula	bt	Jaqueline Cristian	6-4 6-1	peak_diff 25
+2026-03-17	Miami	R16	Hard	Karolina Muchova	bt	Alexandra Eala	6-0 6-2	peak_diff 21
+2026-03-17	Miami	R16	Hard	Victoria Mboko	bt	Mirra Andreeva	7-6(4) 4-6 6-0	peak_diff 4
+2026-03-17	Miami	R32	Hard	Alexandra Eala	bt	Magda Linette	6-3 7-6(2)	peak_diff 10
+2026-03-17	Miami	R32	Hard	Amanda Anisimova	bt	Yuliia Starodubtseva	6-4 6-2	peak_diff 50
+2026-03-17	Miami	R32	Hard	Aryna Sabalenka	bt	Caty Mcnally	6-4 6-2	peak_diff 53
+2026-03-17	Miami	R32	Hard	Belinda Bencic	bt	Diana Shnaider	6-3 6-3	peak_diff 7
+2026-03-17	Miami	R32	Hard	Coco Gauff	bt	Alycia Parks	3-6 6-0 6-1	peak_diff 38
+2026-03-17	Miami	R32	Hard	Elena Rybakina	bt	Marta Kostyuk	6-3 6-4	peak_diff 10
+2026-03-17	Miami	R32	Hard	Hailey Baptiste	bt	Elina Svitolina	6-3 7-5	peak_diff 22
+2026-03-17	Miami	R32	Hard	Jaqueline Cristian	bt	Ekaterina Alexandrova	6-3 4-6 7-6(5)	peak_diff 18
+2026-03-17	Miami	R32	Hard	Jelena Ostapenko	bt	Jasmine Paolini	5-7 6-2 7-5	peak_diff 1
+2026-03-17	Miami	R32	Hard	Jessica Pegula	bt	Leylah Fernandez	6-2 6-2	peak_diff 10
+2026-03-17	Miami	R32	Hard	Karolina Muchova	bt	Katie Boulter	6-3 7-5	peak_diff 15
+2026-03-17	Miami	R32	Hard	Mirra Andreeva	bt	Marie Bouzkova	7-6(4) 6-2	peak_diff 19
+2026-03-17	Miami	R32	Hard	Qinwen Zheng	bt	Madison Keys	4-6 6-2 6-4	peak_diff 1
+2026-03-17	Miami	R32	Hard	Sorana Cirstea	bt	Elise Mertens	6-3 6-2	peak_diff 6
+2026-03-17	Miami	R32	Hard	Talia Gibson	bt	Iva Jovic	6-2 6-2	peak_diff 39
+2026-03-17	Miami	R32	Hard	Victoria Mboko	bt	Anastasia Zakharova	6-1 7-5	peak_diff 56
+2026-03-17	Miami	R64	Hard	Alexandra Eala	bt	Laura Siegemund	6-7(6) 6-3 6-3	peak_diff 2
+2026-03-17	Miami	R64	Hard	Alycia Parks	bt	Maria Sakkari	6-3 6-3	peak_diff 37
+2026-03-17	Miami	R64	Hard	Amanda Anisimova	bt	Ajla Tomljanovic	6-1 5-7 6-4	peak_diff 29
+2026-03-17	Miami	R64	Hard	Anastasia Zakharova	bt	Anna Kalinskaya	3-6 6-1 7-5	peak_diff 54
+2026-03-17	Miami	R64	Hard	Aryna Sabalenka	bt	Ann Li	7-6(5) 6-4	peak_diff 28
+2026-03-17	Miami	R64	Hard	Belinda Bencic	bt	Zeynep Sonmez	6-3 6-2	peak_diff 55
+2026-03-17	Miami	R64	Hard	Caty Mcnally	bt	Xin Yu Wang	6-4 1-6 6-0	peak_diff 24
+2026-03-17	Miami	R64	Hard	Coco Gauff	bt	Elisabetta Cocciaretto	3-6 6-4 6-3	peak_diff 27
+2026-03-17	Miami	R64	Hard	Diana Shnaider	bt	Tereza Valentova	7-6(7) 7-6(3)	peak_diff 31
+2026-03-17	Miami	R64	Hard	Ekaterina Alexandrova	bt	Lilli Tagger	6-3 6-3	peak_diff 76
+2026-03-17	Miami	R64	Hard	Elena Rybakina	bt	Yulia Putintseva	6-3 6-3	peak_diff 18
+2026-03-17	Miami	R64	Hard	Elina Svitolina	bt	Emerson Jones	6-2 6-4	peak_diff 126
+2026-03-17	Miami	R64	Hard	Elise Mertens	bt	Elvina Kalieva	6-2 6-0	peak_diff 122
+2026-03-17	Miami	R64	Hard	Hailey Baptiste	bt	Liudmila Samsonova	6-3 7-5	peak_diff 13
+2026-03-17	Miami	R64	Hard	Iva Jovic	bt	Paula Badosa	6-2 6-1	peak_diff 14
+2026-03-17	Miami	R64	Hard	Jaqueline Cristian	bt	Peyton Stearns	6-4 7-5	peak_diff 0
+2026-03-17	Miami	R64	Hard	Jasmine Paolini	bt	Taylor Townsend	6-3 1-6 6-2	peak_diff 42
+2026-03-17	Miami	R64	Hard	Jelena Ostapenko	bt	Dayana Yastremska	6-4 6-4	peak_diff 16
+2026-03-17	Miami	R64	Hard	Jessica Pegula	bt	Francesca Jones	6-1 3-0 RET	peak_diff 62
+2026-03-17	Miami	R64	Hard	Karolina Muchova	bt	Camila Osorio	4-6 6-2 7-5	peak_diff 25
+2026-03-17	Miami	R64	Hard	Katie Boulter	bt	Clara Tauson	6-7(4) 6-4 1-0 RET	peak_diff 11
+2026-03-17	Miami	R64	Hard	Leylah Fernandez	bt	Oksana Selekhmeteva	7-6(1) 3-6 6-1	peak_diff 58
+2026-03-17	Miami	R64	Hard	Madison Keys	bt	Elena Gabriela Ruse	6-0 6-3	peak_diff 46
+2026-03-17	Miami	R64	Hard	Magda Linette	bt	Iga Swiatek	1-6 7-5 6-3	peak_diff 18
+2026-03-17	Miami	R64	Hard	Marie Bouzkova	bt	Elsa Jacquemot	6-2 6-2	peak_diff 29
+2026-03-17	Miami	R64	Hard	Marta Kostyuk	bt	Kamilla Rakhimova	6-2 6-4	peak_diff 48
+2026-03-17	Miami	R64	Hard	Mirra Andreeva	bt	Mccartney Kessler	6-1 6-7(3) 6-1	peak_diff 25
+2026-03-17	Miami	R64	Hard	Qinwen Zheng	bt	Sloane Stephens	6-3 6-2	peak_diff 1
+2026-03-17	Miami	R64	Hard	Sorana Cirstea	bt	Linda Noskova	6-2 3-6 6-4	peak_diff 6
+2026-03-17	Miami	R64	Hard	Talia Gibson	bt	Naomi Osaka	7-5 6-4	peak_diff 54
+2026-03-17	Miami	R64	Hard	Victoria Mboko	bt	Anna Blinkova	6-2 6-0	peak_diff 26
+2026-03-17	Miami	R64	Hard	Yuliia Starodubtseva	bt	Cristina Bucsa	6-2 3-2 RET	peak_diff 23
+2026-03-17	Miami	SF	Hard	Aryna Sabalenka	bt	Elena Rybakina	6-4 6-3	peak_diff 1
+2026-03-17	Miami	SF	Hard	Coco Gauff	bt	Karolina Muchova	6-1 6-1	peak_diff 6

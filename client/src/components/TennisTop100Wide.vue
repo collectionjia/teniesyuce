@@ -440,6 +440,15 @@ function playerRank(side, m) {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+function playerBest(side, m) {
+  const p = side === 'home' ? m.homePlayer : m.awayPlayer
+  const rankings = bundle.value?.rankingsByPlayer || {}
+  const id = p?.id ?? p?.teamId
+  const fromMap = id != null ? (rankings[String(id)] || rankings[id]) : null
+  const n = Number(fromMap?.best ?? p?.bestRank ?? p?.best)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 function oddsPair(m) {
   const ft = m.odds?.full_time
   if (ft?.home?.decimal != null && ft?.away?.decimal != null) {
@@ -491,11 +500,11 @@ function metricsOf(m) {
   return rankMetrics(m, bundle.value?.rankingsByPlayer || {})
 }
 
-/** 历史最高排位差：现弱史高 − 现强史高 = 结果 */
+/** 历史最高排位差：强现 − 弱者史高 = 结果 */
 function rankDiffText(m) {
   const mx = metricsOf(m)
-  if (!mx.ready || mx.weakBest == null || mx.strongBest == null || mx.rankDiff == null) return '—'
-  return `${mx.weakBest}−${mx.strongBest}=${mx.rankDiff}`
+  if (!mx.ready || mx.strongRank == null || mx.weakBest == null || mx.rankDiff == null) return '—'
+  return `${mx.strongRank}−${mx.weakBest}=${mx.rankDiff}`
 }
 
 /** 北京时间 */
@@ -598,6 +607,8 @@ const matchRows = computed(() => matches.value.map((m) => {
     low,
     homeRk: playerRank('home', m),
     awayRk: playerRank('away', m),
+    homeBest: playerBest('home', m),
+    awayBest: playerBest('away', m),
     homeName: playerName('home', m),
     awayName: playerName('away', m),
     homeAge: playerAge('home', m),
@@ -1632,13 +1643,13 @@ onUnmounted(stopPoll)
             </th>
             <th v-if="colOn('away')" class="c-away">
               <div class="player-col-h">客</div>
-              <div class="player-col-sub">※ 现排名 运动员名字（岁数）</div>
+              <div class="player-col-sub">※ 现排名(历史最高) 名字（岁数）</div>
             </th>
             <th v-if="colOn('side')" class="c-side">建议</th>
             <th v-if="colOn('gap')" class="c-gap">现差</th>
             <th v-if="colOn('rankDiff')" class="c-gap c-rankdiff">
               <div class="rankdiff-h">历史最高排位差</div>
-              <div class="rankdiff-sub">※ 现弱的历史最高排名 − 现强的历史最高排名</div>
+              <div class="rankdiff-sub">※ 强者现排名 − 弱者历史最高</div>
             </th>
             <th v-if="colOn('strong')" class="c-gap">强现</th>
             <th v-if="colOn('score')" class="c-score">比分</th>
@@ -1670,7 +1681,13 @@ onUnmounted(stopPoll)
             <td v-if="colOn('tourney')" class="c-tourney" :title="row.m.tournamentShort || row.m.tournamentName">{{ row.m.tournamentName || '—' }}</td>
             <td v-if="colOn('round')" class="c-round">{{ row.m.roundLabel || row.m.round || '—' }}</td>
             <td v-if="colOn('home')" class="c-home" :class="{ recommend: row.side === 'home' && !row.low, norec: row.side === 'home' && row.low }">
-              <span class="player-rk">{{ row.homeRk ?? '—' }}</span>
+              <span class="player-rk">
+                {{ row.homeRk ?? '—' }}<span
+                  v-if="row.homeBest != null"
+                  class="player-best"
+                  :class="{ up: row.homeRk != null && row.homeBest < row.homeRk }"
+                >({{ row.homeBest }})</span>
+              </span>
               <span class="player-name">{{ row.homeName }}</span>
               <span v-if="row.homeAge != null" class="player-age">({{ row.homeAge }}岁)</span>
               <template v-if="row.side === 'home'">
@@ -1679,7 +1696,13 @@ onUnmounted(stopPoll)
               </template>
             </td>
             <td v-if="colOn('away')" class="c-away" :class="{ recommend: row.side === 'away' && !row.low, norec: row.side === 'away' && row.low }">
-              <span class="player-rk">{{ row.awayRk ?? '—' }}</span>
+              <span class="player-rk">
+                {{ row.awayRk ?? '—' }}<span
+                  v-if="row.awayBest != null"
+                  class="player-best"
+                  :class="{ up: row.awayRk != null && row.awayBest < row.awayRk }"
+                >({{ row.awayBest }})</span>
+              </span>
               <span class="player-name">{{ row.awayName }}</span>
               <span v-if="row.awayAge != null" class="player-age">({{ row.awayAge }}岁)</span>
               <template v-if="row.side === 'away'">
@@ -1689,7 +1712,7 @@ onUnmounted(stopPoll)
             </td>
             <td v-if="colOn('side')" class="c-side">{{ row.side === 'home' ? '主' : (row.side === 'away' ? '客' : '—') }}</td>
             <td v-if="colOn('gap')" class="c-gap">{{ row.gap }}</td>
-            <td v-if="colOn('rankDiff')" class="c-gap c-rankdiff" title="现弱史高 − 现强史高">
+            <td v-if="colOn('rankDiff')" class="c-gap c-rankdiff" title="强者现排名 − 弱者历史最高">
               {{ row.rankDiff }}
             </td>
             <td v-if="colOn('strong')" class="c-gap">{{ row.strong }}</td>
@@ -2374,6 +2397,13 @@ th.c-home, th.c-away {
   color: #dc2626;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+.player-best {
+  color: inherit;
+  font-weight: 700;
+}
+.player-best.up {
+  color: #16a34a;
 }
 .c-home.recommend .player-name,
 .c-away.recommend .player-name {

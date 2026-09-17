@@ -207,15 +207,15 @@ const DETAIL_TIPS = [
   { k: '外', t: '已匹配到 Polymarket 外链市场。' },
   { k: '盘中档', t: '按强者现排名分档（展示用）；列表条件由产品管理挂载的条件组控制。' },
   { k: '优', t: '现排名更高（数字更小）的一侧，建议关注方向。' },
-  { k: '现排名 #', t: '球员当前世界排名，数字越小越强。' },
+  { k: '现排名 #', t: '当前世界排名，后接括号为历史最高，如 169(5)；史高优于现排时括号为绿色。' },
   { k: '比分', t: '进行中比赛的盘分/局分。' },
   { k: '年龄', t: '姓名后括号为年龄（按 2026−出生年估算）。' },
   { k: '周', t: '约一周前的排名（previous）。' },
-  { k: '高', t: '历史最高排名（best），数字越小表示峰值越强。' },
+  { k: '高', t: '历史最高排名（best），已显示在现排名括号内。' },
   { k: 'L', t: '实时排名（live ranking）。' },
   { k: 'U', t: 'UTR 评分参考。' },
   { k: '现排名差', t: '双方现排名之差（弱−强），衡量实力落差。' },
-  { k: '历史最高排名差', t: '双方历史最高排名之差（高−低）。' },
+  { k: '历史最高排名差', t: '强者现排名 − 弱者历史最高排名。' },
   { k: 'Elo', t: 'Tennis Abstract 等来源的胜率/优势估计；edge 为相对报价的优势百分比。' },
   { k: '报价', t: '博彩全场胜负赔率（欧赔小数）。' },
   { k: '外链价', t: 'Polymarket 对应市场价格（美分/隐含概率）。' },
@@ -689,20 +689,17 @@ function matchMetrics(m) {
   if (homeR == null || awayR == null) {
     return { gap: -1, rankDiff: 0, ready: false, hasRankDiff: false, strongRank: null }
   }
-  // 现差 = 弱现−强现；排差 = 现弱历史最高 − 现强历史最高
+  // 现差 = 弱现−强现；排差 = 强者现排名 − 弱者历史最高
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const strongNow = homeStronger ? homeR : awayR
   const homeDetail = rankDetailOf(home)
   const awayDetail = rankDetailOf(away)
-  const strongBest = homeStronger
-    ? (homeDetail.best != null ? Number(homeDetail.best) : null)
-    : (awayDetail.best != null ? Number(awayDetail.best) : null)
   const weakBest = homeStronger
     ? (awayDetail.best != null ? Number(awayDetail.best) : null)
     : (homeDetail.best != null ? Number(homeDetail.best) : null)
-  const hasRankDiff = Number.isFinite(strongBest) && Number.isFinite(weakBest)
-  const rankDiff = hasRankDiff ? weakBest - strongBest : 0
+  const hasRankDiff = Number.isFinite(weakBest)
+  const rankDiff = hasRankDiff ? strongNow - weakBest : 0
   return { gap, rankDiff, ready: true, hasRankDiff, strongRank: strongNow }
 }
 
@@ -1710,6 +1707,13 @@ function listRankOf(m, side) {
     : (m.awayPlayer || { name: m.away, ranking: null })
   return currentRankOf(player)
 }
+function listBestOf(m, side) {
+  const player = side === 'home'
+    ? (m.homePlayer || { name: m.home, ranking: null })
+    : (m.awayPlayer || { name: m.away, ranking: null })
+  const n = Number(rankDetailOf(player, m).best)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
 function matchGenderLabel(m) {
   const g = m?.gender || m?.homePlayer?.gender || m?.awayPlayer?.gender
   return g === 'F' ? '女子' : '男子'
@@ -2216,7 +2220,7 @@ function gapInfo(m) {
   const homeR = currentRankOf(home)
   const awayR = currentRankOf(away)
   if (homeR == null || awayR == null) return { ready: false }
-  // 现排名差 = 弱−强；排差 = 现弱历史最高 − 现强历史最高
+  // 现排名差 = 弱−强；排差 = 强者现排名 − 弱者历史最高
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const better = homeStronger ? shortName(home.name) : shortName(away.name)
@@ -2231,7 +2235,7 @@ function gapInfo(m) {
   const hasBest = Number.isFinite(homeBest) && Number.isFinite(awayBest)
   const bestHigh = hasBest ? Math.min(homeBest, awayBest) : null
   const bestLow = hasBest ? Math.max(homeBest, awayBest) : null
-  const rankDiff = (Number.isFinite(weakBest) && Number.isFinite(strongBest)) ? weakBest - strongBest : null
+  const rankDiff = Number.isFinite(weakBest) ? strongNow - weakBest : null
   return {
     ready: true,
     gap,
@@ -2419,6 +2423,7 @@ defineExpose({
       :is-match-live="isMatchLive"
       :pick-side="pickSide"
       :list-rank-of="listRankOf"
+      :list-best-of="listBestOf"
       :match-home-name="matchHomeName"
       :match-away-name="matchAwayName"
       :live-set-cells="liveSetCells"

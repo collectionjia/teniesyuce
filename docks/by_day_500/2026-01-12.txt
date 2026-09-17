@@ -1,4 +1,4 @@
-# 2026-01-12 · 29 matches · Adelaide
+# 2026-01-12 · 29 matches · Adelaide · from 2026_500.txt
 2026-01-12	Adelaide	F	Hard	Mirra Andreeva	bt	Victoria Mboko	6-3 6-1	peak_diff 4
 2026-01-12	Adelaide	QF	Hard	Diana Shnaider	bt	Emma Navarro	6-3 6-3	peak_diff 3
 2026-01-12	Adelaide	QF	Hard	Kimberly Birrell	bt	Jaqueline Cristian	5-7 6-1 7-5	peak_diff 32

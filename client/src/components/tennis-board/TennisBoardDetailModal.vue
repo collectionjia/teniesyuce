@@ -92,13 +92,18 @@ defineProps({
             <div class="duel">
               <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'home' }">
                 <div class="duel-top">
-                  <span class="duel-rank">#{{ rankText(currentRankOf(detailMatch.homePlayer || { name: detailMatch.home })) }}</span>
+                  <span class="duel-rank">
+                    #{{ rankText(currentRankOf(detailMatch.homePlayer || { name: detailMatch.home })) }}<span
+                      v-if="rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best != null"
+                      class="duel-best"
+                      :class="{ up: Number(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best) < Number(currentRankOf(detailMatch.homePlayer || { name: detailMatch.home })) }"
+                    >({{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best) }})</span>
+                  </span>
                   <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'home')">{{ playerLiveScoreText(detailMatch, 'home') }}</span>
                 </div>
                 <div class="duel-name">{{ playerNameWithAge(detailMatch.homePlayer || { name: detailMatch.home }, eloOf(detailMatch.id)?.home) }}</div>
                 <div class="duel-sub">
                   周{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).previous) }}
-                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).best) }}</span>
                   · L{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).live) }}
                   · U{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).utr) }}
                 </div>
@@ -106,13 +111,18 @@ defineProps({
               <div class="duel-vs">VS</div>
               <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'away' }">
                 <div class="duel-top">
-                  <span class="duel-rank">#{{ rankText(currentRankOf(detailMatch.awayPlayer || { name: detailMatch.away })) }}</span>
+                  <span class="duel-rank">
+                    #{{ rankText(currentRankOf(detailMatch.awayPlayer || { name: detailMatch.away })) }}<span
+                      v-if="rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best != null"
+                      class="duel-best"
+                      :class="{ up: Number(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best) < Number(currentRankOf(detailMatch.awayPlayer || { name: detailMatch.away })) }"
+                    >({{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best) }})</span>
+                  </span>
                   <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'away')">{{ playerLiveScoreText(detailMatch, 'away') }}</span>
                 </div>
                 <div class="duel-name">{{ playerNameWithAge(detailMatch.awayPlayer || { name: detailMatch.away }, eloOf(detailMatch.id)?.away) }}</div>
                 <div class="duel-sub">
                   周{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).previous) }}
-                  · <span class="rank-best">高{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).best) }}</span>
                   · L{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).live) }}
                   · U{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).utr) }}
                 </div>
@@ -135,7 +145,7 @@ defineProps({
                   <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
                     <span class="k">排差</span>
                     <span class="v rank-best">{{ gapInfo(detailMatch).rankDiff }}</span>
-                    <span class="s">现弱历史最高 {{ rankText(gapInfo(detailMatch).weakBest) }} − 现强历史最高 {{ rankText(gapInfo(detailMatch).strongBest) }}</span>
+                    <span class="s">强现 {{ rankText(gapInfo(detailMatch).strongNow) }} − 现弱历史最高 {{ rankText(gapInfo(detailMatch).weakBest) }}</span>
                   </div>
                   <div class="kv" v-else>
                     <span class="k">排差</span>
@@ -437,6 +447,13 @@ defineProps({
 .duel-rank {
   font-size: 0.82rem; font-weight: 800; color: #2563eb;
   font-variant-numeric: tabular-nums;
+}
+.duel-best {
+  color: inherit;
+  font-weight: 700;
+}
+.duel-best.up {
+  color: #16a34a;
 }
 .duel-score {
   font-size: 0.8rem; font-weight: 800; color: #0f172a;

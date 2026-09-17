@@ -23,7 +23,7 @@ function emptySettledBundle() {
   };
 }
 
-router.get('/today', auth(), async (_req, res) => {
+router.get('/today', async (_req, res) => {
   try {
     let full = await tennisSettledCache.getBundle();
     if (!full) {

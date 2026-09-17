@@ -1,0 +1,249 @@
+# 2026-09-01 · 248 matches · US Open · from 2026_all_gs_1000_500.txt
+2026-09-01	US Open	1R	Hard	Alcaraz (2)	bt	Safiullin	6-4 6-4 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Alexandrova (18)	bt	Kessler	6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Andreeva (5)	bt	Tjen	6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Anisimova (10)	bt	Krueger	6-1 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Auger Aliassime (3)	bt	Hijikata	7-5 4-6 6-3 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Badosa	bt	Kasatkina	6-1 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Bartunkova	bt	Sherif	6-1 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Bellucci	bt	Piros	6-4 6-2 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Bergs (31)	bt	Taberner	6-3 3-6 6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Berrettini	bt	Wawrinka	7-6(4) 7-6(3) 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Birrell	bt	Marcinko	3-6 7-6(4) 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Blockx (28)	bt	Barrios Vera	6-3 6-4 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Bondar	bt	Havlickova	6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Bonzi	bt	Molcan	6-4 3-6 6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Boulter	bt	Lee	6-4 3-6 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Bouzas Maneiro	bt	Vidmanova	6-3 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Bouzkova (25)	bt	Jacquemot	6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Bublik (15)	bt	Wolf	6-4 6-2 3-6 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Bucsa	bt	Bejlek (28)	7-5 4-6 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Buse (32)	bt	Giron	3-6 6-3 6-3 6-7(6) 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Cerundolo (24)	bt	Misolic	6-4 6-3 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Cirstea (16)	bt	Grabher	6-3 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Cobolli (5)	bt	Comesana	3-6 2-6 6-3 6-4 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Darderi (21)	bt	Wendelken	6-2 3-6 6-2 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Dart	bt	Stearns	3-6 6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	De Jong	bt	Passaro	2-6 6-2 4-6 6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	De Minaur (6)	bt	Guerrieri	6-2 6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Duckworth	bt	Arnaldi (30)	5-7 6-3 6-2 7-6(8)	peak_diff -
+2026-09-01	US Open	1R	Hard	Eala (17)	bt	Stoiana	6-1 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Etcheverry (27)	bt	Kopriva	6-3 6-4 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Faria	bt	Brooksby	6-3 7-6(4) 4-6 1-6 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Fearnley	bt	Landaluce	4-6 6-2 4-6 7-5 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Fernandez (31)	bt	Zhang	6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Fritz (9)	bt	Blanch	6-3 6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Gauff (4)	bt	Sonmez	6-3 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Gea	bt	Cerundolo	6-3 2-6 3-6 6-3 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Gorzny	bt	Collignon	3-6 6-3 3-6 6-3 7-6(9)	peak_diff -
+2026-09-01	US Open	1R	Hard	Halys	bt	Diaz Acosta	6-4 7-5 6-7(7) 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Harris	bt	Kennedy	6-4 6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Hurkacz	bt	Dzumhur	6-4 4-6 6-1 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Iatcenko	bt	Zarazua	4-6 6-4 7-6(7)	peak_diff -
+2026-09-01	US Open	1R	Hard	Jeanjean	bt	Rus	7-6(6) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Joint	bt	Samsonova	3-6 6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Jones	bt	Linette	6-4 1-6 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Jovic (14)	bt	Frech	7-5 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Kalinskaya (21)	bt	Blinkova	6-4 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Kenin	bt	Williams	6-2 7-6(6)	peak_diff -
+2026-09-01	US Open	1R	Hard	Keys (22)	bt	Korneeva	7-5 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Khachanov	bt	Burruchaga	6-3 6-0 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Kostyuk (11)	bt	Hunter	6-4 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Lehecka (18)	bt	Carreno-Busta	6-1 7-6(5) 4-6 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Li (29)	bt	Ruzic	7-5 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Lys	bt	Knutson	6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Majchrzak	bt	Medjedovic	6-3 6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Mannarino	bt	Tirante	4-6 3-6 6-3 6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Maria	bt	Ostapenko (30)	4-6 6-1 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	McNally	bt	Koevermans	7-5 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Medvedev (7)	bt	Gaston	6-4 6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Mensik (17)	bt	Mochizuki	6-1 6-4 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Merida Aguilar	bt	Fucsovics	6-4 6-4 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Mertens (23)	bt	Quevedo	6-4 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Michelsen	bt	Cina	6-4 6-1 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Monfils	bt	Vallejo	2-6 6-1 6-2 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Muchova (7)	bt	Kraus	6-3 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Munar	bt	Atmane	6-7(5) 3-6 6-1 7-6(4) 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Musetti (13)	bt	Fery	6-3 6-3 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Nakashima (16)	bt	Baez	6-2 6-1 6-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Navarro (26)	bt	Boisson	7-6(6) 6-7(1) 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Navone	bt	Djokovic (4)	7-6(5) 5-7 4-6 6-2 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Noskova (6)	bt	Volynets	7-5 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Oliynykova	bt	Brantmeier	6-4 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Osaka (13)	bt	Zakharova	7-6(6) 7-6(3)	peak_diff -
+2026-09-01	US Open	1R	Hard	Paolini (19)	bt	Erjavec	6-3 3-6 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Parry	bt	Golubic	7-5 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Paul (20)	bt	Wong	6-7(3) 6-1 6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Pegula (3)	bt	Ruse	6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Pliskova	bt	Vandewinkel	2-6 7-5 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Podoroska	bt	Waltert	4-6 7-6(5) 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Popyrin	bt	Dimitrov	3-6 6-3 6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Potapova (24)	bt	Semenistaja	6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Preston	bt	Parks	6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Prizmic	bt	Shevchenko	2-6 6-3 6-3 5-7 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Putintseva	bt	Bencic (12)	4-6 7-5 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Rakhimova	bt	Krejcikova (27)	7-6(4) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Rinderknech (26)	bt	Shimabukuro	6-7(4) 6-2 7-6(4) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Rodionov	bt	Mpetshi Perricard	7-6(2) 6-0 7-6(4)	peak_diff -
+2026-09-01	US Open	1R	Hard	Rublev (23)	bt	Virtanen	6-7(5) 6-7(0) 6-0 6-2 7-6(5)	peak_diff -
+2026-09-01	US Open	1R	Hard	Rybakina (2)	bt	Frodin	6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Sabalenka (1)	bt	Osorio	6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Sakamoto	bt	Vukic	6-4 6-7(5) 6-4 3-6 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Sakatsume	bt	Kalinina	6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Sakkari (32)	bt	Montgomery	2-6 7-5 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Samuel	bt	Machac	6-2 6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Sawangkaew	bt	Udvardy	6-4 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Schoolkate	bt	Basavareddy	7-6(4) 3-6 6-3 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Selekhmeteva	bt	Ito	6-2 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Shapovalov	bt	Kecmanovic	6-4 4-6 6-4 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Shelton (8)	bt	Griekspoor	1-6 6-1 7-6(3) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Shnaider (15)	bt	Snigur	6-0 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Siniakova	bt	Cocciaretto	6-3 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Starodubtseva	bt	Seidel	6-2 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Stefanini	bt	Yastremska	6-3 4-6 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Stephens	bt	Tauson	6-4 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Struff	bt	Ugo Carabelli	6-4 6-3 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Svajda	bt	Altmaier	6-3 6-1 6-7(5) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Svitolina (9)	bt	Sierra	6-1 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Svrcina	bt	Royer	6-4 6-3 5-7 5-7 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Sweeny	bt	Moutet	7-6(4) 6-4 3-0	peak_diff -
+2026-09-01	US Open	1R	Hard	Swiatek (8)	bt	Wang	6-2 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Tabilo (25)	bt	Hanfmann	6-3 6-2 6-7(7) 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Tagger	bt	Korpatsch	6-0 7-6(4)	peak_diff -
+2026-09-01	US Open	1R	Hard	Tararudee	bt	Kalieva	6-3 6-7(4) 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Tiafoe (11)	bt	Damm	6-4 4-6 3-6 6-3 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Tien (14)	bt	Borges	6-4 6-1 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Timofeeva	bt	Zidansek	6-3 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Townsend	bt	Chwalinska (20)	6-2 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Trungelliti	bt	Shang	0-6 7-6(5) 1-6 6-3 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Tsitsipas	bt	Fils (10)	4-6 7-6(3) 6-1 6-4	peak_diff -
+2026-09-01	US Open	1R	Hard	Vacherot (22)	bt	Kovacevic	6-2 6-3 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Van Assche	bt	Norrie (29)	6-7(6) 6-2 6-2 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Van De Zandschulp	bt	Choinski	6-3 6-1 7-6(5)	peak_diff -
+2026-09-01	US Open	1R	Hard	Vekic	bt	Gibson	6-2 4-6 6-3	peak_diff -
+2026-09-01	US Open	1R	Hard	Wang	bt	Arango	6-4 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Wu	bt	Walton	7-6(2) 6-2 7-5	peak_diff -
+2026-09-01	US Open	1R	Hard	Yunchaokete	bt	Jodar (12)	6-2 6-1 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Zheng	bt	Liutova	4-6 6-3 6-1	peak_diff -
+2026-09-01	US Open	1R	Hard	Zheng	bt	Marozsan	6-4 6-4 6-2	peak_diff -
+2026-09-01	US Open	1R	Hard	Zverev (1)	bt	Sonego	6-4 3-6 6-7(7) 7-5 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Alcaraz (2)	bt	Faria	4-6 6-0 6-3 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Alexandrova (18)	bt	Birrell	6-1 2-6 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Andreeva (5)	bt	Lys	6-0 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Anisimova (10)	bt	Tagger	6-3 3-6 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Bartunkova	bt	Maria	6-7(5) 6-2 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Bergs (31)	bt	De Jong	7-5 1-6 6-2 7-6(2)	peak_diff -
+2026-09-01	US Open	2R	Hard	Blockx (28)	bt	Trungelliti	6-3 6-2 3-6 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Bonzi	bt	Buse (32)	6-2 7-6(4) 6-0	peak_diff -
+2026-09-01	US Open	2R	Hard	Bouzkova (25)	bt	Dart	6-2 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Bublik (15)	bt	Mannarino	6-3 6-1 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Bucsa	bt	Sakatsume	7-6(6) 6-7(0) 7-6(6)	peak_diff -
+2026-09-01	US Open	2R	Hard	Cerundolo (24)	bt	Struff	5-7 7-5 4-6 6-2 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Cirstea (16)	bt	Parry	6-2 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Cobolli (5)	bt	Schoolkate	3-6 6-3 6-4 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Darderi (21)	bt	Svrcina	6-3 6-7(5) 6-4 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Eala (17)	bt	Oliynykova	6-1 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Etcheverry (27)	bt	Fearnley	6-3 6-3 3-6 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Fernandez (31)	bt	Sawangkaew	6-4 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Fritz (9)	bt	Bellucci	6-0 6-1 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Gauff (4)	bt	Badosa	6-4 7-6(5)	peak_diff -
+2026-09-01	US Open	2R	Hard	Gea	bt	Svajda	5-7 6-3 6-2 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Jovic (14)	bt	Jones	6-4 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Kalinskaya (21)	bt	Wang	7-5 2-6 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Keys (22)	bt	Bondar	5-7 6-4 7-6(5)	peak_diff -
+2026-09-01	US Open	2R	Hard	Khachanov	bt	Auger Aliassime (3)	6-7(5) 6-3 6-2 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Kostyuk (11)	bt	Stephens	6-1 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Lehecka (18)	bt	Samuel	6-4 6-2 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Li (29)	bt	Vekic	5-7 7-6(4) 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Medvedev (7)	bt	Gorzny	6-1 6-3 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Mensik (17)	bt	Rodionov	6-3 3-6 6-2 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Merida Aguilar	bt	Rublev (23)	6-7(3) 6-2 6-4 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Mertens (23)	bt	Timofeeva	6-2 7-6(5)	peak_diff -
+2026-09-01	US Open	2R	Hard	Michelsen	bt	Nakashima (16)	6-3 6-4 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Muchova (7)	bt	Boulter	6-1 6-0	peak_diff -
+2026-09-01	US Open	2R	Hard	Navarro (26)	bt	McNally	3-6 6-2 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Navone	bt	Berrettini	3-6 6-3 6-4 7-6(4)	peak_diff -
+2026-09-01	US Open	2R	Hard	Noskova (6)	bt	Tararudee	6-4 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Osaka (13)	bt	Siniakova	6-2 5-7 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Paolini (19)	bt	Stefanini	6-4 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Paul (20)	bt	Prizmic	6-2 6-3 5-7 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Pegula (3)	bt	Kenin	6-3 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Potapova (24)	bt	Jeanjean	6-4 2-6 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Rakhimova	bt	Selekhmeteva	6-3 6-0	peak_diff -
+2026-09-01	US Open	2R	Hard	Rinderknech (26)	bt	Munar	7-6(4) 6-2 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Rybakina (2)	bt	Bouzas Maneiro	6-2 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Sabalenka (1)	bt	Iatcenko	6-1 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Shapovalov	bt	Van Assche	6-0 6-4 7-6(7)	peak_diff -
+2026-09-01	US Open	2R	Hard	Shelton (8)	bt	Hurkacz	6-3 5-7 7-6(3) 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Shnaider (15)	bt	Pliskova	6-1 7-6(4)	peak_diff -
+2026-09-01	US Open	2R	Hard	Starodubtseva	bt	Sakkari (32)	1-6 7-6(4) 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Svitolina (9)	bt	Joint	6-2 6-7(6) 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Sweeny	bt	Musetti (13)	3-6 6-1 6-2 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Swiatek (8)	bt	Podoroska	6-3 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Tabilo (25)	bt	Popyrin	2-6 7-6(4) 7-6(3) 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Tiafoe (11)	bt	Sakamoto	6-3 7-6(2) 7-5	peak_diff -
+2026-09-01	US Open	2R	Hard	Tien (14)	bt	Monfils	6-3 6-4 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Townsend	bt	Preston	6-1 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Tsitsipas	bt	Harris	6-7(1) 6-3 7-6(4) 6-4	peak_diff -
+2026-09-01	US Open	2R	Hard	Vacherot (22)	bt	Majchrzak	6-4 4-6 7-6(3) 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Van De Zandschulp	bt	De Minaur (6)	6-4 7-5 6-2	peak_diff -
+2026-09-01	US Open	2R	Hard	Wu	bt	Duckworth	7-5 6-3 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Zheng	bt	Putintseva	6-4 2-6 6-1	peak_diff -
+2026-09-01	US Open	2R	Hard	Zheng	bt	Yunchaokete	6-3 2-6 6-2 6-3	peak_diff -
+2026-09-01	US Open	2R	Hard	Zverev (1)	bt	Halys	6-4 4-6 7-6(3) 6-7(3) 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Alcaraz (2)	bt	Wu	6-3 6-4 6-1	peak_diff -
+2026-09-01	US Open	3R	Hard	Andreeva (5)	bt	Bartunkova	6-2 7-6(5)	peak_diff -
+2026-09-01	US Open	3R	Hard	Blockx (28)	bt	Cobolli (5)	6-7(4) 6-3 6-0 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Cerundolo (24)	bt	Fritz (9)	3-6 4-6 6-3 6-4 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Cirstea (16)	bt	Paolini (19)	6-3 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Darderi (21)	bt	Sweeny	6-4 6-3 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Etcheverry (27)	bt	Navone	6-4 6-4 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Gauff (4)	bt	Bucsa	6-3 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Gea	bt	Zheng	7-6(7) 3-6 4-6 6-3 6-2	peak_diff -
+2026-09-01	US Open	3R	Hard	Jovic (14)	bt	Eala (17)	7-5 3-6 7-5	peak_diff -
+2026-09-01	US Open	3R	Hard	Kalinskaya (21)	bt	Svitolina (9)	6-3 2-6 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Khachanov	bt	Bonzi	6-3 6-2 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Kostyuk (11)	bt	Alexandrova (18)	6-3 6-2	peak_diff -
+2026-09-01	US Open	3R	Hard	Medvedev (7)	bt	Rinderknech (26)	6-4 6-4 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Michelsen	bt	Merida Aguilar	7-6(5) 6-4 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Navarro (26)	bt	Muchova (7)	6-3 7-5	peak_diff -
+2026-09-01	US Open	3R	Hard	Noskova (6)	bt	Li (29)	6-2 6-7(6) 6-2	peak_diff -
+2026-09-01	US Open	3R	Hard	Osaka (13)	bt	Mertens (23)	6-3 3-6 7-5	peak_diff -
+2026-09-01	US Open	3R	Hard	Paul (20)	bt	Bublik (15)	6-4 3-6 6-7(4) 6-1 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Pegula (3)	bt	Fernandez (31)	1-6 6-4 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Potapova (24)	bt	Anisimova (10)	6-2 7-5	peak_diff -
+2026-09-01	US Open	3R	Hard	Rybakina (2)	bt	Starodubtseva	7-6(6) 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Sabalenka (1)	bt	Rakhimova	6-3 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Shelton (8)	bt	Shapovalov	7-6(3) 6-7(5) 6-3 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Swiatek (8)	bt	Bouzkova (25)	7-6(3) 7-6(3)	peak_diff -
+2026-09-01	US Open	3R	Hard	Tiafoe (11)	bt	Vacherot (22)	6-4 6-2 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Tien (14)	bt	Mensik (17)	6-3 1-6 6-7(2) 6-3 6-4	peak_diff -
+2026-09-01	US Open	3R	Hard	Townsend	bt	Shnaider (15)	6-2 6-7(3) 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Tsitsipas	bt	Lehecka (18)	2-6 6-1 7-6(3) 6-1	peak_diff -
+2026-09-01	US Open	3R	Hard	Van De Zandschulp	bt	Bergs (31)	3-6 7-6(3) 4-6 7-6(6) 6-3	peak_diff -
+2026-09-01	US Open	3R	Hard	Zheng	bt	Keys (22)	1-6 7-6(3) 7-5	peak_diff -
+2026-09-01	US Open	3R	Hard	Zverev (1)	bt	Tabilo (25)	6-2 7-6(2) 6-2	peak_diff -
+2026-09-01	US Open	QF	Hard	Gauff (4)	bt	Andreeva (5)	2-6 7-6(7) 6-2	peak_diff -
+2026-09-01	US Open	QF	Hard	Khachanov	bt	Blockx (28)	6-2 7-5 3-2	peak_diff -
+2026-09-01	US Open	QF	Hard	Pegula (3)	bt	Navarro (26)	3-6 6-4 6-3	peak_diff -
+2026-09-01	US Open	QF	Hard	Rybakina (2)	bt	Zheng	3-6 6-1 6-4	peak_diff -
+2026-09-01	US Open	QF	Hard	Sabalenka (1)	bt	Noskova (6)	7-6(1) 3-6 7-6(7)	peak_diff -
+2026-09-01	US Open	QF	Hard	Shelton (8)	bt	Alcaraz (2)	6-7(5) 6-1 6-3 1-6 7-6(7)	peak_diff -
+2026-09-01	US Open	QF	Hard	Tiafoe (11)	bt	Michelsen	5-7 3-6 7-5 6-3 7-6(6)	peak_diff -
+2026-09-01	US Open	QF	Hard	Zverev (1)	bt	Van De Zandschulp	6-2 7-5 6-1	peak_diff -
+2026-09-01	US Open	R16	Hard	Alcaraz (2)	bt	Paul (20)	6-4 6-3 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Andreeva (5)	bt	Potapova (24)	5-7 6-4 6-3	peak_diff -
+2026-09-01	US Open	R16	Hard	Blockx (28)	bt	Cerundolo (24)	6-3 4-6 7-5 7-5	peak_diff -
+2026-09-01	US Open	R16	Hard	Gauff (4)	bt	Jovic (14)	6-1 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Khachanov	bt	Tien (14)	7-5 4-6 6-7(6) 6-1 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Michelsen	bt	Etcheverry (27)	7-6(6) 6-4 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Navarro (26)	bt	Kalinskaya (21)	6-4 6-2	peak_diff -
+2026-09-01	US Open	R16	Hard	Noskova (6)	bt	Kostyuk (11)	7-5 5-7 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Pegula (3)	bt	Cirstea (16)	6-3 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Rybakina (2)	bt	Osaka (13)	6-1 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Sabalenka (1)	bt	Townsend	6-4 6-3	peak_diff -
+2026-09-01	US Open	R16	Hard	Shelton (8)	bt	Tsitsipas	6-2 6-3 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Tiafoe (11)	bt	Medvedev (7)	7-6(1) 6-4 7-6(6)	peak_diff -
+2026-09-01	US Open	R16	Hard	Van De Zandschulp	bt	Gea	3-6 6-7(0) 7-6(7) 7-6(3) 6-4	peak_diff -
+2026-09-01	US Open	R16	Hard	Zheng	bt	Swiatek (8)	7-5 6-3	peak_diff -
+2026-09-01	US Open	R16	Hard	Zverev (1)	bt	Darderi (21)	6-2 6-2 7-6(3)	peak_diff -

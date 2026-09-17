@@ -5,12 +5,13 @@
     "matchCount": 29,
     "tournaments": [
       "Adelaide"
-    ]
+    ],
+    "txtSource": "2026_500.txt"
   },
   "bundle": {
     "sport": "tennis",
     "date": "2026-01-12",
-    "fetched_at": "2026-09-10T10:19:46.498Z",
+    "fetched_at": "2026-09-17T05:09:08.458Z",
     "source": "docks500",
     "upstream": "docks500",
     "dataSource": "docks500",
@@ -19,7 +20,7 @@
     "exclude_ended": false,
     "update": {
       "message": "docks/2026_500 · 2026-01-12 · 29 场",
-      "at": "2026-09-10T10:19:46.498Z"
+      "at": "2026-09-17T05:09:08.458Z"
     },
     "scheduled": {
       "tournaments": [

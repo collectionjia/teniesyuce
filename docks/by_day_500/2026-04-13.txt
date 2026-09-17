@@ -1,4 +1,4 @@
-# 2026-04-13 · 89 matches · Barcelona, Munich, Stuttgart
+# 2026-04-13 · 89 matches · Barcelona, Munich, Stuttgart · from 2026_500.txt
 2026-04-13	Barcelona	F	Clay	Arthur Fils	bt	Andrey Rublev	6-2 7-6(2)	peak_diff 9
 2026-04-13	Barcelona	QF	Clay	Andrey Rublev	bt	Tomas Machac	6-4 6-3	peak_diff 15
 2026-04-13	Barcelona	QF	Clay	Arthur Fils	bt	Lorenzo Musetti	6-3 6-4	peak_diff 9

@@ -1,0 +1,56 @@
+# 2026-02-15 · 55 matches · Dubai · from 2026_all_gs_1000_500.txt
+2026-02-15	Dubai	F	Hard	Jessica Pegula	bt	Elina Svitolina	6-2 6-4	peak_diff 0
+2026-02-15	Dubai	QF	Hard	Amanda Anisimova	bt	Mirra Andreeva	2-6 7-5 7-6(4)	peak_diff 2
+2026-02-15	Dubai	QF	Hard	Coco Gauff	bt	Alexandra Eala	6-0 6-2	peak_diff 27
+2026-02-15	Dubai	QF	Hard	Elina Svitolina	bt	Antonia Ruzic	3-6 6-2 6-3	peak_diff 48
+2026-02-15	Dubai	QF	Hard	Jessica Pegula	bt	Clara Tauson	6-3 2-6 6-4	peak_diff 9
+2026-02-15	Dubai	R16	Hard	Alexandra Eala	bt	Sorana Cirstea	7-5 6-4	peak_diff 11
+2026-02-15	Dubai	R16	Hard	Amanda Anisimova	bt	Janice Tjen	6-1 6-3	peak_diff 33
+2026-02-15	Dubai	R16	Hard	Antonia Ruzic	bt	Elena Rybakina	5-7 6-4 1-0 RET	peak_diff 49
+2026-02-15	Dubai	R16	Hard	Clara Tauson	bt	Magda Linette	6-4 6-2	peak_diff 7
+2026-02-15	Dubai	R16	Hard	Coco Gauff	bt	Elise Mertens	2-6 7-6(9) 6-3	peak_diff 10
+2026-02-15	Dubai	R16	Hard	Elina Svitolina	bt	Belinda Bencic	4-6 6-1 6-3	peak_diff 1
+2026-02-15	Dubai	R16	Hard	Jessica Pegula	bt	Iva Jovic	6-4 6-2	peak_diff 13
+2026-02-15	Dubai	R16	Hard	Mirra Andreeva	bt	Jaqueline Cristian	7-5 6-3	peak_diff 23
+2026-02-15	Dubai	R32	Hard	Alexandra Eala	bt	Jasmine Paolini	6-1 7-6(5)	peak_diff 25
+2026-02-15	Dubai	R32	Hard	Amanda Anisimova	bt	Barbora Krejcikova	W/O	peak_diff 1
+2026-02-15	Dubai	R32	Hard	Antonia Ruzic	bt	Anastasia Zakharova	6-1 6-7(2) 6-1	peak_diff 14
+2026-02-15	Dubai	R32	Hard	Belinda Bencic	bt	Sara Bejlek	W/O	peak_diff 30
+2026-02-15	Dubai	R32	Hard	Clara Tauson	bt	Peyton Stearns	6-2 6-4	peak_diff 16
+2026-02-15	Dubai	R32	Hard	Coco Gauff	bt	Anna Kalinskaya	6-4 6-4	peak_diff 9
+2026-02-15	Dubai	R32	Hard	Elena Rybakina	bt	Kimberly Birrell	6-1 6-2	peak_diff 58
+2026-02-15	Dubai	R32	Hard	Elina Svitolina	bt	Paula Badosa	6-4 0-0 RET	peak_diff 1
+2026-02-15	Dubai	R32	Hard	Elise Mertens	bt	Emma Navarro	6-2 6-2	peak_diff 4
+2026-02-15	Dubai	R32	Hard	Iva Jovic	bt	Diana Shnaider	6-4 1-6 6-0	peak_diff 5
+2026-02-15	Dubai	R32	Hard	Janice Tjen	bt	Leylah Fernandez	7-6(5) 6-4	peak_diff 23
+2026-02-15	Dubai	R32	Hard	Jaqueline Cristian	bt	Ella Seidel	6-0 0-0 RET	peak_diff 50
+2026-02-15	Dubai	R32	Hard	Jessica Pegula	bt	Varvara Gracheva	6-4 6-0	peak_diff 36
+2026-02-15	Dubai	R32	Hard	Magda Linette	bt	Ekaterina Alexandrova	6-2 4-6 6-1	peak_diff 9
+2026-02-15	Dubai	R32	Hard	Mirra Andreeva	bt	Daria Kasatkina	W/O	peak_diff 3
+2026-02-15	Dubai	R32	Hard	Sorana Cirstea	bt	Linda Noskova	6-1 6-4	peak_diff 6
+2026-02-15	Dubai	R64	Hard	Alexandra Eala	bt	Hailey Baptiste	6-4 0-1 RET	peak_diff 4
+2026-02-15	Dubai	R64	Hard	Anastasia Zakharova	bt	Moyuka Uchijima	6-2 6-4	peak_diff 18
+2026-02-15	Dubai	R64	Hard	Anna Kalinskaya	bt	Jelena Ostapenko	2-6 6-1 6-4	peak_diff 6
+2026-02-15	Dubai	R64	Hard	Antonia Ruzic	bt	Emma Raducanu	6-1 5-7 6-2	peak_diff 41
+2026-02-15	Dubai	R64	Hard	Barbora Krejcikova	bt	Anastasia Pavlyuchenkova	6-4 6-4	peak_diff 9
+2026-02-15	Dubai	R64	Hard	Belinda Bencic	bt	Jessica Bouzas Maneiro	2-6 6-1 6-2	peak_diff 36
+2026-02-15	Dubai	R64	Hard	Clara Tauson	bt	Sofia Kenin	7-6(4) 6-2	peak_diff 8
+2026-02-15	Dubai	R64	Hard	Daria Kasatkina	bt	Laura Siegemund	6-2 6-3	peak_diff 19
+2026-02-15	Dubai	R64	Hard	Diana Shnaider	bt	Maya Joint	6-4 6-1	peak_diff 17
+2026-02-15	Dubai	R64	Hard	Elise Mertens	bt	Marie Bouzkova	6-2 6-2	peak_diff 12
+2026-02-15	Dubai	R64	Hard	Ella Seidel	bt	Cristina Bucsa	6-1 6-4	peak_diff 48
+2026-02-15	Dubai	R64	Hard	Emma Navarro	bt	Elena Gabriela Ruse	6-4 7-5	peak_diff 43
+2026-02-15	Dubai	R64	Hard	Iva Jovic	bt	Kamilla Rakhimova	6-1 1-6 6-1	peak_diff 44
+2026-02-15	Dubai	R64	Hard	Janice Tjen	bt	Dayana Yastremska	6-4 6-1	peak_diff 15
+2026-02-15	Dubai	R64	Hard	Jaqueline Cristian	bt	Petra Marcinko	6-1 6-1	peak_diff 22
+2026-02-15	Dubai	R64	Hard	Kimberly Birrell	bt	Tatjana Maria	6-4 3-6 7-5	peak_diff 24
+2026-02-15	Dubai	R64	Hard	Leylah Fernandez	bt	Liudmila Samsonova	5-7 7-5 6-3	peak_diff 1
+2026-02-15	Dubai	R64	Hard	Linda Noskova	bt	Ann Li	6-3 5-7 6-4	peak_diff 17
+2026-02-15	Dubai	R64	Hard	Magda Linette	bt	Lulu Sun	4-6 6-4 6-1	peak_diff 20
+2026-02-15	Dubai	R64	Hard	Paula Badosa	bt	Katerina Siniakova	6-3 7-5	peak_diff 25
+2026-02-15	Dubai	R64	Hard	Peyton Stearns	bt	Magdalena Frech	6-4 6-2	peak_diff 6
+2026-02-15	Dubai	R64	Hard	Sara Bejlek	bt	Zeynep Sonmez	6-2 6-2	peak_diff 25
+2026-02-15	Dubai	R64	Hard	Sorana Cirstea	bt	Aliaksandra Sasnovich	6-3 7-6(6)	peak_diff 11
+2026-02-15	Dubai	R64	Hard	Varvara Gracheva	bt	Rebecca Sramkova	7-5 1-6 6-4	peak_diff 6
+2026-02-15	Dubai	SF	Hard	Elina Svitolina	bt	Coco Gauff	6-4 6-7(13) 6-4	peak_diff 1
+2026-02-15	Dubai	SF	Hard	Jessica Pegula	bt	Amanda Anisimova	1-6 6-4 6-3	peak_diff 0

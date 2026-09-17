@@ -4,8 +4,7 @@
 const express = require('express');
 const { auth } = require('../middleware/auth');
 const store = require('../services/schedulerStore');
-const { runJob } = require('../services/schedulerRunner');
-const schedulerLoop = require('../services/schedulerLoop');
+const schedulerClient = require('../services/schedulerClient');
 const engineApiKeys = require('../services/engineApiKeys');
 const tennisEngines = require('../services/tennisEngines');
 
@@ -14,7 +13,7 @@ router.use(auth(['admin']));
 
 router.get('/scheduler/status', async (_req, res) => {
   try {
-    res.json({ ok: true, ...(await schedulerLoop.status()) });
+    res.json({ ok: true, ...(await schedulerClient.status()) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
@@ -127,7 +126,7 @@ router.post('/scheduler/jobs/:id/disable', async (req, res) => {
 
 router.post('/scheduler/jobs/:id/run', async (req, res) => {
   try {
-    const r = await runJob(req.params.id, 'manual');
+    const r = await schedulerClient.runJob(req.params.id, 'manual');
     res.json({ ok: true, jobId: req.params.id, ...r });
   } catch (e) {
     res.status(e.status || 500).json({ ok: false, error: e.message });

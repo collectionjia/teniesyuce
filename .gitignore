@@ -7,6 +7,7 @@
 server/.env
 server/.env.*
 !server/.env.example
+!server/.env.test.example
 scripts/tennis-monitor/monitor.env
 scripts/tennis-monitor/monitor.env.*
 !scripts/tennis-monitor/env.monitor.*.example

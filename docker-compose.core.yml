@@ -40,7 +40,10 @@ services:
       PORT: 3001
       APP_ENV: ${APP_ENV:-production}
       SOFA_MONITOR_ENV_FILE: ${SOFA_MONITOR_ENV_FILE:-}
-      # REDIS_URL 来自 env_file（测试用外部 Redis；勿强行改成容器内 redis）
+      # 生产 deploy/prod.env 可设 COMPOSE_DB_* / COMPOSE_REDIS_URL；测试留空则用 env_file
+      DB_HOST: ${COMPOSE_DB_HOST:-}
+      DB_PORT: ${COMPOSE_DB_PORT:-}
+      REDIS_URL: ${COMPOSE_REDIS_URL:-}
       TENNIS_MONITOR_DIR: /tennis-monitor
       TENNIS_PYTHON: python3
       PYTHONUNBUFFERED: "1"
@@ -48,6 +51,12 @@ services:
       DOCKS_BY_DAY_DIR: /tmp/docks_by_day_500
       BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://btc-board:8890/}
       SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
+      # 五引擎（P6）；services 在 deploy/docker-compose.services.yml，默认经宿主机端口
+      SCHEDULER_URL: ${SCHEDULER_URL:-http://host.docker.internal:9105}
+      COLLECT_URL: ${COLLECT_URL:-http://host.docker.internal:9101}
+      RULES_URL: ${RULES_URL:-http://host.docker.internal:9102}
+      BETTING_URL: ${BETTING_URL:-http://host.docker.internal:9103}
+      STOP_LOSS_URL: ${STOP_LOSS_URL:-http://host.docker.internal:9104}
     volumes:
       - ./scripts/tennis-monitor:/tennis-monitor:rw
       - ./docks:/docks:ro
@@ -56,6 +65,8 @@ services:
     depends_on:
       btc-board:
         condition: service_started
+      redis:
+        condition: service_healthy
     expose:
       - "3001"
 

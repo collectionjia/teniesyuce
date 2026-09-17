@@ -1,0 +1,96 @@
+# 2026-05-05 · 95 matches · Rome · from 2026_all_gs_1000_500.txt
+2026-05-05	Rome	F	Clay	Elina Svitolina	bt	Coco Gauff	6-4 6-7(3) 6-2	peak_diff 1
+2026-05-05	Rome	QF	Clay	Coco Gauff	bt	Mirra Andreeva	4-6 6-2 6-4	peak_diff 3
+2026-05-05	Rome	QF	Clay	Elina Svitolina	bt	Elena Rybakina	2-6 6-4 6-4	peak_diff 1
+2026-05-05	Rome	QF	Clay	Iga Swiatek	bt	Jessica Pegula	6-1 6-2	peak_diff 2
+2026-05-05	Rome	QF	Clay	Sorana Cirstea	bt	Jelena Ostapenko	6-1 7-6(0)	peak_diff 13
+2026-05-05	Rome	R128	Clay	Alexandra Eala	bt	Magdalena Frech	6-0 3-6 6-4	peak_diff 7
+2026-05-05	Rome	R128	Clay	Anastasia Potapova	bt	Dalma Galfi	5-7 6-2 6-4	peak_diff 58
+2026-05-05	Rome	R128	Clay	Anastasia Zakharova	bt	Dayana Yastremska	4-6 7-5 7-6(6)	peak_diff 44
+2026-05-05	Rome	R128	Clay	Ann Li	bt	Shuai Zhang	1-6 6-4 6-2	peak_diff 7
+2026-05-05	Rome	R128	Clay	Antonia Ruzic	bt	Kamilla Rakhimova	6-4 1-6 6-3	peak_diff 9
+2026-05-05	Rome	R128	Clay	Barbora Krejcikova	bt	Elsa Jacquemot	6-2 6-4	peak_diff 51
+2026-05-05	Rome	R128	Clay	Bianca Andreescu	bt	Sofia Kenin	6-4 7-5	peak_diff 0
+2026-05-05	Rome	R128	Clay	Caty Mcnally	bt	Daria Kasatkina	6-2 6-3	peak_diff 46
+2026-05-05	Rome	R128	Clay	Elisabetta Cocciaretto	bt	Sinja Kraus	6-2 6-4	peak_diff 63
+2026-05-05	Rome	R128	Clay	Eva Lys	bt	Katie Boulter	6-4 3-6 6-4	peak_diff 16
+2026-05-05	Rome	R128	Clay	Jelena Ostapenko	bt	Lucrezia Stefanini	6-0 6-1	peak_diff 95
+2026-05-05	Rome	R128	Clay	Karolina Pliskova	bt	Jessica Bouzas Maneiro	4-6 6-3 7-5	peak_diff 39
+2026-05-05	Rome	R128	Clay	Katerina Siniakova	bt	Lois Boisson	6-2 6-3	peak_diff 7
+2026-05-05	Rome	R128	Clay	Laura Siegemund	bt	Sara Bejlek	6-4 6-4	peak_diff 7
+2026-05-05	Rome	R128	Clay	Leolia Jeanjean	bt	Beatriz Haddad Maia	7-6(6) 6-4	peak_diff 81
+2026-05-05	Rome	R128	Clay	Maria Sakkari	bt	Lilli Tagger	5-7 6-3 6-0	peak_diff 83
+2026-05-05	Rome	R128	Clay	Mccartney Kessler	bt	Lucia Bronzetti	6-3 5-7 6-4	peak_diff 16
+2026-05-05	Rome	R128	Clay	Noemi Basiletti	bt	Ajla Tomljanovic	7-5 6-4	peak_diff 295
+2026-05-05	Rome	R128	Clay	Oleksandra Oliynykova	bt	Petra Marcinko	6-1 6-3	peak_diff 1
+2026-05-05	Rome	R128	Clay	Panna Udvardy	bt	Alina Korneeva	6-2 7-6(2)	peak_diff 37
+2026-05-05	Rome	R128	Clay	Peyton Stearns	bt	Janice Tjen	6-4 6-4	peak_diff 8
+2026-05-05	Rome	R128	Clay	Qinwen Zheng	bt	Anna Bondar	3-6 6-3 6-4	peak_diff 46
+2026-05-05	Rome	R128	Clay	Rebeka Masarova	bt	Oksana Selekhmeteva	7-5 5-7 6-1	peak_diff 9
+2026-05-05	Rome	R128	Clay	Simona Waltert	bt	Yuliia Starodubtseva	7-5 4-6 6-1	peak_diff 28
+2026-05-05	Rome	R128	Clay	Solana Sierra	bt	Tamara Korpatsch	6-3 6-1	peak_diff 15
+2026-05-05	Rome	R128	Clay	Talia Gibson	bt	Martina Trevisan	6-4 0-6 6-3	peak_diff 37
+2026-05-05	Rome	R128	Clay	Tatjana Maria	bt	Magda Linette	6-0 6-3	peak_diff 17
+2026-05-05	Rome	R128	Clay	Taylor Townsend	bt	Nuria Brancaccio	6-3 6-2	peak_diff 104
+2026-05-05	Rome	R128	Clay	Tereza Valentova	bt	Yulia Putintseva	6-3 6-2	peak_diff 22
+2026-05-05	Rome	R128	Clay	Tyra Caterina Grant	bt	Lisa Pigato	1-6 6-2 6-4	peak_diff 25
+2026-05-05	Rome	R128	Clay	Viktorija Golubic	bt	Federica Urgesi	6-1 6-1	peak_diff 250
+2026-05-05	Rome	R128	Clay	Zeynep Sonmez	bt	Jennifer Ruggeri	4-6 6-2 6-2	peak_diff 154
+2026-05-05	Rome	R16	Clay	Coco Gauff	bt	Iva Jovic	5-7 7-5 6-2	peak_diff 14
+2026-05-05	Rome	R16	Clay	Elena Rybakina	bt	Karolina Pliskova	6-0 6-2	peak_diff 1
+2026-05-05	Rome	R16	Clay	Elina Svitolina	bt	Nikola Bartunkova	6-2 6-3	peak_diff 58
+2026-05-05	Rome	R16	Clay	Iga Swiatek	bt	Naomi Osaka	6-2 6-1	peak_diff 0
+2026-05-05	Rome	R16	Clay	Jelena Ostapenko	bt	Anna Kalinskaya	6-1 6-2	peak_diff 6
+2026-05-05	Rome	R16	Clay	Jessica Pegula	bt	Anastasia Potapova	7-6(6) 6-2	peak_diff 18
+2026-05-05	Rome	R16	Clay	Mirra Andreeva	bt	Elise Mertens	6-3 6-3	peak_diff 7
+2026-05-05	Rome	R16	Clay	Sorana Cirstea	bt	Linda Noskova	6-2 6-4	peak_diff 6
+2026-05-05	Rome	R32	Clay	Anastasia Potapova	bt	Liudmila Samsonova	6-3 6-2	peak_diff 9
+2026-05-05	Rome	R32	Clay	Anna Kalinskaya	bt	Belinda Bencic	6-4 6-3	peak_diff 7
+2026-05-05	Rome	R32	Clay	Coco Gauff	bt	Solana Sierra	5-7 6-0 6-4	peak_diff 54
+2026-05-05	Rome	R32	Clay	Elena Rybakina	bt	Alexandra Eala	6-4 6-3	peak_diff 27
+2026-05-05	Rome	R32	Clay	Elina Svitolina	bt	Hailey Baptiste	6-1 6-2	peak_diff 22
+2026-05-05	Rome	R32	Clay	Elise Mertens	bt	Jasmine Paolini	4-6 7-6(5) 6-3	peak_diff 8
+2026-05-05	Rome	R32	Clay	Iga Swiatek	bt	Elisabetta Cocciaretto	6-1 6-0	peak_diff 28
+2026-05-05	Rome	R32	Clay	Iva Jovic	bt	Taylor Townsend	7-5 6-2	peak_diff 30
+2026-05-05	Rome	R32	Clay	Jelena Ostapenko	bt	Qinwen Zheng	4-6 6-4 6-4	peak_diff 1
+2026-05-05	Rome	R32	Clay	Jessica Pegula	bt	Rebeka Masarova	6-0 6-0	peak_diff 59
+2026-05-05	Rome	R32	Clay	Karolina Pliskova	bt	Laura Siegemund	6-1 6-4	peak_diff 26
+2026-05-05	Rome	R32	Clay	Linda Noskova	bt	Oleksandra Oliynykova	6-1 6-3	peak_diff 39
+2026-05-05	Rome	R32	Clay	Mirra Andreeva	bt	Viktorija Golubic	6-1 4-6 6-0	peak_diff 30
+2026-05-05	Rome	R32	Clay	Naomi Osaka	bt	Diana Shnaider	6-1 6-2	peak_diff 10
+2026-05-05	Rome	R32	Clay	Nikola Bartunkova	bt	Madison Keys	6-3 1-6 6-4	peak_diff 56
+2026-05-05	Rome	R32	Clay	Sorana Cirstea	bt	Aryna Sabalenka	2-6 6-3 7-5	peak_diff 17
+2026-05-05	Rome	R64	Clay	Alexandra Eala	bt	Xin Yu Wang	6-4 6-3	peak_diff 1
+2026-05-05	Rome	R64	Clay	Anastasia Potapova	bt	Karolina Muchova	6-3 6-2	peak_diff 13
+2026-05-05	Rome	R64	Clay	Anna Kalinskaya	bt	Katerina Siniakova	4-6 7-6(4) 7-5	peak_diff 16
+2026-05-05	Rome	R64	Clay	Aryna Sabalenka	bt	Barbora Krejcikova	6-2 6-3	peak_diff 1
+2026-05-05	Rome	R64	Clay	Belinda Bencic	bt	Bianca Andreescu	6-4 6-1	peak_diff 0
+2026-05-05	Rome	R64	Clay	Coco Gauff	bt	Tereza Valentova	6-3 6-4	peak_diff 40
+2026-05-05	Rome	R64	Clay	Diana Shnaider	bt	Talia Gibson	5-7 6-1 6-1	peak_diff 44
+2026-05-05	Rome	R64	Clay	Elena Rybakina	bt	Maria Sakkari	6-4 6-1	peak_diff 1
+2026-05-05	Rome	R64	Clay	Elina Svitolina	bt	Noemi Basiletti	6-1 6-3	peak_diff 324
+2026-05-05	Rome	R64	Clay	Elisabetta Cocciaretto	bt	Emma Navarro	6-3 6-3	peak_diff 21
+2026-05-05	Rome	R64	Clay	Elise Mertens	bt	Panna Udvardy	6-4 6-2	peak_diff 47
+2026-05-05	Rome	R64	Clay	Hailey Baptiste	bt	Simona Waltert	6-7(9) 6-4 6-4	peak_diff 56
+2026-05-05	Rome	R64	Clay	Iga Swiatek	bt	Caty Mcnally	6-1 6-7(5) 6-3	peak_diff 53
+2026-05-05	Rome	R64	Clay	Iva Jovic	bt	Mccartney Kessler	7-6(5) 7-6(4)	peak_diff 14
+2026-05-05	Rome	R64	Clay	Jasmine Paolini	bt	Leolia Jeanjean	6-7(4) 6-2 6-4	peak_diff 87
+2026-05-05	Rome	R64	Clay	Jelena Ostapenko	bt	Elena Gabriela Ruse	2-6 6-2 6-3	peak_diff 46
+2026-05-05	Rome	R64	Clay	Jessica Pegula	bt	Zeynep Sonmez	6-4 6-0	peak_diff 56
+2026-05-05	Rome	R64	Clay	Karolina Pliskova	bt	Jaqueline Cristian	6-7(5) 7-6(2) 6-4	peak_diff 27
+2026-05-05	Rome	R64	Clay	Laura Siegemund	bt	Ekaterina Alexandrova	6-4 6-7(4) 6-1	peak_diff 17
+2026-05-05	Rome	R64	Clay	Linda Noskova	bt	Anastasia Zakharova	6-4 6-1	peak_diff 53
+2026-05-05	Rome	R64	Clay	Liudmila Samsonova	bt	Ann Li	6-4 6-3	peak_diff 17
+2026-05-05	Rome	R64	Clay	Madison Keys	bt	Peyton Stearns	4-6 6-4 6-2	peak_diff 23
+2026-05-05	Rome	R64	Clay	Mirra Andreeva	bt	Antonia Ruzic	6-1 6-0	peak_diff 46
+2026-05-05	Rome	R64	Clay	Naomi Osaka	bt	Eva Lys	6-4 4-6 6-3	peak_diff 38
+2026-05-05	Rome	R64	Clay	Nikola Bartunkova	bt	Tyra Caterina Grant	4-6 6-3 6-4	peak_diff 96
+2026-05-05	Rome	R64	Clay	Oleksandra Oliynykova	bt	Clara Tauson	6-1 3-1 RET	peak_diff 39
+2026-05-05	Rome	R64	Clay	Qinwen Zheng	bt	Cristina Bucsa	7-6(6) 6-2	peak_diff 26
+2026-05-05	Rome	R64	Clay	Rebeka Masarova	bt	Leylah Fernandez	4-6 6-4 6-4	peak_diff 49
+2026-05-05	Rome	R64	Clay	Solana Sierra	bt	Anhelina Kalinina	6-2 6-3	peak_diff 31
+2026-05-05	Rome	R64	Clay	Sorana Cirstea	bt	Tatjana Maria	6-2 6-0	peak_diff 18
+2026-05-05	Rome	R64	Clay	Taylor Townsend	bt	Marie Bouzkova	6-3 7-5	peak_diff 22
+2026-05-05	Rome	R64	Clay	Viktorija Golubic	bt	Maya Joint	7-5 6-2	peak_diff 7
+2026-05-05	Rome	SF	Clay	Coco Gauff	bt	Sorana Cirstea	6-4 6-3	peak_diff 16
+2026-05-05	Rome	SF	Clay	Elina Svitolina	bt	Iga Swiatek	6-4 2-6 6-2	peak_diff 2

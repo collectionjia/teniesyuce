@@ -1,0 +1,255 @@
+# 2026-01-19 · 254 matches · Australian Open · from 2026_all_gs_1000_500.txt
+2026-01-19	Australian Open	F	Hard	Carlos Alcaraz	bt	Novak Djokovic	2-6 6-2 6-3 7-5	peak_diff 0
+2026-01-19	Australian Open	F	Hard	Elena Rybakina	bt	Aryna Sabalenka	6-4 4-6 6-4	peak_diff 1
+2026-01-19	Australian Open	QF	Hard	Alexander Zverev	bt	Learner Tien	6-3 6-7(5) 6-1 7-6(3)	peak_diff 16
+2026-01-19	Australian Open	QF	Hard	Aryna Sabalenka	bt	Iva Jovic	6-3 6-0	peak_diff 15
+2026-01-19	Australian Open	QF	Hard	Carlos Alcaraz	bt	Alex De Minaur	7-5 6-2 6-1	peak_diff 5
+2026-01-19	Australian Open	QF	Hard	Elena Rybakina	bt	Iga Swiatek	7-5 6-1	peak_diff 1
+2026-01-19	Australian Open	QF	Hard	Elina Svitolina	bt	Coco Gauff	6-1 6-2	peak_diff 1
+2026-01-19	Australian Open	QF	Hard	Jannik Sinner	bt	Ben Shelton	6-3 6-4 6-4	peak_diff 4
+2026-01-19	Australian Open	QF	Hard	Jessica Pegula	bt	Amanda Anisimova	6-2 7-6(1)	peak_diff 0
+2026-01-19	Australian Open	QF	Hard	Novak Djokovic	bt	Lorenzo Musetti	4-6 3-6 3-1 RET	peak_diff 4
+2026-01-19	Australian Open	R128	Hard	Ajla Tomljanovic	bt	Yuliia Starodubtseva	4-6 7-6(3) 6-1	peak_diff 21
+2026-01-19	Australian Open	R128	Hard	Alejandro Davidovich Fokina	bt	Filip Misolic	6-2 6-3 6-3	peak_diff 62
+2026-01-19	Australian Open	R128	Hard	Alex De Minaur	bt	Mackenzie Mcdonald	6-2 6-2 6-3	peak_diff 31
+2026-01-19	Australian Open	R128	Hard	Alexander Bublik	bt	Jenson Brooksby	6-4 6-4 6-4	peak_diff 23
+2026-01-19	Australian Open	R128	Hard	Alexander Shevchenko	bt	Elias Ymer	3-6 7-5 6-4 6-1	peak_diff 74
+2026-01-19	Australian Open	R128	Hard	Alexander Zverev	bt	Gabriel Diallo	6-7(1) 6-1 6-4 6-2	peak_diff 31
+2026-01-19	Australian Open	R128	Hard	Alexandre Muller	bt	Alexei Popyrin	2-6 6-3 3-6 7-6(5) 7-6(4)	peak_diff 19
+2026-01-19	Australian Open	R128	Hard	Alycia Parks	bt	Alexandra Eala	0-6 6-3 6-2	peak_diff 11
+2026-01-19	Australian Open	R128	Hard	Amanda Anisimova	bt	Simona Waltert	6-3 6-2	peak_diff 78
+2026-01-19	Australian Open	R128	Hard	Anastasia Potapova	bt	Suzan Lamens	3-6 7-5 6-2	peak_diff 36
+2026-01-19	Australian Open	R128	Hard	Andrey Rublev	bt	Matteo Arnaldi	6-4 6-2 6-3	peak_diff 24
+2026-01-19	Australian Open	R128	Hard	Ann Li	bt	Camila Osorio	6-4 6-7(5) 7-5	peak_diff 4
+2026-01-19	Australian Open	R128	Hard	Anna Bondar	bt	Elizabeth Mandlik	6-0 6-4	peak_diff 47
+2026-01-19	Australian Open	R128	Hard	Anna Kalinskaya	bt	Sonay Kartal	7-6(3) 6-1	peak_diff 33
+2026-01-19	Australian Open	R128	Hard	Arthur Fery	bt	Flavio Cobolli	7-6(1) 6-4 6-1	peak_diff 131
+2026-01-19	Australian Open	R128	Hard	Arthur Gea	bt	Jiri Lehecka	7-5 7-6(1) 7-5	peak_diff 123
+2026-01-19	Australian Open	R128	Hard	Aryna Sabalenka	bt	Tiantsoa Sarah Rakotomanga Rajaonah	6-4 6-1	peak_diff 115
+2026-01-19	Australian Open	R128	Hard	Ashlyn Krueger	bt	Sara Bejlek	6-3 6-3	peak_diff 5
+2026-01-19	Australian Open	R128	Hard	Belinda Bencic	bt	Katie Boulter	6-0 7-5	peak_diff 19
+2026-01-19	Australian Open	R128	Hard	Ben Shelton	bt	Ugo Humbert	6-3 7-6(2) 7-6(5)	peak_diff 8
+2026-01-19	Australian Open	R128	Hard	Botic Van De Zandschulp	bt	Brandon Nakashima	6-3 4-6 7-6(1) 7-6(3)	peak_diff 7
+2026-01-19	Australian Open	R128	Hard	Cameron Norrie	bt	Benjamin Bonzi	6-0 6-7(2) 4-6 6-3 6-4	peak_diff 34
+2026-01-19	Australian Open	R128	Hard	Carlos Alcaraz	bt	Adam Walton	6-3 7-6(2) 6-2	peak_diff 73
+2026-01-19	Australian Open	R128	Hard	Casper Ruud	bt	Mattia Bellucci	6-1 6-2 6-4	peak_diff 61
+2026-01-19	Australian Open	R128	Hard	Caty Mcnally	bt	Himeno Sakatsume	6-3 6-1	peak_diff 73
+2026-01-19	Australian Open	R128	Hard	Clara Tauson	bt	Dalma Galfi	6-3 6-3	peak_diff 67
+2026-01-19	Australian Open	R128	Hard	Coco Gauff	bt	Kamilla Rakhimova	6-2 6-3	peak_diff 58
+2026-01-19	Australian Open	R128	Hard	Corentin Moutet	bt	Tristan Schoolkate	6-4 7-6(1) 6-3	peak_diff 65
+2026-01-19	Australian Open	R128	Hard	Damir Dzumhur	bt	Liam Draxl	7-5 6-0 6-4	peak_diff 59
+2026-01-19	Australian Open	R128	Hard	Dane Sweeny	bt	Gael Monfils	6-7(3) 7-5 6-4 7-5	peak_diff 122
+2026-01-19	Australian Open	R128	Hard	Daniil Medvedev	bt	Jesper De Jong	7-5 6-2 7-6(2)	peak_diff 70
+2026-01-19	Australian Open	R128	Hard	Denis Shapovalov	bt	Bu Yunchaokete	6-3 7-6(3) 6-1	peak_diff 54
+2026-01-19	Australian Open	R128	Hard	Diana Shnaider	bt	Barbora Krejcikova	2-6 6-3 6-3	peak_diff 9
+2026-01-19	Australian Open	R128	Hard	Elena Gabriela Ruse	bt	Dayana Yastremska	6-4 7-5	peak_diff 30
+2026-01-19	Australian Open	R128	Hard	Elena Rybakina	bt	Kaja Juvan	6-4 6-3	peak_diff 56
+2026-01-19	Australian Open	R128	Hard	Elina Svitolina	bt	Cristina Bucsa	6-4 6-1	peak_diff 27
+2026-01-19	Australian Open	R128	Hard	Eliot Spizzirri	bt	Joao Fonseca	6-4 2-6 6-1 6-2	peak_diff 43
+2026-01-19	Australian Open	R128	Hard	Elise Mertens	bt	Lanlana Tararudee	7-5 6-1	peak_diff 82
+2026-01-19	Australian Open	R128	Hard	Elsa Jacquemot	bt	Marta Kostyuk	6-7(4) 7-6(4) 7-6(7)	peak_diff 41
+2026-01-19	Australian Open	R128	Hard	Emilio Nava	bt	Kyrian Jacquet	6-2 7-5 6-7(5) 4-6 7-6(6)	peak_diff 28
+2026-01-19	Australian Open	R128	Hard	Emma Raducanu	bt	Mananchaya Sawangkaew	6-4 6-1	peak_diff 90
+2026-01-19	Australian Open	R128	Hard	Ethan Quinn	bt	Tallon Griekspoor	6-2 6-3 6-2	peak_diff 27
+2026-01-19	Australian Open	R128	Hard	Fabian Marozsan	bt	Arthur Rinderknech	6-3 6-4 6-7(2) 6-4	peak_diff 12
+2026-01-19	Australian Open	R128	Hard	Frances Tiafoe	bt	Jason Kubler	7-6(4) 6-3 6-2	peak_diff 53
+2026-01-19	Australian Open	R128	Hard	Francesco Maestrelli	bt	Terence Atmane	6-4 3-6 6-7(4) 6-1 6-1	peak_diff 67
+2026-01-19	Australian Open	R128	Hard	Francisco Cerundolo	bt	Zhizhen Zhang	6-3 7-6(0) 6-3	peak_diff 13
+2026-01-19	Australian Open	R128	Hard	Francisco Comesana	bt	Patrick Kypson	6-2 6-3 3-6 6-3	peak_diff 35
+2026-01-19	Australian Open	R128	Hard	Hailey Baptiste	bt	Taylor Townsend	6-3 6-7(3) 6-3	peak_diff 21
+2026-01-19	Australian Open	R128	Hard	Hamad Medjedovic	bt	Mariano Navone	6-2 6-7(3) 6-4 6-2	peak_diff 27
+2026-01-19	Australian Open	R128	Hard	Hubert Hurkacz	bt	Zizou Bergs	6-7(6) 7-6(6) 6-3 6-3	peak_diff 32
+2026-01-19	Australian Open	R128	Hard	Iga Swiatek	bt	Yue Yuan	7-6(5) 6-3	peak_diff 35
+2026-01-19	Australian Open	R128	Hard	Iva Jovic	bt	Katie Volynets	6-2 6-3	peak_diff 40
+2026-01-19	Australian Open	R128	Hard	Jaime Faria	bt	Alexander Blockx	6-3 3-6 6-3 6-4	peak_diff 51
+2026-01-19	Australian Open	R128	Hard	Jakub Mensik	bt	Pablo Carreno Busta	7-5 4-6 2-6 7-6(1) 6-3	peak_diff 1
+2026-01-19	Australian Open	R128	Hard	James Duckworth	bt	Dino Prizmic	7-6(4) 3-6 1-6 7-5 6-3	peak_diff 24
+2026-01-19	Australian Open	R128	Hard	Janice Tjen	bt	Leylah Fernandez	6-2 7-6(1)	peak_diff 23
+2026-01-19	Australian Open	R128	Hard	Jannik Sinner	bt	Hugo Gaston	6-2 6-1 0-0 RET	peak_diff 57
+2026-01-19	Australian Open	R128	Hard	Jasmine Paolini	bt	Aliaksandra Sasnovich	6-1 6-2	peak_diff 25
+2026-01-19	Australian Open	R128	Hard	Jaume Munar	bt	Dalibor Svrcina	3-6 6-2 6-7(5) 7-5 6-3	peak_diff 53
+2026-01-19	Australian Open	R128	Hard	Jelena Ostapenko	bt	Rebecca Sramkova	6-4 6-4	peak_diff 28
+2026-01-19	Australian Open	R128	Hard	Jessica Pegula	bt	Anastasia Zakharova	6-2 6-1	peak_diff 62
+2026-01-19	Australian Open	R128	Hard	Jordan Thompson	bt	Juan Manuel Cerundolo	6-7(3) 7-5 6-1 6-1	peak_diff 19
+2026-01-19	Australian Open	R128	Hard	Julia Grabher	bt	Elisabetta Cocciaretto	7-5 2-6 6-4	peak_diff 25
+2026-01-19	Australian Open	R128	Hard	Juncheng Shang	bt	Roberto Bautista Agut	6-4 6-7(2) 6-4 6-0	peak_diff 38
+2026-01-19	Australian Open	R128	Hard	Kamil Majchrzak	bt	Jacob Fearnley	7-6(2) 7-5 3-6 7-6(3)	peak_diff 4
+2026-01-19	Australian Open	R128	Hard	Karen Khachanov	bt	Alex Michelsen	4-6 6-4 6-3 5-7 6-3	peak_diff 21
+2026-01-19	Australian Open	R128	Hard	Karolina Muchova	bt	Jaqueline Cristian	6-3 7-6(6)	peak_diff 20
+2026-01-19	Australian Open	R128	Hard	Karolina Pliskova	bt	Sloane Stephens	7-6(7) 6-2	peak_diff 2
+2026-01-19	Australian Open	R128	Hard	Katerina Siniakova	bt	Panna Udvardy	6-1 6-2	peak_diff 32
+2026-01-19	Australian Open	R128	Hard	Laura Siegemund	bt	Liudmila Samsonova	0-6 7-5 6-4	peak_diff 15
+2026-01-19	Australian Open	R128	Hard	Learner Tien	bt	Marcos Giron	7-6(2) 4-6 3-6 7-6(3) 6-2	peak_diff 19
+2026-01-19	Australian Open	R128	Hard	Linda Fruhvirtova	bt	Lulu Sun	6-3 7-5	peak_diff 10
+2026-01-19	Australian Open	R128	Hard	Linda Klimovicova	bt	Francesca Jones	6-2 3-2 RET	peak_diff 64
+2026-01-19	Australian Open	R128	Hard	Linda Noskova	bt	Darja Semenistaja	6-3 6-0	peak_diff 75
+2026-01-19	Australian Open	R128	Hard	Lorenzo Musetti	bt	Raphael Collignon	4-6 7-6(3) 7-5 3-2 RET	peak_diff 46
+2026-01-19	Australian Open	R128	Hard	Lorenzo Sonego	bt	Carlos Taberner	6-4 6-0 6-3	peak_diff 62
+2026-01-19	Australian Open	R128	Hard	Luciano Darderi	bt	Cristian Garin	7-6(5) 7-5 7-6(3)	peak_diff 1
+2026-01-19	Australian Open	R128	Hard	Maddison Inglis	bt	Kimberly Birrell	7-6(6) 6-7(9) 6-4	peak_diff 52
+2026-01-19	Australian Open	R128	Hard	Madison Keys	bt	Oleksandra Oliynykova	7-6(6) 6-1	peak_diff 46
+2026-01-19	Australian Open	R128	Hard	Magda Linette	bt	Emma Navarro	3-6 6-3 6-3	peak_diff 11
+2026-01-19	Australian Open	R128	Hard	Magdalena Frech	bt	Veronika Erjavec	6-1 6-1	peak_diff 62
+2026-01-19	Australian Open	R128	Hard	Maria Sakkari	bt	Leolia Jeanjean	6-4 6-2	peak_diff 88
+2026-01-19	Australian Open	R128	Hard	Marie Bouzkova	bt	Renata Zarazua	6-2 7-5	peak_diff 27
+2026-01-19	Australian Open	R128	Hard	Marin Cilic	bt	Daniel Altmaier	6-0 6-0 7-6(3)	peak_diff 31
+2026-01-19	Australian Open	R128	Hard	Marton Fucsovics	bt	Camilo Ugo Carabelli	7-6(5) 6-1 6-2	peak_diff 8
+2026-01-19	Australian Open	R128	Hard	Mccartney Kessler	bt	Emiliana Arango	6-3 6-2	peak_diff 16
+2026-01-19	Australian Open	R128	Hard	Michael Zheng	bt	Sebastian Korda	6-4 6-4 3-6 6-7(0) 6-3	peak_diff 130
+2026-01-19	Australian Open	R128	Hard	Mirra Andreeva	bt	Donna Vekic	4-6 6-3 6-0	peak_diff 12
+2026-01-19	Australian Open	R128	Hard	Moyuka Uchijima	bt	Solana Sierra	6-3 6-1	peak_diff 9
+2026-01-19	Australian Open	R128	Hard	Naomi Osaka	bt	Antonia Ruzic	6-3 3-6 6-4	peak_diff 50
+2026-01-19	Australian Open	R128	Hard	Nikola Bartunkova	bt	Daria Kasatkina	7-6(7) 0-6 6-3	peak_diff 53
+2026-01-19	Australian Open	R128	Hard	Nishesh Basavareddy	bt	Christopher Oconnell	4-6 7-6(7) 6-7(3) 6-2 6-3	peak_diff 46
+2026-01-19	Australian Open	R128	Hard	Novak Djokovic	bt	Pedro Martinez	6-3 6-2 6-2	peak_diff 35
+2026-01-19	Australian Open	R128	Hard	Nuno Borges	bt	Felix Auger Aliassime	3-6 6-4 6-4 0-0 RET	peak_diff 26
+2026-01-19	Australian Open	R128	Hard	Oksana Selekhmeteva	bt	Ella Seidel	6-3 3-6 6-0	peak_diff 7
+2026-01-19	Australian Open	R128	Hard	Olga Danilovic	bt	Venus Williams	6-7(5) 6-3 6-4	peak_diff 31
+2026-01-19	Australian Open	R128	Hard	Paula Badosa	bt	Zarina Diyas	6-2 6-4	peak_diff 29
+2026-01-19	Australian Open	R128	Hard	Petra Marcinko	bt	Tatjana Maria	6-3 7-5	peak_diff 14
+2026-01-19	Australian Open	R128	Hard	Peyton Stearns	bt	Sofia Kenin	6-3 6-2	peak_diff 24
+2026-01-19	Australian Open	R128	Hard	Polina Kudermetova	bt	Guiomar Maristany Zuleta De Reales	6-2 6-3	peak_diff 111
+2026-01-19	Australian Open	R128	Hard	Priscilla Hon	bt	Marina Stakusic	1-6 6-4 5-3 RET	peak_diff 20
+2026-01-19	Australian Open	R128	Hard	Quentin Halys	bt	Alejandro Tabilo	6-2 6-2 7-6(2)	peak_diff 27
+2026-01-19	Australian Open	R128	Hard	Rafael Jodar	bt	Rei Sakamoto	7-6(6) 6-1 5-7 4-6 6-3	peak_diff 126
+2026-01-19	Australian Open	R128	Hard	Reilly Opelka	bt	Nicolai Budkov Kjaer	6-4 6-3 6-4	peak_diff 104
+2026-01-19	Australian Open	R128	Hard	Rinky Hijikata	bt	Adrian Mannarino	6-3 6-3 6-1	peak_diff 45
+2026-01-19	Australian Open	R128	Hard	Sebastian Baez	bt	Giovanni Mpetshi Perricard	6-4 6-4 3-6 5-7 6-3	peak_diff 11
+2026-01-19	Australian Open	R128	Hard	Sorana Cirstea	bt	Eva Lys	3-6 6-4 6-3	peak_diff 21
+2026-01-19	Australian Open	R128	Hard	Stan Wawrinka	bt	Laslo Djere	5-7 6-3 6-4 7-6(4)	peak_diff 20
+2026-01-19	Australian Open	R128	Hard	Stefanos Tsitsipas	bt	Shintaro Mochizuki	4-6 6-3 6-2 6-2	peak_diff 89
+2026-01-19	Australian Open	R128	Hard	Storm Hunter	bt	Jessica Bouzas Maneiro	6-4 6-4	peak_diff 74
+2026-01-19	Australian Open	R128	Hard	Talia Gibson	bt	Anna Blinkova	6-1 6-3	peak_diff 20
+2026-01-19	Australian Open	R128	Hard	Taylah Preston	bt	Shuai Zhang	6-3 2-6 6-3	peak_diff 104
+2026-01-19	Australian Open	R128	Hard	Taylor Fritz	bt	Valentin Royer	7-6(5) 5-7 6-1 6-3	peak_diff 50
+2026-01-19	Australian Open	R128	Hard	Tereza Valentova	bt	Maya Joint	6-4 6-4	peak_diff 14
+2026-01-19	Australian Open	R128	Hard	Thiago Agustin Tirante	bt	Aleksandar Vukic	7-5 6-2 6-2	peak_diff 4
+2026-01-19	Australian Open	R128	Hard	Tomas Machac	bt	Grigor Dimitrov	6-4 6-4 6-3	peak_diff 11
+2026-01-19	Australian Open	R128	Hard	Tomas Martin Etcheverry	bt	Miomir Kecmanovic	6-2 3-6 4-6 6-3 6-4	peak_diff 2
+2026-01-19	Australian Open	R128	Hard	Tommy Paul	bt	Aleksandar Kovacevic	6-4 6-3 6-3	peak_diff 46
+2026-01-19	Australian Open	R128	Hard	Valentin Vacherot	bt	Martin Damm	6-4 6-4 6-4	peak_diff 26
+2026-01-19	Australian Open	R128	Hard	Varvara Gracheva	bt	Viktorija Golubic	6-1 2-6 6-1	peak_diff 4
+2026-01-19	Australian Open	R128	Hard	Victoria Mboko	bt	Emerson Jones	6-4 6-1	peak_diff 120
+2026-01-19	Australian Open	R128	Hard	Vit Kopriva	bt	Jan Lennard Struff	4-6 6-2 2-6 6-3 6-1	peak_diff 34
+2026-01-19	Australian Open	R128	Hard	Xin Yu Wang	bt	Anhelina Kalinina	6-3 6-3	peak_diff 5
+2026-01-19	Australian Open	R128	Hard	Yannick Hanfmann	bt	Zachary Svajda	7-5 4-6 6-4 7-6(3)	peak_diff 17
+2026-01-19	Australian Open	R128	Hard	Yibing Wu	bt	Luca Nardi	7-5 4-6 6-4 6-2	peak_diff 13
+2026-01-19	Australian Open	R128	Hard	Yulia Putintseva	bt	Beatriz Haddad Maia	3-6 7-5 6-3	peak_diff 10
+2026-01-19	Australian Open	R128	Hard	Zeynep Sonmez	bt	Ekaterina Alexandrova	7-5 4-6 6-4	peak_diff 49
+2026-01-19	Australian Open	R128	Hard	Zhuoxuan Bai	bt	Anastasia Pavlyuchenkova	6-4 2-6 7-6(10)	peak_diff 72
+2026-01-19	Australian Open	R16	Hard	Alex De Minaur	bt	Alexander Bublik	6-4 6-1 6-1	peak_diff 4
+2026-01-19	Australian Open	R16	Hard	Alexander Zverev	bt	Francisco Cerundolo	6-2 6-4 6-4	peak_diff 16
+2026-01-19	Australian Open	R16	Hard	Amanda Anisimova	bt	Xin Yu Wang	7-6(4) 6-4	peak_diff 27
+2026-01-19	Australian Open	R16	Hard	Aryna Sabalenka	bt	Victoria Mboko	6-1 7-6(1)	peak_diff 8
+2026-01-19	Australian Open	R16	Hard	Ben Shelton	bt	Casper Ruud	3-6 6-4 6-3 6-4	peak_diff 3
+2026-01-19	Australian Open	R16	Hard	Carlos Alcaraz	bt	Tommy Paul	7-6(6) 6-4 7-5	peak_diff 7
+2026-01-19	Australian Open	R16	Hard	Coco Gauff	bt	Karolina Muchova	6-1 3-6 6-3	peak_diff 6
+2026-01-19	Australian Open	R16	Hard	Elena Rybakina	bt	Elise Mertens	6-1 6-3	peak_diff 10
+2026-01-19	Australian Open	R16	Hard	Elina Svitolina	bt	Mirra Andreeva	6-2 6-4	peak_diff 2
+2026-01-19	Australian Open	R16	Hard	Iga Swiatek	bt	Maddison Inglis	6-0 6-3	peak_diff 111
+2026-01-19	Australian Open	R16	Hard	Iva Jovic	bt	Yulia Putintseva	6-0 6-1	peak_diff 4
+2026-01-19	Australian Open	R16	Hard	Jannik Sinner	bt	Luciano Darderi	6-1 6-3 7-6(2)	peak_diff 15
+2026-01-19	Australian Open	R16	Hard	Jessica Pegula	bt	Madison Keys	6-3 6-4	peak_diff 2
+2026-01-19	Australian Open	R16	Hard	Learner Tien	bt	Daniil Medvedev	6-4 6-0 6-3	peak_diff 17
+2026-01-19	Australian Open	R16	Hard	Lorenzo Musetti	bt	Taylor Fritz	6-2 7-5 6-4	peak_diff 1
+2026-01-19	Australian Open	R16	Hard	Novak Djokovic	bt	Jakub Mensik	W/O	peak_diff 11
+2026-01-19	Australian Open	R32	Hard	Alex De Minaur	bt	Frances Tiafoe	6-3 6-4 7-5	peak_diff 4
+2026-01-19	Australian Open	R32	Hard	Alexander Bublik	bt	Tomas Martin Etcheverry	7-6(4) 7-6(5) 6-4	peak_diff 15
+2026-01-19	Australian Open	R32	Hard	Alexander Zverev	bt	Cameron Norrie	7-5 4-6 6-3 6-1	peak_diff 6
+2026-01-19	Australian Open	R32	Hard	Amanda Anisimova	bt	Peyton Stearns	6-1 6-4	peak_diff 25
+2026-01-19	Australian Open	R32	Hard	Aryna Sabalenka	bt	Anastasia Potapova	7-6(4) 7-6(7)	peak_diff 20
+2026-01-19	Australian Open	R32	Hard	Ben Shelton	bt	Valentin Vacherot	6-4 6-4 7-6(5)	peak_diff 11
+2026-01-19	Australian Open	R32	Hard	Carlos Alcaraz	bt	Corentin Moutet	6-2 6-4 6-1	peak_diff 29
+2026-01-19	Australian Open	R32	Hard	Casper Ruud	bt	Marin Cilic	6-4 6-4 3-6 7-5	peak_diff 11
+2026-01-19	Australian Open	R32	Hard	Coco Gauff	bt	Hailey Baptiste	3-6 6-0 6-3	peak_diff 23
+2026-01-19	Australian Open	R32	Hard	Daniil Medvedev	bt	Fabian Marozsan	6-7(5) 4-6 7-5 6-0 6-3	peak_diff 35
+2026-01-19	Australian Open	R32	Hard	Elena Rybakina	bt	Tereza Valentova	6-2 6-3	peak_diff 40
+2026-01-19	Australian Open	R32	Hard	Elina Svitolina	bt	Diana Shnaider	7-6(4) 6-3	peak_diff 8
+2026-01-19	Australian Open	R32	Hard	Elise Mertens	bt	Nikola Bartunkova	6-0 6-4	peak_diff 49
+2026-01-19	Australian Open	R32	Hard	Francisco Cerundolo	bt	Andrey Rublev	6-3 7-6(4) 6-3	peak_diff 13
+2026-01-19	Australian Open	R32	Hard	Iga Swiatek	bt	Anna Kalinskaya	6-1 1-6 6-1	peak_diff 10
+2026-01-19	Australian Open	R32	Hard	Iva Jovic	bt	Jasmine Paolini	6-2 7-6(3)	peak_diff 12
+2026-01-19	Australian Open	R32	Hard	Jakub Mensik	bt	Ethan Quinn	6-2 7-6(5) 7-6(5)	peak_diff 36
+2026-01-19	Australian Open	R32	Hard	Jannik Sinner	bt	Eliot Spizzirri	4-6 6-3 6-4 6-4	peak_diff 66
+2026-01-19	Australian Open	R32	Hard	Jessica Pegula	bt	Oksana Selekhmeteva	6-3 6-2	peak_diff 68
+2026-01-19	Australian Open	R32	Hard	Karolina Muchova	bt	Magda Linette	6-1 6-1	peak_diff 11
+2026-01-19	Australian Open	R32	Hard	Learner Tien	bt	Nuno Borges	7-6(9) 6-4 6-2	peak_diff 12
+2026-01-19	Australian Open	R32	Hard	Lorenzo Musetti	bt	Tomas Machac	5-7 6-4 6-2 5-7 6-2	peak_diff 15
+2026-01-19	Australian Open	R32	Hard	Luciano Darderi	bt	Karen Khachanov	7-6(5) 3-6 6-3 6-4	peak_diff 7
+2026-01-19	Australian Open	R32	Hard	Maddison Inglis	bt	Naomi Osaka	W/O	peak_diff 111
+2026-01-19	Australian Open	R32	Hard	Madison Keys	bt	Karolina Pliskova	6-3 6-3	peak_diff 4
+2026-01-19	Australian Open	R32	Hard	Mirra Andreeva	bt	Elena Gabriela Ruse	6-3 6-4	peak_diff 46
+2026-01-19	Australian Open	R32	Hard	Novak Djokovic	bt	Botic Van De Zandschulp	6-3 6-4 7-6(4)	peak_diff 21
+2026-01-19	Australian Open	R32	Hard	Taylor Fritz	bt	Stan Wawrinka	7-6(5) 2-6 6-4 6-4	peak_diff 9
+2026-01-19	Australian Open	R32	Hard	Tommy Paul	bt	Alejandro Davidovich Fokina	6-1 6-1 0-0 RET	peak_diff 6
+2026-01-19	Australian Open	R32	Hard	Victoria Mboko	bt	Clara Tauson	7-6(5) 5-7 6-3	peak_diff 3
+2026-01-19	Australian Open	R32	Hard	Xin Yu Wang	bt	Linda Noskova	7-5 6-4	peak_diff 18
+2026-01-19	Australian Open	R32	Hard	Yulia Putintseva	bt	Zeynep Sonmez	6-3 6-7(3) 6-3	peak_diff 39
+2026-01-19	Australian Open	R64	Hard	Alejandro Davidovich Fokina	bt	Reilly Opelka	6-3 7-6(3) 5-7 4-6 6-4	peak_diff 3
+2026-01-19	Australian Open	R64	Hard	Alex De Minaur	bt	Hamad Medjedovic	6-7(5) 6-2 6-2 6-1	peak_diff 50
+2026-01-19	Australian Open	R64	Hard	Alexander Bublik	bt	Marton Fucsovics	7-5 6-4 7-5	peak_diff 25
+2026-01-19	Australian Open	R64	Hard	Alexander Zverev	bt	Alexandre Muller	6-3 4-6 6-3 6-4	peak_diff 36
+2026-01-19	Australian Open	R64	Hard	Amanda Anisimova	bt	Katerina Siniakova	6-1 6-4	peak_diff 24
+2026-01-19	Australian Open	R64	Hard	Anastasia Potapova	bt	Emma Raducanu	7-6(3) 6-2	peak_diff 11
+2026-01-19	Australian Open	R64	Hard	Andrey Rublev	bt	Jaime Faria	6-4 6-3 4-6 7-5	peak_diff 82
+2026-01-19	Australian Open	R64	Hard	Anna Kalinskaya	bt	Julia Grabher	6-3 6-3	peak_diff 43
+2026-01-19	Australian Open	R64	Hard	Aryna Sabalenka	bt	Zhuoxuan Bai	6-3 6-1	peak_diff 82
+2026-01-19	Australian Open	R64	Hard	Ben Shelton	bt	Dane Sweeny	6-3 6-2 6-2	peak_diff 126
+2026-01-19	Australian Open	R64	Hard	Botic Van De Zandschulp	bt	Juncheng Shang	7-6(6) 6-2 6-3	peak_diff 25
+2026-01-19	Australian Open	R64	Hard	Cameron Norrie	bt	Emilio Nava	6-1 7-6(3) 4-6 7-6(5)	peak_diff 66
+2026-01-19	Australian Open	R64	Hard	Carlos Alcaraz	bt	Yannick Hanfmann	7-6(4) 6-3 6-2	peak_diff 44
+2026-01-19	Australian Open	R64	Hard	Casper Ruud	bt	Jaume Munar	6-3 7-5 6-4	peak_diff 31
+2026-01-19	Australian Open	R64	Hard	Clara Tauson	bt	Polina Kudermetova	6-3 3-6 7-5	peak_diff 42
+2026-01-19	Australian Open	R64	Hard	Coco Gauff	bt	Olga Danilovic	6-2 6-2	peak_diff 30
+2026-01-19	Australian Open	R64	Hard	Corentin Moutet	bt	Michael Zheng	3-6 6-1 6-3 2-0 RET	peak_diff 115
+2026-01-19	Australian Open	R64	Hard	Daniil Medvedev	bt	Quentin Halys	6-7(9) 6-3 6-4 6-2	peak_diff 45
+2026-01-19	Australian Open	R64	Hard	Diana Shnaider	bt	Talia Gibson	3-6 7-5 6-3	peak_diff 44
+2026-01-19	Australian Open	R64	Hard	Elena Gabriela Ruse	bt	Ajla Tomljanovic	6-4 6-4	peak_diff 19
+2026-01-19	Australian Open	R64	Hard	Elena Rybakina	bt	Varvara Gracheva	7-5 6-2	peak_diff 37
+2026-01-19	Australian Open	R64	Hard	Elina Svitolina	bt	Linda Klimovicova	7-5 6-1	peak_diff 126
+2026-01-19	Australian Open	R64	Hard	Eliot Spizzirri	bt	Yibing Wu	6-2 6-4 6-7(4) 4-6 6-3	peak_diff 13
+2026-01-19	Australian Open	R64	Hard	Elise Mertens	bt	Moyuka Uchijima	6-3 6-1	peak_diff 35
+2026-01-19	Australian Open	R64	Hard	Ethan Quinn	bt	Hubert Hurkacz	6-4 7-6(5) 6-1	peak_diff 42
+2026-01-19	Australian Open	R64	Hard	Fabian Marozsan	bt	Kamil Majchrzak	6-3 6-4 7-6(5)	peak_diff 17
+2026-01-19	Australian Open	R64	Hard	Frances Tiafoe	bt	Francisco Comesana	6-4 6-3 4-6 6-2	peak_diff 44
+2026-01-19	Australian Open	R64	Hard	Francisco Cerundolo	bt	Damir Dzumhur	6-3 6-2 6-1	peak_diff 36
+2026-01-19	Australian Open	R64	Hard	Hailey Baptiste	bt	Storm Hunter	6-2 6-1	peak_diff 89
+2026-01-19	Australian Open	R64	Hard	Iga Swiatek	bt	Marie Bouzkova	6-2 6-3	peak_diff 23
+2026-01-19	Australian Open	R64	Hard	Iva Jovic	bt	Priscilla Hon	6-1 6-2	peak_diff 78
+2026-01-19	Australian Open	R64	Hard	Jakub Mensik	bt	Rafael Jodar	6-2 6-4 6-4	peak_diff 11
+2026-01-19	Australian Open	R64	Hard	Jannik Sinner	bt	James Duckworth	6-1 6-4 6-2	peak_diff 45
+2026-01-19	Australian Open	R64	Hard	Jasmine Paolini	bt	Magdalena Frech	6-2 6-3	peak_diff 18
+2026-01-19	Australian Open	R64	Hard	Jessica Pegula	bt	Mccartney Kessler	6-0 6-2	peak_diff 27
+2026-01-19	Australian Open	R64	Hard	Karen Khachanov	bt	Nishesh Basavareddy	6-1 6-4 6-3	peak_diff 90
+2026-01-19	Australian Open	R64	Hard	Karolina Muchova	bt	Alycia Parks	4-6 6-4 6-4	peak_diff 32
+2026-01-19	Australian Open	R64	Hard	Karolina Pliskova	bt	Janice Tjen	6-4 6-4	peak_diff 35
+2026-01-19	Australian Open	R64	Hard	Learner Tien	bt	Alexander Shevchenko	6-2 5-7 6-1 6-0	peak_diff 27
+2026-01-19	Australian Open	R64	Hard	Linda Noskova	bt	Taylah Preston	6-2 4-6 6-2	peak_diff 114
+2026-01-19	Australian Open	R64	Hard	Lorenzo Musetti	bt	Lorenzo Sonego	6-3 6-3 6-4	peak_diff 16
+2026-01-19	Australian Open	R64	Hard	Luciano Darderi	bt	Sebastian Baez	6-3 1-6 6-4 6-3	peak_diff 2
+2026-01-19	Australian Open	R64	Hard	Maddison Inglis	bt	Laura Siegemund	6-4 6-7(3) 7-6(7)	peak_diff 85
+2026-01-19	Australian Open	R64	Hard	Madison Keys	bt	Ashlyn Krueger	6-1 7-5	peak_diff 24
+2026-01-19	Australian Open	R64	Hard	Magda Linette	bt	Ann Li	6-3 6-3	peak_diff 10
+2026-01-19	Australian Open	R64	Hard	Marin Cilic	bt	Denis Shapovalov	6-4 6-3 6-2	peak_diff 3
+2026-01-19	Australian Open	R64	Hard	Mirra Andreeva	bt	Maria Sakkari	6-0 6-4	peak_diff 2
+2026-01-19	Australian Open	R64	Hard	Naomi Osaka	bt	Sorana Cirstea	6-3 4-6 6-2	peak_diff 17
+2026-01-19	Australian Open	R64	Hard	Nikola Bartunkova	bt	Belinda Bencic	6-3 0-6 6-4	peak_diff 57
+2026-01-19	Australian Open	R64	Hard	Novak Djokovic	bt	Francesco Maestrelli	6-3 6-2 6-2	peak_diff 107
+2026-01-19	Australian Open	R64	Hard	Nuno Borges	bt	Jordan Thompson	6-7(9) 6-3 6-2 6-4	peak_diff 4
+2026-01-19	Australian Open	R64	Hard	Oksana Selekhmeteva	bt	Paula Badosa	6-4 6-4	peak_diff 69
+2026-01-19	Australian Open	R64	Hard	Peyton Stearns	bt	Petra Marcinko	6-2 7-5	peak_diff 22
+2026-01-19	Australian Open	R64	Hard	Stan Wawrinka	bt	Arthur Gea	4-6 6-3 3-6 7-5 7-6(3)	peak_diff 122
+2026-01-19	Australian Open	R64	Hard	Taylor Fritz	bt	Vit Kopriva	6-1 6-4 7-6(4)	peak_diff 51
+2026-01-19	Australian Open	R64	Hard	Tereza Valentova	bt	Linda Fruhvirtova	7-5 2-6 6-3	peak_diff 7
+2026-01-19	Australian Open	R64	Hard	Tomas Machac	bt	Stefanos Tsitsipas	6-4 3-6 7-6(5) 7-6(5)	peak_diff 17
+2026-01-19	Australian Open	R64	Hard	Tomas Martin Etcheverry	bt	Arthur Fery	7-6(4) 6-1 6-3	peak_diff 116
+2026-01-19	Australian Open	R64	Hard	Tommy Paul	bt	Thiago Agustin Tirante	6-3 6-4 6-2	peak_diff 44
+2026-01-19	Australian Open	R64	Hard	Valentin Vacherot	bt	Rinky Hijikata	6-1 6-3 4-6 6-2	peak_diff 46
+2026-01-19	Australian Open	R64	Hard	Victoria Mboko	bt	Caty Mcnally	6-4 6-3	peak_diff 45
+2026-01-19	Australian Open	R64	Hard	Xin Yu Wang	bt	Jelena Ostapenko	4-6 6-4 6-4	peak_diff 25
+2026-01-19	Australian Open	R64	Hard	Yulia Putintseva	bt	Elsa Jacquemot	6-1 6-2	peak_diff 33
+2026-01-19	Australian Open	R64	Hard	Zeynep Sonmez	bt	Anna Bondar	6-2 6-4	peak_diff 9
+2026-01-19	Australian Open	SF	Hard	Aryna Sabalenka	bt	Elina Svitolina	6-2 6-3	peak_diff 2
+2026-01-19	Australian Open	SF	Hard	Carlos Alcaraz	bt	Alexander Zverev	6-4 7-6(5) 6-7(3) 6-7(4) 7-5	peak_diff 1
+2026-01-19	Australian Open	SF	Hard	Elena Rybakina	bt	Jessica Pegula	6-3 7-6(7)	peak_diff 1
+2026-01-19	Australian Open	SF	Hard	Novak Djokovic	bt	Jannik Sinner	3-6 6-3 4-6 6-4 6-4	peak_diff 0

@@ -619,13 +619,18 @@ async function getConfigPreferRedis() {
     const client = await redis.getClient();
     if (client) {
       try {
+        let parsed = null;
+        const fullRaw = await client.get(CONFIG_KEY);
+        if (fullRaw) parsed = JSON.parse(fullRaw);
         const condRaw = await client.get(`${CONFIG_KEY}:condition`);
         if (condRaw) {
-          return normalizeConfig({ condition: JSON.parse(condRaw) });
+          const condition = JSON.parse(condRaw);
+          parsed = parsed ? { ...parsed, condition } : { condition };
         }
-        const fullRaw = await client.get(CONFIG_KEY);
-        if (fullRaw) {
-          return normalizeConfig(JSON.parse(fullRaw));
+        if (parsed) {
+          const cfg = normalizeConfig(parsed);
+          await enrichBettingAccount(cfg);
+          return cfg;
         }
       } catch (e) {
         console.warn('[tennis/engines] getConfigPreferRedis redis', e.message);

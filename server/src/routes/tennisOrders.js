@@ -1,63 +1,29 @@
 /**
- * 网球单场下单 API（按邮箱找用户钱包，无需 JWT）
+ * 网球下单 API（按邮箱找用户钱包，无需 JWT）
  * POST /api/tennis/orders/buy
  * POST /api/tennis/orders/sell
+ * POST /api/tennis/orders/batch
  */
 const { Router } = require('express');
-const pool = require('../db');
-const btcWallet = require('../services/btcWallet');
 const tennisTrade = require('../services/tennisTrade');
-const tennisDataSource = require('../services/tennisDataSource');
 const tennisBettingEngine = require('../services/tennisBettingEngine');
+const {
+  pickEmail,
+  wantBool,
+  resolveUserByEmail,
+  resolveSimulate,
+  ensureWalletForLive,
+  attachUserFromEmailBody,
+  resolveTradeSimulatePublic,
+} = require('../services/tennisOrdersPublic');
 
 const router = Router();
 
 const PRODUCTS = new Set(['tennis-prematch', 'tennis-inplay']);
 
-function pickEmail(body = {}) {
-  const email = String(body.email || '').trim();
-  if (email) return email;
-  return String(body.account || '').trim();
-}
-
 function normalizeProduct(raw) {
   const p = String(raw || '').trim().toLowerCase();
   return PRODUCTS.has(p) ? p : null;
-}
-
-function wantBool(v, defaultVal) {
-  if (v === undefined || v === null || v === '') return defaultVal;
-  return v === true || v === 1 || v === '1' || v === 'true';
-}
-
-async function resolveUserByEmail(email) {
-  const account = String(email || '').trim();
-  if (!account) return null;
-  const [[row]] = await pool.query(
-    'SELECT id, account FROM users WHERE account=? LIMIT 1',
-    [account],
-  );
-  return row || null;
-}
-
-async function resolveSimulate(bodySimulate) {
-  const force = await tennisDataSource.shouldSimulateTrades();
-  return force || wantBool(bodySimulate, false);
-}
-
-async function ensureWalletForLive(userId, simulate) {
-  if (simulate) return;
-  const status = await btcWallet.getWalletStatus(userId);
-  if (!status?.configured) {
-    const err = new Error('该用户未配置钱包');
-    err.status = 400;
-    throw err;
-  }
-  if (status.decryptFailed) {
-    const err = new Error('该用户钱包解密失败，请重新保存私钥');
-    err.status = 400;
-    throw err;
-  }
 }
 
 router.post('/buy', async (req, res) => {
@@ -257,6 +223,33 @@ router.post('/sell', async (req, res) => {
     console.error('[tennis/orders/sell]', e);
     const status = e.status || 400;
     res.status(status).json({ ok: false, error: e.message || '卖出失败' });
+  }
+});
+
+/** 批量买入（1～20 场，每场同 amountUsd） */
+router.post('/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const product = normalizeProduct(body.product);
+    if (!product) {
+      return res.status(400).json({ ok: false, error: 'product 须为 tennis-prematch 或 tennis-inplay' });
+    }
+    const { orders, amountUsd } = body;
+    const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
+      orders,
+      amountUsd,
+      product,
+      simulate: !!req.tradeSimulate,
+    });
+    res.json({
+      ...result,
+      email: req.tennisUser.account,
+      userId: req.tennisUser.id,
+      product,
+    });
+  } catch (e) {
+    console.error('[tennis/orders/batch]', e);
+    res.status(400).json({ ok: false, error: e.message || '批量下单失败' });
   }
 });
 

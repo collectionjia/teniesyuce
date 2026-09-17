@@ -10,6 +10,7 @@ import SchedulerCenter from './components/SchedulerCenter.vue'
 import TennisDocksEditor from './components/TennisDocksEditor.vue'
 import TennisTop100Wide from './components/TennisTop100Wide.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
+import EngineServicesCenter from './components/EngineServicesCenter.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
 import { startBackgroundRunner, stopBackgroundRunner, loadSimState, setLiveTradeHandler, setLiveSellHandler } from './btcVirtualBet'
@@ -29,6 +30,10 @@ const authView = ref('login')
 const showPwd = ref(false)
 const loginError = ref('')
 const registerError = ref('')
+/** 启动时会话恢复失败（多为本机 API 未启动） */
+const sessionError = ref('')
+/** 首页产品列表加载失败 */
+const shopLoadError = ref('')
 const role = ref('user')
 const view = ref('home')
 const balance = ref(0)
@@ -632,7 +637,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-betting': '投注引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -674,7 +679,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-betting', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-betting', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 /** 模拟数据编辑：独立全屏页（?page=docks-editor） */
 const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
@@ -763,16 +768,25 @@ const adminManageSections = [
     ],
   },
   {
+    key: 'services',
+    title: '服务类',
+    desc: '五引擎微服务健康 · 手动触发 · 调度',
+    items: [
+      { view: 'engine-services', label: '五引擎服务', desc: 'collect / rules / betting / stop-loss / scheduler 状态与操作', icon: 'grid', color: 'from-cyan-500 to-blue-600' },
+      { view: 'scheduler-center', label: '调度中心', desc: '定时任务 · 立即执行 · 运行日志', icon: 'list', color: 'from-sky-500 to-indigo-500' },
+    ],
+  },
+  {
     key: 'engines',
     title: '引擎类',
-    desc: '网球采集 / 条件 / 投注 / 调度',
+    desc: '网球采集 / 条件 / 投注 / 止损 配置',
     items: [
       { view: 'tennis-collect', label: '采集引擎', desc: '全量拆三桶 · Top100 · tick 刷 Polymarket', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
       { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 多组强制筛', icon: 'list', color: 'from-amber-500 to-yellow-500' },
-      { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入与止损', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
+      { view: 'tennis-betting', label: '投注引擎', desc: '盘前/盘中分桶 · 多组买入', icon: 'grid', color: 'from-violet-500 to-fuchsia-500' },
+      { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },
       { view: 'tennis-docks-editor', label: '虚拟日列表', desc: '盘前/盘中/盘后筛选 · 分页编辑模拟场次', icon: 'list', color: 'from-teal-500 to-cyan-600' },
       { view: 'tennis-top100', label: 'Top100 宽屏', desc: 'ATP/WTA 并排 · 电脑全屏采购看板', icon: 'chart', color: 'from-sky-500 to-cyan-500' },
-      { view: 'scheduler-center', label: '调度中心', desc: '采集/条件/投注 · 自定义时间 · 多任务', icon: 'list', color: 'from-sky-500 to-indigo-500' },
       { view: 'engine-api-keys', label: '引擎 API Key', desc: '签发 / 吊销 · 调用 /api/engine/*', icon: 'link', color: 'from-slate-500 to-zinc-600' },
     ],
   },
@@ -1089,8 +1103,33 @@ async function saveSiteSettings() {
   }
 }
 
+function isApiUnreachableError(e) {
+  return !e?.response && !!e?.request
+}
+
+function apiErrorMessage(e, fallback = '请求失败') {
+  if (isApiUnreachableError(e)) {
+    return '无法连接本机 API，请先在 server 目录运行 npm run dev（端口 3001）'
+  }
+  return e?.response?.data?.error || e?.message || fallback
+}
+
 async function loadProducts() {
-  products.value = await api.fetchProducts()
+  shopLoadError.value = ''
+  try {
+    products.value = await api.fetchProducts()
+  } catch (e) {
+    shopLoadError.value = apiErrorMessage(e, '加载产品失败')
+    throw e
+  }
+}
+
+async function loadProductsSafe() {
+  try {
+    await loadProducts()
+  } catch {
+    /* 首页/切换 tab 时产品加载失败不抛到外层 */
+  }
 }
 
 async function loadSubscriptions() {
@@ -1749,7 +1788,7 @@ function withdrawStatusClass(s) {
 
 /** 首页先出产品列表；订阅 / 管理后台数据后台拉，不挡「加载中」 */
 async function refreshRoleData({ deferSecondary = true } = {}) {
-  await loadProducts()
+  await loadProductsSafe()
   const loadSecondary = async () => {
     try {
       await loadSubscriptions()
@@ -1802,6 +1841,7 @@ async function initSession() {
   }
 
   loading.value = true
+  sessionError.value = ''
   try {
     const token = localStorage.getItem('token')
     if (!token) { authed.value = false; return }
@@ -1810,16 +1850,26 @@ async function initSession() {
     authed.value = true
     view.value = defaultViewForRole(user.role)
     await refreshRoleData({ deferSecondary: true })
-  } catch {
-    api.logoutLocal()
-    authed.value = false
+  } catch (e) {
+    const status = e?.response?.status
+    if (status === 401 || status === 403) {
+      api.logoutLocal()
+      authed.value = false
+    } else if (isApiUnreachableError(e)) {
+      sessionError.value = apiErrorMessage(e)
+      authed.value = false
+    } else {
+      api.logoutLocal()
+      authed.value = false
+      sessionError.value = apiErrorMessage(e, '会话恢复失败，请重新登录')
+    }
   } finally {
     loading.value = false
   }
 }
 
-watch(() => f.account, () => { loginError.value = ''; registerError.value = '' })
-watch(() => f.password, () => { loginError.value = ''; registerError.value = '' })
+watch(() => f.account, () => { loginError.value = ''; registerError.value = ''; sessionError.value = '' })
+watch(() => f.password, () => { loginError.value = ''; registerError.value = ''; sessionError.value = '' })
 watch(() => f.confirm, () => { registerError.value = '' })
 watch(() => f.agree, () => { registerError.value = '' })
 watch(authView, () => { loginError.value = ''; registerError.value = '' })
@@ -1830,6 +1880,7 @@ async function doLogin() {
     return
   }
   loginError.value = ''
+  sessionError.value = ''
   try {
     const data = await api.login(f.account, f.password)
     setUser(data.user)
@@ -1840,7 +1891,7 @@ async function doLogin() {
     }
     showToast('登录成功', 'success')
   } catch (e) {
-    loginError.value = e.response?.data?.error || '账号或密码错误'
+    loginError.value = apiErrorMessage(e, '账号或密码错误')
   }
 }
 
@@ -1905,20 +1956,24 @@ function go(v) {
   if (v === 'mine') page.mine = 1
 }
 
-/** 盘前/盘中列表 → 管理中心条件引擎 / 投注引擎 / 调度中心 */
+/** 盘前/盘中列表 → 管理中心条件引擎 / 投注引擎 / 止损引擎 / 调度中心 */
 function onOpenTennisAdminEngine(payload) {
   if (payload?.kind === 'scheduler') {
     go('scheduler-center')
     return
   }
-  const kind = payload?.kind === 'betting' ? 'betting' : 'condition'
+  const kind = payload?.kind === 'betting'
+    ? 'betting'
+    : payload?.kind === 'stop'
+      ? 'stop'
+      : 'condition'
   const bucket = ['prematch', 'inplay', 'settled'].includes(payload?.bucket)
     ? payload.bucket
     : 'prematch'
   try {
     sessionStorage.setItem('tennis_engine_focus', JSON.stringify({ kind, bucket }))
   } catch (_) { /* ignore */ }
-  go(kind === 'betting' ? 'tennis-betting' : 'tennis-condition')
+  go(kind === 'betting' ? 'tennis-betting' : kind === 'stop' ? 'tennis-stop' : 'tennis-condition')
 }
 
 function onOpenDocksEditor(date) {
@@ -2227,14 +2282,14 @@ watch(view, async (v) => {
   if (!authed.value) return
   if (role.value === 'agent') {
     if (v === 'shop' || v === 'mine') {
-      await loadProducts()
+      await loadProductsSafe()
       if (v === 'mine') await loadSubscriptions()
     } else if (v === 'clients') await loadAgentOrders()
     else if (v === 'overview') await loadAgentData()
   }
   if (role.value === 'admin' && ['overview', 'shop', 'manage', 'products', 'agents', 'orders', 'users', 'mine', 'redeem-codes', 'daily-report', 'site-settings'].includes(v)) {
     if (v === 'shop' || v === 'mine') {
-      await loadProducts()
+      await loadProductsSafe()
       if (v === 'mine') await loadSubscriptions()
     } else if (v === 'products') adminProducts.value = await api.fetchAdminProducts()
     else if (v === 'agents') admin.agentList = await api.fetchAdminAgents()
@@ -2755,6 +2810,7 @@ function productEmbedUrl(product) {
                     <input :type="showPwd?'text':'password'" v-model="f.password" autocomplete="current-password" placeholder="登录密码" class="auth-input"/>
                     <button type="button" @click="showPwd=!showPwd" v-html="icon(showPwd?'eyeOff':'eye')" class="auth-field-action"></button>
                   </div>
+                  <p v-if="sessionError" class="text-amber-700 text-sm text-center -mt-1 bg-amber-50 rounded-xl px-3 py-2">{{ sessionError }}</p>
                   <p v-if="loginError" class="text-danger text-sm text-center -mt-1">{{ loginError }}</p>
                   <button type="button" @click="doLogin" class="auth-submit">登录</button>
                 </div>
@@ -2881,7 +2937,10 @@ function productEmbedUrl(product) {
                   <input v-model="listSearch.shop" type="search" placeholder="搜索..." class="list-search-input" />
                 </div>
               </div>
-              <div v-if="filteredShopProducts.length === 0" class="shop-empty">
+              <div v-if="shopLoadError" class="shop-empty text-amber-700 bg-amber-50 rounded-2xl px-4 py-6">
+                {{ shopLoadError }}
+              </div>
+              <div v-else-if="filteredShopProducts.length === 0" class="shop-empty">
                 未找到匹配的产品
               </div>
               <div v-else class="product-tile-grid">
@@ -3658,6 +3717,23 @@ function productEmbedUrl(product) {
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
               <TennisMonitor engine-page="betting" />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='tennis-stop'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <TennisMonitor engine-page="stop" />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='engine-services'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <EngineServicesCenter
+                @open-scheduler="go('scheduler-center')"
+                @open-settings="go($event)"
+              />
             </section>
 
             <section v-else-if="role==='admin' && view==='scheduler-center'" class="space-y-3 fade-up">

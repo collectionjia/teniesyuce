@@ -1,0 +1,255 @@
+# 2026-05-25 · 254 matches · Roland Garros · from 2026_all_gs_1000_500.txt
+2026-05-25	Roland Garros	F	Clay	Alexander Zverev	bt	Flavio Cobolli	6-1 4-6 6-4 6-7(5) 6-1	peak_diff 8
+2026-05-25	Roland Garros	F	Clay	Mirra Andreeva	bt	Maja Chwalinska	6-3 6-2	peak_diff 16
+2026-05-25	Roland Garros	QF	Clay	Alexander Zverev	bt	Rafael Jodar	7-6(3) 6-1 6-3	peak_diff 21
+2026-05-25	Roland Garros	QF	Clay	Diana Shnaider	bt	Aryna Sabalenka	3-6 7-5 6-0	peak_diff 10
+2026-05-25	Roland Garros	QF	Clay	Flavio Cobolli	bt	Felix Auger Aliassime	4-6 6-4 6-4 6-4	peak_diff 6
+2026-05-25	Roland Garros	QF	Clay	Jakub Mensik	bt	Joao Fonseca	6-4 6-3 7-6(3)	peak_diff 12
+2026-05-25	Roland Garros	QF	Clay	Maja Chwalinska	bt	Anna Kalinskaya	7-6(3) 6-3	peak_diff 10
+2026-05-25	Roland Garros	QF	Clay	Marta Kostyuk	bt	Elina Svitolina	6-3 2-6 6-2	peak_diff 9
+2026-05-25	Roland Garros	QF	Clay	Matteo Arnaldi	bt	Matteo Berrettini	7-5 5-2 RET	peak_diff 23
+2026-05-25	Roland Garros	QF	Clay	Mirra Andreeva	bt	Sorana Cirstea	6-0 6-3	peak_diff 13
+2026-05-25	Roland Garros	R128	Clay	Adam Walton	bt	Daniil Medvedev	6-2 1-6 6-1 1-6 6-4	peak_diff 73
+2026-05-25	Roland Garros	R128	Clay	Adolfo Daniel Vallejo	bt	Cameron Norrie	7-6(7) 2-0 RET	peak_diff 62
+2026-05-25	Roland Garros	R128	Clay	Alejandro Davidovich Fokina	bt	Damir Dzumhur	6-7(3) 6-3 2-6 7-5 6-3	peak_diff 40
+2026-05-25	Roland Garros	R128	Clay	Alejandro Tabilo	bt	Kamil Majchrzak	6-1 6-3 6-4	peak_diff 34
+2026-05-25	Roland Garros	R128	Clay	Alex De Minaur	bt	Toby Samuel	6-4 6-4 6-2	peak_diff 144
+2026-05-25	Roland Garros	R128	Clay	Alex Michelsen	bt	Alexander Shevchenko	6-2 6-4 6-2	peak_diff 15
+2026-05-25	Roland Garros	R128	Clay	Alexander Blockx	bt	Coleman Wong	6-3 6-4 6-2	peak_diff 72
+2026-05-25	Roland Garros	R128	Clay	Alexander Zverev	bt	Benjamin Bonzi	6-3 6-4 6-2	peak_diff 40
+2026-05-25	Roland Garros	R128	Clay	Alina Korneeva	bt	Elisabetta Cocciaretto	6-3 6-3	peak_diff 67
+2026-05-25	Roland Garros	R128	Clay	Alycia Parks	bt	Leylah Fernandez	6-4 6-4	peak_diff 27
+2026-05-25	Roland Garros	R128	Clay	Amanda Anisimova	bt	Tiantsoa Sarah Rakotomanga Rajaonah	6-3 6-1	peak_diff 113
+2026-05-25	Roland Garros	R128	Clay	Anastasia Potapova	bt	Maya Joint	6-1 6-2	peak_diff 7
+2026-05-25	Roland Garros	R128	Clay	Andrey Rublev	bt	Ignacio Buse	6-3 6-7(6) 6-3 7-5	peak_diff 26
+2026-05-25	Roland Garros	R128	Clay	Ann Li	bt	Shuai Zhang	6-4 6-2	peak_diff 7
+2026-05-25	Roland Garros	R128	Clay	Anna Kalinskaya	bt	Lois Boisson	6-2 6-2	peak_diff 23
+2026-05-25	Roland Garros	R128	Clay	Antonia Ruzic	bt	Ashlyn Krueger	3-6 6-2 6-2	peak_diff 22
+2026-05-25	Roland Garros	R128	Clay	Arthur Rinderknech	bt	Jurij Rodionov	7-6(5) 6-2 6-3	peak_diff 63
+2026-05-25	Roland Garros	R128	Clay	Aryna Sabalenka	bt	Jessica Bouzas Maneiro	6-4 6-2	peak_diff 39
+2026-05-25	Roland Garros	R128	Clay	Belinda Bencic	bt	Sinja Kraus	6-2 6-3	peak_diff 88
+2026-05-25	Roland Garros	R128	Clay	Ben Shelton	bt	Daniel Merida Aguilar	6-3 6-3 6-4	peak_diff 77
+2026-05-25	Roland Garros	R128	Clay	Brandon Nakashima	bt	Roberto Bautista Agut	6-2 7-5 6-2	peak_diff 20
+2026-05-25	Roland Garros	R128	Clay	Camila Osorio	bt	Ekaterina Alexandrova	6-2 6-4	peak_diff 23
+2026-05-25	Roland Garros	R128	Clay	Camilo Ugo Carabelli	bt	Emilio Nava	7-6(10) 6-3 6-3	peak_diff 31
+2026-05-25	Roland Garros	R128	Clay	Casper Ruud	bt	Roman Safiullin	6-2 7-6(5) 5-7 0-6 6-2	peak_diff 34
+2026-05-25	Roland Garros	R128	Clay	Caty Mcnally	bt	Ajla Tomljanovic	3-6 7-6(5) 6-3	peak_diff 22
+2026-05-25	Roland Garros	R128	Clay	Claire Liu	bt	Moyuka Uchijima	3-6 6-0 4-1 RET	peak_diff 5
+2026-05-25	Roland Garros	R128	Clay	Coco Gauff	bt	Taylor Townsend	6-4 6-0	peak_diff 44
+2026-05-25	Roland Garros	R128	Clay	Daria Kasatkina	bt	Zeynep Sonmez	6-4 6-4	peak_diff 51
+2026-05-25	Roland Garros	R128	Clay	Daria Snigur	bt	Clara Tauson	3-6 7-5 6-2	peak_diff 72
+2026-05-25	Roland Garros	R128	Clay	Diana Shnaider	bt	Renata Zarazua	6-4 6-1	peak_diff 40
+2026-05-25	Roland Garros	R128	Clay	Diane Parry	bt	Anhelina Kalinina	0-6 6-2 6-4	peak_diff 23
+2026-05-25	Roland Garros	R128	Clay	Dino Prizmic	bt	Michael Zheng	6-1 6-1 6-3	peak_diff 75
+2026-05-25	Roland Garros	R128	Clay	Donna Vekic	bt	Alice Tubello	6-3 6-2	peak_diff 202
+2026-05-25	Roland Garros	R128	Clay	Elena Rybakina	bt	Veronika Erjavec	6-2 6-2	peak_diff 82
+2026-05-25	Roland Garros	R128	Clay	Elina Svitolina	bt	Anna Bondar	3-6 6-1 7-6(3)	peak_diff 47
+2026-05-25	Roland Garros	R128	Clay	Elise Mertens	bt	Tatjana Maria	7-5 6-0	peak_diff 24
+2026-05-25	Roland Garros	R128	Clay	Elsa Jacquemot	bt	Linda Fruhvirtova	6-4 6-3	peak_diff 4
+2026-05-25	Roland Garros	R128	Clay	Emma Navarro	bt	Janice Tjen	6-4 6-3	peak_diff 28
+2026-05-25	Roland Garros	R128	Clay	Eva Lys	bt	Petra Marcinko	6-3 6-0	peak_diff 11
+2026-05-25	Roland Garros	R128	Clay	Facundo Diaz Acosta	bt	Zhizhen Zhang	6-1 6-4 6-3	peak_diff 16
+2026-05-25	Roland Garros	R128	Clay	Federico Cina	bt	Reilly Opelka	3-6 6-4 6-2 6-7(6) 6-4	peak_diff 166
+2026-05-25	Roland Garros	R128	Clay	Felix Auger Aliassime	bt	Daniel Altmaier	4-6 6-4 4-6 6-1 7-6(7)	peak_diff 40
+2026-05-25	Roland Garros	R128	Clay	Flavio Cobolli	bt	Andrea Pellegrino	6-4 7-6(4) 6-3	peak_diff 99
+2026-05-25	Roland Garros	R128	Clay	Frances Tiafoe	bt	Eliot Spizzirri	6-3 6-7(5) 6-4 6-3	peak_diff 57
+2026-05-25	Roland Garros	R128	Clay	Francesca Jones	bt	Beatriz Haddad Maia	1-6 7-6(4) 6-2	peak_diff 55
+2026-05-25	Roland Garros	R128	Clay	Francisco Cerundolo	bt	Botic Van De Zandschulp	6-3 6-4 6-7(7) 6-4	peak_diff 4
+2026-05-25	Roland Garros	R128	Clay	Francisco Comesana	bt	Ethan Quinn	6-4 7-6(8) 7-6(4)	peak_diff 6
+2026-05-25	Roland Garros	R128	Clay	Hailey Baptiste	bt	Barbora Krejcikova	6-7(7) 7-6(6) 6-2	peak_diff 23
+2026-05-25	Roland Garros	R128	Clay	Hamad Medjedovic	bt	Yannick Hanfmann	6-3 6-4 6-7(1) 6-4	peak_diff 11
+2026-05-25	Roland Garros	R128	Clay	Hubert Hurkacz	bt	Jaume Munar	6-3 6-3 2-6 6-3	peak_diff 27
+2026-05-25	Roland Garros	R128	Clay	Hugo Gaston	bt	Gael Monfils	6-2 6-3 3-6 2-6 6-0	peak_diff 49
+2026-05-25	Roland Garros	R128	Clay	Iga Swiatek	bt	Emerson Jones	6-1 6-2	peak_diff 128
+2026-05-25	Roland Garros	R128	Clay	Iva Jovic	bt	Alexandra Eala	6-4 6-2	peak_diff 13
+2026-05-25	Roland Garros	R128	Clay	Jaime Faria	bt	Denis Shapovalov	6-4 7-5 6-4	peak_diff 77
+2026-05-25	Roland Garros	R128	Clay	Jakub Mensik	bt	Titouan Droguet	6-3 6-2 6-4	peak_diff 95
+2026-05-25	Roland Garros	R128	Clay	James Duckworth	bt	Gabriel Diallo	6-3 4-1 RET	peak_diff 13
+2026-05-25	Roland Garros	R128	Clay	Jan Lennard Struff	bt	Alexander Bublik	7-5 6-7(6) 6-4 7-5	peak_diff 11
+2026-05-25	Roland Garros	R128	Clay	Jannik Sinner	bt	Clement Tabur	6-1 6-3 6-4	peak_diff 164
+2026-05-25	Roland Garros	R128	Clay	Jasmine Paolini	bt	Dayana Yastremska	7-5 6-3	peak_diff 17
+2026-05-25	Roland Garros	R128	Clay	Jelena Ostapenko	bt	Ella Seidel	6-4 6-4	peak_diff 73
+2026-05-25	Roland Garros	R128	Clay	Jesper De Jong	bt	Stan Wawrinka	6-3 3-6 6-3 6-4	peak_diff 58
+2026-05-25	Roland Garros	R128	Clay	Jil Teichmann	bt	Liudmila Samsonova	6-4 6-4	peak_diff 9
+2026-05-25	Roland Garros	R128	Clay	Joao Fonseca	bt	Luka Pavlovic	7-6(6) 6-4 6-2	peak_diff 160
+2026-05-25	Roland Garros	R128	Clay	Juan Manuel Cerundolo	bt	Jacob Fearnley	6-2 7-6(0) 7-6(7)	peak_diff 4
+2026-05-25	Roland Garros	R128	Clay	Julia Grabher	bt	Rebecca Sramkova	6-2 6-2	peak_diff 21
+2026-05-25	Roland Garros	R128	Clay	Kaitlin Quevedo	bt	Leolia Jeanjean	7-6(5) 7-6(2)	peak_diff 16
+2026-05-25	Roland Garros	R128	Clay	Kamilla Rakhimova	bt	Jaqueline Cristian	6-3 4-6 6-4	peak_diff 32
+2026-05-25	Roland Garros	R128	Clay	Karen Khachanov	bt	Arthur Gea	6-3 7-6(3) 6-0	peak_diff 126
+2026-05-25	Roland Garros	R128	Clay	Karolina Muchova	bt	Anastasia Zakharova	7-5 6-2	peak_diff 57
+2026-05-25	Roland Garros	R128	Clay	Katerina Siniakova	bt	Simona Waltert	6-4 7-6(4)	peak_diff 54
+2026-05-25	Roland Garros	R128	Clay	Katie Boulter	bt	Akasha Urhobo	6-4 4-6 6-4	peak_diff 157
+2026-05-25	Roland Garros	R128	Clay	Katie Volynets	bt	Clara Burel	6-3 6-1	peak_diff 14
+2026-05-25	Roland Garros	R128	Clay	Kimberly Birrell	bt	Jessica Pegula	1-6 6-3 6-3	peak_diff 57
+2026-05-25	Roland Garros	R128	Clay	Learner Tien	bt	Cristian Garin	6-0 2-6 6-0 6-2	peak_diff 1
+2026-05-25	Roland Garros	R128	Clay	Lorenzo Sonego	bt	Pierre Hugues Herbert	7-6(3) 5-7 6-2 1-6 6-4	peak_diff 43
+2026-05-25	Roland Garros	R128	Clay	Luca Van Assche	bt	Vilius Gaubas	6-4 6-2 2-6 7-5	peak_diff 38
+2026-05-25	Roland Garros	R128	Clay	Luciano Darderi	bt	Sebastian Ofner	7-6(5) 6-2 6-3	peak_diff 21
+2026-05-25	Roland Garros	R128	Clay	Madison Keys	bt	Hanne Vandewinkel	6-3 6-0	peak_diff 87
+2026-05-25	Roland Garros	R128	Clay	Magda Linette	bt	Tereza Valentova	5-7 6-4 7-6(9)	peak_diff 23
+2026-05-25	Roland Garros	R128	Clay	Magdalena Frech	bt	Elena Gabriela Ruse	7-6(5) 2-1 RET	peak_diff 29
+2026-05-25	Roland Garros	R128	Clay	Maja Chwalinska	bt	Qinwen Zheng	6-4 6-0	peak_diff 17
+2026-05-25	Roland Garros	R128	Clay	Marco Trungelliti	bt	Kyrian Jacquet	6-4 6-2 6-2	peak_diff 26
+2026-05-25	Roland Garros	R128	Clay	Maria Sakkari	bt	Linda Noskova	7-5 7-6(3)	peak_diff 9
+2026-05-25	Roland Garros	R128	Clay	Mariano Navone	bt	Jenson Brooksby	6-4 6-4 6-4	peak_diff 4
+2026-05-25	Roland Garros	R128	Clay	Marie Bouzkova	bt	Lucia Bronzetti	6-3 6-1	peak_diff 22
+2026-05-25	Roland Garros	R128	Clay	Marina Bassols Ribera	bt	Emiliana Arango	6-3 6-4	peak_diff 59
+2026-05-25	Roland Garros	R128	Clay	Marta Kostyuk	bt	Oksana Selekhmeteva	6-2 6-3	peak_diff 59
+2026-05-25	Roland Garros	R128	Clay	Martin Landaluce	bt	Juan Carlos Prado Angelo	6-3 4-6 6-2 6-7(3) 6-4	peak_diff 103
+2026-05-25	Roland Garros	R128	Clay	Matteo Arnaldi	bt	Tallon Griekspoor	6-7(9) 6-3 7-6(6) 6-3	peak_diff 8
+2026-05-25	Roland Garros	R128	Clay	Matteo Berrettini	bt	Marton Fucsovics	6-7(2) 7-5 6-1 6-2	peak_diff 29
+2026-05-25	Roland Garros	R128	Clay	Mayar Sherif	bt	Dalma Galfi	7-5 6-4	peak_diff 48
+2026-05-25	Roland Garros	R128	Clay	Mccartney Kessler	bt	Hanyu Guo	4-6 7-6(1) 7-5	peak_diff 126
+2026-05-25	Roland Garros	R128	Clay	Miomir Kecmanovic	bt	Fabian Marozsan	7-6(0) 6-3 6-4	peak_diff 9
+2026-05-25	Roland Garros	R128	Clay	Mirra Andreeva	bt	Fiona Ferro	6-3 6-3	peak_diff 34
+2026-05-25	Roland Garros	R128	Clay	Moise Kouame	bt	Marin Cilic	7-6(4) 6-2 6-1	peak_diff 203
+2026-05-25	Roland Garros	R128	Clay	Naomi Osaka	bt	Laura Siegemund	6-3 7-6(3)	peak_diff 26
+2026-05-25	Roland Garros	R128	Clay	Nishesh Basavareddy	bt	Taylor Fritz	7-6(5) 7-6(5) 6-7(9) 6-1	peak_diff 95
+2026-05-25	Roland Garros	R128	Clay	Novak Djokovic	bt	Giovanni Mpetshi Perricard	5-7 7-5 6-1 6-4	peak_diff 28
+2026-05-25	Roland Garros	R128	Clay	Nuno Borges	bt	Tomas Martin Etcheverry	6-3 6-4 6-2	peak_diff 5
+2026-05-25	Roland Garros	R128	Clay	Oleksandra Oliynykova	bt	Elena Pridankina	6-1 6-2	peak_diff 117
+2026-05-25	Roland Garros	R128	Clay	Pablo Carreno Busta	bt	Jiri Lehecka	6-3 7-6(3) 6-3	peak_diff 1
+2026-05-25	Roland Garros	R128	Clay	Peyton Stearns	bt	Sofia Kenin	6-3 6-3	peak_diff 24
+2026-05-25	Roland Garros	R128	Clay	Quentin Halys	bt	Mattia Bellucci	6-3 7-6(4) 6-3	peak_diff 17
+2026-05-25	Roland Garros	R128	Clay	Rafael Jodar	bt	Aleksandar Kovacevic	6-1 6-0 6-4	peak_diff 31
+2026-05-25	Roland Garros	R128	Clay	Raphael Collignon	bt	Aleksandar Vukic	6-3 6-3 7-6(4)	peak_diff 3
+2026-05-25	Roland Garros	R128	Clay	Roman Andres Burruchaga	bt	Sebastian Baez	2-6 7-5 6-2 2-0 RET	peak_diff 38
+2026-05-25	Roland Garros	R128	Clay	Sara Bejlek	bt	Sloane Stephens	6-3 6-2	peak_diff 31
+2026-05-25	Roland Garros	R128	Clay	Solana Sierra	bt	Emma Raducanu	6-0 7-6(4)	peak_diff 46
+2026-05-25	Roland Garros	R128	Clay	Sorana Cirstea	bt	Ksenia Efremova	6-3 6-1	peak_diff 557
+2026-05-25	Roland Garros	R128	Clay	Stefanos Tsitsipas	bt	Alexandre Muller	6-2 3-0 RET	peak_diff 35
+2026-05-25	Roland Garros	R128	Clay	Susan Bandecchi	bt	Cristina Bucsa	6-4 2-6 6-4	peak_diff 134
+2026-05-25	Roland Garros	R128	Clay	Tamara Korpatsch	bt	Sara Sorribes Tormo	6-4 6-2	peak_diff 39
+2026-05-25	Roland Garros	R128	Clay	Thanasi Kokkinakis	bt	Terence Atmane	6-7(5) 6-2 4-6 6-3 7-5	peak_diff 24
+2026-05-25	Roland Garros	R128	Clay	Thiago Agustin Tirante	bt	Pablo Llamas Ruiz	6-3 7-6(6) 6-7(5) 6-0	peak_diff 68
+2026-05-25	Roland Garros	R128	Clay	Tomas Machac	bt	Zizou Bergs	6-4 6-4 6-3	peak_diff 18
+2026-05-25	Roland Garros	R128	Clay	Tommy Paul	bt	Rinky Hijikata	4-6 6-3 7-5 6-4	peak_diff 54
+2026-05-25	Roland Garros	R128	Clay	Ugo Humbert	bt	Adrian Mannarino	6-3 6-4 6-3	peak_diff 4
+2026-05-25	Roland Garros	R128	Clay	Valentin Royer	bt	Hugo Dellien	6-4 6-2 6-2	peak_diff 10
+2026-05-25	Roland Garros	R128	Clay	Valentin Vacherot	bt	Thomas Faurel	6-3 6-4 3-6 7-6(6)	peak_diff 302
+2026-05-25	Roland Garros	R128	Clay	Victoria Mboko	bt	Nikola Bartunkova	6-1 6-2	peak_diff 52
+2026-05-25	Roland Garros	R128	Clay	Viktorija Golubic	bt	Panna Udvardy	6-0 6-2	peak_diff 24
+2026-05-25	Roland Garros	R128	Clay	Vit Kopriva	bt	Corentin Moutet	6-3 5-7 6-4 3-6 6-3	peak_diff 25
+2026-05-25	Roland Garros	R128	Clay	Xin Yu Wang	bt	Lilli Tagger	6-3 3-6 6-4	peak_diff 56
+2026-05-25	Roland Garros	R128	Clay	Xiyu Wang	bt	Danka Kovinic	6-3 6-1	peak_diff 3
+2026-05-25	Roland Garros	R128	Clay	Yibing Wu	bt	Marcos Giron	7-5 6-2 6-4	peak_diff 17
+2026-05-25	Roland Garros	R128	Clay	Yulia Putintseva	bt	Talia Gibson	4-6 6-4 6-1	peak_diff 35
+2026-05-25	Roland Garros	R128	Clay	Yuliia Starodubtseva	bt	Anna Blinkova	6-3 6-1	peak_diff 18
+2026-05-25	Roland Garros	R128	Clay	Zachary Svajda	bt	Alexei Popyrin	3-6 6-3 7-6(3) 7-5	peak_diff 43
+2026-05-25	Roland Garros	R16	Clay	Alexander Zverev	bt	Jesper De Jong	7-6(3) 6-4 6-1	peak_diff 69
+2026-05-25	Roland Garros	R16	Clay	Anna Kalinskaya	bt	Anastasia Potapova	6-4 2-6 7-6(7)	peak_diff 10
+2026-05-25	Roland Garros	R16	Clay	Aryna Sabalenka	bt	Naomi Osaka	7-5 6-3	peak_diff 0
+2026-05-25	Roland Garros	R16	Clay	Diana Shnaider	bt	Madison Keys	6-3 3-6 6-0	peak_diff 6
+2026-05-25	Roland Garros	R16	Clay	Elina Svitolina	bt	Belinda Bencic	4-6 6-4 6-0	peak_diff 1
+2026-05-25	Roland Garros	R16	Clay	Felix Auger Aliassime	bt	Alejandro Tabilo	6-3 7-5 6-1	peak_diff 15
+2026-05-25	Roland Garros	R16	Clay	Flavio Cobolli	bt	Zachary Svajda	6-2 6-3 6-7(3) 7-6(5)	peak_diff 52
+2026-05-25	Roland Garros	R16	Clay	Jakub Mensik	bt	Andrey Rublev	6-3 7-6(6) 4-6 2-6 6-3	peak_diff 7
+2026-05-25	Roland Garros	R16	Clay	Joao Fonseca	bt	Casper Ruud	7-5 7-6(8) 5-7 6-2	peak_diff 22
+2026-05-25	Roland Garros	R16	Clay	Maja Chwalinska	bt	Diane Parry	6-3 6-2	peak_diff 27
+2026-05-25	Roland Garros	R16	Clay	Marta Kostyuk	bt	Iga Swiatek	7-5 6-1	peak_diff 11
+2026-05-25	Roland Garros	R16	Clay	Matteo Arnaldi	bt	Frances Tiafoe	7-6(5) 6-7(5) 3-6 7-6(3) 6-4	peak_diff 19
+2026-05-25	Roland Garros	R16	Clay	Matteo Berrettini	bt	Juan Manuel Cerundolo	6-3 7-6(2) 7-6(6)	peak_diff 39
+2026-05-25	Roland Garros	R16	Clay	Mirra Andreeva	bt	Jil Teichmann	6-3 6-2	peak_diff 16
+2026-05-25	Roland Garros	R16	Clay	Rafael Jodar	bt	Pablo Carreno Busta	4-6 4-6 6-1 6-2 6-2	peak_diff 12
+2026-05-25	Roland Garros	R16	Clay	Sorana Cirstea	bt	Xiyu Wang	6-3 7-6(4)	peak_diff 31
+2026-05-25	Roland Garros	R32	Clay	Alejandro Tabilo	bt	Moise Kouame	4-6 6-3 6-4 7-6(9)	peak_diff 197
+2026-05-25	Roland Garros	R32	Clay	Alexander Zverev	bt	Quentin Halys	6-4 6-3 5-7 6-2	peak_diff 44
+2026-05-25	Roland Garros	R32	Clay	Anastasia Potapova	bt	Coco Gauff	4-6 7-6(1) 6-4	peak_diff 19
+2026-05-25	Roland Garros	R32	Clay	Andrey Rublev	bt	Nuno Borges	7-5 7-6(2) 7-6(2)	peak_diff 25
+2026-05-25	Roland Garros	R32	Clay	Anna Kalinskaya	bt	Camila Osorio	6-3 0-6 6-2	peak_diff 22
+2026-05-25	Roland Garros	R32	Clay	Aryna Sabalenka	bt	Daria Kasatkina	6-0 7-5	peak_diff 7
+2026-05-25	Roland Garros	R32	Clay	Belinda Bencic	bt	Peyton Stearns	6-3 6-3	peak_diff 24
+2026-05-25	Roland Garros	R32	Clay	Casper Ruud	bt	Tommy Paul	4-6 6-7(4) 6-4 7-6(4) 7-5	peak_diff 6
+2026-05-25	Roland Garros	R32	Clay	Diana Shnaider	bt	Oleksandra Oliynykova	7-5 6-1	peak_diff 40
+2026-05-25	Roland Garros	R32	Clay	Diane Parry	bt	Amanda Anisimova	6-3 4-6 7-6(3)	peak_diff 45
+2026-05-25	Roland Garros	R32	Clay	Elina Svitolina	bt	Tamara Korpatsch	6-2 6-3	peak_diff 68
+2026-05-25	Roland Garros	R32	Clay	Felix Auger Aliassime	bt	Brandon Nakashima	5-7 6-1 7-6(4) 7-6(1)	peak_diff 25
+2026-05-25	Roland Garros	R32	Clay	Flavio Cobolli	bt	Learner Tien	6-2 6-2 6-3	peak_diff 8
+2026-05-25	Roland Garros	R32	Clay	Frances Tiafoe	bt	Jaime Faria	4-6 6-7(2) 7-6(4) 6-1 6-2	peak_diff 77
+2026-05-25	Roland Garros	R32	Clay	Iga Swiatek	bt	Magda Linette	6-4 6-4	peak_diff 18
+2026-05-25	Roland Garros	R32	Clay	Jakub Mensik	bt	Alex De Minaur	0-6 6-2 6-2 6-3	peak_diff 6
+2026-05-25	Roland Garros	R32	Clay	Jesper De Jong	bt	Karen Khachanov	7-5 5-7 6-2 6-7(2) 6-2	peak_diff 62
+2026-05-25	Roland Garros	R32	Clay	Jil Teichmann	bt	Karolina Muchova	6-1 7-5	peak_diff 13
+2026-05-25	Roland Garros	R32	Clay	Joao Fonseca	bt	Novak Djokovic	4-6 4-6 6-3 7-5 7-5	peak_diff 23
+2026-05-25	Roland Garros	R32	Clay	Juan Manuel Cerundolo	bt	Martin Landaluce	6-4 6-7(7) 7-6(4) 6-7(4) 7-6(8)	peak_diff 13
+2026-05-25	Roland Garros	R32	Clay	Madison Keys	bt	Victoria Mboko	6-3 5-7 7-5	peak_diff 4
+2026-05-25	Roland Garros	R32	Clay	Maja Chwalinska	bt	Maria Sakkari	1-6 6-3 6-2	peak_diff 18
+2026-05-25	Roland Garros	R32	Clay	Marta Kostyuk	bt	Viktorija Golubic	6-4 6-3	peak_diff 23
+2026-05-25	Roland Garros	R32	Clay	Matteo Arnaldi	bt	Raphael Collignon	6-4 6-7(5) 5-7 6-4 7-6(4)	peak_diff 22
+2026-05-25	Roland Garros	R32	Clay	Matteo Berrettini	bt	Francisco Comesana	7-6(3) 5-7 6-7(4) 6-4 7-6(13)	peak_diff 48
+2026-05-25	Roland Garros	R32	Clay	Mirra Andreeva	bt	Marie Bouzkova	6-4 6-2	peak_diff 19
+2026-05-25	Roland Garros	R32	Clay	Naomi Osaka	bt	Iva Jovic	7-6(5) 6-7(3) 6-4	peak_diff 15
+2026-05-25	Roland Garros	R32	Clay	Pablo Carreno Busta	bt	Thiago Agustin Tirante	7-6(0) 7-5 3-6 6-4	peak_diff 41
+2026-05-25	Roland Garros	R32	Clay	Rafael Jodar	bt	Alex Michelsen	7-6(2) 6-7(5) 4-6 6-3 6-3	peak_diff 7
+2026-05-25	Roland Garros	R32	Clay	Sorana Cirstea	bt	Solana Sierra	6-0 6-0	peak_diff 38
+2026-05-25	Roland Garros	R32	Clay	Xiyu Wang	bt	Yuliia Starodubtseva	6-3 7-5	peak_diff 4
+2026-05-25	Roland Garros	R32	Clay	Zachary Svajda	bt	Francisco Cerundolo	6-3 6-4 3-6 4-6 6-3	peak_diff 44
+2026-05-25	Roland Garros	R64	Clay	Alejandro Tabilo	bt	Valentin Vacherot	W/O	peak_diff 3
+2026-05-25	Roland Garros	R64	Clay	Alex De Minaur	bt	Alexander Blockx	W/O	peak_diff 30
+2026-05-25	Roland Garros	R64	Clay	Alex Michelsen	bt	Nishesh Basavareddy	7-6(5) 6-3 3-6 6-3	peak_diff 69
+2026-05-25	Roland Garros	R64	Clay	Alexander Zverev	bt	Tomas Machac	6-4 6-2 6-2	peak_diff 18
+2026-05-25	Roland Garros	R64	Clay	Amanda Anisimova	bt	Julia Grabher	6-0 RET	peak_diff 51
+2026-05-25	Roland Garros	R64	Clay	Anastasia Potapova	bt	Katie Boulter	5-7 6-4 6-2	peak_diff 2
+2026-05-25	Roland Garros	R64	Clay	Andrey Rublev	bt	Camilo Ugo Carabelli	6-1 1-6 6-3 7-6(5)	peak_diff 38
+2026-05-25	Roland Garros	R64	Clay	Anna Kalinskaya	bt	Alina Korneeva	7-6(2) 6-4	peak_diff 85
+2026-05-25	Roland Garros	R64	Clay	Aryna Sabalenka	bt	Elsa Jacquemot	7-5 6-2	peak_diff 52
+2026-05-25	Roland Garros	R64	Clay	Belinda Bencic	bt	Caty Mcnally	6-4 6-0	peak_diff 50
+2026-05-25	Roland Garros	R64	Clay	Brandon Nakashima	bt	Luca Van Assche	6-7(5) 6-4 5-7 6-1 6-3	peak_diff 34
+2026-05-25	Roland Garros	R64	Clay	Camila Osorio	bt	Yulia Putintseva	7-5 6-7(6) 7-5	peak_diff 13
+2026-05-25	Roland Garros	R64	Clay	Casper Ruud	bt	Hamad Medjedovic	6-3 6-2 6-4	peak_diff 54
+2026-05-25	Roland Garros	R64	Clay	Coco Gauff	bt	Mayar Sherif	6-3 6-2	peak_diff 29
+2026-05-25	Roland Garros	R64	Clay	Daria Kasatkina	bt	Susan Bandecchi	7-5 7-6(11)	peak_diff 156
+2026-05-25	Roland Garros	R64	Clay	Diana Shnaider	bt	Mccartney Kessler	7-6(3) 6-1	peak_diff 19
+2026-05-25	Roland Garros	R64	Clay	Diane Parry	bt	Ann Li	6-3 6-4	peak_diff 19
+2026-05-25	Roland Garros	R64	Clay	Elina Svitolina	bt	Kaitlin Quevedo	6-0 6-4	peak_diff 104
+2026-05-25	Roland Garros	R64	Clay	Felix Auger Aliassime	bt	Roman Andres Burruchaga	4-6 6-0 7-5 6-1	peak_diff 52
+2026-05-25	Roland Garros	R64	Clay	Flavio Cobolli	bt	Yibing Wu	6-4 6-4 6-4	peak_diff 44
+2026-05-25	Roland Garros	R64	Clay	Frances Tiafoe	bt	Hubert Hurkacz	6-7(5) 7-6(5) 6-4 6-7(1) 6-4	peak_diff 4
+2026-05-25	Roland Garros	R64	Clay	Francisco Cerundolo	bt	Hugo Gaston	2-6 6-4 6-2 6-1	peak_diff 40
+2026-05-25	Roland Garros	R64	Clay	Francisco Comesana	bt	Luciano Darderi	7-6(5) 4-6 6-4 2-6 6-4	peak_diff 38
+2026-05-25	Roland Garros	R64	Clay	Iga Swiatek	bt	Sara Bejlek	6-2 6-3	peak_diff 33
+2026-05-25	Roland Garros	R64	Clay	Iva Jovic	bt	Emma Navarro	6-0 6-3	peak_diff 8
+2026-05-25	Roland Garros	R64	Clay	Jaime Faria	bt	Jan Lennard Struff	7-5 7-6(1) 6-2	peak_diff 66
+2026-05-25	Roland Garros	R64	Clay	Jakub Mensik	bt	Mariano Navone	6-3 2-6 6-4 1-6 7-6(11)	peak_diff 17
+2026-05-25	Roland Garros	R64	Clay	Jesper De Jong	bt	Federico Cina	6-3 6-1 6-3	peak_diff 112
+2026-05-25	Roland Garros	R64	Clay	Jil Teichmann	bt	Magdalena Frech	7-5 6-4	peak_diff 1
+2026-05-25	Roland Garros	R64	Clay	Joao Fonseca	bt	Dino Prizmic	3-6 4-6 6-3 6-1 6-2	peak_diff 46
+2026-05-25	Roland Garros	R64	Clay	Juan Manuel Cerundolo	bt	Jannik Sinner	3-6 2-6 7-5 6-1 6-1	peak_diff 44
+2026-05-25	Roland Garros	R64	Clay	Karen Khachanov	bt	Marco Trungelliti	7-6(5) 5-7 6-1 7-6(4)	peak_diff 67
+2026-05-25	Roland Garros	R64	Clay	Karolina Muchova	bt	Kamilla Rakhimova	6-2 6-2	peak_diff 52
+2026-05-25	Roland Garros	R64	Clay	Learner Tien	bt	Facundo Diaz Acosta	7-5 4-6 3-6 7-6(4) 6-3	peak_diff 29
+2026-05-25	Roland Garros	R64	Clay	Madison Keys	bt	Antonia Ruzic	6-4 6-4	peak_diff 46
+2026-05-25	Roland Garros	R64	Clay	Magda Linette	bt	Jelena Ostapenko	6-2 2-6 6-2	peak_diff 14
+2026-05-25	Roland Garros	R64	Clay	Maja Chwalinska	bt	Elise Mertens	6-4 6-0	peak_diff 9
+2026-05-25	Roland Garros	R64	Clay	Maria Sakkari	bt	Claire Liu	6-7(7) 6-3 6-3	peak_diff 49
+2026-05-25	Roland Garros	R64	Clay	Marie Bouzkova	bt	Francesca Jones	6-0 7-6(3)	peak_diff 41
+2026-05-25	Roland Garros	R64	Clay	Marta Kostyuk	bt	Katie Volynets	6-7(4) 6-3 6-3	peak_diff 44
+2026-05-25	Roland Garros	R64	Clay	Martin Landaluce	bt	Vit Kopriva	1-6 2-6 6-4 7-5 6-0	peak_diff 3
+2026-05-25	Roland Garros	R64	Clay	Matteo Arnaldi	bt	Stefanos Tsitsipas	7-6(2) 5-7 6-3 6-2	peak_diff 26
+2026-05-25	Roland Garros	R64	Clay	Matteo Berrettini	bt	Arthur Rinderknech	6-4 6-4 6-4	peak_diff 18
+2026-05-25	Roland Garros	R64	Clay	Mirra Andreeva	bt	Marina Bassols Ribera	3-6 6-1 6-1	peak_diff 100
+2026-05-25	Roland Garros	R64	Clay	Moise Kouame	bt	Adolfo Daniel Vallejo	6-3 7-5 3-6 2-6 7-6(8)	peak_diff 146
+2026-05-25	Roland Garros	R64	Clay	Naomi Osaka	bt	Donna Vekic	7-6(1) 6-4	peak_diff 16
+2026-05-25	Roland Garros	R64	Clay	Novak Djokovic	bt	Valentin Royer	6-3 6-2 6-7(7) 6-3	peak_diff 53
+2026-05-25	Roland Garros	R64	Clay	Nuno Borges	bt	Miomir Kecmanovic	3-6 6-2 6-1 6-2	peak_diff 3
+2026-05-25	Roland Garros	R64	Clay	Oleksandra Oliynykova	bt	Kimberly Birrell	6-3 0-6 7-6(5)	peak_diff 9
+2026-05-25	Roland Garros	R64	Clay	Pablo Carreno Busta	bt	Thanasi Kokkinakis	7-5 4-6 1-0 RET	peak_diff 54
+2026-05-25	Roland Garros	R64	Clay	Peyton Stearns	bt	Daria Snigur	6-4 6-0	peak_diff 56
+2026-05-25	Roland Garros	R64	Clay	Quentin Halys	bt	Ugo Humbert	6-4 7-6(4) 7-6(8)	peak_diff 33
+2026-05-25	Roland Garros	R64	Clay	Rafael Jodar	bt	James Duckworth	6-1 6-7(5) 6-4 7-5	peak_diff 23
+2026-05-25	Roland Garros	R64	Clay	Raphael Collignon	bt	Ben Shelton	6-4 7-5 6-4	peak_diff 46
+2026-05-25	Roland Garros	R64	Clay	Solana Sierra	bt	Jasmine Paolini	3-6 6-4 6-3	peak_diff 52
+2026-05-25	Roland Garros	R64	Clay	Sorana Cirstea	bt	Eva Lys	6-3 6-0	peak_diff 21
+2026-05-25	Roland Garros	R64	Clay	Tamara Korpatsch	bt	Xin Yu Wang	6-2 2-6 6-3	peak_diff 41
+2026-05-25	Roland Garros	R64	Clay	Thiago Agustin Tirante	bt	Alejandro Davidovich Fokina	4-6 7-6(4) 6-1 6-3	peak_diff 38
+2026-05-25	Roland Garros	R64	Clay	Tommy Paul	bt	Lorenzo Sonego	6-3 6-2 6-4	peak_diff 13
+2026-05-25	Roland Garros	R64	Clay	Victoria Mboko	bt	Katerina Siniakova	5-7 6-4 6-2	peak_diff 18
+2026-05-25	Roland Garros	R64	Clay	Viktorija Golubic	bt	Alycia Parks	6-2 6-2	peak_diff 5
+2026-05-25	Roland Garros	R64	Clay	Xiyu Wang	bt	Hailey Baptiste	5-4 RET	peak_diff 24
+2026-05-25	Roland Garros	R64	Clay	Yuliia Starodubtseva	bt	Elena Rybakina	3-6 6-1 7-6(4)	peak_diff 51
+2026-05-25	Roland Garros	R64	Clay	Zachary Svajda	bt	Adam Walton	6-3 6-4 6-7(4) 6-2	peak_diff 12
+2026-05-25	Roland Garros	SF	Clay	Alexander Zverev	bt	Jakub Mensik	7-5 6-2 3-6 6-3	peak_diff 10
+2026-05-25	Roland Garros	SF	Clay	Flavio Cobolli	bt	Matteo Arnaldi	W/O	peak_diff 19
+2026-05-25	Roland Garros	SF	Clay	Maja Chwalinska	bt	Diana Shnaider	7-6(4) 6-4	peak_diff 10
+2026-05-25	Roland Garros	SF	Clay	Mirra Andreeva	bt	Marta Kostyuk	6-1 6-3	peak_diff 7

@@ -337,7 +337,20 @@ export async function fetchTennisMonitorLogs(lines = 120) {
 }
 
 export async function triggerTennisMonitorCollect(body = {}) {
-  const { data } = await api.post('/admin/tennis-monitor/collect', body)
+  const wantTxt =
+    body.fromTxt === true
+    || body.virtual === true
+    || String(body.source || '').toLowerCase() === 'docks500'
+  if (wantTxt) {
+    const { data } = await api.post('/admin/tennis-monitor/collect', body)
+    return data
+  }
+  const { data } = await api.post('/admin/engines/collect/full', {
+    sport: 'tennis',
+    top100: body.top100 !== false && body.all !== true,
+    date: body.date || body.match_date || undefined,
+    matchDate: body.date || body.match_date || undefined,
+  })
   return data
 }
 
@@ -484,8 +497,7 @@ export async function markTennisBettingSold(payload) {
 }
 
 export async function splitTennisThreeBuckets() {
-  const { data } = await api.post('/admin/tennis-monitor/engines/split-buckets')
-  return data
+  return runCollectFull({ sport: 'tennis', top100: false })
 }
 
 export async function seedTennisVirtualBuckets(payload = {}) {
@@ -540,7 +552,92 @@ export async function applyDocks500Day(date) {
 }
 
 export async function runTennisInplayTick() {
-  const { data } = await api.post('/tennis-inplay/tick')
+  return runCollectPartial({ sport: 'tennis' })
+}
+
+// --- 五引擎服务（经 server 代理 /admin/engines/*）---
+export async function fetchEngineServicesOverview() {
+  try {
+    const { data } = await api.get('/admin/engines/overview')
+    return data
+  } catch (e) {
+    if (e?.response?.status !== 404) throw e
+    // 旧 server 未热重载 /overview 时，用已有子接口拼总览
+    const [collect, stop, scheduler] = await Promise.allSettled([
+      fetchCollectServiceStatus(),
+      fetchStopLossStatus(),
+      fetchSchedulerStatus(),
+    ])
+    const ok = (r) => r.status === 'fulfilled' && r.value?.ok !== false
+    return {
+      ok: ok(collect) && ok(stop),
+      at: new Date().toISOString(),
+      fallback: true,
+      services: {
+        collect: {
+          ok: ok(collect),
+          service: 'collect',
+          ...(collect.status === 'fulfilled' ? collect.value : { error: collect.reason?.message }),
+        },
+        rules: { ok: null, service: 'rules', message: '重启 server 后可显示完整 health' },
+        betting: { ok: null, service: 'betting', message: '重启 server 后可显示完整 health' },
+        stopLoss: {
+          ok: ok(stop),
+          service: 'stop-loss',
+          ...(stop.status === 'fulfilled' ? stop.value : { error: stop.reason?.message }),
+        },
+        scheduler: {
+          ok: scheduler.status === 'fulfilled',
+          service: 'scheduler',
+          ...(scheduler.status === 'fulfilled' ? scheduler.value : { error: scheduler.reason?.message }),
+        },
+      },
+    }
+  }
+}
+
+export async function fetchCollectServiceStatus(params = {}) {
+  const { data } = await api.get('/admin/engines/collect/status', { params })
+  return data
+}
+
+export async function runCollectFull(payload = {}) {
+  const { data } = await api.post('/admin/engines/collect/full', { sport: 'tennis', ...payload })
+  return data
+}
+
+export async function runCollectPartial(payload = {}) {
+  const { data } = await api.post('/admin/engines/collect/partial', { sport: 'tennis', ...payload })
+  return data
+}
+
+export async function runRulesEvaluate(payload = {}) {
+  const { data } = await api.post('/admin/engines/rules/evaluate', { sport: 'tennis', ...payload })
+  return data
+}
+
+export async function fetchRulesMatched(params = {}) {
+  const { data } = await api.get('/admin/engines/rules/matched', { params })
+  return data
+}
+
+export async function runBettingScan(payload = {}) {
+  const { data } = await api.post('/admin/engines/betting/scan', { sport: 'tennis', ...payload })
+  return data
+}
+
+export async function fetchBettingOpenOrders() {
+  const { data } = await api.get('/admin/engines/betting/orders/open')
+  return data
+}
+
+export async function runStopLossScan(payload = {}) {
+  const { data } = await api.post('/admin/engines/stop-loss/scan', { sport: 'tennis', ...payload })
+  return data
+}
+
+export async function fetchStopLossStatus() {
+  const { data } = await api.get('/admin/engines/stop-loss/status')
   return data
 }
 
