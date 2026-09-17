@@ -69,6 +69,13 @@ const allowBatchTrade = computed(() => {
   if (props.isMember && (isPrematchMode.value || isInplayMode.value)) return true
   return false
 })
+/** 自动投注行：各产品（非盘后）无赛事/加载中/报错时也显示 */
+const showAutoBetBar = computed(() => {
+  if (isSettledMode.value) return false
+  if (props.canBatchTrade) return true
+  if (props.isMember) return true
+  return false
+})
 /** 仅「虚拟/采集模拟」数据源下记账；真实采集时自动下单与止损均为实盘 */
 const isVirtualDataSource = computed(() => {
   if (data.value?.tradeSimulate === true) return true
@@ -2393,6 +2400,23 @@ defineExpose({
       :set-status-filter="setStatusFilter"
     />
 
+    <TennisBoardBatchBar
+      v-if="showAutoBetBar"
+      :allow-batch-trade="allowBatchTrade"
+      :auto-sim-bet-enabled="autoSimBetEnabled"
+      :page-all-selected="pageAllSelected"
+      :page-selectable="pageSelectable"
+      :selected-count="selectedCount"
+      v-model:batch-amount-usd="batchAmountUsd"
+      :batch-submitting="batchSubmitting"
+      :batch-notice="batchNotice"
+      :batch-error="batchError"
+      :toggle-auto-bet="toggleAutoBet"
+      :toggle-select-page="toggleSelectPage"
+      :submit-batch-trade="submitBatchTrade"
+      :clear-selection="clearSelection"
+    />
+
     <TennisBoardMatchList
       :loading="loading"
       :data="data"
@@ -2434,25 +2458,7 @@ defineExpose({
       :total-pages="totalPages"
       :current-page="currentPage"
       :go-page="goPage"
-    >
-      <template #batch>
-        <TennisBoardBatchBar
-          :allow-batch-trade="allowBatchTrade"
-          :auto-sim-bet-enabled="autoSimBetEnabled"
-          :page-all-selected="pageAllSelected"
-          :page-selectable="pageSelectable"
-          :selected-count="selectedCount"
-          v-model:batch-amount-usd="batchAmountUsd"
-          :batch-submitting="batchSubmitting"
-          :batch-notice="batchNotice"
-          :batch-error="batchError"
-          :toggle-auto-bet="toggleAutoBet"
-          :toggle-select-page="toggleSelectPage"
-          :submit-batch-trade="submitBatchTrade"
-          :clear-selection="clearSelection"
-        />
-      </template>
-    </TennisBoardMatchList>
+    />
 
     <TennisBoardDetailModal
       :detail-match="detailMatch"

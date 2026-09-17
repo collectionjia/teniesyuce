@@ -49,9 +49,6 @@ defineProps({
   <div v-if="loading && !data" class="empty">加载赛程中…</div>
   <div v-else-if="error && !data" class="empty err">{{ error }}</div>
   <template v-else>
-    <!-- 无赛事也保留自动投注 / 金额 / 批量，便于提前打开开关 -->
-    <slot name="batch" />
-
     <div v-if="!matches.length && !isInplayMode" class="empty">
       当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
       <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
