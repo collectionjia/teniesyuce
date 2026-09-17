@@ -11,6 +11,8 @@ from typing import Any
 
 import requests
 
+from tm.clients.proxy import require_proxy
+
 GAMMA = (os.environ.get("POLY_GAMMA_BASE") or "https://gamma-api.polymarket.com").rstrip("/")
 TENNIS_TAG_ID = int(os.environ.get("POLY_TENNIS_TAG_ID", "864"))
 CACHE_MS = int(os.environ.get("POLY_TENNIS_CACHE_MS", "120000"))
@@ -30,11 +32,13 @@ def _gamma_get(path: str, *, params: dict[str, Any] | None = None) -> Any:
     global _request_count
     _request_count += 1
     url = f"{GAMMA}/{path.lstrip('/')}"
+    proxies = require_proxy("Polymarket")
     resp = requests.get(
         url,
         params=params,
         headers={"Accept": "application/json", "User-Agent": "yuce-bid/1.0"},
         timeout=_TIMEOUT,
+        proxies=proxies,
     )
     if resp.status_code >= 400:
         raise RuntimeError(f"gamma HTTP {resp.status_code}: {path}")

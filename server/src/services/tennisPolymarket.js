@@ -2,6 +2,8 @@
  * 刷新网球 bundle 中 Polymarket moneyline 隐含价（与外链页对齐）。
  * 日包只采一次价，完赛后外链已结算成 100/0 而详情仍显示中途价。
  */
+const { httpsGetJson } = require('../lib/httpProxyAgent');
+
 const GAMMA = 'https://gamma-api.polymarket.com';
 const CONCURRENCY = 4;
 
@@ -47,15 +49,9 @@ function parsePrices(mkt) {
 }
 
 async function fetchEventBySlug(slug) {
-  const res = await fetch(`${GAMMA}/events?slug=${encodeURIComponent(slug)}`, {
-    headers: {
-      Accept: 'application/json',
-      'User-Agent': 'yuce-bid/1.0',
-    },
-    signal: AbortSignal.timeout(8000),
+  const body = await httpsGetJson(`${GAMMA}/events?slug=${encodeURIComponent(slug)}`, {
+    scope: 'Polymarket',
   });
-  if (!res.ok) throw new Error(`gamma HTTP ${res.status}`);
-  const body = await res.json();
   if (Array.isArray(body)) return body[0] || null;
   return body;
 }

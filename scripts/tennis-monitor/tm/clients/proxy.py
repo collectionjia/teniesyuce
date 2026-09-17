@@ -46,6 +46,18 @@ def sofa_proxy_map() -> dict[str, str]:
     return ipwo_proxy_urls()
 
 
+def require_proxy(scope: str = "Sofascore") -> dict[str, str]:
+    """禁止直连：未配置任何代理（IPWO 或 SOFA_HTTP_PROXY）时直接报错，不落地直连采集。"""
+    proxies = sofa_proxy_map()
+    if not proxies:
+        raise RuntimeError(
+            f"{scope} 采集必须经 IPWO 代理，禁止直连采集。"
+            "请在 monitor.env 配置 IPWO_PROXY_HOST/IPWO_PROXY_PORT/IPWO_PROXY_USER/IPWO_PROXY_PASS"
+            "（参考 env.monitor.example，勿提交 Git）后重试。"
+        )
+    return proxies
+
+
 def proxy_status_public() -> dict[str, str | bool]:
     """Safe proxy summary for admin status (no credentials)."""
     direct = (_env("SOFA_HTTP_PROXY") or _env("HTTP_PROXY")).strip()
@@ -64,4 +76,10 @@ def proxy_status_public() -> dict[str, str | bool]:
             "host": f"{host}:{port}",
             "zone": zone.upper() if zone else "",
         }
-    return {"enabled": False, "mode": "direct", "host": "", "zone": ""}
+    return {
+        "enabled": False,
+        "mode": "no_proxy",
+        "host": "",
+        "zone": "",
+        "note": "未配置 IPWO 代理，禁止直连采集",
+    }

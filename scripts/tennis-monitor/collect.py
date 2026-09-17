@@ -40,7 +40,7 @@ def main() -> int:
             print(f"详情: {msg}")
         elif "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
             print(
-                "采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度，或临时清空 IPWO 配置改直连。"
+                "采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度；采集已禁止直连，请修复代理后再试。"
             )
             print(f"详情: {msg}")
         else:

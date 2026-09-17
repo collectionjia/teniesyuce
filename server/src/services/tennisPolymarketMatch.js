@@ -4,6 +4,7 @@
 const pool = require('../db');
 const tennisPolymarket = require('./tennisPolymarket');
 const { parsePrices } = tennisPolymarket;
+const { httpsGetJson } = require('../lib/httpProxyAgent');
 
 const GAMMA = 'https://gamma-api.polymarket.com';
 const TENNIS_TAG_ID = Number(process.env.POLY_TENNIS_TAG_ID || 864);
@@ -100,12 +101,7 @@ function slimGammaEvent(ev) {
 }
 
 async function fetchGammaJson(url) {
-  const res = await fetch(url, {
-    headers: { Accept: 'application/json', 'User-Agent': 'yuce-bid/1.0' },
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!res.ok) throw new Error(`gamma HTTP ${res.status}`);
-  return res.json();
+  return httpsGetJson(url, { scope: 'Polymarket', timeoutMs: 15000 });
 }
 
 async function fetchPolymarketTennisEvents() {

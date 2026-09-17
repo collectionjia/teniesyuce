@@ -45,7 +45,7 @@ def log_live_collect_header(*, filter_conditions: bool = False, top100: bool = T
             f"({p.get('mode')} {p.get('host')} zone={p.get('zone') or '-'})"
         )
     else:
-        print(f"[1/{_STEPS}] 未配置 IPWO 代理，直连（建议在 monitor.env 配置 IPWO）")
+        print(f"[1/{_STEPS}] 未配置 IPWO 代理，禁止直连采集（请在 monitor.env 配置 IPWO_* 后再试）")
     if not filter_conditions:
         print(f"[2/{_STEPS}] 进行中 · 前 {simple_limit} 场（无 tier/Top100 过滤）")
     elif top100:
