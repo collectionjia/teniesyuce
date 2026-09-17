@@ -1611,6 +1611,7 @@ function goPage(page) {
 }
 
 function setStatusFilter(mode) {
+  if (isPrematchMode.value) return
   if (hideEndedEvents.value && mode === 'ended') return
   if (filter.value === mode) return
   filter.value = mode
@@ -1619,8 +1620,17 @@ function setStatusFilter(mode) {
 
 const stats = computed(() => {
   const pool = rawMatches.value.filter((m) => matchPassesTour(m) && matchPassesPm(m))
-  const countTab = (tab) => pool.filter((m) => matchPassesFilter(m, tab)).length
-  const collected = isInplayMode.value
+  const countTab = (tab) => {
+    // 盘前桶仅未开赛；进行中/已结束分属盘中/盘后，勿与未开重复计数
+    if (isPrematchMode.value) {
+      if (tab === 'liveish' || tab === 'ended') return 0
+      return pool.filter((m) => matchPassesFilter(m, 'Not started')).length
+    }
+    return pool.filter((m) => matchPassesFilter(m, tab)).length
+  }
+  const collected = isPrematchMode.value
+    ? countTab('Not started')
+    : isInplayMode.value
     ? (data.value?.live?.eventCount ?? data.value?.events ?? pool.length)
     : classicRankFiltersOn.value
       ? countTab(filter.value)
@@ -2294,6 +2304,7 @@ defineExpose({
   <div class="wrap">
     <TennisBoardTopbar
       :is-inplay-mode="isInplayMode"
+      :is-prematch-mode="isPrematchMode"
       :is-settled-mode="isSettledMode"
       :allow-batch-trade="allowBatchTrade"
       :bundle-hint="bundleHint"

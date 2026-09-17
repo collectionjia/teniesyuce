@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   isInplayMode: { type: Boolean, default: false },
+  isPrematchMode: { type: Boolean, default: false },
   isSettledMode: { type: Boolean, default: false },
   allowBatchTrade: { type: Boolean, default: false },
   bundleHint: { type: String, default: '' },
@@ -47,13 +48,34 @@ defineProps({
       <div class="stats">
         <div class="stat"><b>{{ stats.tournaments }}</b><span>赛</span></div>
         <div class="stat"><b>{{ stats.collected }}</b><span>总</span></div>
-        <button type="button" class="stat stat-btn" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">
+        <button
+          v-if="!isPrematchMode"
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: filter === 'all' }"
+          @click="setStatusFilter('all')"
+        >
           <b>{{ stats.all }}</b><span>全</span>
         </button>
-        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">
+        <div v-if="isPrematchMode" class="stat stat-static active">
+          <b>{{ stats.open }}</b><span>未开</span>
+        </div>
+        <button
+          v-else-if="!isInplayMode"
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: filter === 'Not started' }"
+          @click="setStatusFilter('Not started')"
+        >
           <b>{{ stats.open }}</b><span>未开</span>
         </button>
-        <button v-if="!isInplayMode" type="button" class="stat stat-btn" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">
+        <button
+          v-if="!isInplayMode && !isPrematchMode"
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: filter === 'liveish' }"
+          @click="setStatusFilter('liveish')"
+        >
           <b>{{ stats.live }}</b><span>进行</span>
         </button>
         <button
@@ -142,6 +164,15 @@ defineProps({
   box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
 }
 .stat-btn.active span { color: #6366f1; font-weight: 600; }
+.stat-static {
+  cursor: default;
+}
+.stat-static.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
+}
+.stat-static.active span { color: #6366f1; font-weight: 600; }
 .inplay-source-bar {
   margin-bottom: 8px;
   padding: 8px 10px;
