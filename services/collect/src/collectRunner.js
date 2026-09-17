@@ -471,6 +471,24 @@ function recentLogs(maxLines = 120) {
   }
 }
 
+function clearLogs() {
+  logBuffer = [];
+  let deleted = 0;
+  try {
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+    for (const f of fs.readdirSync(LOG_DIR)) {
+      if (!f.startsWith('collect_') || !f.endsWith('.log')) continue;
+      fs.writeFileSync(path.join(LOG_DIR, f), '', 'utf8');
+      deleted += 1;
+    }
+  } catch (err) {
+    const error = new Error(err.message || 'clear logs failed');
+    error.status = 500;
+    throw error;
+  }
+  return { ok: true, deleted };
+}
+
 module.exports = {
   startCollect,
   startLiveCollect,
@@ -480,6 +498,7 @@ module.exports = {
   updateSchedule,
   readScheduleConfig,
   recentLogs,
+  clearLogs,
   isRunning: () => running,
   isLiveRunning: () => liveRunning,
   getLast: () => ({ ...last }),

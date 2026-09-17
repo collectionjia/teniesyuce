@@ -329,6 +329,17 @@ router.get('/logs', async (req, res) => {
   }
 });
 
+router.post('/logs/clear', async (_req, res) => {
+  try {
+    const tennisCollectRunner = require('../services/tennisCollectRunner');
+    const data = tennisCollectRunner.clearLogs();
+    res.json(data);
+  } catch (err) {
+    console.error('[tennis-monitor/logs/clear]', err);
+    res.status(err.status || 500).json({ ok: false, error: err.message || 'clear logs failed' });
+  }
+});
+
 router.post('/collect', async (req, res) => {
   try {
     const tennisDataSource = require('../services/tennisDataSource');

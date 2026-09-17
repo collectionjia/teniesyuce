@@ -336,6 +336,11 @@ export async function fetchTennisMonitorLogs(lines = 120) {
   return data
 }
 
+export async function clearTennisMonitorLogs() {
+  const { data } = await api.post('/admin/tennis-monitor/logs/clear')
+  return data
+}
+
 export async function triggerTennisMonitorCollect(body = {}) {
   const wantTxt =
     body.fromTxt === true

@@ -251,6 +251,7 @@ const status = ref(null)
 const top100Board = ref(null)
 const liveData = ref(null)
 const logs = ref(null)
+const logsClearing = ref(false)
 const tab = ref('atp') // atp | wta | live | logs
 const topPoolMax = ref('100') // 20 | 50 | 100
 const tierFilter = ref({ gs: false, t1000: false, t500: false })
@@ -518,8 +519,11 @@ const pagedLiveMatches = computed(() => {
 })
 
 const logLines = computed(() => {
-  const raw = logs.value?.lines || logs.value?.content || status.value?.latest_log_tail || ''
-  return String(raw).split('\n')
+  const raw = logs.value != null
+    ? (logs.value.lines ?? logs.value.content ?? '')
+    : (status.value?.latest_log_tail || '')
+  if (!raw) return []
+  return String(raw).split('\n').filter((line) => line.length)
 })
 const logPageCount = computed(() => Math.max(1, Math.ceil(logLines.value.length / LOG_PAGE_SIZE)))
 const pagedLogText = computed(() => {
@@ -693,6 +697,22 @@ async function loadEngines() {
 async function loadLogs() {
   logs.value = await api.fetchTennisMonitorLogs(300)
   jumpLogToEnd()
+}
+
+async function clearCollectLogs() {
+  if (!confirm('确认清空采集日志？此操作不可恢复。')) return
+  logsClearing.value = true
+  error.value = ''
+  try {
+    await api.clearTennisMonitorLogs()
+    logs.value = { lines: '', content: '', file: '—' }
+    logPage.value = 1
+    notice.value = '采集日志已清空'
+  } catch (e) {
+    error.value = e?.response?.data?.error || e?.message || '清空日志失败'
+  } finally {
+    logsClearing.value = false
+  }
 }
 
 async function refreshAll({ silent = false } = {}) {
@@ -1353,6 +1373,9 @@ watch(tab, (t) => {
   logPage.value = 1
   if (t !== 'atp' && t !== 'wta') poolFilterOpen.value = false
 })
+watch(poolFilterOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
 watch(players, (list) => {
   if (playerPage.value > Math.max(1, Math.ceil(list.length / PLAYER_PAGE_SIZE))) {
     playerPage.value = 1
@@ -1403,6 +1426,7 @@ onUnmounted(() => {
   if (liveTimer) clearInterval(liveTimer)
   if (noticeTimer) clearTimeout(noticeTimer)
   stopTop100LoadingClock()
+  document.body.style.overflow = ''
 })
 </script>
 
@@ -2243,7 +2267,15 @@ onUnmounted(() => {
       <div v-else-if="tab === 'logs'" class="panel">
         <div class="panel-h row">
           <span>采集日志</span>
-          <span class="muted truncate">{{ logs?.file || logs?.log_file || status?.latest_log || '—' }}</span>
+          <div class="panel-h-actions">
+            <span class="muted truncate">{{ logs?.file || logs?.log_file || status?.latest_log || '—' }}</span>
+            <button
+              type="button"
+              class="btn ghost sm danger"
+              :disabled="logsClearing || !logLines.length"
+              @click="clearCollectLogs"
+            >{{ logsClearing ? '清空中…' : '清空' }}</button>
+          </div>
         </div>
         <div class="pager">
           <span class="pager-info">第 {{ logPage }} / {{ logPageCount }} 页 · {{ logPageLabel() }}</span>
@@ -2263,6 +2295,7 @@ onUnmounted(() => {
       </div>
     </template>
 
+    <Teleport to="body">
     <div v-if="poolFilterOpen" class="pool-filter-mask" @click.self="poolFilterOpen = false">
       <div class="pool-filter-panel" role="dialog" aria-modal="true" :aria-label="`${tab.toUpperCase()} 球员`">
         <header class="pool-filter-head">
@@ -2383,6 +2416,7 @@ onUnmounted(() => {
         </footer>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2874,6 +2908,8 @@ onUnmounted(() => {
 }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 .btn.ghost { background: #e2e8f0; color: #334155; }
+.btn.ghost.danger { background: #fee2e2; color: #b91c1c; }
+.btn.ghost.danger:hover:not(:disabled) { background: #fecaca; }
 .btn.primary { background: #4f46e5; color: #fff; }
 .btn.primary:hover:not(:disabled) { background: #4338ca; }
 
@@ -2936,6 +2972,9 @@ onUnmounted(() => {
 }
 .fold-toggle { flex: 0 0 auto; font-size: 0.68rem; font-weight: 600; }
 .panel-h { font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 8px; }
+.panel-h-actions {
+  display: flex; align-items: center; gap: 8px; min-width: 0; margin-left: auto;
+}
 .panel-h.row {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px;
   align-items: baseline;
@@ -2965,21 +3004,31 @@ onUnmounted(() => {
   padding: 0 2px;
 }
 .pool-filter-mask {
-  position: fixed; inset: 0; z-index: 1200;
+  position: fixed; inset: 0; z-index: 9999;
   background: rgba(15, 23, 42, 0.45);
   display: flex; align-items: flex-start; justify-content: center;
-  padding: 12vh 16px 24px;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 16px max(12px, env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 .pool-filter-panel {
-  width: min(720px, 100%);
-  max-height: calc(100vh - 12vh - 32px);
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(
+    860px,
+    calc(
+      100dvh
+      - max(12px, env(safe-area-inset-top, 0px))
+      - max(12px, env(safe-area-inset-bottom, 0px))
+      - 8px
+    )
+  );
   background: #fff; border-radius: 14px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2); overflow: hidden;
   display: flex; flex-direction: column;
   flex-shrink: 0;
-  margin: 0 auto;
+  margin: auto 0;
 }
 .pool-filter-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
