@@ -64,7 +64,7 @@ defineProps({
             <span v-if="isMember && polyOf(m.id)?.url" class="badge poly">外</span>
             <span v-if="isMember && isNewMode && gapInfo(m).ready" class="badge live-tier">{{ gapInfo(m).tier }}</span>
             <span
-              v-if="isInplayMode && gapInfo(m).ready"
+              v-if="isMember && isInplayMode && gapInfo(m).ready"
               class="badge live-tier"
               :title="`现差 ${gapInfo(m).gap} · 需≥${gapInfo(m).minGap}`"
             >{{ gapInfo(m).tier }} · 差{{ gapInfo(m).gap }}</span>

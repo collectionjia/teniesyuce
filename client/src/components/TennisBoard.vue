@@ -89,6 +89,8 @@ const isVirtualDataSource = computed(() => {
 })
 const useSimulateOrders = computed(() => !!isVirtualDataSource.value)
 const apiPath = computed(() => {
+  // 未订阅：与经典「网球」同源数据与展示，不走盘前/盘中专用桶与条件筛选
+  if ((isPrematchMode.value || isInplayMode.value) && !props.isMember) return '/api/tennis'
   if (isPrematchMode.value) return '/api/tennis-prematch'
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
@@ -1593,6 +1595,9 @@ watch(() => props.isMember, (ok) => {
   if (!ok) {
     closeDetail()
     clearSelection()
+  }
+  if (isPrematchMode.value || isInplayMode.value) {
+    void loadOnce({ quiet: true })
   }
 })
 

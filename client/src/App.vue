@@ -2497,7 +2497,8 @@ function isDirectProduct(product) {
 function isTennisPrematchProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-prematch') return true
-  return /盘前网球/.test(String(product?.name || ''))
+  const name = String(product?.name || '')
+  return /盘前网球|未开赛的网球|未开赛.*网球/.test(name)
 }
 
 function isTennisSettledProduct(product) {
@@ -2510,7 +2511,8 @@ function isTennisSettledProduct(product) {
 function isTennisInplayProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-inplay') return true
-  return /盘中采集|盘中网球/.test(String(product?.name || '')) && !/盘前|盘后/.test(String(product?.name || ''))
+  const name = String(product?.name || '')
+  return /盘中采集|盘中网球|比赛中的网球|比赛中.*网球/.test(name) && !/盘前|盘后|未开赛/.test(name)
 }
 
 const showBoardEngineButtons = computed(
@@ -3077,7 +3079,7 @@ function productEmbedUrl(product) {
                   <TennisBoard
                     ref="tennisBoardRef"
                     board-mode="prematch"
-                    :show-filters="true"
+                    :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"
@@ -3091,7 +3093,7 @@ function productEmbedUrl(product) {
                   <TennisBoard
                     ref="tennisBoardRef"
                     board-mode="inplay"
-                    :show-filters="true"
+                    :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
                     :can-batch-trade="canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"

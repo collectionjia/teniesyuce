@@ -49,12 +49,9 @@ defineProps({
   <div v-if="loading && !data" class="empty">加载赛程中…</div>
   <div v-else-if="error && !data" class="empty err">{{ error }}</div>
   <template v-else>
-    <div v-if="!matches.length && !isInplayMode" class="empty">
+    <div v-if="!matches.length" class="empty" role="status">
       当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
       <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
-    </div>
-    <div v-else-if="!matches.length && isInplayMode" class="empty" role="status">
-      暂无数据
     </div>
 
     <template v-else>
