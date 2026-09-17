@@ -2967,12 +2967,19 @@ onUnmounted(() => {
 .pool-filter-mask {
   position: fixed; inset: 0; z-index: 1200;
   background: rgba(15, 23, 42, 0.45);
-  display: flex; align-items: center; justify-content: center; padding: 16px;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 12vh 16px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .pool-filter-panel {
-  width: min(720px, 100%); max-height: min(88vh, 900px); background: #fff; border-radius: 14px;
+  width: min(720px, 100%);
+  max-height: calc(100vh - 12vh - 32px);
+  background: #fff; border-radius: 14px;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2); overflow: hidden;
   display: flex; flex-direction: column;
+  flex-shrink: 0;
+  margin: 0 auto;
 }
 .pool-filter-head {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
