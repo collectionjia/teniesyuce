@@ -47,6 +47,7 @@ dota2elo/
 
 # temp / local scratch
 tmp_*
+tmp-*.json
 tmp-deploy/
 tmp-deploy-fast/
 scripts/tmp_*
