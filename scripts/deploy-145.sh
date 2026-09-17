@@ -37,13 +37,21 @@ else
   echo "    · 继续构建的风险自负"
 fi
 
-echo "==> [2/5] 重建核心栈 yuce-prod (server/web/redis/btc-board)"
+echo "==> [2/6] server 依赖 node_modules（五引擎容器 NODE_PATH 挂载用，缺 redis 会启动失败）"
+if [[ ! -d server/node_modules/redis ]]; then
+  echo "    server/node_modules 缺失或未装 redis，执行 npm install ..."
+  npm install --omit=dev --prefix server
+else
+  echo "    server/node_modules 就绪"
+fi
+
+echo "==> [3/6] 重建核心栈 yuce-prod (server/web/redis/btc-board)"
 bash scripts/docker-deploy.sh prod up -d --build
 
-echo "==> [3/5] 重建五引擎 yuce-services (9101-9105)"
+echo "==> [4/6] 重建五引擎 yuce-services (9101-9105)"
 bash scripts/docker-deploy-services.sh up -d --build
 
-echo "==> [4/5] 健康检查"
+echo "==> [5/6] 健康检查"
 sleep 6
 WEB_PORT="${WEB_PORT:-9001}"
 if curl -sf "http://127.0.0.1:${WEB_PORT}/api/health" >/dev/null; then
@@ -59,7 +67,7 @@ for p in 9101 9102 9103 9104 9105; do
   fi
 done
 
-echo "==> [5/5] 服务状态"
+echo "==> [6/6] 服务状态"
 docker compose -f docker-compose.core.yml ps
 docker compose -f deploy/docker-compose.services.yml --profile all ps
 
