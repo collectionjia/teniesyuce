@@ -77,6 +77,7 @@ async function runInplayTick({ skipBetting = false } = {}) {
       if (wantScore) {
         scores = {
           updated: Number(s.updated) || 0,
+          failed: Number(s.failed) || 0,
           liveFeed: s.live_feed ?? null,
           tracked: s.tracked ?? matchCount,
           ok: refresh?.ok !== false && s.ok !== false,
@@ -103,6 +104,28 @@ async function runInplayTick({ skipBetting = false } = {}) {
       if (!refresh?.ok) {
         console.warn('[inplay-tick] refresh_inplay failed:', refresh?.error);
         if (refresh?.log_tail) console.warn('[inplay-tick] log_tail:\n', refresh.log_tail);
+      }
+      if (wantScore && (scores.error || scores.ok === false || Number(scores.failed) > 0)) {
+        console.warn('[inplay-tick] score collection failed:', {
+          updated: scores.updated,
+          failed: scores.failed,
+          tracked: scores.tracked,
+          liveFeed: scores.liveFeed,
+          error: scores.error,
+          missed: scores.summary?.missed || null,
+        });
+        if (refresh?.log_tail) console.warn('[inplay-tick] score log_tail:\n', refresh.log_tail);
+      }
+      if (wantOdds && Number(prices.failed) > 0) {
+        console.warn('[inplay-tick] odds collection failed:', {
+          updated: prices.updated,
+          failed: prices.failed,
+          error: prices.error,
+          failures: prices.summary?.failures || null,
+        });
+        if (refresh?.ok && refresh?.log_tail) {
+          console.warn('[inplay-tick] odds log_tail:\n', refresh.log_tail);
+        }
       }
       bundle = await tennisInplayCache.getBundle();
       if (bundle) {

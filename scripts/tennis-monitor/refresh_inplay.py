@@ -73,20 +73,58 @@ def refresh_scores(matches: list[dict[str, Any]]) -> dict[str, Any]:
 
     by_id = {int(ev["id"]): ev for ev in live_raw if ev.get("id") is not None}
     updated = 0
+    missed: list[dict[str, Any]] = []
     for m in matches:
         eid = m.get("id")
         if eid is None:
             continue
-        raw = by_id.get(int(eid))
+        iid = int(eid)
+        raw = by_id.get(iid)
         if not raw:
+            missed.append(
+                {
+                    "id": iid,
+                    "home": m.get("home") or (m.get("homePlayer") or {}).get("name"),
+                    "away": m.get("away") or (m.get("awayPlayer") or {}).get("name"),
+                    "status": m.get("status") or m.get("statusType"),
+                    "reason": "not in Sofascore live feed",
+                }
+            )
             continue
         _patch_match_score(m, raw)
         updated += 1
 
+    if missed:
+        preview = missed[:20]
+        print(
+            f"[refresh_inplay] score miss {len(missed)}/{len(want)} "
+            f"(live_feed={len(live_raw)}): "
+            + "; ".join(
+                f"{x['id']} {x.get('home') or '?'} vs {x.get('away') or '?'} ({x.get('reason')})"
+                for x in preview
+            )
+            + (" …" if len(missed) > len(preview) else ""),
+            flush=True,
+        )
+    if error:
+        print(
+            f"[refresh_inplay] score failed: error={error} "
+            f"updated={updated}/{len(want)} live_feed={len(live_raw)}",
+            flush=True,
+        )
+    elif updated == 0 and want:
+        print(
+            f"[refresh_inplay] score failed: updated=0/{len(want)} "
+            f"live_feed={len(live_raw)} missed={len(missed)}",
+            flush=True,
+        )
+
     return {
         "updated": updated,
+        "failed": len(missed),
         "live_feed": len(live_raw),
         "tracked": len(want),
+        "missed": missed[:50],
         "error": error,
         "ok": error is None,
     }
@@ -127,20 +165,40 @@ def refresh_polymarket(poly_map: dict[str, Any], match_ids: set[int]) -> dict[st
         except Exception as exc:
             return eid, None, str(exc)
 
+    failures: list[dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futs = [pool.submit(_one, e) for e in entries]
         for fut in as_completed(futs):
             eid, next_poly, err = fut.result()
             if err or not next_poly:
                 failed += 1
-                if err and err != "empty":
-                    print(f"[refresh_inplay] poly {eid}: {err}", flush=True)
+                reason = err or "no event"
+                failures.append({"id": eid, "reason": reason})
+                print(f"[refresh_inplay] poly fail id={eid}: {reason}", flush=True)
                 continue
             if next_poly.get("moneyline", {}).get("prices"):
                 poly_map[eid] = next_poly
                 updated += 1
+            else:
+                failed += 1
+                reason = "no moneyline prices"
+                failures.append({"id": eid, "reason": reason})
+                print(f"[refresh_inplay] poly fail id={eid}: {reason}", flush=True)
 
-    return {"updated": updated, "failed": failed, "candidates": len(entries), "ok": True}
+    if failed:
+        print(
+            f"[refresh_inplay] poly failed {failed}/{len(entries)} "
+            f"(updated={updated})",
+            flush=True,
+        )
+
+    return {
+        "updated": updated,
+        "failed": failed,
+        "candidates": len(entries),
+        "failures": failures[:50],
+        "ok": True,
+    }
 
 
 def main() -> int:
