@@ -5,6 +5,9 @@ defineProps({
   isSettledMode: { type: Boolean, default: false },
   allowBatchTrade: { type: Boolean, default: false },
   bundleHint: { type: String, default: '' },
+  collectUpdatedText: { type: String, default: '' },
+  collectRefreshing: { type: Boolean, default: false },
+  refreshScoreOddsCollect: { type: Function, default: null },
   inplayAutoRulesText: { type: String, default: '' },
   settledStats: { type: Object, default: null },
   stats: { type: Object, required: true },
@@ -18,9 +21,25 @@ defineProps({
 </script>
 
 <template>
-<div v-if="isInplayMode && (allowBatchTrade || bundleHint)" class="inplay-source-bar">
-      <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ inplayAutoRulesText }}</span>
-      <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
+<div v-if="isInplayMode" class="inplay-source-bar">
+      <div class="inplay-collect-row">
+        <div class="inplay-collect-main">
+          <span class="inplay-collect-label">polymarket赔率 · 比分和赔率采集</span>
+          <span v-if="collectUpdatedText" class="inplay-collect-time">更新 {{ collectUpdatedText }}</span>
+          <span v-else class="inplay-collect-time muted">暂无更新时间</span>
+        </div>
+        <button
+          v-if="refreshScoreOddsCollect"
+          type="button"
+          class="inplay-refresh-btn"
+          :disabled="collectRefreshing || loading"
+          @click="refreshScoreOddsCollect()"
+        >{{ collectRefreshing ? '刷新中…' : '刷新' }}</button>
+      </div>
+      <div v-if="allowBatchTrade || bundleHint" class="inplay-collect-extra">
+        <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ inplayAutoRulesText }}</span>
+        <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
+      </div>
     </div>
     <div v-if="isSettledMode && settledStats" class="settled-stats-bar">
       <span>合计 盈{{ pct(settledStats.total?.winRate) }} / 亏{{ pct(settledStats.total?.lossRate) }} · PnL {{ num(settledStats.total?.totalPnl) }}</span>
@@ -182,6 +201,48 @@ defineProps({
   color: #92400e;
   font-size: 0.72rem;
   line-height: 1.4;
+}
+.inplay-collect-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.inplay-collect-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.inplay-collect-label {
+  font-weight: 700;
+  color: #78350f;
+}
+.inplay-collect-time {
+  font-variant-numeric: tabular-nums;
+  color: #92400e;
+}
+.inplay-collect-time.muted { color: #b45309; opacity: 0.75; }
+.inplay-refresh-btn {
+  flex-shrink: 0;
+  border: 1px solid #f59e0b;
+  background: #fff7ed;
+  color: #b45309;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.inplay-refresh-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.inplay-collect-extra {
+  margin-top: 6px;
+  color: #92400e;
 }
 .settled-stats-bar {
   display: flex;

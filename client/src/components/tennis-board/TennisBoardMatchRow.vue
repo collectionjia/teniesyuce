@@ -30,7 +30,10 @@ defineProps({
   livePointText: { type: Function, required: true },
   openDetail: { type: Function, required: true },
   openMarket: { type: Function, required: true },
+  onPolymarketAction: { type: Function, default: null },
   polyUrlOf: { type: Function, required: true },
+  collectUpdatedText: { type: String, default: '' },
+  collectRefreshing: { type: Boolean, default: false },
 })
 </script>
 
@@ -154,13 +157,18 @@ defineProps({
           </div>
           <div v-if="isMember" class="row-actions">
             <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
-            <button
-              type="button"
-              class="act-btn market"
-              :disabled="!polyUrlOf(m)"
-              :title="polyUrlOf(m) ? '打开关联页' : '暂无对应外链'"
-              @click="openMarket(m)"
-            >外链</button>
+            <div class="poly-action">
+              <button
+                type="button"
+                class="act-btn market"
+                :disabled="collectRefreshing || (!isInplayMode && !polyUrlOf(m))"
+                :title="isInplayMode
+                  ? (collectUpdatedText ? `比分和赔率采集 · ${collectUpdatedText}` : '刷新比分和 Polymarket 赔率')
+                  : (polyUrlOf(m) ? '打开关联页' : '暂无对应外链')"
+                @click="(onPolymarketAction || openMarket)(m)"
+              >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
+              <span v-if="isInplayMode && collectUpdatedText" class="poly-updated">{{ collectUpdatedText }}</span>
+            </div>
           </div>
         </div>
         </div>
@@ -449,6 +457,22 @@ defineProps({
   gap: 4px;
   flex-shrink: 0;
   align-items: center;
+}
+.poly-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+.poly-updated {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  max-width: 140px;
+  text-align: right;
 }
 .act-btn {
   border: 1px solid #c7d2fe;

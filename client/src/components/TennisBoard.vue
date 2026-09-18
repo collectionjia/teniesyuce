@@ -1769,18 +1769,45 @@ function sanitizeBundleHint(raw) {
     .trim()
 }
 
-const bundleHint = computed(() => {
-  const msg = data.value?.message || data.value?.update?.message || ''
-  const base = sanitizeBundleHint(msg)
-  if (!isInplayMode.value) return base
+/** 比分 / Polymarket 赔率采集最后更新时间（盘中） */
+const collectUpdatedText = computed(() => {
   const scoreAt = fmtRefreshClock(data.value?.score_updated_at || data.value?.tick_at)
   const oddsAt = fmtRefreshClock(data.value?.odds_updated_at || data.value?.tick_at)
   const parts = []
   if (scoreAt) parts.push(`比分 ${scoreAt}`)
   if (oddsAt) parts.push(`赔率 ${oddsAt}`)
-  if (!parts.length) return base
-  return base ? `${base} · ${parts.join(' · ')}` : parts.join(' · ')
+  return parts.join(' · ')
 })
+
+const bundleHint = computed(() => {
+  const msg = data.value?.message || data.value?.update?.message || ''
+  return sanitizeBundleHint(msg)
+})
+
+const collectRefreshing = ref(false)
+
+/** 盘中：触发比分+Polymarket 赔率采集并刷新列表 */
+async function refreshScoreOddsCollect() {
+  if (collectRefreshing.value) return
+  collectRefreshing.value = true
+  try {
+    if (props.canEditRules) {
+      try {
+        await api.runTennisInplayTick()
+      } catch {
+        /* 采集失败仍拉 Redis 最新包 */
+      }
+    }
+    await loadOnce({ quiet: false })
+  } finally {
+    collectRefreshing.value = false
+  }
+}
+
+async function onPolymarketAction(m) {
+  if (isInplayMode.value) await refreshScoreOddsCollect()
+  openMarket(m)
+}
 
 function fmtRefreshClock(iso) {
   if (!iso) return ''
@@ -2424,6 +2451,9 @@ defineExpose({
       :is-settled-mode="isSettledMode"
       :allow-batch-trade="allowBatchTrade"
       :bundle-hint="bundleHint"
+      :collect-updated-text="collectUpdatedText"
+      :collect-refreshing="collectRefreshing"
+      :refresh-score-odds-collect="refreshScoreOddsCollect"
       :inplay-auto-rules-text="INPLAY_AUTO_RULES_TEXT"
       :settled-stats="settledStats"
       :stats="stats"
@@ -2589,7 +2619,10 @@ defineExpose({
       :live-point-text="livePointText"
       :open-detail="openDetail"
       :open-market="openMarket"
+      :on-polymarket-action="onPolymarketAction"
       :poly-url-of="polyUrlOf"
+      :collect-updated-text="collectUpdatedText"
+      :collect-refreshing="collectRefreshing"
       :total-pages="totalPages"
       :current-page="currentPage"
       :go-page="goPage"
@@ -2627,6 +2660,9 @@ defineExpose({
       :poly-side-cents="polySideCents"
       :poly-url-of="polyUrlOf"
       :open-market="openMarket"
+      :on-polymarket-action="onPolymarketAction"
+      :collect-updated-text="collectUpdatedText"
+      :collect-refreshing="collectRefreshing"
     />
   </div>
 </template>

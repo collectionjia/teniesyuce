@@ -31,6 +31,9 @@ defineProps({
   polySideCents: { type: Function, required: true },
   polyUrlOf: { type: Function, required: true },
   openMarket: { type: Function, required: true },
+  onPolymarketAction: { type: Function, default: null },
+  collectUpdatedText: { type: String, default: '' },
+  collectRefreshing: { type: Boolean, default: false },
 })
 </script>
 
@@ -204,7 +207,7 @@ defineProps({
               </div>
 
               <div class="kv" v-if="polyOf(detailMatch.id)?.url">
-                <span class="k">外链</span>
+                <span class="k">polymarket赔率</span>
                 <div class="kv-lines">
                   <div class="kv-line">
                     <span class="n">{{ shortName(matchHomeName(detailMatch)) }}</span>
@@ -215,7 +218,10 @@ defineProps({
                     <span class="num">{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away }}</span>
                   </div>
                 </div>
-                <span class="s">{{ polyOf(detailMatch.id)?.closed ? '已结算 · 隐含占比' : '隐含占比' }}</span>
+                <span class="s">
+                  {{ polyOf(detailMatch.id)?.closed ? '已结算 · 隐含占比' : '隐含占比' }}
+                  <template v-if="isInplayMode && collectUpdatedText"> · 更新 {{ collectUpdatedText }}</template>
+                </span>
               </div>
             </div>
           </div>
@@ -225,9 +231,9 @@ defineProps({
             <button
               type="button"
               class="act-btn market"
-              :disabled="!polyUrlOf(detailMatch)"
-              @click="openMarket(detailMatch)"
-            >外链</button>
+              :disabled="collectRefreshing || (!isInplayMode && !polyUrlOf(detailMatch))"
+              @click="(onPolymarketAction || openMarket)(detailMatch)"
+            >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
           </div>
         </div>
       </div>

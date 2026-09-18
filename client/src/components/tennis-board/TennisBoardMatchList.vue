@@ -38,7 +38,10 @@ defineProps({
   livePointText: { type: Function, required: true },
   openDetail: { type: Function, required: true },
   openMarket: { type: Function, required: true },
+  onPolymarketAction: { type: Function, default: null },
   polyUrlOf: { type: Function, required: true },
+  collectUpdatedText: { type: String, default: '' },
+  collectRefreshing: { type: Boolean, default: false },
   totalPages: { type: Number, default: 1 },
   currentPage: { type: Number, default: 1 },
   goPage: { type: Function, required: true },
@@ -89,7 +92,10 @@ defineProps({
           :live-point-text="livePointText"
           :open-detail="openDetail"
           :open-market="openMarket"
+          :on-polymarket-action="onPolymarketAction"
           :poly-url-of="polyUrlOf"
+          :collect-updated-text="collectUpdatedText"
+          :collect-refreshing="collectRefreshing"
         />
       </div>
 
