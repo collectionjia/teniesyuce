@@ -154,10 +154,54 @@ router.get('/daily-report', auth(['admin']), async (req, res) => {
 router.get('/products', auth(['admin']), async (req, res) => {
   try {
     await productService.ensureProductColumns();
+    await productService.ensureProductCategories();
     const [rows] = await pool.query('SELECT * FROM products ORDER BY id');
-    res.json({ products: rows.map(mapProduct) });
+    const categories = await productService.listCategories();
+    res.json({ products: rows.map(mapProduct), categories });
   } catch (e) {
     res.status(500).json({ error: '获取产品失败' });
+  }
+});
+
+router.get('/product-categories', auth(['admin']), async (req, res) => {
+  try {
+    const categories = await productService.listCategories();
+    res.json({ categories });
+  } catch (e) {
+    res.status(500).json({ error: '获取分类失败' });
+  }
+});
+
+router.post('/product-categories', auth(['admin']), async (req, res) => {
+  try {
+    const category = await productService.createCategory({
+      name: req.body?.name,
+      sortOrder: req.body?.sortOrder,
+    });
+    res.json({ category, message: '分类已创建' });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || '创建分类失败' });
+  }
+});
+
+router.put('/product-categories/:id', auth(['admin']), async (req, res) => {
+  try {
+    const category = await productService.updateCategory(req.params.id, {
+      name: req.body?.name,
+      sortOrder: req.body?.sortOrder,
+    });
+    res.json({ category, message: '分类已更新' });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || '更新分类失败' });
+  }
+});
+
+router.delete('/product-categories/:id', auth(['admin']), async (req, res) => {
+  try {
+    await productService.deleteCategory(req.params.id);
+    res.json({ message: '分类已删除' });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || '删除分类失败' });
   }
 });
 
@@ -179,12 +223,13 @@ router.post('/products', auth(['admin']), async (req, res) => {
   if (!name || !tag) return res.status(400).json({ error: '请填写产品名称' });
   try {
     await productService.ensureProductColumns();
+    const categoryId = await productService.resolveCategoryId(req.body.categoryId);
     const [result] = await pool.query(
-      `INSERT INTO products (name, tag, gradient, url, description, price_month, price_week, price_day, default_plan, online, admin_only, condition_select, betting_select)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `INSERT INTO products (name, tag, gradient, url, description, price_month, price_week, price_day, default_plan, online, admin_only, condition_select, betting_select, category_id)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [name, tag, gradient || 'linear-gradient(135deg,#2563eb,#06b6d4)', url || '#',
         desc || '', priceMonth || 0, priceWeek || 0, priceDay || 0, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0,
-        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect)]
+        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect), categoryId]
     );
     res.json({ id: result.insertId, message: '产品已创建' });
   } catch (e) {
@@ -202,12 +247,13 @@ router.put('/products/:id', auth(['admin']), async (req, res) => {
     await productService.ensureProductColumns();
     const [[exists]] = await pool.query('SELECT id FROM products WHERE id=?', [req.params.id]);
     if (!exists) return res.status(404).json({ error: '产品不存在' });
+    const categoryId = await productService.resolveCategoryId(req.body.categoryId);
     await pool.query(
       `UPDATE products SET name=?, tag=?, gradient=?, url=?, description=?,
        price_month=?, price_week=?, price_day=?, default_plan=?, online=?, admin_only=?,
-       condition_select=?, betting_select=? WHERE id=?`,
+       condition_select=?, betting_select=?, category_id=? WHERE id=?`,
       [name, tag, gradient, url, desc, priceMonth, priceWeek, priceDay, defaultPlan, online ? 1 : 0, adminOnly ? 1 : 0,
-        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect), req.params.id]
+        JSON.stringify(conditionSelect), JSON.stringify(bettingSelect), categoryId, req.params.id]
     );
     res.json({ message: '产品已更新' });
   } catch (e) {

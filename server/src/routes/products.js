@@ -23,13 +23,27 @@ function mapProductForUser(row, user) {
 router.get('/', auth(), async (req, res) => {
   try {
     await productService.ensureProductColumns();
+    await productService.ensureProductCategories();
     const user = await loadUserPricingContext(req.user.id);
     const sql = 'SELECT * FROM products WHERE online=1 ORDER BY id';
     const [rows] = await pool.query(sql);
     const visible = rows.filter((p) => !p.admin_only || user?.role === 'admin');
-    res.json({ products: visible.map((p) => mapProductForUser(p, user)) });
+    const categories = await productService.listCategories();
+    res.json({
+      products: visible.map((p) => mapProductForUser(p, user)),
+      categories,
+    });
   } catch (e) {
     res.status(500).json({ error: '获取产品失败' });
+  }
+});
+
+router.get('/categories', auth(), async (req, res) => {
+  try {
+    const categories = await productService.listCategories();
+    res.json({ categories });
+  } catch (e) {
+    res.status(500).json({ error: '获取分类失败' });
   }
 });
 

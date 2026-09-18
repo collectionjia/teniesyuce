@@ -914,18 +914,48 @@ async function setConfig(patch) {
     for (const key of BETTING_BUCKET_KEYS) {
       if (!patchBetBuckets[key]) continue;
       const p = patchBetBuckets[key];
+      // base 已是 deepMerge 结果，含本桶 orderType/amountUsd/shares/限价等
       const base = next.betting.buckets[key] || {
         enabled: false,
         simulate: false,
+        orderType: 'market',
+        amountUsd: 1,
+        shares: null,
+        limitBuyPrice: null,
+        limitPrice: null,
+        limitSellPrice: null,
         groups: key === 'inplay' ? defaultInplayBettingGroups() : defaultPrematchBettingGroups(),
       };
       next.betting.buckets[key] = {
+        ...base,
         enabled: p.enabled != null ? !!p.enabled : !!base.enabled,
         simulate: p.simulate != null ? !!p.simulate : !!base.simulate,
+        // groups 以 patch 整数组为准，避免与旧组合并残留
         groups: Array.isArray(p.groups)
           ? p.groups.map((g) => normalizeBettingGroup(g, key))
           : (base.groups || [emptyBettingGroup(key)]),
       };
+      if (p.orderType != null && p.orderType !== '') {
+        next.betting.buckets[key].orderType = String(p.orderType).toLowerCase() === 'limit' ? 'limit' : 'market';
+      }
+      if (p.amountUsd != null && p.amountUsd !== '') {
+        const amt = Number(p.amountUsd);
+        if (Number.isFinite(amt) && amt > 0) {
+          next.betting.buckets[key].amountUsd = Math.round(amt * 100) / 100;
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(p, 'shares')) {
+        const sh = Math.floor(Number(p.shares) * 100) / 100;
+        next.betting.buckets[key].shares = Number.isFinite(sh) && sh > 0 ? sh : null;
+      }
+      if (Object.prototype.hasOwnProperty.call(p, 'limitBuyPrice') || Object.prototype.hasOwnProperty.call(p, 'limitPrice')) {
+        const buy = clampProbPrice(p.limitBuyPrice != null && p.limitBuyPrice !== '' ? p.limitBuyPrice : p.limitPrice);
+        next.betting.buckets[key].limitBuyPrice = buy;
+        next.betting.buckets[key].limitPrice = buy;
+      }
+      if (Object.prototype.hasOwnProperty.call(p, 'limitSellPrice')) {
+        next.betting.buckets[key].limitSellPrice = clampProbPrice(p.limitSellPrice);
+      }
       if (key === 'inplay') {
         next.betting.buckets[key].entry = normalizeInplayBettingEntry(
           p.entry != null ? p.entry : base.entry,

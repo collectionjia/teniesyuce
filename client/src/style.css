@@ -307,6 +307,35 @@ html, body { margin: 0; background: #0f172a; }
 .shop-search .list-search-icon {
   left: 10px;
 }
+.shop-category-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 4px;
+  margin: 2px 0 4px;
+  scrollbar-width: none;
+}
+.shop-category-bar::-webkit-scrollbar {
+  display: none;
+}
+.shop-cat-chip {
+  flex-shrink: 0;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+.shop-cat-chip.on {
+  border-color: #6366f1;
+  background: #eef2ff;
+  color: #4338ca;
+}
 .shop-empty {
   background: #fff;
   border: 1px solid #e2e8f0;

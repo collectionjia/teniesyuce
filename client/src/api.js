@@ -41,6 +41,10 @@ export async function fetchProducts() {
   const { data } = await api.get('/products')
   return data.products
 }
+export async function fetchProductCategories() {
+  const { data } = await api.get('/products/categories')
+  return data.categories || []
+}
 
 export async function fetchSubscriptions() {
   const { data } = await api.get('/subscriptions/mine')
@@ -135,6 +139,22 @@ export async function payAdminWithdrawal(id) {
 export async function fetchAdminProducts() {
   const { data } = await api.get('/admin/products')
   return data.products
+}
+export async function fetchAdminProductCategories() {
+  const { data } = await api.get('/admin/product-categories')
+  return data.categories || []
+}
+export async function createProductCategory(payload) {
+  const { data } = await api.post('/admin/product-categories', payload)
+  return data
+}
+export async function updateProductCategory(id, payload) {
+  const { data } = await api.put(`/admin/product-categories/${id}`, payload)
+  return data
+}
+export async function deleteProductCategory(id) {
+  const { data } = await api.delete(`/admin/product-categories/${id}`)
+  return data
 }
 export async function fetchAdminProduct(id) {
   const { data } = await api.get(`/admin/products/${id}`)

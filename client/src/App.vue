@@ -44,7 +44,12 @@ const f = reactive({ account: '', password: '', confirm: '', regRole: 'user', ag
 const currentUser = reactive({ id: null, name: '', account: '', role: 'user', inviteCode: '', tennisFilterEnabled: false, btcSimEnabled: false })
 
 const products = ref([])
+const productCategories = ref([])
+const shopCategoryFilter = ref('all') // all | none | categoryId
 const adminProducts = ref([])
+const adminCategories = ref([])
+const categoryForm = reactive({ name: '', sortOrder: '', saving: false, editingId: null })
+const categoryBusyId = ref(null)
 const userSubs = reactive({})
 const openedProduct = ref(null)
 /** 当前列表页是否已开启自动投注（由 TennisBoard / BtcBoard 上报） */
@@ -362,6 +367,12 @@ const filteredProducts = computed(() => {
 const filteredShopProducts = computed(() => {
   let list = products.value
   if (role.value !== 'admin') list = list.filter((p) => !p.adminOnly)
+  const cat = shopCategoryFilter.value
+  if (cat === 'none') list = list.filter((p) => !p.categoryId)
+  else if (cat !== 'all') {
+    const cid = Number(cat)
+    list = list.filter((p) => Number(p.categoryId) === cid)
+  }
   list = filterBySearch(list, listSearch.shop, ['name', 'desc', 'tag'])
   const bucketRank = (p) => {
     const b = productFormBucket(p)
@@ -377,6 +388,10 @@ const filteredShopProducts = computed(() => {
     return (Number(a.id) || 0) - (Number(b.id) || 0)
   })
 })
+
+const shopHasUncategorized = computed(() =>
+  products.value.some((p) => !p.categoryId && (role.value === 'admin' || !p.adminOnly))
+)
 const filteredMineSubs = computed(() =>
   filterBySearch(mySubs.value, listSearch.mine, ['name', 'desc', 'tag'])
 )
@@ -642,7 +657,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -684,7 +699,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'collect-proxy', 'tennis-monitor', 'btc-board', 'btc-api-keys', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'product-categories', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'collect-proxy', 'tennis-monitor', 'btc-board', 'btc-api-keys', 'redeem-codes', 'daily-report', 'site-settings']
 /** 模拟数据编辑：独立全屏页（?page=docks-editor） */
 const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
@@ -766,6 +781,7 @@ const adminManageSections = [
     items: [
       { view: 'daily-report', label: '运营日报', desc: '今日新增客户、激活码与营收', icon: 'chart', color: 'from-emerald-500 to-teal-500' },
       { view: 'products', label: '产品管理', desc: '上架、定价与产品配置', icon: 'grid', color: 'from-indigo-500 to-violet-500' },
+      { view: 'product-categories', label: '产品分类', desc: '首页顶层分类 · 添加与排序', icon: 'list', color: 'from-violet-500 to-indigo-500' },
       { view: 'agents', label: '代理管理', desc: '代理账号与分成比例', icon: 'users', color: 'from-sky-500 to-cyan-500' },
       { view: 'orders', label: '订单中心', desc: '支付订单与交易记录', icon: 'list', color: 'from-amber-500 to-orange-500' },
       { view: 'users', label: '用户管理', desc: '用户账号与余额维护', icon: 'user', color: 'from-rose-500 to-pink-500' },
@@ -1135,10 +1151,107 @@ function apiErrorMessage(e, fallback = '请求失败') {
 async function loadProducts() {
   shopLoadError.value = ''
   try {
-    products.value = await api.fetchProducts()
+    const [list, cats] = await Promise.all([
+      api.fetchProducts(),
+      api.fetchProductCategories().catch(() => []),
+    ])
+    products.value = list
+    productCategories.value = Array.isArray(cats) ? cats : []
+    const ids = new Set(productCategories.value.map((c) => String(c.id)))
+    if (shopCategoryFilter.value !== 'all' && shopCategoryFilter.value !== 'none'
+      && !ids.has(String(shopCategoryFilter.value))) {
+      shopCategoryFilter.value = 'all'
+    }
   } catch (e) {
     shopLoadError.value = apiErrorMessage(e, '加载产品失败')
     throw e
+  }
+}
+
+async function loadAdminCategories() {
+  adminCategories.value = await api.fetchAdminProductCategories()
+}
+
+async function saveCategoryForm() {
+  if (categoryForm.saving) return
+  const name = String(categoryForm.name || '').trim()
+  if (!name) return showToast('请填写分类名称', 'error')
+  categoryForm.saving = true
+  try {
+    const payload = { name }
+    if (categoryForm.sortOrder !== '' && categoryForm.sortOrder != null) {
+      payload.sortOrder = Number(categoryForm.sortOrder)
+    }
+    if (categoryForm.editingId) {
+      await api.updateProductCategory(categoryForm.editingId, payload)
+      showToast('分类已更新', 'success')
+    } else {
+      await api.createProductCategory(payload)
+      showToast('分类已创建', 'success')
+    }
+    categoryForm.name = ''
+    categoryForm.sortOrder = ''
+    categoryForm.editingId = null
+    await loadAdminCategories()
+    await loadProductsSafe()
+  } catch (e) {
+    showToast(e.response?.data?.error || '保存分类失败', 'error')
+  } finally {
+    categoryForm.saving = false
+  }
+}
+
+function startEditCategory(cat) {
+  categoryForm.editingId = cat.id
+  categoryForm.name = cat.name
+  categoryForm.sortOrder = cat.sortOrder
+}
+
+function cancelEditCategory() {
+  categoryForm.editingId = null
+  categoryForm.name = ''
+  categoryForm.sortOrder = ''
+}
+
+async function moveCategory(cat, dir) {
+  if (categoryBusyId.value) return
+  const list = [...adminCategories.value]
+  const idx = list.findIndex((c) => c.id === cat.id)
+  const swap = idx + dir
+  if (idx < 0 || swap < 0 || swap >= list.length) return
+  categoryBusyId.value = cat.id
+  try {
+    const a = list[idx]
+    const b = list[swap]
+    const orderA = Number(a.sortOrder) || 0
+    const orderB = Number(b.sortOrder) || 0
+    await Promise.all([
+      api.updateProductCategory(a.id, { sortOrder: orderB }),
+      api.updateProductCategory(b.id, { sortOrder: orderA }),
+    ])
+    await loadAdminCategories()
+    await loadProductsSafe()
+  } catch (e) {
+    showToast(e.response?.data?.error || '调整顺序失败', 'error')
+  } finally {
+    categoryBusyId.value = null
+  }
+}
+
+async function removeCategory(cat) {
+  if (!confirm(`确定删除分类「${cat.name}」？所属产品将变为未分类。`)) return
+  if (categoryBusyId.value) return
+  categoryBusyId.value = cat.id
+  try {
+    await api.deleteProductCategory(cat.id)
+    showToast('分类已删除', 'success')
+    if (categoryForm.editingId === cat.id) cancelEditCategory()
+    await loadAdminCategories()
+    await loadProductsSafe()
+  } catch (e) {
+    showToast(e.response?.data?.error || '删除失败', 'error')
+  } finally {
+    categoryBusyId.value = null
   }
 }
 
@@ -1279,6 +1392,7 @@ function emptyForm(type) {
       defaultPlan: paymentSettings.defaultPlan || 'month',
       online: true,
       adminOnly: false,
+      categoryId: '',
       conditionSelect: [],
       bettingSelect: [],
     }
@@ -1309,6 +1423,7 @@ async function openAdminModal(type, mode, item) {
     ...item,
     defaultPlan: item.defaultPlan || paymentSettings.defaultPlan || 'month',
     password: '',
+    categoryId: item.categoryId ?? '',
     conditionSelect: normalizeSelectRows(item.conditionSelect),
     bettingSelect: normalizeSelectRows(item.bettingSelect),
   }
@@ -1319,6 +1434,7 @@ async function openAdminModal(type, mode, item) {
     adminModal.form.productId = adminProducts.value[0]?.id || ''
   }
   if (type === 'product') {
+    if (!adminCategories.value.length) await loadAdminCategories()
     const bucket = productFormBucket(adminModal.form)
     await loadProductEngineGroups(bucket)
   } else {
@@ -1328,7 +1444,10 @@ async function openAdminModal(type, mode, item) {
 }
 
 async function refreshAdminList(type) {
-  if (type === 'product') adminProducts.value = await api.fetchAdminProducts()
+  if (type === 'product') {
+    adminProducts.value = await api.fetchAdminProducts()
+    await loadAdminCategories()
+  }
   else if (type === 'agent') admin.agentList = await api.fetchAdminAgents()
   else if (type === 'order') await loadPaymentOrders()
   else if (type === 'user') admin.users = await api.fetchAdminUsers()
@@ -1351,6 +1470,7 @@ async function saveAdminModal() {
         defaultPlan: form.defaultPlan,
         online: !!form.online,
         adminOnly: !!form.adminOnly,
+        categoryId: form.categoryId || null,
         conditionSelect: normalizeSelectRows(form.conditionSelect),
         bettingSelect: normalizeSelectRows(form.bettingSelect),
       }
@@ -2302,11 +2422,15 @@ watch(view, async (v) => {
     } else if (v === 'clients') await loadAgentOrders()
     else if (v === 'overview') await loadAgentData()
   }
-  if (role.value === 'admin' && ['overview', 'shop', 'manage', 'products', 'agents', 'orders', 'users', 'mine', 'redeem-codes', 'daily-report', 'site-settings'].includes(v)) {
+  if (role.value === 'admin' && ['overview', 'shop', 'manage', 'products', 'product-categories', 'agents', 'orders', 'users', 'mine', 'redeem-codes', 'daily-report', 'site-settings'].includes(v)) {
     if (v === 'shop' || v === 'mine') {
       await loadProductsSafe()
       if (v === 'mine') await loadSubscriptions()
-    } else if (v === 'products') adminProducts.value = await api.fetchAdminProducts()
+    } else if (v === 'products') {
+      adminProducts.value = await api.fetchAdminProducts()
+      await loadAdminCategories()
+    }
+    else if (v === 'product-categories') await loadAdminCategories()
     else if (v === 'agents') admin.agentList = await api.fetchAdminAgents()
     else if (v === 'orders') await loadPaymentOrders()
     else if (v === 'users') admin.users = await api.fetchAdminUsers()
@@ -2960,6 +3084,29 @@ function productEmbedUrl(product) {
                   <span class="list-search-icon" v-html="icon('search')"></span>
                   <input v-model="listSearch.shop" type="search" placeholder="搜索..." class="list-search-input" />
                 </div>
+              </div>
+              <div v-if="productCategories.length || shopHasUncategorized" class="shop-category-bar" role="tablist">
+                <button
+                  type="button"
+                  class="shop-cat-chip"
+                  :class="{ on: shopCategoryFilter === 'all' }"
+                  @click="shopCategoryFilter = 'all'"
+                >全部</button>
+                <button
+                  v-for="c in productCategories"
+                  :key="c.id"
+                  type="button"
+                  class="shop-cat-chip"
+                  :class="{ on: String(shopCategoryFilter) === String(c.id) }"
+                  @click="shopCategoryFilter = String(c.id)"
+                >{{ c.name }}</button>
+                <button
+                  v-if="shopHasUncategorized"
+                  type="button"
+                  class="shop-cat-chip"
+                  :class="{ on: shopCategoryFilter === 'none' }"
+                  @click="shopCategoryFilter = 'none'"
+                >未分类</button>
               </div>
               <div v-if="shopLoadError" class="shop-empty text-amber-700 bg-amber-50 rounded-2xl px-4 py-6">
                 {{ shopLoadError }}
@@ -4086,6 +4233,7 @@ function productEmbedUrl(product) {
                       <div class="font-medium truncate">{{ p.name }}</div>
                       <div class="text-xs text-slate-400">月{{ p.priceMonth }} / 周{{ p.priceWeek }} / 天{{ p.priceDay }}</div>
                       <div class="text-[11px] text-primary-600 mt-0.5">支付默认：按{{ planText(p.defaultPlan || 'month') }}</div>
+                      <div v-if="p.categoryId" class="text-[11px] text-slate-500 mt-0.5">分类：{{ adminCategories.find(c => c.id === p.categoryId)?.name || ('#' + p.categoryId) }}</div>
                       <div v-if="p.adminOnly" class="text-[11px] text-amber-600 mt-0.5">仅管理员可见</div>
                     </div>
                   </div>
@@ -4105,6 +4253,37 @@ function productEmbedUrl(product) {
                 <button @click="goPage('products', pagedProducts.current-1)" :disabled="pagedProducts.current<=1" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40">上一页</button>
                 <span class="text-xs text-slate-400">{{ pagedProducts.from }}-{{ pagedProducts.to }} / {{ pagedProducts.total }} · 第 {{ pagedProducts.current }}/{{ pagedProducts.totalPages }} 页</span>
                 <button @click="goPage('products', pagedProducts.current+1)" :disabled="pagedProducts.current>=pagedProducts.totalPages" class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-40">下一页</button>
+              </div>
+            </section>
+
+            <section v-else-if="role==='admin' && view==='product-categories'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1"><span v-html="icon('back')"></span>返回管理中心</button>
+              <div class="flex items-center justify-between px-1">
+                <h2 class="text-xl font-semibold">产品分类</h2>
+              </div>
+              <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+                <div class="text-sm font-medium text-slate-700">{{ categoryForm.editingId ? '编辑分类' : '添加分类' }}</div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input v-model.trim="categoryForm.name" type="text" placeholder="分类名称" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"/>
+                  <input v-model="categoryForm.sortOrder" type="number" placeholder="排序（可选）" class="w-full sm:w-28 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"/>
+                </div>
+                <div class="flex gap-2">
+                  <button type="button" class="px-3 py-2 rounded-xl bg-primary-600 text-white text-sm disabled:opacity-60" :disabled="categoryForm.saving" @click="saveCategoryForm">
+                    {{ categoryForm.saving ? '保存中…' : (categoryForm.editingId ? '保存修改' : '添加分类') }}
+                  </button>
+                  <button v-if="categoryForm.editingId" type="button" class="px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600" @click="cancelEditCategory">取消</button>
+                </div>
+              </div>
+              <div v-if="!adminCategories.length" class="bg-white rounded-2xl p-8 shadow-sm text-center text-sm text-slate-400">暂无分类，请先添加</div>
+              <div v-for="(c, i) in adminCategories" :key="c.id" class="bg-white rounded-xl px-3 py-3 shadow-sm ring-1 ring-slate-100 flex items-center gap-2">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium truncate">{{ c.name }}</div>
+                  <div class="text-xs text-slate-400 mt-0.5">排序 {{ c.sortOrder }} · ID {{ c.id }}</div>
+                </div>
+                <button type="button" class="px-2 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 disabled:opacity-40" :disabled="i===0 || categoryBusyId===c.id" @click="moveCategory(c, -1)">上移</button>
+                <button type="button" class="px-2 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 disabled:opacity-40" :disabled="i===adminCategories.length-1 || categoryBusyId===c.id" @click="moveCategory(c, 1)">下移</button>
+                <button type="button" class="px-2 py-1.5 rounded-lg border border-primary-200 text-primary-700 text-xs" @click="startEditCategory(c)">编辑</button>
+                <button type="button" class="px-2 py-1.5 rounded-lg border border-danger/30 text-danger text-xs disabled:opacity-40" :disabled="categoryBusyId===c.id" @click="removeCategory(c)">删除</button>
               </div>
             </section>
 
@@ -4579,6 +4758,13 @@ function productEmbedUrl(product) {
                 </label>
                 <label class="flex items-center gap-2 text-sm text-slate-600">
                   <input type="checkbox" v-model="adminModal.form.adminOnly" class="accent-primary-600"/> 仅管理员可见
+                </label>
+                <label class="block text-sm text-slate-600 space-y-1">
+                  <span>首页分类</span>
+                  <select v-model="adminModal.form.categoryId" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none">
+                    <option value="">未分类</option>
+                    <option v-for="c in adminCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                  </select>
                 </label>
 
                 <div v-if="isEngineLinkedProductForm(adminModal.form)" class="space-y-3 pt-2 border-t border-slate-100">
