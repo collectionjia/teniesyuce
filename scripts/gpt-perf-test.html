@@ -1,0 +1,725 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GPT 性能测试</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --accent: #3d9cf0;
+      --ok: #3ecf8e;
+      --bad: #f07178;
+      --warn: #e6b450;
+      --mono: "Cascadia Code", "SF Mono", Consolas, monospace;
+      --sans: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 600px at 10% -10%, #1a2a44 0%, transparent 55%),
+                  radial-gradient(900px 500px at 100% 0%, #1a2e28 0%, transparent 50%),
+                  var(--bg);
+      color: var(--text);
+      padding: 28px 20px 48px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 1.45rem; font-weight: 650; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 22px; }
+    .panel {
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 18px 14px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(8px);
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) {
+      .grid, .grid3 { grid-template-columns: 1fr; }
+    }
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+      letter-spacing: 0.02em;
+    }
+    input, select {
+      width: 100%;
+      background: #0c1118;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-size: 0.9rem;
+      font-family: var(--mono);
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    .row { margin-bottom: 12px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: transform 0.08s, opacity 0.15s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-secondary { background: #243044; color: var(--text); }
+    .btn-primary { background: var(--accent); color: #041018; }
+    .btn-run { background: #2a9d6a; color: #041018; }
+    .hint { color: var(--muted); font-size: 0.8rem; margin: 10px 0 0; line-height: 1.45; }
+    .hint code { font-family: var(--mono); font-size: 0.78rem; color: #b8c7de; }
+    .status { color: var(--accent); font-size: 0.85rem; margin: 8px 0 0; min-height: 1.2em; }
+    .metrics, .metrics6 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .metrics6 { grid-template-columns: repeat(3, 1fr); }
+    @media (max-width: 640px) {
+      .metrics, .metrics6 { grid-template-columns: 1fr 1fr; }
+    }
+    .metric {
+      background: #0c1118;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .metric .k { font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
+    .metric .v { font-size: 1.15rem; font-family: var(--mono); font-weight: 600; }
+    .metric .u { font-size: 0.75rem; color: var(--muted); margin-left: 2px; }
+    .checks { display: grid; gap: 8px; }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .check .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #3a465a;
+    }
+    .check.pass .dot { background: var(--ok); box-shadow: 0 0 8px color-mix(in srgb, var(--ok) 50%, transparent); }
+    .check.fail .dot { background: var(--bad); }
+    .check.pass { color: var(--text); }
+    .check.fail { color: #f5b4b8; }
+    .log {
+      background: #0c1118;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 280px;
+      overflow: auto;
+      margin: 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 500; }
+    td.ok { color: var(--ok); }
+    td.fail { color: var(--bad); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>GPT 性能测试</h1>
+    <p class="sub"><strong>GPT / Azure</strong> · <a href="/gemini" style="color:var(--accent)">Gemini 文本</a></p>
+    <p class="sub">一键拉模型 → 并发流式问「1+1等于几」→ 看首字、耗时、吞吐与功能完整性。默认并发 1。</p>
+
+    <div class="panel">
+      <div class="grid">
+        <div class="row">
+          <label>Base URL（Azure 用 /openai/v1，不要带 /chat/completions）</label>
+          <input id="baseUrl" placeholder="https://mg-000002.openai.azure.com/openai/v1" />
+        </div>
+        <div class="row">
+          <label>API Key</label>
+          <input id="apiKey" type="password" placeholder="sk-... / Azure key" autocomplete="off" />
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="row">
+          <label>模型 / Deployment</label>
+          <select id="modelSelect">
+            <option value="">先点「获取模型」</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>或手动填模型名（部署名）</label>
+          <input id="modelManual" placeholder="gpt-5.5 / gpt-5.6-sol" />
+        </div>
+        <div class="row">
+          <label>并发数</label>
+          <input id="concurrency" type="number" min="1" max="50" value="1" />
+        </div>
+      </div>
+      <div class="row">
+        <label>测试问题</label>
+        <input id="prompt" value="1+1等于几？请只回答数字。" />
+      </div>
+      <div class="actions">
+        <button class="btn-secondary" id="btnModels" type="button">① 获取模型</button>
+        <button class="btn-run" id="btnRun" type="button">② 并发测速</button>
+        <button class="btn-primary" id="btnBoth" type="button">获取模型并测速</button>
+      </div>
+      <p class="hint">请用 <code>node scripts/gpt-perf-server.mjs</code> 打开本页（避开浏览器 CORS）。Azure Base：<code>https://资源名.openai.azure.com/openai/v1</code>，模型填部署名如 <code>gpt-5.5</code>。配置存 localStorage。</p>
+      <p class="hint" id="proxyHint" style="color:var(--warn)"></p>
+      <p class="status" id="status"></p>
+    </div>
+
+    <div class="panel">
+      <div class="metrics metrics6">
+        <div class="metric">
+          <div class="k">成功 / 总数</div>
+          <div class="v"><span id="mOk">—</span></div>
+        </div>
+        <div class="metric">
+          <div class="k">墙钟总耗时</div>
+          <div class="v"><span id="mWall">—</span><span class="u">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="k">TTFT 平均 / P95</div>
+          <div class="v"><span id="mTtft">—</span><span class="u">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="k">单请求耗时 平均 / P95</div>
+          <div class="v"><span id="mTotal">—</span><span class="u">ms</span></div>
+        </div>
+        <div class="metric">
+          <div class="k">合计吞吐</div>
+          <div class="v"><span id="mTps">—</span><span class="u">tok/s</span></div>
+        </div>
+        <div class="metric">
+          <div class="k">输出 token 合计</div>
+          <div class="v"><span id="mTok">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <label style="margin-bottom:10px">功能检查</label>
+      <div class="checks" id="checks"></div>
+    </div>
+
+    <div class="panel">
+      <label style="margin-bottom:10px">各请求明细</label>
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>状态</th>
+              <th>TTFT</th>
+              <th>耗时</th>
+              <th>tok/s</th>
+              <th>tokens</th>
+              <th>回复</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <label>诊断日志</label>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const LS_KEY = "gpt-perf-test-v3";
+
+    const CHECK_DEFS = [
+      { id: "models", label: "GET /models 可列出模型" },
+      { id: "stream", label: "并发流式 chat 可用" },
+      { id: "ttft", label: "能测到首字延迟" },
+      { id: "answer", label: "回复语义正确（含答案 2）" },
+      { id: "finish", label: "正常结束（finish_reason / [DONE]）" },
+      { id: "concurrency", label: "并发成功率" },
+    ];
+
+    function loadCfg() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return;
+        const c = JSON.parse(raw);
+        if (c.baseUrl) $("baseUrl").value = c.baseUrl;
+        if (c.apiKey) $("apiKey").value = c.apiKey;
+        if (c.modelManual) $("modelManual").value = c.modelManual;
+        if (c.prompt) $("prompt").value = c.prompt;
+        if (c.concurrency) $("concurrency").value = c.concurrency;
+      } catch {}
+    }
+
+    function saveCfg() {
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        baseUrl: $("baseUrl").value.trim(),
+        apiKey: $("apiKey").value.trim(),
+        modelManual: $("modelManual").value.trim(),
+        prompt: $("prompt").value,
+        concurrency: Number($("concurrency").value) || 1,
+      }));
+    }
+
+    function log(msg, obj) {
+      const t = new Date().toLocaleTimeString();
+      const line = obj !== undefined
+        ? `[${t}] ${msg}\n${typeof obj === "string" ? obj : JSON.stringify(obj, null, 2)}`
+        : `[${t}] ${msg}`;
+      $("log").textContent += ($("log").textContent ? "\n" : "") + line;
+      $("log").scrollTop = $("log").scrollHeight;
+    }
+
+    function setStatus(s) { $("status").textContent = s || ""; }
+
+    function resetChecks() {
+      const box = $("checks");
+      box.innerHTML = "";
+      CHECK_DEFS.forEach((c) => {
+        const el = document.createElement("div");
+        el.className = "check skip";
+        el.id = "chk-" + c.id;
+        el.innerHTML = `<span class="dot"></span><span>${c.label}</span>`;
+        box.appendChild(el);
+      });
+    }
+
+    function setCheck(id, pass, detail) {
+      const el = $("chk-" + id);
+      if (!el) return;
+      el.className = "check " + (pass ? "pass" : "fail");
+      const baseLabel = CHECK_DEFS.find((c) => c.id === id)?.label || id;
+      el.querySelector("span:last-child").textContent = detail ? `${baseLabel} — ${detail}` : baseLabel;
+    }
+
+    let PROXY_OK = false;
+
+    function normalizeBaseUrl(raw) {
+      let u = (raw || "").trim().replace(/\/+$/, "");
+      if (!u) return u;
+      u = u.replace(/\/(chat\/completions|completions|models)$/i, "");
+      try {
+        const url = new URL(u);
+        if (/\.openai\.azure\.com$/i.test(url.hostname)) {
+          let p = (url.pathname || "/").replace(/\/+$/, "") || "";
+          if (!/\/openai\/v1$/i.test(p)) {
+            if (/^\/openai$/i.test(p) || !p || p === "/") p = "/openai/v1";
+            else if (!/\/openai\//i.test(p)) p = "/openai/v1";
+          }
+          url.pathname = p;
+          return (url.origin + url.pathname).replace(/\/+$/, "");
+        }
+      } catch {}
+      return u;
+    }
+
+    function upstreamBase() {
+      return normalizeBaseUrl($("baseUrl").value);
+    }
+
+    function base() {
+      if (PROXY_OK) return location.origin + "/proxy";
+      return upstreamBase();
+    }
+
+    function headers() {
+      const key = $("apiKey").value.trim();
+      const h = {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + key,
+        "api-key": key,
+      };
+      if (PROXY_OK) h["X-Upstream-Base"] = upstreamBase();
+      return h;
+    }
+
+    function explainFetchError(e) {
+      const msg = e && e.message ? e.message : String(e);
+      if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+        return msg + " — 浏览器直连 Azure 会被 CORS 拦截。请运行 node scripts/gpt-perf-server.mjs 后打开 http://127.0.0.1:8791/ ；并确认 Base URL 为 https://xxx.openai.azure.com/openai/v1（不要带 /chat/completions）";
+      }
+      return msg;
+    }
+
+    function buildChatBody(model, prompt) {
+      const body = {
+        model,
+        stream: true,
+        stream_options: { include_usage: true },
+        messages: [
+          { role: "system", content: "你是简洁助手。数字题只给最短答案。" },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 128,
+      };
+      if (!/^(gpt-5|gpt-6|o[0-9])/i.test(model)) {
+        body.temperature = 0;
+      }
+      return body;
+    }
+
+    function selectedModel() {
+      return ($("modelManual").value.trim() || $("modelSelect").value || "").trim();
+    }
+
+    function estimateTokens(text) {
+      if (!text) return 0;
+      const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+      const rest = text.length - cjk;
+      return Math.max(1, Math.round(cjk / 1.5 + rest / 4));
+    }
+
+    function answerLooksCorrect(text) {
+      const t = (text || "").replace(/\s/g, "");
+      if (/\b2\b/.test(text) || /等于2|是2|为2|答案[:：]?2|「2」|"2"|'2'/.test(t)) return true;
+      if (/^2[.。!！]?$/.test(text.trim())) return true;
+      if (t.includes("2") && !t.includes("11") && !t.includes("3")) return true;
+      return false;
+    }
+
+    function percentile(sorted, p) {
+      if (!sorted.length) return null;
+      const idx = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
+      return sorted[Math.max(0, idx)];
+    }
+
+    function avg(nums) {
+      if (!nums.length) return null;
+      return nums.reduce((a, b) => a + b, 0) / nums.length;
+    }
+
+    async function fetchModels() {
+      saveCfg();
+      setStatus("正在获取模型…");
+      const url = base() + "/models";
+      log("GET " + url + (PROXY_OK ? " (via proxy → " + upstreamBase() + ")" : ""));
+      const t0 = performance.now();
+      let res;
+      try {
+        res = await fetch(url, { headers: headers() });
+      } catch (e) {
+        throw new Error(explainFetchError(e));
+      }
+      const ms = Math.round(performance.now() - t0);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = null; }
+      if (!res.ok) {
+        setCheck("models", false, `HTTP ${res.status} (${ms}ms)`);
+        log("models 失败", text.slice(0, 2000));
+        throw new Error("获取模型失败: HTTP " + res.status);
+      }
+      const list = (data?.data || data?.models || []).map((m) => m.id || m.name || String(m)).filter(Boolean);
+      list.sort((a, b) => a.localeCompare(b));
+      const sel = $("modelSelect");
+      sel.innerHTML = "";
+      if (!list.length) {
+        sel.innerHTML = '<option value="">（空列表，请手动填模型）</option>';
+        setCheck("models", true, `成功但列表为空 (${ms}ms)`);
+        log("models 空列表", data);
+      } else {
+        list.forEach((id) => {
+          const opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = id;
+          sel.appendChild(opt);
+        });
+        const prefer = list.find((x) => /^gpt-5\.5$|^gpt-5\.6-sol$|gpt-4o-mini|mini/i.test(x)) || list[0];
+        sel.value = prefer;
+        if (!$("modelManual").value.trim()) $("modelManual").value = prefer;
+        setCheck("models", true, `${list.length} 个 (${ms}ms)`);
+        log(`models OK: ${list.length} 个，用时 ${ms}ms`);
+      }
+      setStatus(`模型列表就绪（${ms}ms）`);
+      return list;
+    }
+
+    async function oneChat(index, model, prompt) {
+      const body = buildChatBody(model, prompt);
+      const tStart = performance.now();
+      let tFirst = null;
+      let reply = "";
+      let finishReason = null;
+      let usage = null;
+      let gotDelta = false;
+      let streamOk = false;
+
+      try {
+        let res;
+        try {
+          res = await fetch(base() + "/chat/completions", {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify(body),
+          });
+        } catch (e) {
+          throw new Error(explainFetchError(e));
+        }
+
+        if (!res.ok) {
+          const errText = await res.text();
+          return {
+            index, ok: false, error: `HTTP ${res.status}: ${errText.slice(0, 120)}`,
+            ttft: null, total: Math.round(performance.now() - tStart),
+            tokens: 0, tps: 0, reply: "", finishReason: null, usage: null,
+            gotDelta: false, streamOk: false, answerOk: false,
+          };
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buf = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const parts = buf.split("\n");
+          buf = parts.pop() || "";
+          for (const rawLine of parts) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith(":")) continue;
+            if (line === "data: [DONE]" || (line.startsWith("data:") && line.slice(5).trim() === "[DONE]")) {
+              streamOk = true;
+              continue;
+            }
+            if (!line.startsWith("data:")) continue;
+            let chunk;
+            try { chunk = JSON.parse(line.slice(5).trim()); } catch { continue; }
+            if (chunk.usage) usage = chunk.usage;
+            const choice = chunk.choices && chunk.choices[0];
+            if (!choice) continue;
+            if (choice.finish_reason) finishReason = choice.finish_reason;
+            const delta = choice.delta?.content ?? choice.message?.content ?? "";
+            if (delta) {
+              if (tFirst == null) tFirst = performance.now();
+              gotDelta = true;
+              reply += delta;
+            }
+          }
+        }
+        if (buf.trim()) {
+          const line = buf.trim();
+          if (line.startsWith("data:") && line.slice(5).trim() !== "[DONE]") {
+            try {
+              const chunk = JSON.parse(line.slice(5).trim());
+              if (chunk.usage) usage = chunk.usage;
+              const choice = chunk.choices && chunk.choices[0];
+              const delta = choice?.delta?.content ?? "";
+              if (delta) {
+                if (tFirst == null) tFirst = performance.now();
+                gotDelta = true;
+                reply += delta;
+              }
+              if (choice?.finish_reason) finishReason = choice.finish_reason;
+            } catch {}
+          } else if (line.includes("[DONE]")) {
+            streamOk = true;
+          }
+        }
+
+        const tEnd = performance.now();
+        const total = Math.round(tEnd - tStart);
+        const ttft = tFirst != null ? Math.round(tFirst - tStart) : null;
+        const tokens = usage?.completion_tokens || estimateTokens(reply);
+        const genMs = tFirst != null ? Math.max(1, tEnd - tFirst) : Math.max(1, total);
+        const tps = tokens / (genMs / 1000);
+        const answerOk = answerLooksCorrect(reply);
+        const ok = gotDelta && answerOk;
+
+        return {
+          index, ok, error: null, ttft, total, tokens, tps, reply,
+          finishReason, usage, gotDelta, streamOk, answerOk,
+        };
+      } catch (e) {
+        return {
+          index, ok: false, error: e.message || String(e),
+          ttft: null, total: Math.round(performance.now() - tStart),
+          tokens: 0, tps: 0, reply: "", finishReason: null, usage: null,
+          gotDelta: false, streamOk: false, answerOk: false,
+        };
+      }
+    }
+
+    function renderRows(results) {
+      const tbody = $("rows");
+      tbody.innerHTML = "";
+      results.forEach((r) => {
+        const tr = document.createElement("tr");
+        const st = r.ok ? "OK" : "FAIL";
+        const stClass = r.ok ? "ok" : "fail";
+        const preview = r.error
+          ? r.error.slice(0, 60)
+          : (r.reply || "").replace(/\s+/g, " ").slice(0, 40);
+        tr.innerHTML = `
+          <td>${r.index + 1}</td>
+          <td class="${stClass}">${st}</td>
+          <td>${r.ttft == null ? "—" : r.ttft + "ms"}</td>
+          <td>${r.total}ms</td>
+          <td>${r.tps ? r.tps.toFixed(1) : "—"}</td>
+          <td>${r.tokens || "—"}</td>
+          <td>${preview}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function runConcurrent() {
+      saveCfg();
+      const model = selectedModel();
+      if (!model) throw new Error("请先选择或手动填写模型 / 部署名（如 gpt-5.5）");
+      if (!$("apiKey").value.trim()) throw new Error("请填写 API Key");
+      if (!upstreamBase()) throw new Error("请填写 Base URL");
+
+      const n = Math.min(50, Math.max(1, Number($("concurrency").value) || 1));
+      const prompt = $("prompt").value || "1+1等于几？请只回答数字。";
+      resetChecks();
+      $("rows").innerHTML = "";
+      setStatus(`并发 ${n} 路请求中…`);
+      log(`并发启动 n=${n} model=${model}` + (PROXY_OK ? " via proxy" : " DIRECT"));
+
+      const wall0 = performance.now();
+      const jobs = Array.from({ length: n }, (_, i) => oneChat(i, model, prompt));
+      const results = await Promise.all(jobs);
+      const wallMs = Math.round(performance.now() - wall0);
+
+      const okList = results.filter((r) => r.ok);
+      const withTtft = results.filter((r) => r.ttft != null).map((r) => r.ttft).sort((a, b) => a - b);
+      const totals = results.map((r) => r.total).sort((a, b) => a - b);
+      const sumTok = results.reduce((s, r) => s + (r.tokens || 0), 0);
+      const aggTps = sumTok / Math.max(0.001, wallMs / 1000);
+      const ttftAvg = avg(withTtft);
+      const totAvg = avg(totals);
+      const ttftP95 = percentile(withTtft, 95);
+      const totP95 = percentile(totals, 95);
+
+      $("mOk").textContent = `${okList.length}/${n}`;
+      $("mWall").textContent = String(wallMs);
+      $("mTtft").textContent = ttftAvg == null
+        ? "N/A"
+        : `${Math.round(ttftAvg)} / ${ttftP95 ?? "—"}`;
+      $("mTotal").textContent = `${Math.round(totAvg)} / ${totP95}`;
+      $("mTps").textContent = aggTps.toFixed(1);
+      $("mTok").textContent = String(sumTok);
+
+      renderRows(results);
+
+      const streamOk = results.some((r) => r.gotDelta || r.streamOk);
+      const allAnswer = results.filter((r) => r.answerOk).length;
+      const allFinish = results.filter((r) => r.finishReason || r.streamOk).length;
+
+      setCheck("stream", streamOk, `${results.filter((r) => r.gotDelta).length}/${n} 收到 delta`);
+      setCheck("ttft", withTtft.length > 0, withTtft.length ? `avg ${Math.round(ttftAvg)}ms` : "无首字");
+      setCheck("answer", allAnswer === n, `${allAnswer}/${n} 含答案 2`);
+      setCheck("finish", allFinish === n, `${allFinish}/${n} 正常结束`);
+      setCheck("concurrency", okList.length === n, `${okList.length}/${n} 成功`);
+
+      log(`并发完成 wall=${wallMs}ms ok=${okList.length}/${n} aggTps=${aggTps.toFixed(2)}`, {
+        ttftAvg, ttftP95, totAvg, totP95, sumTok,
+      });
+      setStatus(
+        `完成 · ${okList.length}/${n} 成功 · 墙钟 ${wallMs}ms · TTFT avg ${ttftAvg == null ? "N/A" : Math.round(ttftAvg) + "ms"} · 合计 ${aggTps.toFixed(1)} tok/s`
+      );
+
+      if (!okList.length) {
+        const firstErr = results.find((r) => r.error);
+        throw new Error(firstErr?.error || "全部请求失败");
+      }
+    }
+
+    async function withBusy(fn) {
+      ["btnModels", "btnRun", "btnBoth"].forEach((id) => { $(id).disabled = true; });
+      try {
+        await fn();
+      } catch (e) {
+        setStatus(e.message || String(e));
+        log("错误: " + (e.message || e));
+      } finally {
+        ["btnModels", "btnRun", "btnBoth"].forEach((id) => { $(id).disabled = false; });
+      }
+    }
+
+    $("btnModels").onclick = () => withBusy(async () => {
+      resetChecks();
+      await fetchModels();
+    });
+
+    $("btnRun").onclick = () => withBusy(async () => {
+      await runConcurrent();
+    });
+
+    $("btnBoth").onclick = () => withBusy(async () => {
+      resetChecks();
+      $("log").textContent = "";
+      try {
+        await fetchModels();
+      } catch (e) {
+        log("获取模型跳过: " + (e.message || e) + "（将使用手动模型名）");
+        setCheck("models", false, "跳过");
+      }
+      await runConcurrent();
+    });
+
+    ["baseUrl", "apiKey", "modelManual", "prompt", "concurrency"].forEach((id) => {
+      $(id).addEventListener("change", saveCfg);
+    });
+
+    async function detectProxy() {
+      try {
+        const r = await fetch("/__proxy", { cache: "no-store" });
+        PROXY_OK = r.ok;
+      } catch {
+        PROXY_OK = false;
+      }
+      const el = $("proxyHint");
+      if (!el) return;
+      if (PROXY_OK) {
+        el.style.color = "var(--ok)";
+        el.textContent = "本地代理已连接（CORS 已绕过）。";
+      } else if (location.protocol === "file:") {
+        el.textContent = "当前是 file:// 打开，请求会被 CORS 挡住。请运行: node scripts/gpt-perf-server.mjs";
+      } else {
+        el.textContent = "未检测到本地代理。Azure 直连通常 Failed to fetch，请用 gpt-perf-server.mjs 打开。";
+      }
+    }
+
+    loadCfg();
+    resetChecks();
+    if (!$("baseUrl").value) $("baseUrl").value = "https://mg-000002.openai.azure.com/openai/v1";
+    else $("baseUrl").value = normalizeBaseUrl($("baseUrl").value);
+    if (!$("modelManual").value) $("modelManual").value = "gpt-5.5";
+    if (!$("concurrency").value) $("concurrency").value = "1";
+    detectProxy();
+  </script>
+</body>
+</html>

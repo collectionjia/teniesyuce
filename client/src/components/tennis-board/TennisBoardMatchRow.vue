@@ -181,9 +181,9 @@ defineProps({
               <button
                 type="button"
                 class="act-btn market"
-                :disabled="collectRefreshing || (!isInplayMode && !polyUrlOf(m))"
+                :disabled="!isInplayMode && !polyUrlOf(m)"
                 :title="isInplayMode
-                  ? (collectUpdatedText ? `比分和赔率采集 · ${collectUpdatedText}` : '刷新比分和 Polymarket 赔率')
+                  ? (collectUpdatedText ? `打开外链并刷新比分/赔率 · ${collectUpdatedText}` : '打开外链并刷新比分/赔率')
                   : (polyUrlOf(m) ? '打开关联页' : '暂无对应外链')"
                 @click="(onPolymarketAction || openMarket)(m)"
               >{{ collectRefreshing && isInplayMode ? '刷新中…' : '外链' }}</button>

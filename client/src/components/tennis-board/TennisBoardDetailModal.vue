@@ -266,7 +266,7 @@ defineProps({
             <button
               type="button"
               class="act-btn market"
-              :disabled="collectRefreshing || (!isInplayMode && !polyUrlOf(detailMatch))"
+              :disabled="!isInplayMode && !polyUrlOf(detailMatch)"
               @click="(onPolymarketAction || openMarket)(detailMatch)"
             >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
           </div>

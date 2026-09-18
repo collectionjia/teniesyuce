@@ -1908,11 +1908,17 @@ function refreshScoreOddsCollect() {
           : tick
         const s = body.scores || {}
         const p = body.prices || {}
-        const scoreErr = s.error || (s.ok === false ? '比分采集失败' : '')
-        const oddsErr = p.error || (p.ok === false ? '赔率采集失败' : '')
+        const topErr = body.error || tick.error || ''
+        const scoreErr = s.error || s.reason || (s.ok === false ? '比分采集失败' : '')
+        const oddsErr = p.error || p.reason || (p.ok === false ? '赔率采集失败' : '')
         const missed = s.summary?.missed || s.missed || body.score_failures || []
-        if (scoreErr || oddsErr) {
-          collectError.value = [scoreErr, oddsErr].filter(Boolean).join(' · ')
+        if (scoreErr || oddsErr || topErr) {
+          const parts = [scoreErr, oddsErr].filter(Boolean)
+          // 顶层错误（如 gamma 超时 / Redis）补一句，避免只显示笼统「采集失败」
+          if (topErr && !parts.some((x) => String(x).includes(String(topErr).slice(0, 24)))) {
+            parts.push(topErr)
+          }
+          collectError.value = parts.join(' · ') || String(topErr)
         } else {
           const su = Number(s.updated) || 0
           const pu = Number(p.updated) || 0
@@ -1928,9 +1934,10 @@ function refreshScoreOddsCollect() {
   })()
 }
 
-async function onPolymarketAction(m) {
-  if (isInplayMode.value) await refreshScoreOddsCollect()
+function onPolymarketAction(m) {
+  // 必须先同步打开：await 采集后再 window.open 会丢掉用户手势，弹窗被浏览器拦截
   openMarket(m)
+  if (isInplayMode.value) refreshScoreOddsCollect()
 }
 
 function fmtRefreshClock(iso) {
