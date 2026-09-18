@@ -779,7 +779,7 @@ const adminManageSections = [
     items: [
       { view: 'engine-services', label: '五引擎服务', desc: 'collect / rules / betting / stop-loss / scheduler 状态与操作', icon: 'grid', color: 'from-cyan-500 to-blue-600' },
       { view: 'tennis-collect', label: '采集引擎', desc: 'Top100 采集 · 虚拟/真实源 · 采集范围', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
-      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 调度命中自动投注', icon: 'list', color: 'from-amber-500 to-yellow-500' },
+      { view: 'tennis-condition', label: '条件引擎', desc: '未开赛/比赛中/比赛结束分桶 · 各桶独立投注方式 · 调度命中自动投注', icon: 'list', color: 'from-amber-500 to-yellow-500' },
       { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },
       { view: 'scheduler-center', label: '调度中心', desc: '定时任务 · 立即执行 · 运行日志', icon: 'list', color: 'from-sky-500 to-indigo-500' },
     ],

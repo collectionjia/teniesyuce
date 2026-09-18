@@ -419,16 +419,30 @@ const DEFAULT_CONFIG = {
     /** 列表页整页数据刷新间隔（秒）；0=关闭 */
     listPageRefreshIntervalSec: 0,
     buckets: {
-      prematch: { enabled: false, simulate: false, groups: defaultPrematchBettingGroups() },
+      prematch: {
+        enabled: false,
+        simulate: false,
+        orderType: 'market',
+        shares: null,
+        limitBuyPrice: null,
+        limitPrice: null,
+        limitSellPrice: null,
+        groups: defaultPrematchBettingGroups(),
+      },
       inplay: {
         enabled: false,
         simulate: false,
+        orderType: 'market',
+        shares: null,
+        limitBuyPrice: null,
+        limitPrice: null,
+        limitSellPrice: null,
         groups: defaultInplayBettingGroups(),
         entry: defaultInplayBettingEntry(),
       },
     },
     rules: {
-      note: '盘前/盘中分桶；盘中买入条件见 inplay.entry；止损见各组 stopRules',
+      note: '未开赛/比赛中分桶；各桶独立下单类型；比赛中买入条件见 inplay.entry；止损见各组 stopRules',
     },
   },
 };
@@ -495,17 +509,59 @@ function clampProbPrice(raw) {
   return Math.round(n * 100) / 100;
 }
 
+function normalizeBucketOrder(raw = {}, fallback = {}) {
+  const srcType = raw.orderType != null && raw.orderType !== '' ? raw.orderType : fallback.orderType;
+  const orderType = String(srcType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
+  const buyRaw = raw.limitBuyPrice != null && raw.limitBuyPrice !== ''
+    ? raw.limitBuyPrice
+    : (raw.limitPrice != null && raw.limitPrice !== ''
+      ? raw.limitPrice
+      : (fallback.limitBuyPrice ?? fallback.limitPrice));
+  const buyP = clampProbPrice(buyRaw);
+  const sellRaw = raw.limitSellPrice != null && raw.limitSellPrice !== ''
+    ? raw.limitSellPrice
+    : fallback.limitSellPrice;
+  const sellP = clampProbPrice(sellRaw);
+  const shRaw = raw.shares != null && raw.shares !== '' ? raw.shares : fallback.shares;
+  const sh = Math.floor(Number(shRaw) * 100) / 100;
+  return {
+    orderType,
+    limitBuyPrice: buyP,
+    limitPrice: buyP,
+    limitSellPrice: sellP,
+    shares: Number.isFinite(sh) && sh > 0 ? sh : null,
+  };
+}
+
 function normalizeBetting(betting) {
   const b = betting && typeof betting === 'object' ? { ...betting } : {};
   const legacyPm = Number(b.rules?.pmMaxCents);
   const src = b.buckets && typeof b.buckets === 'object' ? b.buckets : null;
+  // 先规范化全局（旧配置兼容，作各桶缺省回退）
+  b.orderType = String(b.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
+  const buyP = clampProbPrice(b.limitBuyPrice != null && b.limitBuyPrice !== '' ? b.limitBuyPrice : b.limitPrice);
+  b.limitBuyPrice = buyP;
+  b.limitPrice = buyP;
+  b.limitSellPrice = clampProbPrice(b.limitSellPrice);
+  const shGlobal = Math.floor(Number(b.shares) * 100) / 100;
+  b.shares = Number.isFinite(shGlobal) && shGlobal > 0 ? shGlobal : null;
+  const globalOrder = {
+    orderType: b.orderType,
+    shares: b.shares,
+    limitBuyPrice: b.limitBuyPrice,
+    limitPrice: b.limitPrice,
+    limitSellPrice: b.limitSellPrice,
+  };
+
   const buckets = {};
   for (const key of BETTING_BUCKET_KEYS) {
     const raw = src?.[key];
+    const order = normalizeBucketOrder(raw && typeof raw === 'object' ? raw : {}, globalOrder);
     if (raw && Array.isArray(raw.groups)) {
       buckets[key] = {
         enabled: !!raw.enabled,
         simulate: !!raw.simulate,
+        ...order,
         groups: raw.groups.map((g) => normalizeBettingGroup(g, key)),
       };
       if (key === 'inplay') {
@@ -515,6 +571,7 @@ function normalizeBetting(betting) {
       buckets[key] = {
         enabled: false,
         simulate: false,
+        ...order,
         groups: key === 'inplay' ? defaultInplayBettingGroups() : defaultPrematchBettingGroups(),
       };
       if (key === 'inplay') {
@@ -538,18 +595,11 @@ function normalizeBetting(betting) {
     ? String(b.userAccount).trim()
     : null;
   b.amountUsd = b.amountUsd != null ? Number(b.amountUsd) || 1 : 1;
-  b.orderType = String(b.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
-  const buyP = clampProbPrice(b.limitBuyPrice != null && b.limitBuyPrice !== '' ? b.limitBuyPrice : b.limitPrice);
-  b.limitBuyPrice = buyP;
-  b.limitPrice = buyP; // 兼容旧字段
-  b.limitSellPrice = clampProbPrice(b.limitSellPrice);
-  const sh = Math.floor(Number(b.shares) * 100) / 100;
-  b.shares = Number.isFinite(sh) && sh > 0 ? sh : null;
   b.listAutoBetIntervalSec = clampListPollSec(b.listAutoBetIntervalSec, 60);
   b.listStopLossIntervalSec = clampListPollSec(b.listStopLossIntervalSec, 60);
   b.listPageRefreshIntervalSec = clampPageRefreshSec(b.listPageRefreshIntervalSec);
   b.rules = {
-    note: b.rules?.note || '盘前/盘中分桶；多组 OR；组内买入且止损可配',
+    note: b.rules?.note || '未开赛/比赛中分桶；各桶独立下单类型；多组 OR；组内买入且止损可配',
   };
   return b;
 }

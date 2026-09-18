@@ -60,7 +60,7 @@ export function useTennisConditionRules({
     () => props.canEditRules && (isPrematchMode.value || isInplayMode.value),
   )
   const conditionBucketKey = computed(() => (isInplayMode.value ? 'inplay' : 'prematch'))
-  const conditionBucketLabel = computed(() => (isInplayMode.value ? '盘中' : '盘前'))
+  const conditionBucketLabel = computed(() => (isInplayMode.value ? '比赛中' : '未开赛'))
   const canEditProductSelect = computed(
     () => props.canEditRules && props.productId != null && props.productId !== '' && (isPrematchMode.value || isInplayMode.value),
   )

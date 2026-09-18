@@ -1070,11 +1070,11 @@ async function runBettingPass({
         mode: effectiveMode,
         onlyStrategyKey: sk || null,
         allowEventIds,
-        orderType: cfg.betting?.orderType || 'market',
-        limitPrice: cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
-        limitBuyPrice: cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
-        limitSellPrice: cfg.betting?.limitSellPrice,
-        shares: cfg.betting?.shares,
+        orderType: bucketCfg?.orderType || cfg.betting?.orderType || 'market',
+        limitPrice: bucketCfg?.limitBuyPrice ?? bucketCfg?.limitPrice ?? cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
+        limitBuyPrice: bucketCfg?.limitBuyPrice ?? bucketCfg?.limitPrice ?? cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
+        limitSellPrice: bucketCfg?.limitSellPrice ?? cfg.betting?.limitSellPrice,
+        shares: bucketCfg?.shares ?? cfg.betting?.shares,
       }));
     }
   }

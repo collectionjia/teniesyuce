@@ -36,15 +36,15 @@ const pageTitle = computed(() => {
 
 const conditionTab = ref('prematch')
 const CONDITION_TABS = [
-  { id: 'prematch', label: '盘前' },
-  { id: 'inplay', label: '盘中' },
-  { id: 'settled', label: '盘后' },
+  { id: 'prematch', label: '未开赛' },
+  { id: 'inplay', label: '比赛中' },
+  { id: 'settled', label: '比赛结束' },
 ]
 
 const bettingTab = ref('inplay')
 const BETTING_TABS = [
-  { id: 'prematch', label: '盘前' },
-  { id: 'inplay', label: '盘中' },
+  { id: 'prematch', label: '未开赛' },
+  { id: 'inplay', label: '比赛中' },
 ]
 
 function emptyConditionGroup() {
@@ -132,9 +132,17 @@ function cloneBettingBuckets(src) {
   const out = {}
   for (const k of ['prematch', 'inplay']) {
     const b = src?.[k]
+    const orderType = String(b?.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market'
+    const buyP = Number(b?.limitBuyPrice ?? b?.limitPrice)
+    const sellP = Number(b?.limitSellPrice)
+    const sh = Math.floor(Number(b?.shares) * 100) / 100
     out[k] = {
       enabled: !!b?.enabled,
       simulate: !!b?.simulate,
+      orderType,
+      shares: Number.isFinite(sh) && sh > 0 ? sh : null,
+      limitBuyPrice: Number.isFinite(buyP) && buyP >= 0.01 && buyP <= 0.99 ? Math.round(buyP * 100) / 100 : null,
+      limitSellPrice: Number.isFinite(sellP) && sellP >= 0.01 && sellP <= 0.99 ? Math.round(sellP * 100) / 100 : null,
       groups: Array.isArray(b?.groups)
         ? b.groups.map((g) => {
           const base = { ...emptyBettingGroup(k), ...g }
@@ -236,9 +244,13 @@ const activeConditionBucket = computed(() => conditionDraft.value?.[conditionTab
 })
 
 const activeBettingBucket = computed(() => {
-  const b = bettingDraft.value?.[bettingTab.value]
+  // 条件页：未开赛/比赛中各自看自己的投注桶；投注页用 bettingTab
+  const key = (isConditionPage.value && (conditionTab.value === 'prematch' || conditionTab.value === 'inplay'))
+    ? conditionTab.value
+    : bettingTab.value
+  const b = bettingDraft.value?.[key]
   if (b) {
-    if (bettingTab.value === 'inplay' && !b.entry) {
+    if (key === 'inplay' && !b.entry) {
       return { ...b, entry: normalizeInplayEntryDraft(null) }
     }
     return b
@@ -246,9 +258,22 @@ const activeBettingBucket = computed(() => {
   return {
     enabled: false,
     simulate: false,
-    groups: [emptyBettingGroup(bettingTab.value)],
-    entry: bettingTab.value === 'inplay' ? normalizeInplayEntryDraft(null) : undefined,
+    orderType: 'market',
+    shares: null,
+    limitBuyPrice: null,
+    limitSellPrice: null,
+    groups: [emptyBettingGroup(key)],
+    entry: key === 'inplay' ? normalizeInplayEntryDraft(null) : undefined,
   }
+})
+
+/** 当前可编辑下单方式的桶：条件页随未开赛/比赛中切换，投注页随投注 Tab */
+const orderEditBucketKey = computed(() => {
+  if (isConditionPage.value) {
+    return (conditionTab.value === 'prematch' || conditionTab.value === 'inplay') ? conditionTab.value : ''
+  }
+  if (isBettingPage.value) return bettingTab.value
+  return ''
 })
 
 const loading = ref(true)
@@ -464,7 +489,7 @@ const pageSub = computed(() => {
     const b = engines.value?.condition?.buckets || {}
     const on = ['prematch', 'inplay', 'settled']
       .filter((k) => b[k]?.enabled)
-      .map((k) => ({ prematch: '盘前', inplay: '盘中', settled: '盘后' }[k]))
+      .map((k) => ({ prematch: '未开赛', inplay: '比赛中', settled: '比赛结束' }[k]))
     const account = engines.value?.betting?.userAccount || engines.value?.betting?.userId
     const buckets = on.length ? `已开：${on.join('、')}` : '各桶均未打开'
     return `${buckets} · 账号 ${account || '未设'} · 调度命中自动投注`
@@ -473,7 +498,7 @@ const pageSub = computed(() => {
     const b = engines.value?.betting?.buckets || {}
     const on = ['prematch', 'inplay']
       .filter((k) => b[k]?.enabled)
-      .map((k) => ({ prematch: '盘前', inplay: '盘中' }[k]))
+      .map((k) => ({ prematch: '未开赛', inplay: '比赛中' }[k]))
     const master = engines.value?.betting?.enabled ? '总开关开' : '总开关关'
     const account = engines.value?.betting?.userAccount || engines.value?.betting?.userId
     if (isStopPage.value) {
@@ -1140,38 +1165,61 @@ function onBettingAmountUsdChange(ev) {
   patchEngines({ betting: { amountUsd: Math.round(n * 100) / 100 } })
 }
 function onBettingOrderTypeChange(ev) {
+  const key = orderEditBucketKey.value
+  if (!key) return
   const orderType = String(ev?.target?.value || 'market').toLowerCase() === 'limit' ? 'limit' : 'market'
-  patchEngines({ betting: { orderType } })
+  bettingDraft.value = {
+    ...bettingDraft.value,
+    [key]: { ...bettingDraft.value[key], orderType },
+  }
+  bettingDraftDirty.value = true
+  patchEngines({ betting: { buckets: { [key]: { orderType } } } })
 }
 function onBettingSharesChange(ev) {
+  const key = orderEditBucketKey.value
+  if (!key) return
   const n = Number(ev?.target?.value)
-  if (!Number.isFinite(n) || n <= 0) {
-    patchEngines({ betting: { shares: null } })
-    return
+  const shares = (Number.isFinite(n) && n > 0) ? Math.round(n * 100) / 100 : null
+  bettingDraft.value = {
+    ...bettingDraft.value,
+    [key]: { ...bettingDraft.value[key], shares },
   }
-  patchEngines({ betting: { shares: Math.round(n * 100) / 100 } })
+  bettingDraftDirty.value = true
+  patchEngines({ betting: { buckets: { [key]: { shares } } } })
 }
 function onBettingLimitBuyPriceChange(ev) {
+  const key = orderEditBucketKey.value
+  if (!key) return
   const raw = ev?.target?.value
-  if (raw === '' || raw == null) {
-    patchEngines({ betting: { limitBuyPrice: null, limitPrice: null } })
-    return
+  let limitBuyPrice = null
+  if (raw !== '' && raw != null) {
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return
+    limitBuyPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
   }
-  const n = Number(raw)
-  if (!Number.isFinite(n)) return
-  const limitBuyPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
-  patchEngines({ betting: { limitBuyPrice, limitPrice: limitBuyPrice } })
+  bettingDraft.value = {
+    ...bettingDraft.value,
+    [key]: { ...bettingDraft.value[key], limitBuyPrice },
+  }
+  bettingDraftDirty.value = true
+  patchEngines({ betting: { buckets: { [key]: { limitBuyPrice, limitPrice: limitBuyPrice } } } })
 }
 function onBettingLimitSellPriceChange(ev) {
+  const key = orderEditBucketKey.value
+  if (!key) return
   const raw = ev?.target?.value
-  if (raw === '' || raw == null) {
-    patchEngines({ betting: { limitSellPrice: null } })
-    return
+  let limitSellPrice = null
+  if (raw !== '' && raw != null) {
+    const n = Number(raw)
+    if (!Number.isFinite(n)) return
+    limitSellPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
   }
-  const n = Number(raw)
-  if (!Number.isFinite(n)) return
-  const limitSellPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
-  patchEngines({ betting: { limitSellPrice } })
+  bettingDraft.value = {
+    ...bettingDraft.value,
+    [key]: { ...bettingDraft.value[key], limitSellPrice },
+  }
+  bettingDraftDirty.value = true
+  patchEngines({ betting: { buckets: { [key]: { limitSellPrice } } } })
 }
 
 function onListPollIntervalChange(field, ev) {
@@ -1378,8 +1426,14 @@ function removeStopRule(groupIndex, ruleIndex) {
   void saveBettingBucketAndEnable()
 }
 
+function onConditionTabClick(id) {
+  conditionTab.value = id
+  if (id === 'prematch' || id === 'inplay') bettingTab.value = id
+}
+
 function setBettingBucketEnabled(ev) {
-  const tab = bettingTab.value
+  const tab = orderEditBucketKey.value || bettingTab.value
+  if (!tab) return
   bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
@@ -1388,7 +1442,8 @@ function setBettingBucketEnabled(ev) {
 }
 
 function setBettingBucketSimulate(ev) {
-  const tab = bettingTab.value
+  const tab = orderEditBucketKey.value || bettingTab.value
+  if (!tab) return
   bettingDraftDirty.value = true
   bettingDraft.value = {
     ...bettingDraft.value,
@@ -1469,6 +1524,19 @@ async function saveBettingBucketAndEnable(opts = {}) {
         [tab]: {
           enabled: !!bucket.enabled,
           simulate: !!bucket.simulate,
+          orderType: String(bucket.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market',
+          shares: (() => {
+            const sh = Math.floor(Number(bucket.shares) * 100) / 100
+            return Number.isFinite(sh) && sh > 0 ? sh : null
+          })(),
+          limitBuyPrice: (() => {
+            const n = Number(bucket.limitBuyPrice)
+            return Number.isFinite(n) && n >= 0.01 && n <= 0.99 ? Math.round(n * 100) / 100 : null
+          })(),
+          limitSellPrice: (() => {
+            const n = Number(bucket.limitSellPrice)
+            return Number.isFinite(n) && n >= 0.01 && n <= 0.99 ? Math.round(n * 100) / 100 : null
+          })(),
           groups: (bucket.groups || []).map((g) => {
             const base = { ...emptyBettingGroup(tab), ...g }
             const id = String(base.id || '').trim() || emptyBettingGroup(tab).id
@@ -1866,10 +1934,7 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label
-            v-if="engines.betting?.orderType !== 'limit'"
-            class="interval-select"
-          >
+          <label class="interval-select">
             <span>默认金额 (USD)</span>
             <input
               type="number"
@@ -1878,67 +1943,6 @@ onUnmounted(() => {
               style="width: 6.5rem"
               :value="engines.betting?.amountUsd ?? 1"
               @change="onBettingAmountUsdChange"
-            >
-          </label>
-          <label class="interval-select" title="市价=立即成交(FOK)；限价=填份额+买/卖目标价挂 GTC">
-            <span>下单类型</span>
-            <select
-              style="width: 6.5rem"
-              :value="engines.betting?.orderType === 'limit' ? 'limit' : 'market'"
-              @change="onBettingOrderTypeChange"
-            >
-              <option value="market">市价单</option>
-              <option value="limit">限价单</option>
-            </select>
-          </label>
-          <label
-            v-if="engines.betting?.orderType === 'limit'"
-            class="interval-select"
-            title="限价买入份额"
-          >
-            <span>份额</span>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              style="width: 5.5rem"
-              :value="engines.betting?.shares ?? ''"
-              placeholder="10"
-              @change="onBettingSharesChange"
-            >
-          </label>
-          <label
-            v-if="engines.betting?.orderType === 'limit'"
-            class="interval-select"
-            title="买入限价（0.01–0.99），成交价不高于此价"
-          >
-            <span>买入目标价</span>
-            <input
-              type="number"
-              min="0.01"
-              max="0.99"
-              step="0.01"
-              style="width: 5.5rem"
-              :value="engines.betting?.limitBuyPrice ?? engines.betting?.limitPrice ?? ''"
-              placeholder="0.50"
-              @change="onBettingLimitBuyPriceChange"
-            >
-          </label>
-          <label
-            v-if="engines.betting?.orderType === 'limit'"
-            class="interval-select"
-            title="止损/卖出限价（0.01–0.99），成交价不低于此价"
-          >
-            <span>卖出目标价</span>
-            <input
-              type="number"
-              min="0.01"
-              max="0.99"
-              step="0.01"
-              style="width: 5.5rem"
-              :value="engines.betting?.limitSellPrice ?? ''"
-              placeholder="0.40"
-              @change="onBettingLimitSellPriceChange"
             >
           </label>
         </div>
@@ -1952,7 +1956,7 @@ onUnmounted(() => {
             :class="{ on: conditionTab === t.id, enabled: conditionDraft[t.id]?.enabled }"
             role="tab"
             :aria-selected="conditionTab === t.id"
-            @click="conditionTab = t.id"
+            @click="onConditionTabClick(t.id)"
           >
             {{ t.label }}
             <span class="dot" :class="{ on: conditionDraft[t.id]?.enabled }" />
@@ -1960,6 +1964,72 @@ onUnmounted(() => {
         </div>
 
         <div class="condition-tab-panel">
+          <div
+            v-if="conditionTab === 'prematch' || conditionTab === 'inplay'"
+            class="settings-row engines-row"
+          >
+            <label class="interval-select" title="本桶独立：市价=FOK；限价=份额+买/卖目标价 GTC">
+              <span>{{ CONDITION_TABS.find(t => t.id === conditionTab)?.label }}下单类型</span>
+              <select
+                style="width: 6.5rem"
+                :value="activeBettingBucket.orderType === 'limit' ? 'limit' : 'market'"
+                @change="onBettingOrderTypeChange"
+              >
+                <option value="market">市价单</option>
+                <option value="limit">限价单</option>
+              </select>
+            </label>
+            <label
+              v-if="activeBettingBucket.orderType === 'limit'"
+              class="interval-select"
+              title="限价买入份额"
+            >
+              <span>份额</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                style="width: 5.5rem"
+                :value="activeBettingBucket.shares ?? ''"
+                placeholder="10"
+                @change="onBettingSharesChange"
+              >
+            </label>
+            <label
+              v-if="activeBettingBucket.orderType === 'limit'"
+              class="interval-select"
+              title="买入限价（0.01–0.99），成交价不高于此价"
+            >
+              <span>买入目标价</span>
+              <input
+                type="number"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+                style="width: 5.5rem"
+                :value="activeBettingBucket.limitBuyPrice ?? ''"
+                placeholder="0.50"
+                @change="onBettingLimitBuyPriceChange"
+              >
+            </label>
+            <label
+              v-if="activeBettingBucket.orderType === 'limit'"
+              class="interval-select"
+              title="止损/卖出限价（0.01–0.99），成交价不低于此价"
+            >
+              <span>卖出目标价</span>
+              <input
+                type="number"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+                style="width: 5.5rem"
+                :value="activeBettingBucket.limitSellPrice ?? ''"
+                placeholder="0.40"
+                @change="onBettingLimitSellPriceChange"
+              >
+            </label>
+          </div>
           <div class="settings-row engines-row">
             <label class="collect-toggle">
               <span>{{ CONDITION_TABS.find(t => t.id === conditionTab)?.label }}打开</span>
@@ -1970,7 +2040,11 @@ onUnmounted(() => {
               >
               <span class="toggle-state" :class="{ off: !activeConditionBucket.enabled }">{{ activeConditionBucket.enabled ? '已开启' : '已关闭' }}</span>
             </label>
-            <label v-if="conditionTab === 'prematch'" class="collect-toggle" title="虚拟采集时强制模拟；真实采集时按此开关">
+            <label
+              v-if="conditionTab === 'prematch' || conditionTab === 'inplay'"
+              class="collect-toggle"
+              title="虚拟采集时强制模拟；真实采集时按此开关"
+            >
               <span>模拟投注</span>
               <input
                 type="checkbox"
@@ -2135,7 +2209,7 @@ onUnmounted(() => {
               </label>
             </div>
             <p class="condition-group-hint">
-              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可填「第几盘 + 盘差（强−弱 &gt; N）」。盘前组勾选「关联未开赛」后，到产品管理选用本组。
+              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。比赛中/比赛结束可填「第几盘 + 盘差（强−弱 &gt; N）」。未开赛组勾选「关联未开赛」后，到产品管理选用本组。未开赛与比赛中各自独立下单类型（市价/限价）。
             </p>
             </div>
             </div>
@@ -2147,7 +2221,7 @@ onUnmounted(() => {
       <section v-if="isBettingOrStopPage" class="engine-panel" :id="isStopPage ? 'engine-stop' : 'engine-betting'">
         <div class="engine-panel-head">
           <h3>{{ isStopPage ? '止损引擎' : '投注引擎' }}</h3>
-          <span v-if="engines" class="engine-panel-tag">{{ isStopPage ? '盘前/盘中 · 止损组 · 可挂调度' : '盘前/盘中 · 买入与止损' }}</span>
+          <span v-if="engines" class="engine-panel-tag">{{ isStopPage ? '未开赛/比赛中 · 止损组 · 可挂调度' : '未开赛/比赛中 · 买入与止损' }}</span>
           <span v-else-if="enginesLoading" class="engine-panel-tag muted">加载中…</span>
         </div>
         <p v-if="enginesLoading && !engines" class="engines-note">配置加载中…</p>
@@ -2164,7 +2238,7 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label v-if="isBettingPage && engines.betting?.orderType !== 'limit'" class="interval-select">
+          <label v-if="isBettingPage" class="interval-select">
             <span>默认金额 (USD)</span>
             <input
               type="number"
@@ -2178,12 +2252,12 @@ onUnmounted(() => {
           <label
             v-if="isBettingPage"
             class="interval-select"
-            title="市价=立即成交(FOK)；限价=填份额+买/卖目标价挂 GTC"
+            title="本桶独立：市价=FOK；限价=份额+买/卖目标价 GTC"
           >
-            <span>下单类型</span>
+            <span>{{ BETTING_TABS.find(t => t.id === bettingTab)?.label }}下单类型</span>
             <select
               style="width: 6.5rem"
-              :value="engines.betting?.orderType === 'limit' ? 'limit' : 'market'"
+              :value="activeBettingBucket.orderType === 'limit' ? 'limit' : 'market'"
               @change="onBettingOrderTypeChange"
             >
               <option value="market">市价单</option>
@@ -2191,7 +2265,7 @@ onUnmounted(() => {
             </select>
           </label>
           <label
-            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            v-if="isBettingPage && activeBettingBucket.orderType === 'limit'"
             class="interval-select"
             title="限价买入份额"
           >
@@ -2201,13 +2275,13 @@ onUnmounted(() => {
               min="0.01"
               step="0.01"
               style="width: 5.5rem"
-              :value="engines.betting?.shares ?? ''"
+              :value="activeBettingBucket.shares ?? ''"
               placeholder="10"
               @change="onBettingSharesChange"
             >
           </label>
           <label
-            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            v-if="isBettingPage && activeBettingBucket.orderType === 'limit'"
             class="interval-select"
             title="买入限价（0.01–0.99），成交价不高于此价"
           >
@@ -2218,13 +2292,13 @@ onUnmounted(() => {
               max="0.99"
               step="0.01"
               style="width: 5.5rem"
-              :value="engines.betting?.limitBuyPrice ?? engines.betting?.limitPrice ?? ''"
+              :value="activeBettingBucket.limitBuyPrice ?? ''"
               placeholder="0.50"
               @change="onBettingLimitBuyPriceChange"
             >
           </label>
           <label
-            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            v-if="isBettingPage && activeBettingBucket.orderType === 'limit'"
             class="interval-select"
             title="止损/卖出限价（0.01–0.99），成交价不低于此价"
           >
@@ -2235,7 +2309,7 @@ onUnmounted(() => {
               max="0.99"
               step="0.01"
               style="width: 5.5rem"
-              :value="engines.betting?.limitSellPrice ?? ''"
+              :value="activeBettingBucket.limitSellPrice ?? ''"
               placeholder="0.40"
               @change="onBettingLimitSellPriceChange"
             >
@@ -2542,7 +2616,7 @@ onUnmounted(() => {
               <tbody>
                 <tr v-for="o in openStopOrders" :key="'ord-' + o.id">
                   <td>{{ o.label || o.market }}</td>
-                  <td>{{ orderBucketKey(o) === 'inplay' ? '盘中' : '盘前' }}</td>
+                  <td>{{ orderBucketKey(o) === 'inplay' ? '比赛中' : '未开赛' }}</td>
                   <td>{{ o.side }}</td>
                   <td>{{ o.amountUsd != null ? ('$' + o.amountUsd) : '—' }}</td>
                   <td>

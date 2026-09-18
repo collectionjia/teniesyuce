@@ -103,7 +103,7 @@ export function useTennisBettingRules({
     () => props.canEditRules && (isPrematchMode.value || isInplayMode.value),
   )
   const bettingBucketKey = computed(() => (isInplayMode.value ? 'inplay' : 'prematch'))
-  const bettingBucketLabel = computed(() => (isInplayMode.value ? '盘中' : '盘前'))
+  const bettingBucketLabel = computed(() => (isInplayMode.value ? '比赛中' : '未开赛'))
 
   const betRulesSummary = computed(() => {
     const n = bettingGroups.value.length
