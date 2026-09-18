@@ -147,5 +147,8 @@ class SofascoreClient:
     def get_live_tennis_events(self) -> dict[str, Any]:
         return self._api_get("sport/tennis/events/live")
 
+    def get_event(self, event_id: int | str) -> dict[str, Any]:
+        return self._api_get(f"event/{event_id}")
+
     def get_scheduled_tennis_events(self, day: str) -> dict[str, Any]:
         return self._api_get(f"sport/tennis/scheduled-events/{day}")

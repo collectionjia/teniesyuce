@@ -7,6 +7,7 @@ defineProps({
   error: { type: String, default: '' },
   matches: { type: Array, default: () => [] },
   isInplayMode: { type: Boolean, default: false },
+  isSettledMode: { type: Boolean, default: false },
   stats: { type: Object, required: true },
   bundleHint: { type: String, default: '' },
   allowBatchTrade: { type: Boolean, default: false },
@@ -30,6 +31,7 @@ defineProps({
   settledPnlBadge: { type: Function, required: true },
   isMatchLive: { type: Function, required: true },
   pickSide: { type: Function, required: true },
+  matchWinnerSide: { type: Function, required: true },
   listRankOf: { type: Function, required: true },
   listBestOf: { type: Function, required: true },
   matchHomeName: { type: Function, required: true },
@@ -68,6 +70,7 @@ defineProps({
           :is-member="isMember"
           :is-new-mode="isNewMode"
           :is-inplay-mode="isInplayMode"
+          :is-settled-mode="isSettledMode"
           :is-selected="isSelected"
           :can-select-match="canSelectMatch"
           :toggle-select="toggleSelect"
@@ -84,6 +87,7 @@ defineProps({
           :settled-pnl-badge="settledPnlBadge"
           :is-match-live="isMatchLive"
           :pick-side="pickSide"
+          :match-winner-side="matchWinnerSide"
           :list-rank-of="listRankOf"
           :list-best-of="listBestOf"
           :match-home-name="matchHomeName"

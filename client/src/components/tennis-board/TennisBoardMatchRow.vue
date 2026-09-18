@@ -6,6 +6,7 @@ defineProps({
   isMember: { type: Boolean, default: false },
   isNewMode: { type: Boolean, default: false },
   isInplayMode: { type: Boolean, default: false },
+  isSettledMode: { type: Boolean, default: false },
   isSelected: { type: Function, required: true },
   canSelectMatch: { type: Function, required: true },
   toggleSelect: { type: Function, required: true },
@@ -22,6 +23,7 @@ defineProps({
   settledPnlBadge: { type: Function, required: true },
   isMatchLive: { type: Function, required: true },
   pickSide: { type: Function, required: true },
+  matchWinnerSide: { type: Function, default: () => null },
   listRankOf: { type: Function, required: true },
   listBestOf: { type: Function, required: true },
   matchHomeName: { type: Function, required: true },
@@ -76,6 +78,8 @@ defineProps({
               class="badge"
               :class="settledPnlBadge(m).cls"
             >{{ settledPnlBadge(m).text }}</span>
+            <span v-if="isSettledMode && isMember && pickSide(m)" class="badge pick" title="推荐侧">荐</span>
+            <span v-if="isSettledMode && matchWinnerSide(m)" class="badge win" title="实际胜方">赢</span>
           </div>
         </div>
         <div class="row-main">
@@ -128,7 +132,13 @@ defineProps({
           </div>
           <div v-else class="matchup is-stacked">
             <div class="matchup-line">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'home' }">
+              <span
+                class="name"
+                :class="{
+                  pick: isMember && pickSide(m) === 'home',
+                  winner: isSettledMode && matchWinnerSide(m) === 'home',
+                }"
+              >
                 <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">
                   #{{ listRankOf(m, 'home') }}<span
                     v-if="listBestOf(m, 'home') != null"
@@ -137,12 +147,20 @@ defineProps({
                   >({{ listBestOf(m, 'home') }})</span>
                 </span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+                <span v-if="isSettledMode && isMember && pickSide(m) === 'home'" class="pick-tag">荐</span>
+                <span v-else-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+                <span v-if="isSettledMode && matchWinnerSide(m) === 'home'" class="win-tag">赢</span>
               </span>
             </div>
             <span class="vs-row">VS</span>
             <div class="matchup-line">
-              <span class="name" :class="{ pick: isMember && pickSide(m) === 'away' }">
+              <span
+                class="name"
+                :class="{
+                  pick: isMember && pickSide(m) === 'away',
+                  winner: isSettledMode && matchWinnerSide(m) === 'away',
+                }"
+              >
                 <span v-if="isMember && listRankOf(m, 'away') != null" class="list-rank">
                   #{{ listRankOf(m, 'away') }}<span
                     v-if="listBestOf(m, 'away') != null"
@@ -151,7 +169,9 @@ defineProps({
                   >({{ listBestOf(m, 'away') }})</span>
                 </span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
-                <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+                <span v-if="isSettledMode && isMember && pickSide(m) === 'away'" class="pick-tag">荐</span>
+                <span v-else-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+                <span v-if="isSettledMode && matchWinnerSide(m) === 'away'" class="win-tag">赢</span>
               </span>
             </div>
           </div>
@@ -197,6 +217,7 @@ defineProps({
 .badge.pnl-flat { background: #f8fafc; color: #64748b; }
 .badge.pnl-bet { background: #eff6ff; color: #1d4ed8; }
 .badge.pick { background: var(--primary); color: #fff; }
+.badge.win { background: #ecfdf5; color: #047857; }
 .row-card {
   background: var(--card);
   border: 1px solid #f1f5f9;
@@ -422,6 +443,7 @@ defineProps({
   flex-wrap: wrap;
 }
 .matchup .name.pick { color: var(--primary); }
+.matchup .name.winner { color: #047857; }
 .list-rank {
   color: #64748b;
   font-size: 0.72rem;
@@ -445,6 +467,18 @@ defineProps({
   line-height: 1.35;
   color: #fff;
   background: var(--primary);
+}
+.win-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
 }
 .matchup .vs-text {
   color: var(--muted);

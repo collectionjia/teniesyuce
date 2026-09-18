@@ -4,6 +4,7 @@ defineProps({
   detailHelpOpen: { type: Boolean, default: false },
   detailTips: { type: Array, default: () => [] },
   isInplayMode: { type: Boolean, default: false },
+  isSettledMode: { type: Boolean, default: false },
   isRangeMode: { type: Boolean, default: false },
   isNewMode: { type: Boolean, default: false },
   shortName: { type: Function, required: true },
@@ -17,6 +18,7 @@ defineProps({
   polyOf: { type: Function, required: true },
   gapInfo: { type: Function, required: true },
   pickSide: { type: Function, required: true },
+  matchWinnerSide: { type: Function, default: () => null },
   toggleDetailHelp: { type: Function, required: true },
   closeDetail: { type: Function, required: true },
   rankText: { type: Function, required: true },
@@ -66,7 +68,18 @@ defineProps({
                   v-if="isInplayMode && gapInfo(detailMatch).ready"
                   class="badge live-tier"
                 >{{ gapInfo(detailMatch).tier }} · 差{{ gapInfo(detailMatch).gap }}</span>
-                <span v-if="pickSide(detailMatch)" class="badge pick">优{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
+                <span
+                  v-if="isSettledMode && pickSide(detailMatch)"
+                  class="badge pick"
+                >荐{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
+                <span
+                  v-else-if="pickSide(detailMatch)"
+                  class="badge pick"
+                >优{{ pickSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
+                <span
+                  v-if="isSettledMode && matchWinnerSide(detailMatch)"
+                  class="badge win"
+                >赢{{ matchWinnerSide(detailMatch) === 'home' ? shortName(matchHomeName(detailMatch)) : shortName(matchAwayName(detailMatch)) }}</span>
               </div>
             </div>
             <div class="modal-head-actions">
@@ -93,7 +106,13 @@ defineProps({
 
           <div class="modal-body">
             <div class="duel">
-              <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'home' }">
+              <div
+                class="duel-side"
+                :class="{
+                  pick: pickSide(detailMatch) === 'home',
+                  winner: isSettledMode && matchWinnerSide(detailMatch) === 'home',
+                }"
+              >
                 <div class="duel-top">
                   <span class="duel-rank">
                     #{{ rankText(currentRankOf(detailMatch.homePlayer || { name: detailMatch.home })) }}<span
@@ -104,7 +123,12 @@ defineProps({
                   </span>
                   <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'home')">{{ playerLiveScoreText(detailMatch, 'home') }}</span>
                 </div>
-                <div class="duel-name">{{ playerNameWithAge(detailMatch.homePlayer || { name: detailMatch.home }, eloOf(detailMatch.id)?.home) }}</div>
+                <div class="duel-name">
+                  {{ playerNameWithAge(detailMatch.homePlayer || { name: detailMatch.home }, eloOf(detailMatch.id)?.home) }}
+                  <span v-if="isSettledMode && pickSide(detailMatch) === 'home'" class="pick-tag">荐</span>
+                  <span v-else-if="pickSide(detailMatch) === 'home'" class="pick-tag">优</span>
+                  <span v-if="isSettledMode && matchWinnerSide(detailMatch) === 'home'" class="win-tag">赢</span>
+                </div>
                 <div class="duel-sub">
                   周{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).previous) }}
                   · L{{ rankText(rankDetailOf(detailMatch.homePlayer || {}, detailMatch).live) }}
@@ -112,7 +136,13 @@ defineProps({
                 </div>
               </div>
               <div class="duel-vs">VS</div>
-              <div class="duel-side" :class="{ pick: pickSide(detailMatch) === 'away' }">
+              <div
+                class="duel-side"
+                :class="{
+                  pick: pickSide(detailMatch) === 'away',
+                  winner: isSettledMode && matchWinnerSide(detailMatch) === 'away',
+                }"
+              >
                 <div class="duel-top">
                   <span class="duel-rank">
                     #{{ rankText(currentRankOf(detailMatch.awayPlayer || { name: detailMatch.away })) }}<span
@@ -123,7 +153,12 @@ defineProps({
                   </span>
                   <span class="duel-score" v-if="playerLiveScoreText(detailMatch, 'away')">{{ playerLiveScoreText(detailMatch, 'away') }}</span>
                 </div>
-                <div class="duel-name">{{ playerNameWithAge(detailMatch.awayPlayer || { name: detailMatch.away }, eloOf(detailMatch.id)?.away) }}</div>
+                <div class="duel-name">
+                  {{ playerNameWithAge(detailMatch.awayPlayer || { name: detailMatch.away }, eloOf(detailMatch.id)?.away) }}
+                  <span v-if="isSettledMode && pickSide(detailMatch) === 'away'" class="pick-tag">荐</span>
+                  <span v-else-if="pickSide(detailMatch) === 'away'" class="pick-tag">优</span>
+                  <span v-if="isSettledMode && matchWinnerSide(detailMatch) === 'away'" class="win-tag">赢</span>
+                </div>
                 <div class="duel-sub">
                   周{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).previous) }}
                   · L{{ rankText(rankDetailOf(detailMatch.awayPlayer || {}, detailMatch).live) }}
@@ -423,6 +458,7 @@ defineProps({
 .badge.pnl-flat { background: #f8fafc; color: #64748b; }
 .badge.pnl-bet { background: #eff6ff; color: #1d4ed8; }
 .badge.pick { background: var(--primary); color: #fff; }
+.badge.win { background: #ecfdf5; color: #047857; }
 .duel {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -447,6 +483,10 @@ defineProps({
   border-color: #c7d2fe;
   background: var(--primary-soft);
 }
+.duel-side.winner {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
 .duel-top {
   display: flex; align-items: center; justify-content: space-between; gap: 4px;
 }
@@ -470,8 +510,36 @@ defineProps({
   font-size: 0.88rem; font-weight: 800; color: #0f172a;
   line-height: 1.25;
   word-break: break-word;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 .duel-side.pick .duel-name { color: #3730a3; }
+.duel-side.winner .duel-name { color: #047857; }
+.pick-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+  background: var(--primary);
+}
+.win-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
 .duel-sub {
   margin-top: 3px;
   font-size: 0.68rem; color: #64748b; line-height: 1.35;
@@ -544,6 +612,7 @@ defineProps({
 .badge.pnl-flat { background: #f8fafc; color: #64748b; }
 .badge.pnl-bet { background: #eff6ff; color: #1d4ed8; }
 .badge.pick { background: var(--primary); color: #fff; }
+.badge.win { background: #ecfdf5; color: #047857; }
 .help-bang.modal-help-bang {
   width: 32px;
   height: 32px;

@@ -64,6 +64,7 @@ def refresh_scores(matches: list[dict[str, Any]]) -> dict[str, Any]:
     skip_warm = os.environ.get("SOFA_SKIP_WARM_ON_LIVE", "1") == "1"
     error: str | None = None
     live_raw: list[dict] = []
+    by_id: dict[int, dict] = {}
     try:
         with SofascoreClient(skip_warm=skip_warm) as client:
             try:
@@ -71,6 +72,22 @@ def refresh_scores(matches: list[dict[str, Any]]) -> dict[str, Any]:
             except Exception as exc:
                 error = str(exc)
                 print(f"[refresh_inplay] Sofascore live failed: {error}", flush=True)
+
+            by_id = {int(ev["id"]): ev for ev in live_raw if ev.get("id") is not None}
+
+            # live 列表可能不全（部分进行中场次不在 events/live），对未命中 id 再逐场拉 event/{id}
+            missing_ids = [iid for iid in want if iid not in by_id]
+            for iid in missing_ids:
+                try:
+                    payload = client.get_event(iid)
+                    ev = payload.get("event") if isinstance(payload, dict) else None
+                    if isinstance(ev, dict) and ev.get("id") is not None:
+                        by_id[int(ev["id"])] = ev
+                        print(f"[refresh_inplay] score by-id ok id={iid}", flush=True)
+                    else:
+                        print(f"[refresh_inplay] score by-id empty id={iid}", flush=True)
+                except Exception as exc:
+                    print(f"[refresh_inplay] score by-id fail id={iid}: {exc}", flush=True)
     except Exception as exc:
         # curl_cffi / 代理未配置等：Client 初始化失败也要落成 scores.error，避免整脚本崩掉
         error = str(exc)
@@ -85,7 +102,6 @@ def refresh_scores(matches: list[dict[str, Any]]) -> dict[str, Any]:
             "ok": False,
         }
 
-    by_id = {int(ev["id"]): ev for ev in live_raw if ev.get("id") is not None}
     updated = 0
     missed: list[dict[str, Any]] = []
     for m in matches:

@@ -1808,16 +1808,24 @@ async function refreshScoreOddsCollect() {
     if (tick && tick.ok === false && (tick.reason || tick.message)) {
       collectError.value = tick.reason || tick.message
     } else if (tick && !collectError.value) {
-      const s = tick.scores || {}
-      const p = tick.prices || {}
+      // collect 服务把 tick 结果包在 metrics 里；本机回退则在顶层
+      const body = (tick.metrics && typeof tick.metrics === 'object')
+        ? { ...tick, ...tick.metrics }
+        : tick
+      const s = body.scores || {}
+      const p = body.prices || {}
       const scoreErr = s.error || (s.ok === false ? '比分采集失败' : '')
       const oddsErr = p.error || (p.ok === false ? '赔率采集失败' : '')
+      const missed = s.summary?.missed || s.missed || body.score_failures || []
       if (scoreErr || oddsErr) {
         collectError.value = [scoreErr, oddsErr].filter(Boolean).join(' · ')
       } else {
         const su = Number(s.updated) || 0
         const pu = Number(p.updated) || 0
-        collectNotice.value = `已刷新 · 比分 ${su} · 赔率 ${pu}`
+        const missHint = Array.isArray(missed) && missed.length
+          ? ` · ${missed.length} 场未在 Sofascore live 命中`
+          : ''
+        collectNotice.value = `已刷新 · 比分 ${su} · 赔率 ${pu}${missHint}`
       }
     }
   } finally {
@@ -1866,6 +1874,55 @@ function pickSide(m) {
   if (homeR == null || awayR == null) return null
   if (homeR === awayR) return null
   return homeR < awayR ? 'home' : 'away'
+}
+
+function periodScoreOf(block, i) {
+  if (!block || typeof block !== 'object') return null
+  const key = `period${i}`
+  const setKey = `set${i}`
+  const n = Number(block[key] ?? block[setKey] ?? (Array.isArray(block.periods) ? block.periods[i - 1] : null))
+  return Number.isFinite(n) ? n : null
+}
+
+function isSetCompleteScore(a, b) {
+  if (a == null || b == null) return false
+  const hi = Math.max(a, b)
+  const lo = Math.min(a, b)
+  if (hi >= 6 && hi - lo >= 2) return true
+  if (hi >= 7 && lo >= 5) return true
+  return false
+}
+
+/** 完赛胜方 home|away|null（盘后标记「赢」用） */
+function matchWinnerSide(m) {
+  if (!m) return null
+  const w = String(m.winner || m.winnerCode || m.winner_code || '').toLowerCase()
+  if (w === 'home' || w === '1' || w === 'h') return 'home'
+  if (w === 'away' || w === '2' || w === 'a') return 'away'
+  const hsRaw = m.homeScore ?? m.home_score
+  const asRaw = m.awayScore ?? m.away_score
+  if (typeof hsRaw === 'number' && typeof asRaw === 'number' && hsRaw !== asRaw) {
+    return hsRaw > asRaw ? 'home' : 'away'
+  }
+  const hs = hsRaw && typeof hsRaw === 'object' ? hsRaw : null
+  const as = asRaw && typeof asRaw === 'object' ? asRaw : null
+  const displayH = Number(hs?.display ?? hs?.current)
+  const displayA = Number(as?.display ?? as?.current)
+  if (Number.isFinite(displayH) && Number.isFinite(displayA) && displayH !== displayA) {
+    return displayH > displayA ? 'home' : 'away'
+  }
+  let homeSets = 0
+  let awaySets = 0
+  for (let i = 1; i <= 5; i++) {
+    const h = periodScoreOf(hs, i)
+    const a = periodScoreOf(as, i)
+    if (h == null || a == null) break
+    if (!isSetCompleteScore(h, a)) break
+    if (h > a) homeSets += 1
+    else if (a > h) awaySets += 1
+  }
+  if (homeSets !== awaySets) return homeSets > awaySets ? 'home' : 'away'
+  return null
 }
 
 function matchHomeName(m) {
@@ -2611,6 +2668,7 @@ defineExpose({
       :error="error"
       :matches="matches"
       :is-inplay-mode="isInplayMode"
+      :is-settled-mode="isSettledMode"
       :stats="stats"
       :bundle-hint="bundleHint"
       :allow-batch-trade="allowBatchTrade"
@@ -2634,6 +2692,7 @@ defineExpose({
       :settled-pnl-badge="settledPnlBadge"
       :is-match-live="isMatchLive"
       :pick-side="pickSide"
+      :match-winner-side="matchWinnerSide"
       :list-rank-of="listRankOf"
       :list-best-of="listBestOf"
       :match-home-name="matchHomeName"
@@ -2656,6 +2715,7 @@ defineExpose({
       :detail-help-open="detailHelpOpen"
       :detail-tips="DETAIL_TIPS"
       :is-inplay-mode="isInplayMode"
+      :is-settled-mode="isSettledMode"
       :is-range-mode="isRangeMode"
       :is-new-mode="isNewMode"
       :short-name="shortName"
@@ -2669,6 +2729,7 @@ defineExpose({
       :poly-of="polyOf"
       :gap-info="gapInfo"
       :pick-side="pickSide"
+      :match-winner-side="matchWinnerSide"
       :toggle-detail-help="toggleDetailHelp"
       :close-detail="closeDetail"
       :rank-text="rankText"
