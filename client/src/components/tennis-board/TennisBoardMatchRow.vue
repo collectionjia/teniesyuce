@@ -166,8 +166,8 @@ defineProps({
                   ? (collectUpdatedText ? `比分和赔率采集 · ${collectUpdatedText}` : '刷新比分和 Polymarket 赔率')
                   : (polyUrlOf(m) ? '打开关联页' : '暂无对应外链')"
                 @click="(onPolymarketAction || openMarket)(m)"
-              >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
-              <span v-if="isInplayMode && collectUpdatedText" class="poly-updated">{{ collectUpdatedText }}</span>
+              >{{ collectRefreshing && isInplayMode ? '刷新中…' : '外链' }}</button>
+              
             </div>
           </div>
         </div>
