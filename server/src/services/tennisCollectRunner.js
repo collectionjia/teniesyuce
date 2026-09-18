@@ -474,6 +474,7 @@ function runInplayRefreshAndWait({
         ok: false,
         timedOut: true,
         error: `refresh_inplay timed out after ${timeout}ms`,
+        process_log: chunks.join('').split(/\r?\n/).filter(Boolean).slice(-200).join('\n'),
         log_tail: chunks.slice(-40).join(''),
         upstream: 'ipwo',
       });
@@ -510,11 +511,13 @@ function runInplayRefreshAndWait({
         }
       }
       const ok = code === 0 && (!summary || summary.ok !== false);
-      const log_tail = text.split(/\r?\n/).slice(-40).join('\n');
+      const lines = text.split(/\r?\n/);
+      const process_log = lines.filter((l) => l.length).slice(-200).join('\n');
+      const log_tail = lines.slice(-80).join('\n');
       try {
         appendLogFile([
           `=== refresh_inplay.py ${new Date().toISOString()} ===`,
-          ...text.split(/\r?\n/).filter(Boolean).slice(-80),
+          ...lines.filter(Boolean).slice(-120),
         ]);
       } catch {
         /* ignore */
@@ -524,6 +527,7 @@ function runInplayRefreshAndWait({
         code,
         summary,
         error: ok ? null : summary?.error || (code != null ? `exit ${code}` : 'refresh_inplay failed'),
+        process_log,
         log_tail,
         upstream: 'ipwo',
         script: 'refresh_inplay.py',

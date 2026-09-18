@@ -141,33 +141,60 @@ async function mapPool(items, limit, fn) {
  */
 async function refreshPolymarketPrices(bundle) {
   const map = bundle?.polymarketByEvent;
-  if (!map || typeof map !== 'object') return { updated: 0, failed: 0 };
+  if (!map || typeof map !== 'object') {
+    return { updated: 0, failed: 0, process_log: '[poly] no polymarketByEvent' };
+  }
   const entries = Object.entries(map).filter(([, v]) => v && (v.slug || v.url));
-  if (!entries.length) return { updated: 0, failed: 0 };
+  if (!entries.length) {
+    return { updated: 0, failed: 0, process_log: '[poly] no slugs' };
+  }
 
   let updated = 0;
   let failed = 0;
+  const failures = [];
+  const lines = [`[poly] candidates=${entries.length}`];
   await mapPool(entries, CONCURRENCY, async ([id, poly]) => {
     const slug = extractSlug(poly);
-    if (!slug) return;
+    if (!slug) {
+      failed += 1;
+      failures.push({ id, reason: 'no slug' });
+      lines.push(`[poly] fail id=${id}: no slug`);
+      return;
+    }
     try {
       const ev = await fetchEventBySlug(slug);
       if (!ev) {
         failed += 1;
+        failures.push({ id, slug, reason: 'empty event' });
+        lines.push(`[poly] fail id=${id} slug=${slug}: empty`);
         return;
       }
       const next = await applyLivePrices(poly, ev);
       if (next !== poly && next.moneyline?.prices) {
         map[id] = next;
         updated += 1;
+        lines.push(`[poly] ok id=${id} slug=${slug} source=${next.priceSource || next.moneyline?.source || '?'}`);
+      } else {
+        failed += 1;
+        failures.push({ id, slug, reason: 'no moneyline prices' });
+        lines.push(`[poly] fail id=${id} slug=${slug}: no moneyline prices`);
       }
     } catch (e) {
       failed += 1;
-      console.warn(`[tennis/poly-refresh] ${slug}:`, e.message || e);
+      const reason = e.message || String(e);
+      failures.push({ id, slug, reason });
+      lines.push(`[poly] fail id=${id} slug=${slug}: ${reason}`);
+      console.warn(`[tennis/poly-refresh] ${slug}:`, reason);
     }
   });
 
-  return { updated, failed };
+  lines.push(`[poly] done updated=${updated} failed=${failed}`);
+  return {
+    updated,
+    failed,
+    failures,
+    process_log: lines.join('\n'),
+  };
 }
 
 module.exports = {

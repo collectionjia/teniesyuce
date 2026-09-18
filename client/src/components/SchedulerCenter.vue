@@ -444,32 +444,32 @@ function formatRunDetail(r) {
     return [r.error, r.message].filter(Boolean).join('\n') || '暂无详细日志（本次未写入 metrics）'
   }
   const parts = []
-  const head = {
-    tick_at: m.tick_at,
-    fields: m.fields,
-    scores: m.scores,
-    prices: m.prices,
-    inplay_matches: m.inplay_matches,
-    migrated_prematch_to_inplay: m.migrated_prematch_to_inplay,
-    admitted_live_from_full: m.admitted_live_from_full,
-    migrated_inplay_to_settled: m.migrated_inplay_to_settled,
+  const proc = m.process_log
+    || m.log_tail
+    || m.refresh_inplay?.process_log
+    || m.refresh_inplay?.log_tail
+    || m.prices?.process_log
+    || ''
+  if (proc) {
+    parts.push(`=== 采集过程日志 ===\n${proc}`)
+  } else {
+    parts.push(
+      '=== 采集过程日志 ===\n'
+      + '(本次记录未包含过程日志。请部署最新代码后重新执行一轮「盘中比分刷新」。)',
+    )
   }
-  parts.push(`=== 汇总 ===\n${JSON.stringify(head, null, 2)}`)
   if (m.score_failures) {
     parts.push(`=== 比分失败 ===\n${JSON.stringify(m.score_failures, null, 2)}`)
   }
-  if (m.odds_failures?.length) {
-    parts.push(`=== 赔率失败 ===\n${JSON.stringify(m.odds_failures, null, 2)}`)
+  if (m.odds_failures?.length || m.prices?.failures?.length) {
+    parts.push(
+      `=== 赔率失败 ===\n${JSON.stringify(m.odds_failures || m.prices.failures, null, 2)}`,
+    )
   }
-  const tail = m.log_tail || m.refresh_inplay?.log_tail
-  if (tail) parts.push(`=== 执行日志 ===\n${tail}`)
-  if (m.refresh_inplay) {
-    parts.push(`=== refresh_inplay ===\n${JSON.stringify(m.refresh_inplay, null, 2)}`)
-  }
-  // 其它任务类型：整包 metrics
-  if (!m.scores && !m.prices && !tail) {
-    parts.push(`=== metrics ===\n${JSON.stringify(m, null, 2)}`)
-  }
+  // 完整 metrics，避免只看到精简汇总
+  parts.push(`=== 完整 metrics ===\n${JSON.stringify(m, null, 2)}`)
+  if (r.error) parts.unshift(`=== 错误 ===\n${r.error}`)
+  if (r.message) parts.unshift(`=== 说明 ===\n${r.message}`)
   return parts.join('\n\n')
 }
 

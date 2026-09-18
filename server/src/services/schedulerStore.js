@@ -507,6 +507,21 @@ async function startRun({ jobId, trigger }) {
 
 async function finishRun(runId, { status, message = null, error = null, metrics = null }) {
   await ensureTables();
+  let metricsJson = null;
+  if (metrics != null) {
+    try {
+      const copy = typeof metrics === 'object' ? { ...metrics } : { value: metrics };
+      // 保证过程日志进库；过长截断避免撑爆 JSON 列
+      const proc = String(copy.process_log || copy.log_tail || copy.refresh_inplay?.process_log || '');
+      if (proc && !copy.process_log) copy.process_log = proc;
+      if (typeof copy.process_log === 'string' && copy.process_log.length > 48000) {
+        copy.process_log = `${copy.process_log.slice(0, 48000)}\n…(truncated)`;
+      }
+      metricsJson = JSON.stringify(copy);
+    } catch {
+      metricsJson = JSON.stringify({ error: 'metrics serialize failed' });
+    }
+  }
   await pool.query(
     `UPDATE scheduler_runs
      SET status=?, message=?, error_msg=?, metrics_json=?, finished_at=NOW()
@@ -515,7 +530,7 @@ async function finishRun(runId, { status, message = null, error = null, metrics 
       status,
       message != null ? String(message).slice(0, 512) : null,
       error != null ? String(error).slice(0, 1024) : null,
-      metrics != null ? JSON.stringify(metrics) : null,
+      metricsJson,
       runId,
     ]
   );

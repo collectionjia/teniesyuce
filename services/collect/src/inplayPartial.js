@@ -65,6 +65,12 @@ async function runInplayPartial() {
     tick_at: new Date().toISOString(),
     fields: { score: wantScore, odds: wantOdds },
     prices,
+    odds_failures: prices.failures || null,
+    process_log: [
+      '[inplayPartial] fallback path (tennisInplayTick unavailable)',
+      wantScore ? '[score] skipped on fallback' : '[score] off',
+      prices.process_log || `[odds] updated=${prices.updated || 0} failed=${prices.failed || 0}`,
+    ].join('\n'),
     migrated_prematch_to_inplay: migratePre.moved || 0,
     admitted_live_from_full: admitLive.admitted || 0,
     migrated_inplay_to_settled: migrateEnd.moved || 0,

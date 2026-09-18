@@ -160,9 +160,20 @@ async function runInplayTick({ skipBetting = false } = {}) {
     upstream: 'ipwo',
     scores,
     prices,
-    // 失败明细：前端/指标可直接看，不必翻 Docker 日志
     score_failures: wantScore ? (scores.summary?.missed || scores.error || null) : null,
     odds_failures: wantOdds ? (prices.summary?.failures || null) : null,
+    // 采集过程完整日志（写入 scheduler_runs.metrics_json，供「详细日志」展示）
+    process_log:
+      refresh?.process_log
+      || refresh?.log_tail
+      || [
+          `[inplay-tick] matches=${matchCount}`,
+          wantScore ? `[score] updated=${scores.updated ?? 0} failed=${scores.failed ?? 0} error=${scores.error || '-'}` : '[score] skipped',
+          wantOdds ? `[odds] updated=${prices.updated ?? 0} failed=${prices.failed ?? 0} error=${prices.error || '-'}` : '[odds] skipped',
+          refresh == null ? '[refresh_inplay] not run' : null,
+        ]
+          .filter(Boolean)
+          .join('\n'),
     log_tail: refresh?.log_tail || null,
     refresh_inplay: refresh
       ? {
@@ -170,6 +181,7 @@ async function runInplayTick({ skipBetting = false } = {}) {
           error: refresh.error || null,
           timedOut: !!refresh.timedOut,
           summary: refresh.summary || null,
+          process_log: refresh.process_log || refresh.log_tail || null,
           log_tail: refresh.log_tail || null,
         }
       : null,
