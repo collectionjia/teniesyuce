@@ -423,6 +423,7 @@ const DEFAULT_CONFIG = {
         enabled: false,
         simulate: false,
         orderType: 'market',
+        amountUsd: 1,
         shares: null,
         limitBuyPrice: null,
         limitPrice: null,
@@ -433,6 +434,7 @@ const DEFAULT_CONFIG = {
         enabled: false,
         simulate: false,
         orderType: 'market',
+        amountUsd: 1,
         shares: null,
         limitBuyPrice: null,
         limitPrice: null,
@@ -442,7 +444,7 @@ const DEFAULT_CONFIG = {
       },
     },
     rules: {
-      note: '未开赛/比赛中分桶；各桶独立下单类型；比赛中买入条件见 inplay.entry；止损见各组 stopRules',
+      note: '未开赛/比赛中分桶；市价用金额、限价用买入数量+目标价；比赛中买入条件见 inplay.entry；止损见各组 stopRules',
     },
   },
 };
@@ -524,8 +526,11 @@ function normalizeBucketOrder(raw = {}, fallback = {}) {
   const sellP = clampProbPrice(sellRaw);
   const shRaw = raw.shares != null && raw.shares !== '' ? raw.shares : fallback.shares;
   const sh = Math.floor(Number(shRaw) * 100) / 100;
+  const amtRaw = raw.amountUsd != null && raw.amountUsd !== '' ? raw.amountUsd : fallback.amountUsd;
+  const amt = Number(amtRaw);
   return {
     orderType,
+    amountUsd: Number.isFinite(amt) && amt > 0 ? Math.round(amt * 100) / 100 : 1,
     limitBuyPrice: buyP,
     limitPrice: buyP,
     limitSellPrice: sellP,
@@ -547,6 +552,7 @@ function normalizeBetting(betting) {
   b.shares = Number.isFinite(shGlobal) && shGlobal > 0 ? shGlobal : null;
   const globalOrder = {
     orderType: b.orderType,
+    amountUsd: b.amountUsd != null ? Number(b.amountUsd) || 1 : 1,
     shares: b.shares,
     limitBuyPrice: b.limitBuyPrice,
     limitPrice: b.limitPrice,

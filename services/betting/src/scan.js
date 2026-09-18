@@ -117,7 +117,7 @@ async function scan(body = {}) {
         continue;
       }
 
-      const amountUsd = Number(entry.amountUsd ?? matched.amountUsd ?? cfg.betting?.amountUsd ?? 1) || 1;
+      const amountUsd = Number(entry.amountUsd ?? matched.amountUsd ?? bucketCfg?.amountUsd ?? cfg.betting?.amountUsd ?? 1) || 1;
       const key = String(amountUsd);
       if (!byAmount.has(key)) byAmount.set(key, []);
       byAmount.get(key).push({ eventId, side, strategyKey, amountUsd, entry });

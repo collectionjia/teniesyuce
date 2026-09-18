@@ -136,10 +136,12 @@ function cloneBettingBuckets(src) {
     const buyP = Number(b?.limitBuyPrice ?? b?.limitPrice)
     const sellP = Number(b?.limitSellPrice)
     const sh = Math.floor(Number(b?.shares) * 100) / 100
+    const amt = Number(b?.amountUsd)
     out[k] = {
       enabled: !!b?.enabled,
       simulate: !!b?.simulate,
       orderType,
+      amountUsd: Number.isFinite(amt) && amt > 0 ? Math.round(amt * 100) / 100 : 1,
       shares: Number.isFinite(sh) && sh > 0 ? sh : null,
       limitBuyPrice: Number.isFinite(buyP) && buyP >= 0.01 && buyP <= 0.99 ? Math.round(buyP * 100) / 100 : null,
       limitSellPrice: Number.isFinite(sellP) && sellP >= 0.01 && sellP <= 0.99 ? Math.round(sellP * 100) / 100 : null,
@@ -259,6 +261,7 @@ const activeBettingBucket = computed(() => {
     enabled: false,
     simulate: false,
     orderType: 'market',
+    amountUsd: 1,
     shares: null,
     limitBuyPrice: null,
     limitSellPrice: null,
@@ -1162,7 +1165,18 @@ function onBettingUserAccountChange(ev) {
 function onBettingAmountUsdChange(ev) {
   const n = Number(ev?.target?.value)
   if (!Number.isFinite(n) || n <= 0) return
-  patchEngines({ betting: { amountUsd: Math.round(n * 100) / 100 } })
+  const amountUsd = Math.round(n * 100) / 100
+  const key = orderEditBucketKey.value
+  if (key) {
+    bettingDraft.value = {
+      ...bettingDraft.value,
+      [key]: { ...bettingDraft.value[key], amountUsd },
+    }
+    bettingDraftDirty.value = true
+    patchEngines({ betting: { buckets: { [key]: { amountUsd } } } })
+    return
+  }
+  patchEngines({ betting: { amountUsd } })
 }
 function onBettingOrderTypeChange(ev) {
   const key = orderEditBucketKey.value
@@ -1525,6 +1539,10 @@ async function saveBettingBucketAndEnable(opts = {}) {
           enabled: !!bucket.enabled,
           simulate: !!bucket.simulate,
           orderType: String(bucket.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market',
+          amountUsd: (() => {
+            const n = Number(bucket.amountUsd)
+            return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 1
+          })(),
           shares: (() => {
             const sh = Math.floor(Number(bucket.shares) * 100) / 100
             return Number.isFinite(sh) && sh > 0 ? sh : null
@@ -1934,17 +1952,6 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label class="interval-select">
-            <span>默认金额 (USD)</span>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              style="width: 6.5rem"
-              :value="engines.betting?.amountUsd ?? 1"
-              @change="onBettingAmountUsdChange"
-            >
-          </label>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -1968,8 +1975,8 @@ onUnmounted(() => {
             v-if="conditionTab === 'prematch' || conditionTab === 'inplay'"
             class="settings-row engines-row"
           >
-            <label class="interval-select" title="本桶独立：市价=FOK；限价=份额+买/卖目标价 GTC">
-              <span>{{ CONDITION_TABS.find(t => t.id === conditionTab)?.label }}下单类型</span>
+            <label class="interval-select" title="本桶独立：市价=金额 FOK；限价=买入数量+买卖目标价 GTC">
+              <span>下单类型</span>
               <select
                 style="width: 6.5rem"
                 :value="activeBettingBucket.orderType === 'limit' ? 'limit' : 'market'"
@@ -1980,11 +1987,26 @@ onUnmounted(() => {
               </select>
             </label>
             <label
+              v-if="activeBettingBucket.orderType !== 'limit'"
+              class="interval-select"
+              title="市价单买入金额（USD）"
+            >
+              <span>金额</span>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                style="width: 6.5rem"
+                :value="activeBettingBucket.amountUsd ?? 1"
+                @change="onBettingAmountUsdChange"
+              >
+            </label>
+            <label
               v-if="activeBettingBucket.orderType === 'limit'"
               class="interval-select"
-              title="限价买入份额"
+              title="限价买入数量（份额）"
             >
-              <span>份额</span>
+              <span>买入数量</span>
               <input
                 type="number"
                 min="0.01"
@@ -2238,23 +2260,12 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label v-if="isBettingPage" class="interval-select">
-            <span>默认金额 (USD)</span>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              style="width: 6.5rem"
-              :value="engines.betting?.amountUsd ?? 1"
-              @change="onBettingAmountUsdChange"
-            >
-          </label>
           <label
             v-if="isBettingPage"
             class="interval-select"
-            title="本桶独立：市价=FOK；限价=份额+买/卖目标价 GTC"
+            title="本桶独立：市价=金额 FOK；限价=买入数量+买卖目标价 GTC"
           >
-            <span>{{ BETTING_TABS.find(t => t.id === bettingTab)?.label }}下单类型</span>
+            <span>下单类型</span>
             <select
               style="width: 6.5rem"
               :value="activeBettingBucket.orderType === 'limit' ? 'limit' : 'market'"
@@ -2265,11 +2276,26 @@ onUnmounted(() => {
             </select>
           </label>
           <label
+            v-if="isBettingPage && activeBettingBucket.orderType !== 'limit'"
+            class="interval-select"
+            title="市价单买入金额（USD）"
+          >
+            <span>金额</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              style="width: 6.5rem"
+              :value="activeBettingBucket.amountUsd ?? 1"
+              @change="onBettingAmountUsdChange"
+            >
+          </label>
+          <label
             v-if="isBettingPage && activeBettingBucket.orderType === 'limit'"
             class="interval-select"
-            title="限价买入份额"
+            title="限价买入数量（份额）"
           >
-            <span>份额</span>
+            <span>买入数量</span>
             <input
               type="number"
               min="0.01"

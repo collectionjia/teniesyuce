@@ -1064,7 +1064,7 @@ async function runBettingPass({
         entryGroups,
         entryCfg: bucketKey === 'inplay' ? bucketCfg?.entry : null,
         uidNum: resolvedUid,
-        stake: stakeFromGroups(stopGroups.length ? stopGroups : entryGroups, fallbackStake),
+        stake: stakeFromGroups(stopGroups.length ? stopGroups : entryGroups, Number(bucketCfg?.amountUsd) > 0 ? Number(bucketCfg.amountUsd) : fallbackStake),
         state,
         simulate,
         mode: effectiveMode,
