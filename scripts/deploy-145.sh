@@ -49,6 +49,10 @@ echo "==> [3/6] 重建核心栈 yuce-prod (server/web/redis/btc-board)"
 bash scripts/docker-deploy.sh prod up -d --build
 
 echo "==> [4/6] 重建五引擎 yuce-services (9101-9105)"
+# 145 曾用宿主机 node 跑引擎；若 9105 仍被占，Docker scheduler 起不来 → server 对 scheduler ENOTFOUND → 调用中心 fetch failed
+if [[ -x scripts/deploy-host-services.sh ]]; then
+  bash scripts/deploy-host-services.sh stop 2>/dev/null || true
+fi
 bash scripts/docker-deploy-services.sh up -d --build
 
 echo "==> [5/6] 健康检查"
