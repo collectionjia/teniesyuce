@@ -346,6 +346,52 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
 }
 
 function startLiveCollect() {
+  const r = beginLiveCollect({ trigger: 'admin-collect_live.py', wait: false });
+  if (!r.ok) return r;
+  return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
+}
+
+/**
+ * 同步跑 collect_live.py（IPWO → Sofascore 比分/状态 + Polymarket），写完 Redis 再返回。
+ * 供调度「盘中比分刷新」使用。
+ */
+function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
+  const timeout = Math.max(30000, Number(timeoutMs) || 180000);
+  if (liveRunning) {
+    return waitForLiveCollectIdle(timeout).then((waited) => ({
+      ok: liveLast.status === 'success',
+      waited: true,
+      timedOut: !!waited?.timedOut,
+      last: { ...liveLast },
+      upstream: 'ipwo',
+    }));
+  }
+  const started = beginLiveCollect({ trigger: 'scheduler-collect_live.py', wait: true });
+  if (!started.ok) {
+    return Promise.resolve({ ...started, upstream: 'ipwo' });
+  }
+  return started.done.then((result) => ({
+    ...result,
+    upstream: 'ipwo',
+  }));
+}
+
+function waitForLiveCollectIdle(timeoutMs) {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    const t = setInterval(() => {
+      if (!liveRunning) {
+        clearInterval(t);
+        resolve({ timedOut: false });
+      } else if (Date.now() - started > timeoutMs) {
+        clearInterval(t);
+        resolve({ timedOut: true });
+      }
+    }, 400);
+  });
+}
+
+function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = {}) {
   if (liveRunning) {
     return { ok: false, status: 409, error: 'live collect already running', last: { ...liveLast } };
   }
@@ -353,21 +399,21 @@ function startLiveCollect() {
     return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last: { ...liveLast } };
   }
   if (!fs.existsSync(COLLECT_LIVE_SCRIPT)) {
-    return { ok: false, status: 500, error: `collect_live.py not found: ${COLLECT_LIVE_SCRIPT}` };
+    return { ok: false, status: 500, error: `collect_live.py not found: ${COLLECT_LIVE_SCRIPT}`, last: { ...liveLast } };
   }
 
   liveRunning = true;
   const startedAt = nowIso();
   liveLast = {
     status: 'running',
-    trigger: 'admin-collect_live.py',
+    trigger,
     started_at: startedAt,
     finished_at: null,
     error: null,
     events: [],
     live_count: null,
   };
-  pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=admin ===`);
+  pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=${trigger} ===`);
 
   const bin = pythonBin();
   const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
@@ -378,47 +424,75 @@ function startLiveCollect() {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
+  let settle;
+  const done = new Promise((resolve) => {
+    settle = resolve;
+  });
+
+  const finish = (payload) => {
+    liveRunning = false;
+    liveChild = null;
+    liveLast = { ...liveLast, ...payload };
+    appendLogFile(logBuffer);
+    try {
+      const tennisRedis = require('./tennisRedis');
+      tennisRedis.invalidateMemCache();
+    } catch { /* ignore */ }
+    if (typeof settle === 'function') {
+      settle({
+        ok: payload.status === 'success',
+        last: { ...liveLast },
+        error: payload.error || null,
+      });
+    }
+  };
+
   liveChild.stdout.on('data', (d) => pushLog(d));
   liveChild.stderr.on('data', (d) => pushLog(d));
 
   liveChild.on('error', (err) => {
-    liveRunning = false;
-    liveChild = null;
-    liveLast = {
-      ...liveLast,
+    console.error('[tennis/collect-live] spawn error:', err.message);
+    finish({
       status: 'failed',
       finished_at: nowIso(),
       error: err.message || 'spawn failed',
-    };
-    appendLogFile(logBuffer);
-    console.error('[tennis/collect-live] spawn error:', err.message);
+    });
   });
 
   liveChild.on('close', (code) => {
-    liveRunning = false;
-    liveChild = null;
     const finishedAt = nowIso();
     const text = logBuffer.join('\n');
     const emptyRun = /完成:\s*无进行中比赛|无符合条件的比赛/.test(text);
-    liveLast = {
+    finish({
       status: code === 0 ? 'success' : 'failed',
-      trigger: 'admin-collect_live.py',
-      started_at: liveLast.started_at,
       finished_at: finishedAt,
       exit_code: code,
       error: code === 0 ? null : (friendlyCollectError(code, text) || `collect_live.py 退出码 ${code}`),
       events: [],
       live_count: emptyRun ? 0 : null,
       fetched_at: finishedAt,
-    };
-    appendLogFile(logBuffer);
-    try {
-      const tennisRedis = require('./tennisRedis');
-      tennisRedis.invalidateMemCache();
-    } catch { /* ignore */ }
+    });
   });
 
-  return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
+  if (wait) {
+    const timeoutMs = Number(process.env.COLLECT_LIVE_TIMEOUT_MS || 180000);
+    const timed = Promise.race([
+      done,
+      new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            ok: false,
+            timedOut: true,
+            error: `collect_live.py timeout ${timeoutMs}ms`,
+            last: { ...liveLast },
+          });
+        }, Math.max(30000, timeoutMs));
+      }),
+    ]);
+    return { ok: true, done: timed, last: { ...liveLast } };
+  }
+
+  return { ok: true, last: { ...liveLast } };
 }
 
 function livePayload() {
@@ -483,6 +557,7 @@ function clearLogs() {
 module.exports = {
   startCollect,
   startLiveCollect,
+  runLiveCollectAndWait,
   statusPayload,
   livePayload,
   schedulePayload,
