@@ -1782,6 +1782,33 @@ const bundleHint = computed(() => {
   return sanitizeBundleHint(msg)
 })
 
+/** 条件筛完为空时的说明：采集数 + 条件组名 */
+const emptyListHint = computed(() => {
+  if (matches.value.length) return ''
+  const applied = data.value?.condition_applied === true
+  const poolN = Number(data.value?.condition_pool_count)
+  const names = Array.isArray(data.value?.condition_group_names)
+    ? data.value.condition_group_names.map((n) => String(n || '').trim()).filter(Boolean)
+    : []
+  const fromRules = Array.isArray(data.value?.admin_condition_rules?.groups)
+    ? data.value.admin_condition_rules.groups.map((g, i) => String(g?.name || '').trim() || `条件组 ${i + 1}`)
+    : []
+  // 回退：本地条件组名（服务端未带回时）
+  const localNames = (conditionGroups.value || [])
+    .filter((g) => !isPrematchMode.value || g?.linkPrematch === true)
+    .map((g, i) => String(g?.name || '').trim() || `条件组 ${i + 1}`)
+  const groupNames = names.length ? names : (fromRules.length ? fromRules : localNames)
+  const collected = Number.isFinite(poolN) && poolN >= 0
+    ? poolN
+    : (Number(stats.value?.collected) || Number(stats.value?.total) || 0)
+
+  if (applied || (conditionBucketOn.value && groupNames.length)) {
+    const nameText = groupNames.length ? groupNames.join('、') : '当前条件'
+    return `采集到 ${collected} 条数据，根据筛选条件「${nameText}」，未获取到符合的数据`
+  }
+  return `当前筛选下没有场次（池内 ${stats.value.total} 场 · 符合筛选 ${stats.value.shown} 场）`
+})
+
 const collectRefreshing = ref(false)
 const collectNotice = ref('')
 const collectError = ref('')
@@ -2653,6 +2680,7 @@ defineExpose({
       :is-settled-mode="isSettledMode"
       :stats="stats"
       :bundle-hint="bundleHint"
+      :empty-list-hint="emptyListHint"
       :allow-batch-trade="allowBatchTrade"
       :paginated-matches="paginatedMatches"
       :auto-placed-ids="autoPlacedIds"

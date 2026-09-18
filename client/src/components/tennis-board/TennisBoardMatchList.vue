@@ -10,6 +10,7 @@ defineProps({
   isSettledMode: { type: Boolean, default: false },
   stats: { type: Object, required: true },
   bundleHint: { type: String, default: '' },
+  emptyListHint: { type: String, default: '' },
   allowBatchTrade: { type: Boolean, default: false },
   paginatedMatches: { type: Array, default: () => [] },
   autoPlacedIds: { type: Object, default: () => new Set() },
@@ -55,7 +56,7 @@ defineProps({
   <div v-else-if="error && !data" class="empty err">{{ error }}</div>
   <template v-else>
     <div v-if="!matches.length" class="empty" role="status">
-      当前筛选下没有场次（池内 {{ stats.total }} 场 · 符合筛选 {{ stats.shown }} 场）
+      {{ emptyListHint || `当前筛选下没有场次（池内 ${stats.total} 场 · 符合筛选 ${stats.shown} 场）` }}
       <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
     </div>
 

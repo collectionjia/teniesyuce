@@ -215,8 +215,14 @@ function filterMatchList(matches, bucketOrRules, bundle) {
   return list.filter((m) => evalGroupsChain(groups, (g) => passGroup(m, g, bundle)));
 }
 
+function countPrematchEvents(bundle) {
+  const tournaments = bundle?.scheduled?.tournaments || [];
+  return tournaments.reduce((n, t) => n + ((t.events || []).length), 0);
+}
+
 function applyToPrematchBundle(bundle, bucket) {
   if (!bundle || !bucket) return bundle;
+  const poolCount = countPrematchEvents(bundle);
   const tournaments = (bundle.scheduled?.tournaments || []).map((t) => ({
     ...t,
     events: filterMatchList(t.events || [], bucket, bundle),
@@ -227,12 +233,16 @@ function applyToPrematchBundle(bundle, bucket) {
     scheduled: { tournaments, tournamentCount: tournaments.length, eventCount },
     events: eventCount,
     condition_applied: true,
+    condition_pool_count: poolCount,
+    condition_matched_count: eventCount,
   };
 }
 
 function applyToInplayBundle(bundle, bucket) {
   if (!bundle || !bucket) return bundle;
-  const matches = filterMatchList(bundle.live?.matches || [], bucket, bundle);
+  const pool = bundle.live?.matches || [];
+  const poolCount = pool.length;
+  const matches = filterMatchList(pool, bucket, bundle);
   return {
     ...bundle,
     live: {
@@ -242,6 +252,8 @@ function applyToInplayBundle(bundle, bucket) {
     },
     events: matches.length,
     condition_applied: true,
+    condition_pool_count: poolCount,
+    condition_matched_count: matches.length,
   };
 }
 
@@ -352,12 +364,17 @@ async function maybeApplyCondition(product, bundle, productId = null) {
   }
   if (product === 'prematch') next = applyToPrematchBundle(bundle, filterBucket);
   else if (product === 'inplay' || product === 'settled') next = applyToInplayBundle(bundle, filterBucket);
+  const groupNames = resolved.groups.map((g, i) => {
+    const n = String(g?.name || '').trim();
+    return n || `条件组 ${i + 1}`;
+  });
   return {
     ...next,
     condition_enabled: true,
     condition_bucket: product,
     condition_source: resolved.source,
     condition_product_id: resolved.product?.id || null,
+    condition_group_names: groupNames,
     admin_condition_rules: filterBucket,
   };
 }
