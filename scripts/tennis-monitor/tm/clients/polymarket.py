@@ -357,6 +357,12 @@ def apply_live_prices(poly: dict[str, Any], ev: dict[str, Any]) -> dict[str, Any
     next_poly = dict(poly)
     next_poly["active"] = bool(ev.get("active")) if ev.get("active") is not None else poly.get("active")
     next_poly["closed"] = bool(ev.get("closed")) if ev.get("closed") is not None else poly.get("closed")
+    next_poly["live"] = bool(ev.get("live")) if ev.get("live") is not None else poly.get("live")
+    next_poly["ended"] = bool(ev.get("ended")) if ev.get("ended") is not None else poly.get("ended")
+    if ev.get("score") is not None:
+        next_poly["score"] = ev.get("score")
+    if ev.get("period") is not None:
+        next_poly["period"] = ev.get("period")
     next_poly["home_price"] = prices[0]
     next_poly["away_price"] = prices[1]
     next_poly["priceSource"] = source
@@ -369,6 +375,151 @@ def apply_live_prices(poly: dict[str, Any], ev: dict[str, Any]) -> dict[str, Any
         "source": source,
     }
     return next_poly
+
+
+def sport_state_from_gamma(ev: dict[str, Any] | None) -> dict[str, Any]:
+    """从 Gamma event 抽取体育状态（比分/是否完赛）。"""
+    if not isinstance(ev, dict):
+        return {}
+    status_raw = ev.get("gameStatus") or ev.get("status")
+    if isinstance(status_raw, dict):
+        status = status_raw.get("type") or status_raw.get("description") or ""
+    else:
+        status = status_raw or ""
+    return {
+        "score": ev.get("score"),
+        "period": ev.get("period"),
+        "elapsed": ev.get("elapsed"),
+        "live": bool(ev.get("live")) if ev.get("live") is not None else None,
+        "ended": bool(ev.get("ended")) if ev.get("ended") is not None else None,
+        "closed": bool(ev.get("closed")) if ev.get("closed") is not None else None,
+        "active": ev.get("active"),
+        "finishedTimestamp": ev.get("finishedTimestamp"),
+        "status": str(status or "").strip(),
+    }
+
+
+def _status_type_from_sport(state: dict[str, Any]) -> str | None:
+    if state.get("ended") is True or state.get("closed") is True:
+        return "finished"
+    st = str(state.get("status") or "").lower().replace(" ", "")
+    if st in {"finished", "final", "f/ot", "ended", "cancelled", "canceled", "retired", "walkover", "forfeit"}:
+        return "finished"
+    if st in {"inprogress", "in_progress", "live", "running", "suspended", "break"}:
+        return "inprogress"
+    if st in {"scheduled", "notstarted", "not_started", "postponed", "delayed"}:
+        return "notstarted"
+    if state.get("live") is True:
+        return "inprogress"
+    if state.get("live") is False and state.get("ended") is False:
+        return "notstarted"
+    return None
+
+
+def _apply_parsed_score(match: dict[str, Any], score: str) -> None:
+    """解析 Polymarket score 字符串（如 6-4 / 6-4, 3-6, 1-0）写入 homeScore/awayScore。"""
+    raw = str(score or "").strip()
+    if not raw:
+        return
+    parts = [p.strip() for p in re.split(r"[,|/]+", raw) if p.strip()]
+    if len(parts) == 1:
+        parts = [p for p in re.split(r"\s+", parts[0]) if p]
+    pairs: list[tuple[int, int]] = []
+    for p in parts:
+        m = re.match(r"^(\d+)\s*[-:]\s*(\d+)$", p)
+        if m:
+            pairs.append((int(m.group(1)), int(m.group(2))))
+    if not pairs:
+        return
+    home_score: dict[str, Any] = {}
+    away_score: dict[str, Any] = {}
+    if len(pairs) == 1:
+        h, a = pairs[0]
+        home_score["current"] = h
+        home_score["display"] = h
+        away_score["current"] = a
+        away_score["display"] = a
+    else:
+        hs = as_ = 0
+        for i, (h, a) in enumerate(pairs[:5], 1):
+            home_score[f"period{i}"] = h
+            away_score[f"period{i}"] = a
+            if h > a:
+                hs += 1
+            elif a > h:
+                as_ += 1
+        home_score["current"] = hs
+        home_score["display"] = hs
+        away_score["current"] = as_
+        away_score["display"] = as_
+    match["homeScore"] = home_score
+    match["awayScore"] = away_score
+    match["home_score"] = home_score.get("current")
+    match["away_score"] = away_score.get("current")
+
+
+def _winner_from_poly_prices(poly: dict[str, Any] | None) -> str | None:
+    if not isinstance(poly, dict):
+        return None
+    try:
+        hp = float(poly.get("home_price"))
+        ap = float(poly.get("away_price"))
+    except (TypeError, ValueError):
+        ml = (poly.get("moneyline") or {}).get("prices") or []
+        if len(ml) < 2:
+            return None
+        try:
+            hp, ap = float(ml[0]), float(ml[1])
+        except (TypeError, ValueError):
+            return None
+    if hp >= 0.9 and ap <= 0.1:
+        return "home"
+    if ap >= 0.9 and hp <= 0.1:
+        return "away"
+    return None
+
+
+def apply_sport_state_to_match(
+    match: dict[str, Any],
+    ev: dict[str, Any],
+    *,
+    poly: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """用 Gamma 体育字段刷新比赛比分/状态；完赛时尽量用赔率推断胜方。"""
+    state = sport_state_from_gamma(ev)
+    score = state.get("score")
+    if score is not None and str(score).strip() != "":
+        match["scoreText"] = str(score)
+        match["score"] = str(score)
+        _apply_parsed_score(match, str(score))
+    period = state.get("period")
+    if period:
+        match["period"] = period
+        match["statusDescription"] = str(period)
+
+    st = _status_type_from_sport(state)
+    if st:
+        match["statusType"] = st
+        if st == "finished":
+            match["status"] = "Finished"
+        elif st == "inprogress":
+            match["status"] = str(period or "In Progress")
+        elif st == "notstarted":
+            match["status"] = "Not started"
+
+    if st == "finished" or state.get("ended") is True or state.get("closed") is True:
+        winner = _winner_from_poly_prices(poly)
+        if winner:
+            match["winner"] = winner
+            match["winnerCode"] = 1 if winner == "home" else 2
+
+    return {
+        "score": score,
+        "statusType": match.get("statusType"),
+        "ended": state.get("ended"),
+        "live": state.get("live"),
+        "closed": state.get("closed"),
+    }
 
 
 def _poly_from_hit(hit: dict[str, Any], home: str, away: str) -> dict[str, Any]:

@@ -28,6 +28,19 @@ DATA_SOURCE_COLLECT_LIVE = "collect_live"
 TTL_SEC = int(os.environ.get("TENNIS_CACHE_TTL_SEC", "86400"))
 _TOP_N_DEFAULT = int(os.environ.get("SOFA_TOP_N", "100"))
 _LIVE_TYPES = frozenset({"inprogress", "live", "interrupted"})
+_ENDED_TYPES = frozenset({"finished", "ended", "closed", "retired", "walkover"})
+
+
+def is_ended_match(match: dict[str, Any] | None) -> bool:
+    """盘中场次是否已完赛（用于 tick 迁入 settled）。"""
+    if not match:
+        return False
+    st = str(match.get("statusType") or "").lower().strip()
+    if st in _ENDED_TYPES:
+        return True
+    # 少数源把完赛写在 status 文案里
+    desc = str(match.get("status") or "").lower()
+    return any(x in desc for x in ("finished", "ended", "retired", "walkover", "已结束", "完赛"))
 
 
 def group_scheduled(events: list[dict]) -> dict[str, Any]:
@@ -167,13 +180,12 @@ def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
         for e in (bundle.get("live") or {}).get("matches") or []:
             events.append(e)
         live_types = _LIVE_TYPES
-        ended_types = frozenset({"finished", "ended", "closed", "retired", "walkover"})
         prematch_ev, inplay_ev, settled_ev = [], [], []
         for e in events:
             st = str(e.get("statusType") or "").lower()
             if st in live_types:
                 inplay_ev.append(e)
-            elif st in ended_types:
+            elif is_ended_match(e):
                 settled_ev.append(e)
             else:
                 prematch_ev.append(e)
@@ -330,6 +342,140 @@ def write_live_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
+
+
+def read_settled_bundle_redis() -> dict[str, Any]:
+    """读取 tennis:bundle:settled。"""
+    client, err = _redis_client()
+    if err:
+        return err
+    try:
+        raw = client.get(SETTLED_BUNDLE_KEY)
+        if not raw:
+            return {"ok": True, "bundle": None, "key": SETTLED_BUNDLE_KEY}
+        return {"ok": True, "bundle": json.loads(raw), "key": SETTLED_BUNDLE_KEY}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def write_settled_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
+    """写入盘后 Redis 键 tennis:bundle:settled。"""
+    client, err = _redis_client()
+    if err:
+        return err
+    try:
+        payload = json.dumps(bundle, ensure_ascii=False)
+        client.set(SETTLED_BUNDLE_KEY, payload, ex=TTL_SEC)
+        client.set(SETTLED_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        return {
+            "ok": True,
+            "key": SETTLED_BUNDLE_KEY,
+            "events": bundle.get("events"),
+            "date": bundle.get("date"),
+            "ttl_sec": TTL_SEC,
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def _empty_settled_shell(*, date: str | None = None) -> dict[str, Any]:
+    now = datetime.now(timezone.utc).isoformat()
+    return {
+        "ok": True,
+        "sport": "tennis",
+        "source": "tennis-settled",
+        "date": date or today_bj().isoformat(),
+        "fetched_at": now,
+        "scheduled": {"tournaments": [], "tournamentCount": 0, "eventCount": 0},
+        "live": {"matches": [], "tournaments": [], "tournamentCount": 0, "eventCount": 0},
+        "rankingsByPlayer": {},
+        "oddsByEvent": {},
+        "polymarketByEvent": {},
+        "eloByEvent": {},
+        "birthYearByPlayer": {},
+        "events": 0,
+        "serverTime": int(datetime.now(timezone.utc).timestamp()),
+        "message": "tick 迁入盘后",
+        "update": {"message": "refresh_inplay → tennis:bundle:settled"},
+    }
+
+
+def merge_finished_into_settled(
+    finished: list[dict[str, Any]],
+    *,
+    from_bundle: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """把完赛场次并入 settled 包（按 event id 去重，后写覆盖），并迁入相关 meta。"""
+    if not finished:
+        return {"ok": True, "moved": 0, "skipped": True}
+
+    loaded = read_settled_bundle_redis()
+    if not loaded.get("ok"):
+        return {"ok": False, "error": loaded.get("error") or loaded.get("reason") or "settled read failed"}
+
+    settled = loaded.get("bundle")
+    if not isinstance(settled, dict):
+        settled = _empty_settled_shell(date=(from_bundle or {}).get("date"))
+
+    live = settled.get("live") if isinstance(settled.get("live"), dict) else {}
+    existing = list(live.get("matches") or [])
+    by_id: dict[int, dict[str, Any]] = {}
+    for m in existing:
+        if m.get("id") is not None:
+            by_id[int(m["id"])] = m
+    for m in finished:
+        if m.get("id") is None:
+            continue
+        by_id[int(m["id"])] = m
+
+    merged = list(by_id.values())
+    grouped = group_scheduled(merged)
+    live["matches"] = merged
+    live["tournaments"] = grouped["tournaments"]
+    live["tournamentCount"] = grouped["tournamentCount"]
+    live["eventCount"] = len(merged)
+    settled["live"] = live
+    settled["events"] = len(merged)
+    settled["source"] = "tennis-settled"
+    settled["ok"] = True
+    now = datetime.now(timezone.utc).isoformat()
+    settled["fetched_at"] = now
+    settled["tick_at"] = now
+    settled["serverTime"] = int(datetime.now(timezone.utc).timestamp())
+    settled["collectScript"] = "refresh_inplay"
+    settled["message"] = f"settled · {len(merged)}"
+    settled["update"] = {"message": f"refresh_inplay 迁入 · +{len(finished)} → {len(merged)}"}
+
+    # 从盘中包迁入对应 meta，避免盘后页缺赔率/推荐依据
+    src = from_bundle if isinstance(from_bundle, dict) else {}
+    finished_ids = {str(int(m["id"])) for m in finished if m.get("id") is not None}
+    for meta_key in ("oddsByEvent", "polymarketByEvent", "eloByEvent"):
+        dst_map = settled.get(meta_key)
+        if not isinstance(dst_map, dict):
+            dst_map = {}
+            settled[meta_key] = dst_map
+        src_map = src.get(meta_key)
+        if not isinstance(src_map, dict):
+            continue
+        for kid, val in src_map.items():
+            if str(kid) in finished_ids:
+                dst_map[str(kid)] = val
+
+    for rk in ("rankingsByPlayer", "birthYearByPlayer"):
+        if isinstance(src.get(rk), dict) and src[rk]:
+            dst = settled.get(rk) if isinstance(settled.get(rk), dict) else {}
+            dst.update(src[rk])
+            settled[rk] = dst
+
+    written = write_settled_bundle_redis(settled)
+    if not written.get("ok"):
+        return {"ok": False, "error": written.get("error") or written.get("reason") or "settled write failed"}
+    return {
+        "ok": True,
+        "moved": len(finished),
+        "settled_matches": len(merged),
+        "key": SETTLED_BUNDLE_KEY,
+    }
 
 
 def persist_collect_bundle(collect: dict[str, Any]) -> dict[str, Any]:
