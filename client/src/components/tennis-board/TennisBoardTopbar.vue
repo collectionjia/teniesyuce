@@ -158,18 +158,22 @@ defineProps({
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 2px 3px;
+  padding: 2px 4px;
   text-align: center;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  white-space: nowrap;
 }
 .stat b {
-  display: block;
   color: var(--primary);
   font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1.05;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
-.stat span { color: var(--muted); font-size: 0.52rem; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 0.58rem; line-height: 1.2; }
 .stat-btn {
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;

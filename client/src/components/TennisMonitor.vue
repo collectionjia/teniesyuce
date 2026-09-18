@@ -2507,44 +2507,7 @@ onUnmounted(() => {
         </div>
       </details>
 
-      <details class="panel panel-fold metrics-fold" :open="metricsOpen" @toggle="metricsOpen = $event.target.open">
-        <summary class="fold-summary stats-summary">
-          <span class="fold-title">采集统计</span>
-          <span class="fold-meta">
-            HTTP {{ collectRequests?.total ?? '—' }} 次
-            · 采集 {{ formatMs(collectElapsedMs) }}
-            · PM {{ formatMs(polyElapsedMs) }}
-            · Redis {{ formatMs(redisRefreshStats?.totalMs) }}
-          </span>
-          <span class="muted fold-toggle">{{ metricsOpen ? '收起' : '展开' }}</span>
-        </summary>
-        <div class="metrics metrics-inner">
-          <div class="metric">
-            <div class="metric-label">采集 HTTP 请求</div>
-            <div class="metric-value">{{ collectRequests?.total ?? '—' }} 次</div>
-            <div class="metric-hint">{{ collectRequestHint(collectRequests) }}</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">采集耗时</div>
-            <div class="metric-value">{{ formatMs(collectElapsedMs) }}</div>
-            <div class="metric-hint">Top100 最近一轮</div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Polymarket 外链</div>
-            <div class="metric-value">{{ formatMs(polyElapsedMs) }}</div>
-            <div class="metric-hint">
-              匹配 {{ formatMs(polyMatchStats?.timingMs?.match ?? redisRefreshStats?.polyMatchMs) }}
-              · 刷价 {{ formatMs(polyMatchStats?.timingMs?.prices ?? redisRefreshStats?.polyPriceMs) }}
-              · 链接 {{ polyMatchStats?.matched ?? '—' }} 场
-            </div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">写入 Redis 总耗时</div>
-            <div class="metric-value">{{ formatMs(redisRefreshStats?.totalMs) }}</div>
-            <div class="metric-hint">含 PM 外链 · {{ fmtTime(dataSource?.redis_fetched_at) }}</div>
-          </div>
-        </div>
-      </details>
+      
 
       <div class="tabs">
         <button type="button" :class="{ on: tab === 'atp' }" @click="openPoolView('atp')">ATP</button>

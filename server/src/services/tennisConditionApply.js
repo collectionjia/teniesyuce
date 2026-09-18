@@ -246,8 +246,8 @@ function applyToInplayBundle(bundle, bucket) {
 }
 
 /**
- * 条件引擎：桶开关 + 产品管理挂载的条件组（AND/OR）筛 matches
- * 条件组定义在引擎库；joinPrev 来自产品 condition_select
+ * 条件引擎：桶开关 + 条件组筛 matches
+ * 盘前用「关联未开赛」组；盘中/盘后用产品 condition_select 挂载
  */
 
 function resolveGroupsFromProductSelect(libraryGroups, selectRows) {
@@ -291,7 +291,19 @@ async function resolveBucketFilterGroups(bucketKey, productId = null) {
   } else {
     product = await productService.findOnlineProductForBucket(bucketKey);
   }
-  // 产品已挂载条件组 → 优先用挂载
+  // 盘前：勾选「关联未开赛」即生效，无需产品再选用
+  if (bucketKey === 'prematch') {
+    const groups = linkedGroupsForBucket(bucketKey, library);
+    return {
+      ok: true,
+      cfg,
+      bucket,
+      product,
+      groups,
+      source: groups.length ? 'engine_library_linked' : (productId ? 'product_no_selection' : 'no_groups'),
+    };
+  }
+  // 盘中/盘后：产品已挂载条件组 → 用挂载；无有效挂载则不筛
   if (product && Array.isArray(product.conditionSelect) && product.conditionSelect.length) {
     const groups = resolveGroupsFromProductSelect(library, product.conditionSelect);
     if (groups.length) {
@@ -305,19 +317,6 @@ async function resolveBucketFilterGroups(bucketKey, productId = null) {
       };
     }
   }
-  // 盘前：产品未挂载或挂载无效时，用勾选了「关联未开赛」的条件组
-  if (bucketKey === 'prematch') {
-    const groups = linkedGroupsForBucket(bucketKey, library);
-    return {
-      ok: true,
-      cfg,
-      bucket,
-      product,
-      groups,
-      source: groups.length ? 'engine_library_linked' : (productId ? 'product_no_selection' : 'no_groups'),
-    };
-  }
-  // 盘中/盘后：无有效挂载则不筛
   return {
     ok: true,
     cfg,

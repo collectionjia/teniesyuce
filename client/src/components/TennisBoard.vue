@@ -128,26 +128,15 @@ const {
   conditionGroups,
   conditionModalOpen,
   selectLoading,
-  selectSaving,
   selectError,
   selectNotice,
   libraryGroups,
-  linkedLibraryGroups,
   productSelectCond,
-  productConditionGroupId,
-  canEditConditionRules,
   conditionBucketLabel,
-  canEditProductSelect,
-  needsConditionGroupSelect,
+  canEditConditionRules,
   rulesSummary,
-  conditionGroupLabel,
   loadProductSelect,
   loadConditionRules,
-  addSelectRow,
-  removeSelectRow,
-  setSelectRowField,
-  setProductConditionGroupId,
-  saveProductSelect,
   setConditionGroupField,
   addConditionGroup,
   removeConditionGroup,
@@ -1197,6 +1186,15 @@ function resolveBatchStakeUsd() {
 function resolveAutoBetConditionGroups() {
   const fromBundle = data.value?.admin_condition_rules?.groups
   if (Array.isArray(fromBundle) && fromBundle.length) return fromBundle
+  // 盘前：勾选「关联未开赛」的组直接生效
+  if (isPrematchMode.value) {
+    const pool = libraryGroups.value?.length ? libraryGroups.value : (conditionGroups.value || [])
+    const linked = pool.filter((g) => g?.linkPrematch === true)
+    return linked.map((g, i) => ({
+      ...g,
+      joinPrev: i === 0 ? 'or' : (String(g?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'),
+    }))
+  }
   if (props.productId != null && productSelectCond.value?.length && libraryGroups.value?.length) {
     const byId = new Map(libraryGroups.value.filter((g) => g?.id).map((g) => [String(g.id), g]))
     const out = []
@@ -2558,26 +2556,10 @@ defineExpose({
       :condition-groups="conditionGroups"
       :is-inplay-mode="isInplayMode"
       :is-prematch-mode="isPrematchMode"
-      :can-edit-product-select="canEditProductSelect"
-      :needs-condition-group-select="needsConditionGroupSelect"
-      :select-error="selectError"
-      :select-notice="selectNotice"
-      :select-loading="selectLoading"
-      :select-saving="selectSaving"
-      :product-select-cond="productSelectCond"
-      :product-condition-group-id="productConditionGroupId"
-      :library-groups="libraryGroups"
-      :linked-library-groups="linkedLibraryGroups"
-      :condition-group-label="conditionGroupLabel"
       :set-condition-group-field="setConditionGroupField"
       :remove-condition-group="removeConditionGroup"
       :add-condition-group="addConditionGroup"
       :save-condition-rules="saveConditionRules"
-      :add-select-row="addSelectRow"
-      :save-product-select="saveProductSelect"
-      :set-select-row-field="setSelectRowField"
-      :set-product-condition-group-id="setProductConditionGroupId"
-      :remove-select-row="removeSelectRow"
       :open-admin-engine="openAdminEngine"
     />
 

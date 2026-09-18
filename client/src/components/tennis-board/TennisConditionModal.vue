@@ -12,26 +12,10 @@ defineProps({
   conditionGroups: { type: Array, default: () => [] },
   isInplayMode: { type: Boolean, default: false },
   isPrematchMode: { type: Boolean, default: false },
-  canEditProductSelect: { type: [Boolean, null], default: null },
-  needsConditionGroupSelect: { type: Boolean, default: false },
-  selectError: { type: String, default: '' },
-  selectNotice: { type: String, default: '' },
-  selectLoading: { type: Boolean, default: false },
-  selectSaving: { type: Boolean, default: false },
-  productSelectCond: { type: Array, default: () => [] },
-  productConditionGroupId: { type: String, default: '' },
-  libraryGroups: { type: Array, default: () => [] },
-  linkedLibraryGroups: { type: Array, default: () => [] },
-  conditionGroupLabel: { type: Function, required: true },
   setConditionGroupField: { type: Function, required: true },
   removeConditionGroup: { type: Function, required: true },
   addConditionGroup: { type: Function, required: true },
   saveConditionRules: { type: Function, required: true },
-  addSelectRow: { type: Function, required: true },
-  saveProductSelect: { type: Function, required: true },
-  setSelectRowField: { type: Function, required: true },
-  setProductConditionGroupId: { type: Function, required: true },
-  removeSelectRow: { type: Function, required: true },
   openAdminEngine: { type: Function, required: true },
 })
 
@@ -39,7 +23,7 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
 </script>
 
 <template>
-<!-- 条件设置弹框：盘前/盘中均可编辑条件组；多组时可再选用挂到本产品 -->
+<!-- 条件设置弹框：盘前/盘中均可编辑条件组；盘前勾选「关联未开赛」即用于列表筛选 -->
     <div v-if="open" class="modal-mask modal-mask--top" @click.self="emit('update:open', false)">
       <div class="modal-sheet rules-modal-sheet" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -71,7 +55,7 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
                 <label
                   v-if="isPrematchMode"
                   class="admin-toggle admin-rule-link"
-                  title="勾选后可在产品管理中挂载到未开赛产品"
+                  title="勾选并保存后，未开赛列表按该组筛选"
                 >
                   <input
                     type="checkbox"
@@ -165,37 +149,7 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
                 </template>
               </div>
             </div>
-            <p class="admin-rules-hint">各条件组相互独立；组内字段「且」。盘前组可勾选「关联未开赛」供产品挂载。</p>
-
-            <template v-if="canEditProductSelect && isPrematchMode">
-              <div class="admin-select-section-title">本产品筛选条件组</div>
-              <p v-if="selectError" class="admin-rules-msg err">{{ selectError }}</p>
-              <p v-if="selectNotice" class="admin-rules-msg ok">{{ selectNotice }}</p>
-              <div v-if="selectLoading" class="admin-rules-hint">加载挂载中…</div>
-              <template v-else>
-                <div class="admin-select-row-main">
-                  <select
-                    class="admin-rule-name"
-                    :value="productConditionGroupId"
-                    :disabled="selectSaving || !needsConditionGroupSelect"
-                    @change="setProductConditionGroupId($event.target.value)"
-                  >
-                    <option value="">不按条件筛选</option>
-                    <option
-                      v-for="(g, gi) in linkedLibraryGroups"
-                      :key="g.id || gi"
-                      :value="g.id"
-                    >{{ conditionGroupLabel(g, gi) }}</option>
-                  </select>
-                  <button type="button" class="chip-btn active" :disabled="selectSaving" @click="saveProductSelect('condition')">
-                    {{ selectSaving ? '保存中…' : '保存选用' }}
-                  </button>
-                </div>
-                <p v-if="!needsConditionGroupSelect" class="admin-rules-hint">请先在上方创建并勾选「关联未开赛」的条件组</p>
-                <p v-else class="admin-rules-hint">选用后，打开本产品页将按该组条件筛选列表</p>
-              </template>
-            </template>
-            <p v-else-if="canEditProductSelect === false" class="admin-rules-hint">缺少产品 ID 时无法配置产品筛选条件</p>
+            <p class="admin-rules-hint">各条件组相互独立；组内字段「且」。盘前勾选「关联未开赛」并保存后，列表即按该组筛选。</p>
           </template>
         </div>
       </div>

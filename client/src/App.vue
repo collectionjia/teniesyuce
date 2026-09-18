@@ -269,15 +269,6 @@ async function loadProductEngineGroups(bucket) {
   }
 }
 
-function productConditionGroupId() {
-  return adminModal.form.conditionSelect?.[0]?.id || ''
-}
-
-function setProductConditionGroupId(id) {
-  const next = id != null && String(id).trim() ? String(id).trim() : ''
-  adminModal.form.conditionSelect = next ? [{ id: next, joinPrev: 'or' }] : []
-}
-
 function addProductSelectRow(field) {
   const list = Array.isArray(adminModal.form[field]) ? [...adminModal.form[field]] : []
   const firstUnused = productEngineGroups.value.find((g) => !list.some((r) => String(r.id) === String(g.id)))
@@ -3027,16 +3018,7 @@ function productEmbedUrl(product) {
                       class="shrink-0 px-2.5 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 text-xs font-semibold hover:bg-sky-100"
                       @click="openBoardConditionModal"
                     >条件设置</button>
-                    <button
-                      type="button"
-                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 text-xs font-semibold hover:bg-amber-100"
-                      @click="openBoardBettingModal"
-                    >投注设置</button>
-                    <button
-                      type="button"
-                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-800 text-xs font-semibold hover:bg-indigo-100"
-                      @click="openBoardScheduleModal"
-                    >调度设置</button>
+                   
                   </template>
                   <button
                     type="button"
@@ -4572,21 +4554,8 @@ function productEmbedUrl(product) {
                   <div v-else-if="!productEngineGroups.length" class="text-xs text-amber-600">该桶暂无条件组，请先到条件引擎创建</div>
                   <template v-else>
                     <div v-if="productFormBucket(adminModal.form) === 'prematch'">
-                      <div class="text-xs text-slate-500 mb-1.5">未开赛列表筛选条件组</div>
-                      <select
-                        :value="productConditionGroupId()"
-                        class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-sm"
-                        :disabled="!productEngineGroups.length"
-                        @change="setProductConditionGroupId($event.target.value)"
-                      >
-                        <option value="">不按条件筛选</option>
-                        <option
-                          v-for="(g, gi) in productEngineGroups"
-                          :key="g.id || gi"
-                          :value="g.id"
-                        >{{ conditionGroupLabel(g, gi) }}</option>
-                      </select>
-                      <p class="text-[11px] text-slate-400 mt-1">仅显示条件引擎中勾选「关联未开赛」的组；选用后打开本产品页将按该组筛选</p>
+                      <div class="text-xs text-slate-500 mb-1.5">未开赛列表筛选</div>
+                      <p class="text-[11px] text-slate-400">由条件引擎中勾选「关联未开赛」的组决定，无需在此单独选用</p>
                     </div>
                     <div>
                       <div class="flex items-center justify-between mb-1.5">
