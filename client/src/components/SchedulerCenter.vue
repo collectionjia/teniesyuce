@@ -444,12 +444,24 @@ function formatRunDetail(r) {
     return [r.error, r.message].filter(Boolean).join('\n') || '暂无详细日志（本次未写入 metrics）'
   }
   const parts = []
-  const proc = m.process_log
+  let proc = m.process_log
     || m.log_tail
     || m.refresh_inplay?.process_log
     || m.refresh_inplay?.log_tail
     || m.prices?.process_log
     || ''
+  if (!proc && (m.scores || m.prices || m.inplay_matches != null)) {
+    proc = [
+      `[inplay-tick] matches=${m.inplay_matches ?? '-'}`,
+      m.scores
+        ? `[score] updated=${m.scores.updated ?? 0} failed=${m.scores.failed ?? 0} error=${m.scores.error || '-'}`
+        : null,
+      m.prices
+        ? `[odds] updated=${m.prices.updated ?? 0} failed=${m.prices.failed ?? 0}`
+        : null,
+      m.message || m.reason || null,
+    ].filter(Boolean).join('\n')
+  }
   if (proc) {
     parts.push(`=== 采集过程日志 ===\n${proc}`)
   } else {

@@ -460,8 +460,8 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
   return { ok: true, message: 'collect.py started', last: { ...last } };
 }
 
-function startLiveCollect() {
-  const r = beginLiveCollect({ trigger: 'admin-collect_live.py', wait: false });
+async function startLiveCollect() {
+  const r = await beginLiveCollect({ trigger: 'admin-collect_live.py', wait: false });
   if (!r.ok) return r;
   return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
 }
@@ -538,9 +538,11 @@ async function runInplayRefreshAndWait({
     childProc.on('error', (err) => {
       const msg = err.message || String(err);
       pushLog(`[refresh_inplay] spawn error: ${msg}`);
+      const text = chunks.join('');
       finish({
         ok: false,
         error: msg,
+        process_log: text.split(/\r?\n/).filter(Boolean).slice(-200).join('\n') || `[refresh_inplay] spawn error: ${msg}`,
         log_tail: chunks.slice(-40).join(''),
         upstream: 'ipwo',
       });
@@ -586,10 +588,11 @@ async function runInplayRefreshAndWait({
  * 同步跑 collect_live.py（IPWO → Sofascore 比分/状态 + Polymarket），写完 Redis 再返回。
  * 供调度「盘中比分刷新」使用。
  */
-function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
+async function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
   const timeout = Math.max(30000, Number(timeoutMs) || 180000);
   if (liveRunning) {
-    return waitForLiveCollectIdle(timeout).then((waited) => ({
+    const waited = await waitForLiveCollectIdle(timeout);
+    return {
       ok: liveLast.status === 'success',
       waited: true,
       timedOut: !!waited?.timedOut,
@@ -602,17 +605,19 @@ function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
         no_proxy: !!liveLast.no_proxy,
       },
       log_tail: liveLast.log_tail || recentLiveLogTail(40),
+      process_log: liveLast.log_tail || recentLiveLogTail(80),
       upstream: 'ipwo',
-    }));
+    };
   }
-  const started = beginLiveCollect({ trigger: 'scheduler-collect_live.py', wait: true });
+  const started = await beginLiveCollect({ trigger: 'scheduler-collect_live.py', wait: true });
   if (!started.ok) {
-    return Promise.resolve({ ...started, upstream: 'ipwo' });
+    return { ...started, upstream: 'ipwo' };
   }
-  return started.done.then((result) => ({
+  const result = await started.done;
+  return {
     ...result,
     upstream: 'ipwo',
-  }));
+  };
 }
 
 function waitForLiveCollectIdle(timeoutMs) {
@@ -630,7 +635,7 @@ function waitForLiveCollectIdle(timeoutMs) {
   });
 }
 
-function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = {}) {
+async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = {}) {
   if (liveRunning) {
     return { ok: false, status: 409, error: 'live collect already running', last: { ...liveLast } };
   }

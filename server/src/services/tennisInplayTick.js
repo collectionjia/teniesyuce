@@ -22,14 +22,29 @@ async function stampInplayRefreshTimes(bundle, { score = false, odds = false } =
 async function runInplayTick({ skipBetting = false } = {}) {
   const tennisDataSource = require('./tennisDataSource');
   if ((await tennisDataSource.get()) === 'docks500') {
-    return { ok: false, skipped: true, reason: 'virtual docks500 skips live tick' };
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'virtual docks500 skips live tick',
+      process_log: '[inplay-tick] skipped: virtual docks500',
+    };
   }
   const cfg = await tennisEngines.getConfig();
   if (cfg.collect?.enabled === false) {
-    return { ok: false, skipped: true, reason: 'collect engine disabled' };
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'collect engine disabled',
+      process_log: '[inplay-tick] skipped: collect engine disabled',
+    };
   }
   if (cfg.collect?.inplay_tick_enabled === false) {
-    return { ok: false, skipped: true, reason: 'tick disabled' };
+    return {
+      ok: false,
+      skipped: true,
+      reason: 'tick disabled',
+      process_log: '[inplay-tick] skipped: inplay_tick disabled',
+    };
   }
 
   const fields = cfg.collect?.inplay_tick_fields || {};
