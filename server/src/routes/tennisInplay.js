@@ -201,14 +201,16 @@ router.get('/today', async (req, res) => {
 
 router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
-    const { orders, amountUsd, orderType, limitPrice } = req.body || {};
+    const { orders, amountUsd, orderType, limitPrice, limitBuyPrice, shares } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
       orders,
       amountUsd,
       product: 'tennis-inplay',
       simulate: !!req.tradeSimulate,
       orderType,
-      limitPrice,
+      limitPrice: limitBuyPrice ?? limitPrice,
+      limitBuyPrice: limitBuyPrice ?? limitPrice,
+      shares,
     });
     res.json({
       ...result,
@@ -224,13 +226,16 @@ router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic,
 
 router.post('/trade/sell', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
-    const { eventId, side, shares } = req.body || {};
+    const { eventId, side, shares, orderType, limitSellPrice, limitPrice } = req.body || {};
     const result = await tennisTrade.placeSellOrder(req.tennisUser.id, {
       eventId,
       side,
       shares,
       product: 'tennis-inplay',
       simulate: !!req.tradeSimulate,
+      orderType,
+      limitSellPrice,
+      limitPrice: limitSellPrice ?? limitPrice,
     });
     res.json({
       ...result,

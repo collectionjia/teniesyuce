@@ -43,6 +43,11 @@ async function load() {
   }
 }
 
+/** 手动刷新：后台异步，立刻返回 */
+function refresh() {
+  void load()
+}
+
 async function save() {
   saving.value = true
   error.value = ''
@@ -60,9 +65,9 @@ async function save() {
     if (pass) proxy.pass = pass
     const cfg = await api.updateTennisEngines({ collect: { proxy } })
     applyFromCfg(cfg)
-    notice.value = '已保存。采集子进程下次启动即使用新配置。'
+    notice.value = '保存成功'
   } catch (e) {
-    error.value = e?.response?.data?.error || e?.message || '保存失败'
+    error.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
   } finally {
     saving.value = false
   }
@@ -166,7 +171,7 @@ onMounted(load)
             type="button"
             :disabled="loading || saving"
             class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 disabled:opacity-60"
-            @click="load"
+            @click="refresh"
           >
             刷新
           </button>

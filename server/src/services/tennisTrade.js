@@ -61,6 +61,8 @@ async function placeBatchOrders(userId, {
   bucket: batchBucket = null,
   orderType: batchOrderType = 'market',
   limitPrice: batchLimitPrice = null,
+  limitBuyPrice: batchLimitBuyPrice = null,
+  shares: batchShares = null,
 } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
@@ -69,17 +71,25 @@ async function placeBatchOrders(userId, {
     throw new Error('单次最多批量下单 20 场');
   }
 
-  const amount = Number(amountUsd);
-  if (!(amount >= 1)) throw new Error('每场投注金额至少 $1');
-
   const orderType = String(batchOrderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
-  let limitPrice = null;
+  let limitBuyPrice = null;
+  let shares = null;
+  let amount = Number(amountUsd);
+
   if (orderType === 'limit') {
-    const p = Number(batchLimitPrice);
+    const buyRaw = batchLimitBuyPrice != null && batchLimitBuyPrice !== ''
+      ? batchLimitBuyPrice
+      : batchLimitPrice;
+    const p = Number(buyRaw);
     if (!(p >= 0.01 && p <= 0.99)) {
-      throw new Error('限价单须填写目标价（0.01–0.99）');
+      throw new Error('限价单须填写买入目标价（0.01–0.99）');
     }
-    limitPrice = Math.round(p * 100) / 100;
+    limitBuyPrice = Math.round(p * 100) / 100;
+    shares = Math.floor(Number(batchShares) * 100) / 100;
+    if (!(shares > 0)) throw new Error('限价单须填写份额');
+    amount = Math.round(shares * limitBuyPrice * 100) / 100;
+  } else if (!(amount >= 1)) {
+    throw new Error('每场投注金额至少 $1');
   }
 
   const isSim = !!simulate;
@@ -144,10 +154,8 @@ async function placeBatchOrders(userId, {
     try {
       if (isSim) {
         const orderId = `sim_${Date.now().toString(36)}_${String(eventId).slice(-6)}`;
-        const simPrice = orderType === 'limit' ? limitPrice : 1;
-        const simShares = orderType === 'limit' && limitPrice > 0
-          ? Math.floor((amount / limitPrice) * 100) / 100
-          : amount;
+        const simPrice = orderType === 'limit' ? limitBuyPrice : 1;
+        const simShares = orderType === 'limit' ? shares : amount;
         try {
           await tradeRecords.addTradeRecord(userId, {
             product: tradeProduct,
@@ -198,8 +206,8 @@ async function placeBatchOrders(userId, {
           proxyAddress: secrets.proxyAddress,
           signatureType: secrets.signatureType,
           tokenId,
-          amountUsd: amount,
-          price: limitPrice,
+          shares,
+          price: limitBuyPrice,
         })
         : await polymarketTrade.placeMarketBuy({
           privateKey: secrets.privateKey,
@@ -211,10 +219,10 @@ async function placeBatchOrders(userId, {
 
       const orderId = result?.orderID || result?.id || result?.orderId || '';
       const price = orderType === 'limit'
-        ? limitPrice
+        ? limitBuyPrice
         : tradeRecords.priceFromFill(result, { action: 'buy', amountUsd: amount });
-      const shares = orderType === 'limit'
-        ? Math.floor((amount / limitPrice) * 100) / 100
+      const fillShares = orderType === 'limit'
+        ? (result?.size ?? shares)
         : tradeRecords.sharesFromFill(result, { action: 'buy', amountUsd: amount, price });
       try {
         await tradeRecords.addTradeRecord(userId, {
@@ -223,7 +231,7 @@ async function placeBatchOrders(userId, {
           market: String(eventId),
           side,
           amountUsd: amount,
-          shares,
+          shares: fillShares,
           price,
           label,
           orderId,
@@ -241,7 +249,7 @@ async function placeBatchOrders(userId, {
         side,
         amountUsd: amount,
         price,
-        shares,
+        shares: fillShares,
         homeName,
         awayName,
         orderId,
@@ -303,13 +311,16 @@ async function resolveBundle(product) {
   return tennisCache.getBundle();
 }
 
-/** 平仓（市价卖出全部持仓） */
+/** 平仓（市价卖出全部持仓；限价时按卖出目标价挂 GTC） */
 async function placeSellOrder(userId, {
   eventId,
   side,
   shares = 'all',
   product = 'tennis-inplay',
   simulate = false,
+  orderType: sellOrderType = 'market',
+  limitSellPrice = null,
+  limitPrice = null,
 } = {}) {
   const tradeProduct = String(product || 'tennis-inplay').toLowerCase();
   const sideKey = String(side || '').toLowerCase();
@@ -317,6 +328,15 @@ async function placeSellOrder(userId, {
   if (!['home', 'away'].includes(sideKey)) throw new Error('投注方向无效');
 
   const isSim = !!simulate;
+  const orderType = String(sellOrderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
+  let sellLimit = null;
+  if (orderType === 'limit') {
+    const p = Number(limitSellPrice != null && limitSellPrice !== '' ? limitSellPrice : limitPrice);
+    if (!(p >= 0.01 && p <= 0.99)) {
+      throw new Error('限价卖出须填写卖出目标价（0.01–0.99）');
+    }
+    sellLimit = Math.round(p * 100) / 100;
+  }
 
   // 模拟卖出：不依赖 Redis 场次 / PM 外链（虚拟日联调常缺这两项）
   if (isSim) {
@@ -387,17 +407,30 @@ async function placeSellOrder(userId, {
     ? undefined
     : Number(shares);
 
-  const result = await polymarketTrade.placeMarketSell({
-    privateKey: secrets.privateKey,
-    proxyAddress: secrets.proxyAddress,
-    signatureType: secrets.signatureType,
-    tokenId,
-    shares: sellShares,
-  });
+  const result = orderType === 'limit'
+    ? await polymarketTrade.placeLimitSell({
+      privateKey: secrets.privateKey,
+      proxyAddress: secrets.proxyAddress,
+      signatureType: secrets.signatureType,
+      tokenId,
+      shares: sellShares,
+      price: sellLimit,
+    })
+    : await polymarketTrade.placeMarketSell({
+      privateKey: secrets.privateKey,
+      proxyAddress: secrets.proxyAddress,
+      signatureType: secrets.signatureType,
+      tokenId,
+      shares: sellShares,
+    });
 
   const orderId = result?.orderID || result?.id || result?.orderId || '';
-  const price = tradeRecords.priceFromFill(result, { action: 'sell' });
-  const soldShares = tradeRecords.sharesFromFill(result, { action: 'sell', price });
+  const price = orderType === 'limit'
+    ? sellLimit
+    : tradeRecords.priceFromFill(result, { action: 'sell' });
+  const soldShares = orderType === 'limit'
+    ? (result?.soldShares ?? sellShares)
+    : tradeRecords.sharesFromFill(result, { action: 'sell', price });
   try {
     await tradeRecords.addTradeRecord(userId, {
       product: tradeProduct,
@@ -424,6 +457,7 @@ async function placeSellOrder(userId, {
     orderId,
     soldShares,
     price,
+    orderType,
     amountUsd: price > 0 && soldShares > 0
       ? Math.round(price * soldShares * 100) / 100
       : null,

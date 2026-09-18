@@ -121,7 +121,6 @@ function emptyCond(name = '', strategyKey = '') {
     strongRankMax: 'all',
     strongRankGt: 'all',
     strongRankLt: 'all',
-    gapMode: 'all',
     requireWonFirstSet: false,
     firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
@@ -546,8 +545,10 @@ async function stopAutoBetSelected() {
 
 async function load({ soft = false } = {}) {
   if (loading.value) return
-  loading.value = true
-  if (!soft) error.value = ''
+  if (!soft) {
+    loading.value = true
+    error.value = ''
+  }
   try {
     const cfg = await api.fetchTennisEngines()
     const cond = cfg?.condition?.buckets || {}
@@ -571,14 +572,15 @@ async function load({ soft = false } = {}) {
     error.value = ''
     await refreshAutoBetStatus()
   } catch (e) {
-    error.value = e?.response?.data?.error || e?.message || '加载失败'
+    if (!soft) error.value = e?.response?.data?.error || e?.message || '加载失败'
   } finally {
-    loading.value = false
+    if (!soft) loading.value = false
   }
 }
 
-async function refreshList() {
-  await load({ soft: true })
+/** 手动刷新：后台异步，立刻返回 */
+function refreshList() {
+  void load({ soft: false })
 }
 
 watch(() => props.open, (v) => {
@@ -623,11 +625,11 @@ async function persist() {
         },
       },
     })
-    notice.value = '已保存'
+    notice.value = '保存成功'
     emit('changed')
     setTimeout(() => { notice.value = '' }, 1600)
   } catch (e) {
-    error.value = e?.response?.data?.error || e?.message || '保存失败'
+    error.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
   } finally {
     saving.value = false
   }

@@ -258,13 +258,17 @@ const settledStats = ref(null)
 let inplayPollTimer = null
 let stopLossPollTimer = null
 let pageRefreshPollTimer = null
+/** 页面刷新进行中：跳过重叠触发，后台异步拉数不挡交互 */
+let pageRefreshInFlight = false
 /** 列表自动投注 / 止损 / 页面刷新间隔（秒），来自投注引擎配置；页面刷新 0=关 */
 const listAutoBetIntervalSec = ref(60)
 const listStopLossIntervalSec = ref(60)
 const listPageRefreshIntervalSec = ref(0)
 /** 与投注引擎一致：market | limit */
 const engineOrderType = ref('market')
-const engineLimitPrice = ref(null)
+const engineShares = ref(null)
+const engineLimitBuyPrice = ref(null)
+const engineLimitSellPrice = ref(null)
 const scheduleModalOpen = ref(false)
 const scheduleDraftAuto = ref(60)
 const scheduleDraftStop = ref(60)
@@ -294,14 +298,20 @@ async function loadListPollIntervals() {
     listStopLossIntervalSec.value = clampPollSec(bet.listStopLossIntervalSec, 60)
     listPageRefreshIntervalSec.value = clampPageRefreshSec(bet.listPageRefreshIntervalSec)
     engineOrderType.value = bet.orderType === 'limit' ? 'limit' : 'market'
-    const lp = Number(bet.limitPrice)
-    engineLimitPrice.value = (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null
+    const sh = Math.floor(Number(bet.shares) * 100) / 100
+    engineShares.value = Number.isFinite(sh) && sh > 0 ? sh : null
+    const buy = Number(bet.limitBuyPrice != null ? bet.limitBuyPrice : bet.limitPrice)
+    engineLimitBuyPrice.value = (buy >= 0.01 && buy <= 0.99) ? Math.round(buy * 100) / 100 : null
+    const sell = Number(bet.limitSellPrice)
+    engineLimitSellPrice.value = (sell >= 0.01 && sell <= 0.99) ? Math.round(sell * 100) / 100 : null
   } catch {
     listAutoBetIntervalSec.value = 60
     listStopLossIntervalSec.value = 60
     listPageRefreshIntervalSec.value = 0
     engineOrderType.value = 'market'
-    engineLimitPrice.value = null
+    engineShares.value = null
+    engineLimitBuyPrice.value = null
+    engineLimitSellPrice.value = null
   }
 }
 
@@ -346,11 +356,11 @@ async function saveScheduleSettings() {
     scheduleDraftPage.value = pageSec
     syncInplayPoll()
     scheduleNotice.value = pageSec > 0
-      ? `已保存：页面刷新 ${pageSec}s · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
-      : `已保存：页面刷新关 · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+      ? `保存成功：页面刷新 ${pageSec}s · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
+      : `保存成功：页面刷新关 · 自动投注 ${autoSec}s · 止损 ${stopSec}s`
     setTimeout(() => { scheduleNotice.value = '' }, 2500)
   } catch (e) {
-    scheduleError.value = e?.response?.data?.error || e?.message || '保存失败'
+    scheduleError.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
   } finally {
     scheduleSaving.value = false
   }
@@ -505,8 +515,8 @@ async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
   // 管理员「桶打开」只影响规则与引擎；用户是否自动投注由本人开关决定
   if (fromSave) {
     betRulesNotice.value = autoSimBetEnabled.value
-      ? `规则已保存；你已开启「自动投注」，将按当前列表条件在本账号下单`
-      : `规则已保存；有持仓时会按卖出条件与调度间隔刷 PM 并自动卖出；买入仍需自行打开「自动投注」`
+      ? `保存成功；你已开启「自动投注」，将按当前列表条件在本账号下单`
+      : `保存成功；有持仓时会按卖出条件与调度间隔刷 PM 并自动卖出；买入仍需自行打开「自动投注」`
   }
   await loadListPollIntervals()
   syncInplayPoll()
@@ -804,7 +814,6 @@ function matchPassesFilter(m, statusFilter) {
       tour: tour.value,
       pm: pmFilter.value,
       strongRankMax: 'all',
-      gapMode: 'all',
     }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
   }
   if (isSettledMode.value) {
@@ -970,14 +979,21 @@ function strongPolyPriceCents(m) {
   return p * 100
 }
 
-function strongWonFirstSet(m) {
+function strongWonSet(m, setIndex = 1) {
   const side = pickSide(m)
   if (!side) return false
   const pairs = liveSetPairs(m)
-  if (!pairs.length) return false
-  const first = pairs[0]
-  if (first.home === first.away) return false
-  return side === 'home' ? first.home > first.away : first.away > first.home
+  const idx = Number(setIndex)
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1
+  const set = pairs[i - 1]
+  if (!set) return false
+  if (!isTennisSetComplete(set.home, set.away)) return false
+  if (set.home === set.away) return false
+  return side === 'home' ? set.home > set.away : set.away > set.home
+}
+
+function strongWonFirstSet(m) {
+  return strongWonSet(m, 1)
 }
 
 function isTennisSetComplete(a, b) {
@@ -1252,8 +1268,17 @@ function passesInplayAutoBet(m) {
   if (!side) return false
   if (!polyUrlOf(m)) return false
   return passesInplayBettingEntry(m, data.value?.rankingsByPlayer || {}, bettingEntry.value, {
+    strongWonSet,
     strongWonFirstSet,
     strongPolyCents: strongPolyPriceCents,
+    getSetGames: (match, setIndex = 1) => {
+      const pairs = liveSetPairs(match)
+      const idx = Number(setIndex)
+      const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1
+      const set = pairs[i - 1]
+      if (!set) return null
+      return { home: set.home, away: set.away }
+    },
     getFirstSetGames: (match) => {
       const pairs = liveSetPairs(match)
       if (!pairs.length) return null
@@ -1350,8 +1375,12 @@ async function placeBatchTradeRequest(orders, amount) {
     simulate: !!useSimulateOrders.value,
     orderType: engineOrderType.value,
   }
-  if (engineOrderType.value === 'limit' && engineLimitPrice.value != null) {
-    payload.limitPrice = engineLimitPrice.value
+  if (engineOrderType.value === 'limit') {
+    if (engineShares.value != null) payload.shares = engineShares.value
+    if (engineLimitBuyPrice.value != null) {
+      payload.limitBuyPrice = engineLimitBuyPrice.value
+      payload.limitPrice = engineLimitBuyPrice.value
+    }
   }
   if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
   if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
@@ -1374,17 +1403,22 @@ async function submitBatchTrade({ auto = false } = {}) {
     if (!auto) batchError.value = '请先勾选可同步的场次'
     return
   }
-  const amount = resolveBatchStakeUsd()
-  if (!(amount >= 1)) {
-    batchError.value = '每场金额至少 1 元'
-    return
-  }
+  let amount = resolveBatchStakeUsd()
   if (engineOrderType.value === 'limit') {
-    const lp = Number(engineLimitPrice.value)
-    if (!(lp >= 0.01 && lp <= 0.99)) {
-      batchError.value = '限价单请先在投注引擎填写目标价（0.01–0.99）'
+    const sh = Number(engineShares.value)
+    const lp = Number(engineLimitBuyPrice.value)
+    if (!(sh > 0)) {
+      batchError.value = '限价单请先在投注引擎填写份额'
       return
     }
+    if (!(lp >= 0.01 && lp <= 0.99)) {
+      batchError.value = '限价单请先在投注引擎填写买入目标价（0.01–0.99）'
+      return
+    }
+    amount = Math.round(sh * lp * 100) / 100
+  } else if (!(amount >= 1)) {
+    batchError.value = '每场金额至少 1 元'
+    return
   }
   batchSubmitting.value = true
   try {
@@ -1462,6 +1496,10 @@ async function placeStopSell(m, side, { simulate } = {}) {
     side,
     shares: 'all',
     simulate: simulate != null ? !!simulate : !!useSimulateOrders.value,
+    orderType: engineOrderType.value,
+  }
+  if (engineOrderType.value === 'limit' && engineLimitSellPrice.value != null) {
+    payload.limitSellPrice = engineLimitSellPrice.value
   }
   if (isPrematchMode.value) return api.placeTennisPrematchSell(payload)
   return api.placeTennisInplaySell(payload)
@@ -1656,13 +1694,18 @@ function syncInplayPoll() {
 
   if (needPage) {
     pageRefreshPollTimer = setInterval(() => {
-      loadOnce({ quiet: true })
+      if (pageRefreshInFlight) return
+      pageRefreshInFlight = true
+      void loadOnce({ quiet: true, deferSideEffects: true })
+        .catch(() => { /* 异步刷新失败不打断页面 */ })
+        .finally(() => { pageRefreshInFlight = false })
     }, pageMs)
   }
   // 自动投注：若与页面刷新同间隔则已由页面刷新覆盖
   if (needBuy && (!needPage || pageMs !== buyMs)) {
     inplayPollTimer = setInterval(() => {
-      loadOnce({ quiet: true })
+      void loadOnce({ quiet: true, deferSideEffects: true })
+        .catch(() => {})
     }, buyMs)
   }
   // 止损：跳过已由页面刷新或买入同间隔覆盖的情况
@@ -1671,7 +1714,8 @@ function syncInplayPoll() {
     const coveredByPage = needPage && pageMs === stopMs
     if (!coveredByBuy && !coveredByPage) {
       stopLossPollTimer = setInterval(() => {
-        loadOnce({ quiet: true, skipAutoBatch: true })
+        void loadOnce({ quiet: true, skipAutoBatch: true, deferSideEffects: true })
+          .catch(() => {})
       }, stopMs)
     }
   }
@@ -1836,49 +1880,52 @@ const collectRefreshing = ref(false)
 const collectNotice = ref('')
 const collectError = ref('')
 
-/** 盘中：触发比分+Polymarket 赔率采集并刷新列表 */
-async function refreshScoreOddsCollect() {
+/** 盘中：触发比分+Polymarket 赔率采集并刷新列表（后台异步，不挡列表操作） */
+function refreshScoreOddsCollect() {
   if (collectRefreshing.value) return
   collectRefreshing.value = true
   collectNotice.value = ''
   collectError.value = ''
-  try {
-    let tick = null
+  void (async () => {
     try {
-      tick = await api.runTennisInplayTick()
-    } catch (e) {
-      const msg = e?.response?.data?.error || e?.message || '比分/赔率采集失败'
-      if (props.canEditRules || e?.response?.status !== 403) {
-        collectError.value = msg
+      let tick = null
+      try {
+        tick = await api.runTennisInplayTick()
+      } catch (e) {
+        const msg = e?.response?.data?.error || e?.message || '比分/赔率采集失败'
+        if (props.canEditRules || e?.response?.status !== 403) {
+          collectError.value = msg
+        }
       }
-    }
-    await loadOnce({ quiet: false })
-    if (tick && tick.ok === false && (tick.reason || tick.message)) {
-      collectError.value = tick.reason || tick.message
-    } else if (tick && !collectError.value) {
-      // collect 服务把 tick 结果包在 metrics 里；本机回退则在顶层
-      const body = (tick.metrics && typeof tick.metrics === 'object')
-        ? { ...tick, ...tick.metrics }
-        : tick
-      const s = body.scores || {}
-      const p = body.prices || {}
-      const scoreErr = s.error || (s.ok === false ? '比分采集失败' : '')
-      const oddsErr = p.error || (p.ok === false ? '赔率采集失败' : '')
-      const missed = s.summary?.missed || s.missed || body.score_failures || []
-      if (scoreErr || oddsErr) {
-        collectError.value = [scoreErr, oddsErr].filter(Boolean).join(' · ')
-      } else {
-        const su = Number(s.updated) || 0
-        const pu = Number(p.updated) || 0
-        const missHint = Array.isArray(missed) && missed.length
-          ? ` · ${missed.length} 场未在 Sofascore live 命中`
-          : ''
-        collectNotice.value = `已刷新 · 比分 ${su} · 赔率 ${pu}${missHint}`
+      // 列表后台刷新，不挡交互
+      void loadOnce({ quiet: true, deferSideEffects: true })
+      if (tick && tick.ok === false && (tick.reason || tick.message)) {
+        collectError.value = tick.reason || tick.message
+      } else if (tick && !collectError.value) {
+        // collect 服务把 tick 结果包在 metrics 里；本机回退则在顶层
+        const body = (tick.metrics && typeof tick.metrics === 'object')
+          ? { ...tick, ...tick.metrics }
+          : tick
+        const s = body.scores || {}
+        const p = body.prices || {}
+        const scoreErr = s.error || (s.ok === false ? '比分采集失败' : '')
+        const oddsErr = p.error || (p.ok === false ? '赔率采集失败' : '')
+        const missed = s.summary?.missed || s.missed || body.score_failures || []
+        if (scoreErr || oddsErr) {
+          collectError.value = [scoreErr, oddsErr].filter(Boolean).join(' · ')
+        } else {
+          const su = Number(s.updated) || 0
+          const pu = Number(p.updated) || 0
+          const missHint = Array.isArray(missed) && missed.length
+            ? ` · ${missed.length} 场未在 Sofascore live 命中`
+            : ''
+          collectNotice.value = `已刷新 · 比分 ${su} · 赔率 ${pu}${missHint}`
+        }
       }
+    } finally {
+      collectRefreshing.value = false
     }
-  } finally {
-    collectRefreshing.value = false
-  }
+  })()
 }
 
 async function onPolymarketAction(m) {

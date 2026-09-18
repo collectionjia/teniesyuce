@@ -344,9 +344,9 @@ async function saveTelegramConfig() {
     tgForm.value.botToken = ''
     tgForm.value.botTokenSet = !!c.botTokenSet
     tgForm.value.botTokenPreview = c.botTokenPreview || ''
-    msg.value = 'Telegram 通知已保存'
+    msg.value = '保存成功'
   } catch (e) {
-    err.value = e?.response?.data?.error || e.message || '保存失败'
+    err.value = `保存失败：${e?.response?.data?.error || e.message || '请重试'}`
   } finally {
     tgSaving.value = false
   }
@@ -370,6 +370,7 @@ async function testTelegramConfig() {
 }
 
 async function refresh() {
+  if (loading.value) return
   loading.value = true
   err.value = ''
   try {
@@ -397,7 +398,7 @@ async function refresh() {
         activeTab.value = jobCategory(selected)
       }
     }
-    if (logOpen.value && selectedJobId.value) await loadRuns()
+    if (logOpen.value && selectedJobId.value) void loadRuns()
   } catch (e) {
     err.value = e?.response?.data?.error || e.message || '加载失败'
   } finally {
@@ -714,7 +715,7 @@ onUnmounted(() => {
           <p class="sub">管理定时任务 · 立即执行 · 查看运行日志</p>
         </div>
         <div class="head-actions">
-          <button type="button" class="btn ghost" :disabled="loading" @click="refresh">刷新</button>
+          <button type="button" class="btn ghost" :disabled="loading" @click="() => void refresh()">刷新</button>
           <button
             type="button"
             class="btn primary"

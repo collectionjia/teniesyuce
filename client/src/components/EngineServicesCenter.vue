@@ -96,9 +96,13 @@ async function refreshDetails() {
   }
 }
 
-async function refreshAll() {
-  await refreshOverview()
-  await refreshDetails()
+/** 后台异步刷新：立刻返回，不挡按钮外的操作 */
+function refreshAll() {
+  if (loading.value) return
+  void (async () => {
+    await refreshOverview()
+    void refreshDetails()
+  })()
 }
 
 async function runAction(key, label, fn) {
@@ -108,7 +112,7 @@ async function runAction(key, label, fn) {
     const r = await fn()
     pushLog(`${label}: ${r.skipped ? r.message || 'skipped' : r.message || 'ok'}`)
     if (r.metrics) pushLog(fmtJson(r.metrics))
-    await refreshAll()
+    void refreshAll()
     return r
   } catch (e) {
     const msg = e?.response?.data?.error || e.message || '失败'

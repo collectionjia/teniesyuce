@@ -8,7 +8,7 @@
  * 条件引擎 buckets：
  *   prematch|inplay|settled: { enabled, groups[] }
  *   groups = 条件组库（组间 AND/OR）；组内字段 AND
- *   组字段：id / name / linkPrematch / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankGt / strongRankLt / gapMode
+ *   组字段：id / name / linkPrematch / tour / pm / gapMin / rankDiffMin / rankDiffMax / strongRankGt / strongRankLt / wonSetIndex / setGapMin
  *
  * 投注引擎 buckets：
  *   prematch|inplay: { enabled, groups[] }（买入 + 盘中止损规则）
@@ -48,10 +48,11 @@ function emptyGroup() {
     strongRankGt: 'all',
     /** 强现开区间上界：rank < strongRankLt（如 10） */
     strongRankLt: 'all',
-    gapMode: 'all',
-    /** 盘中：要求强者已赢首盘 */
+    /** 盘中：启用第几盘盘差（强−弱 > setGapMin） */
     requireWonFirstSet: false,
-    /** 勾选后排除首盘局分为 firstSetExcludeScore（默认 7:5）的场次 */
+    wonSetIndex: 1,
+    setGapMin: 'all',
+    /** 勾选后排除该盘局分为 firstSetExcludeScore（默认 7:5）的场次 */
     firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
   };
@@ -74,8 +75,12 @@ function emptyStopRule() {
 /** 盘中列表/自动投注买入条件（原写死规则，现可在投注引擎配置） */
 function defaultInplayBettingEntry() {
   return {
-    requireWonFirstSet: true,
-    firstSetExcludeEnabled: true,
+    requireWonFirstSet: false,
+    /** 看第几盘的局分（1–5） */
+    wonSetIndex: 1,
+    /** 盘差：强方局分 − 弱方局分 > setGapMin；'all' 不启用 */
+    setGapMin: 0,
+    firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
     pmCentsMax: 91,
     rankGapRules: [],
@@ -85,13 +90,7 @@ function defaultInplayBettingEntry() {
 function normalizeInplayBettingEntry(raw) {
   const d = defaultInplayBettingEntry();
   if (!raw || typeof raw !== 'object') {
-    return {
-      requireWonFirstSet: d.requireWonFirstSet,
-      firstSetExcludeEnabled: d.firstSetExcludeEnabled,
-      firstSetExcludeScore: d.firstSetExcludeScore,
-      pmCentsMax: d.pmCentsMax,
-      rankGapRules: [],
-    };
+    return { ...d, rankGapRules: [] };
   }
   let pmCentsMax = d.pmCentsMax;
   if (raw.pmCentsMax === '' || raw.pmCentsMax === 'all' || raw.pmCentsMax == null) {
@@ -102,10 +101,24 @@ function normalizeInplayBettingEntry(raw) {
   const excludeScore = raw.firstSetExcludeScore != null && String(raw.firstSetExcludeScore).trim()
     ? String(raw.firstSetExcludeScore).trim().slice(0, 12)
     : d.firstSetExcludeScore;
+  const setIdx = Number(raw.wonSetIndex);
+
+  let setGapMin = d.setGapMin;
+  if (raw.setGapMin === '' || raw.setGapMin === 'all') {
+    setGapMin = 'all';
+  } else if (raw.setGapMin != null && Number.isFinite(Number(raw.setGapMin))) {
+    setGapMin = Number(raw.setGapMin);
+  } else if (raw.setGapMin == null) {
+    // 旧配置无盘差字段：曾开「须赢盘」→ 按盘差>0；显式关掉须赢 → 不启用
+    setGapMin = raw.requireWonFirstSet === false ? 'all' : 0;
+  }
+
+  const hasGap = setGapMin !== 'all' && Number.isFinite(Number(setGapMin));
   return {
-    requireWonFirstSet: raw.requireWonFirstSet !== false,
-    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true
-      || (raw.firstSetExcludeEnabled == null && raw.requireWonFirstSet !== false && d.firstSetExcludeEnabled),
+    requireWonFirstSet: hasGap || raw.requireWonFirstSet === true,
+    wonSetIndex: Number.isFinite(setIdx) ? Math.max(1, Math.min(5, Math.round(setIdx))) : 1,
+    setGapMin: hasGap ? Number(setGapMin) : 'all',
+    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true,
     firstSetExcludeScore: excludeScore || '7:5',
     pmCentsMax,
     rankGapRules: [],
@@ -154,8 +167,19 @@ function normalizeGroup(g) {
     strongRankMax: g.strongRankMax != null ? g.strongRankMax : base.strongRankMax,
     strongRankGt: g.strongRankGt != null ? g.strongRankGt : base.strongRankGt,
     strongRankLt: g.strongRankLt != null ? g.strongRankLt : base.strongRankLt,
-    gapMode: g.gapMode != null ? g.gapMode : base.gapMode,
-    requireWonFirstSet: g.requireWonFirstSet === true,
+    requireWonFirstSet: g.requireWonFirstSet === true
+      || (g.setGapMin != null && g.setGapMin !== '' && g.setGapMin !== 'all' && Number.isFinite(Number(g.setGapMin))),
+    wonSetIndex: (() => {
+      const n = Number(g.wonSetIndex);
+      return Number.isFinite(n) ? Math.max(1, Math.min(5, Math.round(n))) : 1;
+    })(),
+    setGapMin: (() => {
+      if (g.setGapMin === '' || g.setGapMin === 'all' || g.setGapMin == null) {
+        return g.requireWonFirstSet === true ? 0 : 'all';
+      }
+      const n = Number(g.setGapMin);
+      return Number.isFinite(n) ? n : 'all';
+    })(),
     firstSetExcludeEnabled: g.firstSetExcludeEnabled === true,
     firstSetExcludeScore: excludeScore || '7:5',
     /** 条件检查调度间隔（秒）：时间到了检查，满足则买入 */
@@ -365,7 +389,7 @@ const DEFAULT_CONFIG = {
         false,
       ),
       inplay: defaultBucket(
-        { tour: 'all', pm: 'all', strongRankMax: 100, gapMode: 'all' },
+        { tour: 'all', pm: 'all', strongRankMax: 100 },
         false,
       ),
       settled: defaultBucket(
@@ -379,10 +403,15 @@ const DEFAULT_CONFIG = {
     userId: null,
     userAccount: null,
     amountUsd: 1,
-    /** market=市价 FOK；limit=限价 GTC */
+    /** market=市价 FOK；limit=限价 GTC（填份额+买/卖目标价） */
     orderType: 'market',
-    /** 限价目标价（0.01–0.99）；orderType=limit 时必填 */
+    /** 限价买入份额 */
+    shares: null,
+    /** 买入目标价（0.01–0.99）；兼容旧字段 limitPrice */
+    limitBuyPrice: null,
     limitPrice: null,
+    /** 卖出/止损目标价（0.01–0.99） */
+    limitSellPrice: null,
     /** 列表页「自动投注」刷新间隔（秒） */
     listAutoBetIntervalSec: 60,
     /** 列表页止损检查间隔（秒） */
@@ -460,6 +489,12 @@ function clampPageRefreshSec(raw) {
   return Math.max(10, Math.min(600, Math.round(n)));
 }
 
+function clampProbPrice(raw) {
+  const n = Number(raw);
+  if (!(n >= 0.01 && n <= 0.99)) return null;
+  return Math.round(n * 100) / 100;
+}
+
 function normalizeBetting(betting) {
   const b = betting && typeof betting === 'object' ? { ...betting } : {};
   const legacyPm = Number(b.rules?.pmMaxCents);
@@ -504,17 +539,12 @@ function normalizeBetting(betting) {
     : null;
   b.amountUsd = b.amountUsd != null ? Number(b.amountUsd) || 1 : 1;
   b.orderType = String(b.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
-  if (b.orderType === 'limit') {
-    const lp = Number(b.limitPrice);
-    b.limitPrice = (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null;
-  } else {
-    b.limitPrice = b.limitPrice != null && b.limitPrice !== ''
-      ? (() => {
-        const lp = Number(b.limitPrice);
-        return (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null;
-      })()
-      : null;
-  }
+  const buyP = clampProbPrice(b.limitBuyPrice != null && b.limitBuyPrice !== '' ? b.limitBuyPrice : b.limitPrice);
+  b.limitBuyPrice = buyP;
+  b.limitPrice = buyP; // 兼容旧字段
+  b.limitSellPrice = clampProbPrice(b.limitSellPrice);
+  const sh = Math.floor(Number(b.shares) * 100) / 100;
+  b.shares = Number.isFinite(sh) && sh > 0 ? sh : null;
   b.listAutoBetIntervalSec = clampListPollSec(b.listAutoBetIntervalSec, 60);
   b.listStopLossIntervalSec = clampListPollSec(b.listStopLossIntervalSec, 60);
   b.listPageRefreshIntervalSec = clampPageRefreshSec(b.listPageRefreshIntervalSec);

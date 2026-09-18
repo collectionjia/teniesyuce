@@ -22,7 +22,6 @@ export const DEFAULT_FILTERS = {
     tour: 'all',
     pm: 'all',
     strongRankMax: '100',
-    gapMode: 'all', // all | tier
   },
   settled: {
     tour: 'all',
@@ -86,16 +85,6 @@ export function rankMetrics(m, rankingsByPlayer = {}) {
   return { ready: true, gap, rankDiff, strongRank, weakBest, strongBest, homeR, awayR }
 }
 
-function requiredTierGap(strongRank) {
-  const r = Number(strongRank)
-  if (!Number.isFinite(r) || r <= 0) return Infinity
-  if (r <= 10) return 20
-  if (r <= 20) return 30
-  if (r <= 50) return 50
-  if (r <= 100) return 150
-  return Infinity
-}
-
 function matchTour(m) {
   return (m.tour || ((m.gender || m.homePlayer?.gender || m.awayPlayer?.gender) === 'F' ? 'WTA' : 'ATP')).toUpperCase()
 }
@@ -155,10 +144,6 @@ export function applyInplayFilters(matches, filters, ctx = {}) {
     if (f.strongRankMax !== 'all' && f.strongRankMax != null) {
       if (!metrics.ready || metrics.strongRank > Number(f.strongRankMax)) return false
     }
-    if (f.gapMode === 'tier') {
-      if (!metrics.ready) return false
-      if (metrics.gap < requiredTierGap(metrics.strongRank)) return false
-    }
     return true
   })
 }
@@ -191,8 +176,10 @@ export function applySettledFilters(matches, filters, ctx = {}) {
 
 /** 盘中自动买入条件；现差规则已移除，不再按现差过滤 */
 export const DEFAULT_INPLAY_BETTING_ENTRY = {
-  requireWonFirstSet: true,
-  firstSetExcludeEnabled: true,
+  requireWonFirstSet: false,
+  wonSetIndex: 1,
+  setGapMin: 0,
+  firstSetExcludeEnabled: false,
   firstSetExcludeScore: '7:5',
   pmCentsMax: 91,
   rankGapRules: [],
@@ -201,13 +188,7 @@ export const DEFAULT_INPLAY_BETTING_ENTRY = {
 export function normalizeInplayBettingEntry(raw) {
   const d = DEFAULT_INPLAY_BETTING_ENTRY
   if (!raw || typeof raw !== 'object') {
-    return {
-      requireWonFirstSet: d.requireWonFirstSet,
-      firstSetExcludeEnabled: d.firstSetExcludeEnabled,
-      firstSetExcludeScore: d.firstSetExcludeScore,
-      pmCentsMax: d.pmCentsMax,
-      rankGapRules: [],
-    }
+    return { ...d, rankGapRules: [] }
   }
   let pmCentsMax = d.pmCentsMax
   if (raw.pmCentsMax === '' || raw.pmCentsMax === 'all' || raw.pmCentsMax == null) {
@@ -218,10 +199,21 @@ export function normalizeInplayBettingEntry(raw) {
   const excludeScore = raw.firstSetExcludeScore != null && String(raw.firstSetExcludeScore).trim()
     ? String(raw.firstSetExcludeScore).trim().slice(0, 12)
     : d.firstSetExcludeScore
+  const setIdx = Number(raw.wonSetIndex)
+  let setGapMin = d.setGapMin
+  if (raw.setGapMin === '' || raw.setGapMin === 'all') {
+    setGapMin = 'all'
+  } else if (raw.setGapMin != null && Number.isFinite(Number(raw.setGapMin))) {
+    setGapMin = Number(raw.setGapMin)
+  } else if (raw.setGapMin == null) {
+    setGapMin = raw.requireWonFirstSet === false ? 'all' : 0
+  }
+  const hasGap = setGapMin !== 'all' && Number.isFinite(Number(setGapMin))
   return {
-    requireWonFirstSet: raw.requireWonFirstSet !== false,
-    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true
-      || (raw.firstSetExcludeEnabled == null && raw.requireWonFirstSet !== false && d.firstSetExcludeEnabled),
+    requireWonFirstSet: hasGap || raw.requireWonFirstSet === true,
+    wonSetIndex: Number.isFinite(setIdx) ? Math.max(1, Math.min(5, Math.round(setIdx))) : 1,
+    setGapMin: hasGap ? Number(setGapMin) : 'all',
+    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true,
     firstSetExcludeScore: excludeScore || '7:5',
     pmCentsMax,
     rankGapRules: [],
@@ -252,24 +244,39 @@ export function firstSetGamesMatchExclude(games, excludeRaw) {
 
 /**
  * 盘中自动买入：投注引擎 buckets.inplay.entry
- * opts.strongWonFirstSet(m)、opts.strongPolyCents(m)、opts.getFirstSetGames(m) 由调用方注入
+ * 第几盘 + 盘差（强−弱 > setGapMin）；opts.getSetGames(m, setIndex) 取该盘局分
  */
 export function passesInplayBettingEntry(m, rankingsByPlayer = {}, entry, opts = {}) {
   const e = normalizeInplayBettingEntry(entry)
   const metrics = rankMetrics(m, rankingsByPlayer)
   if (!metrics.ready) return false
-  if (e.requireWonFirstSet) {
-    if (typeof opts.strongWonFirstSet === 'function') {
-      if (!opts.strongWonFirstSet(m)) return false
+  const setIdx = e.wonSetIndex || 1
+  if (e.setGapMin != null && e.setGapMin !== '' && e.setGapMin !== 'all') {
+    let games = null
+    if (typeof opts.getSetGames === 'function') games = opts.getSetGames(m, setIdx)
+    else if (setIdx === 1 && typeof opts.getFirstSetGames === 'function') games = opts.getFirstSetGames(m)
+    if (!games) return false
+    const homeStrong = metrics.homeR != null && metrics.awayR != null && metrics.homeR < metrics.awayR
+    const strongG = Number(homeStrong ? games.home : games.away)
+    const weakG = Number(homeStrong ? games.away : games.home)
+    if (!Number.isFinite(strongG) || !Number.isFinite(weakG)) return false
+    if (!(strongG - weakG > Number(e.setGapMin))) return false
+  } else if (e.requireWonFirstSet) {
+    if (typeof opts.strongWonSet === 'function') {
+      if (!opts.strongWonSet(m, setIdx)) return false
+    } else if (typeof opts.strongWonFirstSet === 'function') {
+      if (setIdx === 1 && !opts.strongWonFirstSet(m)) return false
+      if (setIdx !== 1) return false
     }
-    if (e.firstSetExcludeEnabled && typeof opts.getFirstSetGames === 'function') {
-      const games = opts.getFirstSetGames(m)
-      if (firstSetGamesMatchExclude(games, e.firstSetExcludeScore || '7:5')) return false
-    }
+  }
+  if (e.firstSetExcludeEnabled) {
+    let games = null
+    if (typeof opts.getSetGames === 'function') games = opts.getSetGames(m, setIdx)
+    else if (setIdx === 1 && typeof opts.getFirstSetGames === 'function') games = opts.getFirstSetGames(m)
+    if (firstSetGamesMatchExclude(games, e.firstSetExcludeScore || '7:5')) return false
   }
   if (e.pmCentsMax != null && e.pmCentsMax !== '' && e.pmCentsMax !== 'all') {
     const cents = typeof opts.strongPolyCents === 'function' ? opts.strongPolyCents(m) : null
-    // 未设置/无赔率时不计算 PM 因素
     if (cents != null && !(Number(cents) < Number(e.pmCentsMax))) return false
   }
   return true
@@ -315,26 +322,38 @@ function pickStrongSide(m, rankingsByPlayer = {}) {
   return homeR < awayR ? 'home' : 'away'
 }
 
-function strongWonFirstSet(m, side) {
+function strongWonSet(m, side, setIndex = 1) {
+  const idx = Number(setIndex)
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1
   const hs = scoreSide(m, 'home')
   const as = scoreSide(m, 'away')
-  const h1 = periodScore(hs, 1)
-  const a1 = periodScore(as, 1)
-  if (h1 == null || a1 == null || h1 === a1) return false
-  if (!isSetComplete(h1, a1)) return false
-  const homeWon = h1 > a1
+  const h = periodScore(hs, i)
+  const a = periodScore(as, i)
+  if (h == null || a == null || h === a) return false
+  if (!isSetComplete(h, a)) return false
+  const homeWon = h > a
   return side === 'home' ? homeWon : !homeWon
 }
 
-function firstSetMatchesExcludeScore(m, excludeRaw) {
+function strongWonFirstSet(m, side) {
+  return strongWonSet(m, side, 1)
+}
+
+function setMatchesExcludeScore(m, setIndex, excludeRaw) {
   const pair = parseGameScorePair(excludeRaw)
   if (!pair) return false
+  const idx = Number(setIndex)
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1
   const hs = scoreSide(m, 'home')
   const as = scoreSide(m, 'away')
-  const h1 = periodScore(hs, 1)
-  const a1 = periodScore(as, 1)
-  if (h1 == null || a1 == null) return false
-  return Math.max(h1, a1) === pair.hi && Math.min(h1, a1) === pair.lo
+  const h = periodScore(hs, i)
+  const a = periodScore(as, i)
+  if (h == null || a == null) return false
+  return Math.max(h, a) === pair.hi && Math.min(h, a) === pair.lo
+}
+
+function firstSetMatchesExcludeScore(m, excludeRaw) {
+  return setMatchesExcludeScore(m, 1, excludeRaw)
 }
 
 /** 单组：字段全部 AND（与服务端 tennisConditionApply.passGroup 一致） */
@@ -363,17 +382,29 @@ export function passConditionGroup(m, group, ctx = {}) {
   if (isLimited(rules.rankDiffMax)) {
     if (!metrics.ready || metrics.rankDiff == null || metrics.rankDiff > Number(rules.rankDiffMax)) return false
   }
-  if (rules.gapMode === 'tier') {
-    if (!metrics.ready || metrics.gap < requiredTierGap(metrics.strongRank)) return false
-  }
-  if (rules.requireWonFirstSet) {
+  if (rules.requireWonFirstSet
+    || (rules.setGapMin != null && rules.setGapMin !== '' && rules.setGapMin !== 'all' && Number.isFinite(Number(rules.setGapMin)))) {
     const side = pickStrongSide(m, rankings)
-    if (!side || !strongWonFirstSet(m, side)) return false
+    const setIdx = Number(rules.wonSetIndex)
+    const wonSet = Number.isFinite(setIdx) ? Math.max(1, Math.min(5, Math.round(setIdx))) : 1
+    if (!side) return false
+    if (rules.setGapMin != null && rules.setGapMin !== '' && rules.setGapMin !== 'all' && Number.isFinite(Number(rules.setGapMin))) {
+      const hs = scoreSide(m, 'home')
+      const as = scoreSide(m, 'away')
+      const h = periodScore(hs, wonSet)
+      const a = periodScore(as, wonSet)
+      if (h == null || a == null) return false
+      const strong = side === 'home' ? h : a
+      const weak = side === 'home' ? a : h
+      if (!(strong - weak > Number(rules.setGapMin))) return false
+    } else if (!strongWonSet(m, side, wonSet)) {
+      return false
+    }
     if (rules.firstSetExcludeEnabled) {
       const excludeRaw = rules.firstSetExcludeScore != null
         ? String(rules.firstSetExcludeScore).trim()
         : '7:5'
-      if (excludeRaw && firstSetMatchesExcludeScore(m, excludeRaw || '7:5')) return false
+      if (excludeRaw && setMatchesExcludeScore(m, wonSet, excludeRaw || '7:5')) return false
     }
   }
   return true

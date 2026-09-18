@@ -59,6 +59,10 @@ async function load() {
   }
 }
 
+function refresh() {
+  void load()
+}
+
 async function save() {
   saving.value = true
   error.value = ''
@@ -77,12 +81,12 @@ async function save() {
 
     const data = await api.saveAdminBtcKeys(payload)
     applyStatus(data)
-    notice.value = data.message || '已保存'
+    notice.value = data.message || '保存成功'
     if (data.boardSynced === false && data.boardSyncError) {
       error.value = data.boardSyncError
     }
   } catch (e) {
-    error.value = e?.response?.data?.error || e?.message || '保存失败'
+    error.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
   } finally {
     saving.value = false
   }
@@ -190,7 +194,7 @@ onMounted(load)
             type="button"
             :disabled="loading || saving"
             class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 disabled:opacity-60"
-            @click="load"
+            @click="refresh"
           >
             刷新
           </button>

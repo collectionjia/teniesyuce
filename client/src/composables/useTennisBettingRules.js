@@ -87,11 +87,11 @@ export function useTennisBettingRules({
   const INPLAY_AUTO_RULES_TEXT = computed(() => {
     const e = bettingEntryNorm.value
     const pm = e.pmCentsMax === 'all' || e.pmCentsMax == null ? 'PM不限' : `PM<${e.pmCentsMax}¢`
-    let first = '不要求赢首盘'
-    if (e.requireWonFirstSet) {
-      first = e.firstSetExcludeEnabled
-        ? `须赢首盘·排除${e.firstSetExcludeScore || '7:5'}`
-        : '须赢首盘'
+    let first = '盘差不限'
+    if (e.setGapMin != null && e.setGapMin !== '' && e.setGapMin !== 'all') {
+      first = `第${e.wonSetIndex || 1}盘·盘差>${e.setGapMin}`
+    } else if (e.requireWonFirstSet) {
+      first = `须赢第${e.wonSetIndex || 1}盘`
     }
     return `买入：${first} · ${pm}｜卖出见投注设置`
   })
@@ -155,7 +155,20 @@ export function useTennisBettingRules({
   function setBettingEntryField(key, raw) {
     const e = { ...normalizeInplayBettingEntry(bettingEntry.value) }
     if (key === 'requireWonFirstSet') e.requireWonFirstSet = !!raw
-    else if (key === 'firstSetExcludeEnabled') e.firstSetExcludeEnabled = !!raw
+    else if (key === 'wonSetIndex') {
+      const n = Number(raw)
+      e.wonSetIndex = Number.isFinite(n) ? Math.max(1, Math.min(5, Math.round(n))) : 1
+    } else if (key === 'setGapMin') {
+      const s = String(raw ?? '').trim()
+      if (s === '' || s === 'all') {
+        e.setGapMin = 'all'
+        e.requireWonFirstSet = false
+      } else {
+        const n = Number(s)
+        e.setGapMin = Number.isFinite(n) ? n : 'all'
+        e.requireWonFirstSet = e.setGapMin !== 'all'
+      }
+    } else if (key === 'firstSetExcludeEnabled') e.firstSetExcludeEnabled = !!raw
     else if (key === 'firstSetExcludeScore') {
       const s = String(raw ?? '').trim().slice(0, 12)
       e.firstSetExcludeScore = s || '7:5'
@@ -269,13 +282,11 @@ export function useTennisBettingRules({
           },
         },
       })
-      betRulesNotice.value = key === 'inplay'
-        ? `${bettingBucketLabel.value}条件已保存（有未平仓持仓且条件命中时会自动卖出）`
-        : `${bettingBucketLabel.value}止损条件已保存`
-      await getSyncListAutoBetFromBucket()({ fromSave: true })
+      betRulesNotice.value = '保存成功'
+      void getSyncListAutoBetFromBucket()({ fromSave: true })
       setTimeout(() => { betRulesNotice.value = '' }, 2500)
     } catch (e) {
-      betRulesError.value = e?.response?.data?.error || e?.message || '保存失败'
+      betRulesError.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
     } finally {
       betRulesSaving.value = false
     }

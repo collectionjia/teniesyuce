@@ -18,6 +18,16 @@ defineProps({
 const bundle = ref(null)
 const loading = ref(false)
 const error = ref('')
+const notice = ref('')
+let noticeTimer = null
+function noticeFlash(msg) {
+  notice.value = msg || ''
+  if (noticeTimer) clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => {
+    if (notice.value === msg) notice.value = ''
+    noticeTimer = null
+  }, 2500)
+}
 const filtersOpen = ref(false)
 const tourFilter = ref('all')
 const statusFilter = ref('all')
@@ -25,7 +35,6 @@ const pmFilter = ref('all')
 const gapMin = ref('all')
 const rankDiffMax = ref('all')
 const strongRankMax = ref('all')
-const gapMode = ref('all') // all | tier
 const levelFilter = ref('all') // all | gs | 1000 | 500 | 250 | other
 const query = ref('')
 const autoRefresh = ref(true)
@@ -530,7 +539,6 @@ function resetFilters() {
   gapMin.value = 'all'
   rankDiffMax.value = 'all'
   strongRankMax.value = 'all'
-  gapMode.value = 'all'
   levelFilter.value = 'all'
   query.value = ''
 }
@@ -560,15 +568,6 @@ const matches = computed(() => {
     rankDiffMax: rankDiffMax.value,
     strongRankMax: strongRankMax.value,
   }, ctx)
-
-  if (gapMode.value === 'tier') {
-    list = applyInplayFilters(list, {
-      tour: 'all',
-      pm: 'all',
-      strongRankMax: 'all',
-      gapMode: 'tier',
-    }, ctx)
-  }
 
   const q = query.value.trim().toLowerCase()
   if (q) {
@@ -638,7 +637,6 @@ const filterSummary = computed(() => {
   if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
   if (rankDiffMax.value !== 'all') parts.push(`史高排差≤${rankDiffMax.value}`)
   if (strongRankMax.value !== 'all') parts.push(`强现≤${strongRankMax.value}`)
-  if (gapMode.value === 'tier') parts.push('分档现差')
   if (levelFilter.value !== 'all') parts.push(`级别${levelFilter.value}`)
   if (query.value.trim()) parts.push(`搜:${query.value.trim()}`)
   return parts.length ? parts.join(' · ') : '未限制'
@@ -1208,8 +1206,11 @@ async function onAutoBetFromSettings(payload = {}) {
 }
 
 async function load({ soft = false } = {}) {
-  if (!soft) loading.value = true
-  if (!soft) error.value = ''
+  if (!soft && loading.value) return
+  if (!soft) {
+    loading.value = true
+    error.value = ''
+  }
   try {
     const data = await api.fetchTennisMonitorBundle()
     if (!data?.ok && data?.error) {
@@ -1229,6 +1230,11 @@ async function load({ soft = false } = {}) {
   } finally {
     if (!soft) loading.value = false
   }
+}
+
+/** 手动刷新：后台异步，立刻返回 */
+function refreshPage() {
+  void load({ soft: false })
 }
 
 function startPoll() {
@@ -1365,8 +1371,9 @@ async function saveCollectScheduleOnly() {
   try {
     await saveCollectSchedule()
     collectModalOpen.value = false
+    noticeFlash('保存成功')
   } catch (e) {
-    collectModalError.value = e?.response?.data?.error || e?.message || '保存采集时间失败'
+    collectModalError.value = `保存失败：${e?.response?.data?.error || e?.message || '保存采集时间失败'}`
   } finally {
     collectSaving.value = false
   }
@@ -1480,7 +1487,7 @@ onUnmounted(stopPoll)
         <button type="button" class="btn ghost" @click="filtersOpen = !filtersOpen">
           {{ filtersOpen ? '收起条件' : '条件过滤' }}
         </button>
-        <button type="button" class="btn" :disabled="loading" @click="load">刷新</button>
+        <button type="button" class="btn" :disabled="loading" @click="refreshPage">刷新</button>
         <button
           type="button"
           class="btn strategy-list-btn"
@@ -1592,16 +1599,10 @@ onUnmounted(stopPoll)
         <button type="button" class="chip" :class="{ on: strongRankMax === '50' }" @click="strongRankMax = '50'">≤50</button>
         <button type="button" class="chip" :class="{ on: strongRankMax === '100' }" @click="strongRankMax = '100'">≤100</button>
       </div>
-
-      <div class="filter-row">
-        <span class="label">分档</span>
-        <button type="button" class="chip" :class="{ on: gapMode === 'all' }" @click="gapMode = 'all'">关闭</button>
-        <button type="button" class="chip" :class="{ on: gapMode === 'tier' }" @click="gapMode = 'tier'">分档现差</button>
-        <span class="hint">Top10&gt;20 · Top20&gt;30 · Top50&gt;50 · Top100&gt;150</span>
-      </div>
     </section>
 
-    <div v-if="error" class="banner">{{ error }}</div>
+    <div v-if="notice" class="banner ok">{{ notice }}</div>
+      <div v-if="error" class="banner">{{ error }}</div>
 
     <div class="table-wrap">
       <table>
@@ -2267,6 +2268,10 @@ tbody tr.disabled td.c-check {
   background: #fff7ed;
   color: #c2410c;
   font-size: 13px;
+}
+.banner.ok {
+  background: #ecfdf5;
+  color: #047857;
 }
 .table-wrap {
   flex: 1;

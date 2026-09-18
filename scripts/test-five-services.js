@@ -22,7 +22,6 @@ const PERMISSIVE_GROUP = {
   strongRankMax: 200,
   gapMin: 0,
   rankDiffMax: 999,
-  gapMode: 'all',
 };
 
 async function post(url, body = {}) {

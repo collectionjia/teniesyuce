@@ -62,16 +62,6 @@ function passPm(m, pm, poly) {
   return pm === 'yes' ? ok : !ok;
 }
 
-function requiredTierGap(strongRank) {
-  const r = Number(strongRank);
-  if (!Number.isFinite(r) || r <= 0) return Infinity;
-  if (r <= 10) return 20;
-  if (r <= 20) return 30;
-  if (r <= 50) return 50;
-  if (r <= 100) return 150;
-  return Infinity;
-}
-
 function isLimited(v) {
   return v != null && v !== '' && v !== 'all';
 }
@@ -112,15 +102,34 @@ function pickStrongSide(m, rankingsByPlayer = {}) {
   return homeR < awayR ? 'home' : 'away';
 }
 
-function strongWonFirstSet(m, side) {
+function strongWonSet(m, side, setIndex = 1) {
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
   const hs = scoreSide(m, 'home');
   const as = scoreSide(m, 'away');
-  const h1 = periodScore(hs, 1);
-  const a1 = periodScore(as, 1);
-  if (h1 == null || a1 == null || h1 === a1) return false;
-  if (!isSetComplete(h1, a1)) return false;
-  const homeWon = h1 > a1;
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null || h === a) return false;
+  if (!isSetComplete(h, a)) return false;
+  const homeWon = h > a;
   return side === 'home' ? homeWon : !homeWon;
+}
+
+function setGameGap(m, side, setIndex = 1) {
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
+  const hs = scoreSide(m, 'home');
+  const as = scoreSide(m, 'away');
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null) return null;
+  const strong = side === 'home' ? h : a;
+  const weak = side === 'home' ? a : h;
+  return strong - weak;
+}
+
+function strongWonFirstSet(m, side) {
+  return strongWonSet(m, side, 1);
 }
 
 function parseGameScorePair(raw) {
@@ -134,16 +143,23 @@ function parseGameScorePair(raw) {
   return { hi: Math.max(a, b), lo: Math.min(a, b) };
 }
 
-/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
-function firstSetMatchesExcludeScore(m, excludeRaw) {
+/** 指定盘局分是否命中排除形（如 7:5，顺序无关） */
+function setMatchesExcludeScore(m, setIndex, excludeRaw) {
   const pair = parseGameScorePair(excludeRaw);
   if (!pair) return false;
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
   const hs = scoreSide(m, 'home');
   const as = scoreSide(m, 'away');
-  const h1 = periodScore(hs, 1);
-  const a1 = periodScore(as, 1);
-  if (h1 == null || a1 == null) return false;
-  return Math.max(h1, a1) === pair.hi && Math.min(h1, a1) === pair.lo;
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null) return false;
+  return Math.max(h, a) === pair.hi && Math.min(h, a) === pair.lo;
+}
+
+/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
+function firstSetMatchesExcludeScore(m, excludeRaw) {
+  return setMatchesExcludeScore(m, 1, excludeRaw);
 }
 
 /** 单组：字段全部 AND */
@@ -173,17 +189,23 @@ function passGroup(m, group, bundle) {
   if (isLimited(rules.rankDiffMax)) {
     if (!metrics.ready || metrics.rankDiff == null || metrics.rankDiff > Number(rules.rankDiffMax)) return false;
   }
-  if (rules.gapMode === 'tier') {
-    if (!metrics.ready || metrics.gap < requiredTierGap(metrics.strongRank)) return false;
-  }
-  if (rules.requireWonFirstSet) {
+  if (rules.requireWonFirstSet
+    || (rules.setGapMin != null && rules.setGapMin !== '' && rules.setGapMin !== 'all' && Number.isFinite(Number(rules.setGapMin)))) {
     const side = pickStrongSide(m, rankings);
-    if (!side || !strongWonFirstSet(m, side)) return false;
+    const setIdx = Number(rules.wonSetIndex);
+    const wonSet = Number.isFinite(setIdx) ? Math.max(1, Math.min(5, Math.round(setIdx))) : 1;
+    if (!side) return false;
+    if (rules.setGapMin != null && rules.setGapMin !== '' && rules.setGapMin !== 'all' && Number.isFinite(Number(rules.setGapMin))) {
+      const gap = setGameGap(m, side, wonSet);
+      if (gap == null || !(gap > Number(rules.setGapMin))) return false;
+    } else if (!strongWonSet(m, side, wonSet)) {
+      return false;
+    }
     if (rules.firstSetExcludeEnabled) {
       const excludeRaw = rules.firstSetExcludeScore != null
         ? String(rules.firstSetExcludeScore).trim()
         : '7:5';
-      if (excludeRaw && firstSetMatchesExcludeScore(m, excludeRaw || '7:5')) return false;
+      if (excludeRaw && setMatchesExcludeScore(m, wonSet, excludeRaw || '7:5')) return false;
     }
   }
   return true;

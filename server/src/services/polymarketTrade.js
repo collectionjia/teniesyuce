@@ -370,29 +370,31 @@ function assertOrderAccepted(result) {
   throw new Error(formatClobError(result));
 }
 
-/** GTC 限价买入：按目标价挂单，成交价不超过 limitPrice */
+/** GTC 限价买入：按份额 + 目标价挂单 */
 async function placeLimitBuy({
   privateKey,
   proxyAddress,
   signatureType,
   tokenId,
-  amountUsd,
+  shares,
   price,
+  amountUsd,
 }) {
   const clob = loadClob();
   const { OrderType, Side } = clob;
   const client = await createClobClient({ privateKey, proxyAddress, signatureType });
 
-  const amount = Math.round(Number(amountUsd) * 100) / 100;
-  if (!(amount >= 1)) throw new Error('投注金额至少 $1');
-
   const limitPrice = Math.round(Math.min(Math.max(Number(price), 0.01), 0.99) * 100) / 100;
   if (!(Number(price) >= 0.01 && Number(price) <= 0.99)) {
-    throw new Error('限价目标价须在 0.01–0.99');
+    throw new Error('买入目标价须在 0.01–0.99');
   }
 
-  const size = Math.floor((amount / limitPrice) * 100) / 100;
-  if (!(size > 0)) throw new Error('下单份额无效');
+  let size = Math.floor(Number(shares) * 100) / 100;
+  if (!(size > 0) && amountUsd != null) {
+    const amount = Math.round(Number(amountUsd) * 100) / 100;
+    if (amount >= 1) size = Math.floor((amount / limitPrice) * 100) / 100;
+  }
+  if (!(size > 0)) throw new Error('限价单须填写份额');
 
   let result;
   try {
@@ -421,9 +423,67 @@ async function placeLimitBuy({
   }
 
   try {
-    return assertOrderAccepted(result);
+    return { ...assertOrderAccepted(result), size, price: limitPrice };
   } catch (e) {
     console.error('[polymarket/limitOrderResult]', JSON.stringify(result).slice(0, 800));
+    throw e;
+  }
+}
+
+/** GTC 限价卖出：按份额 + 目标价挂单 */
+async function placeLimitSell({
+  privateKey,
+  proxyAddress,
+  signatureType,
+  tokenId,
+  shares,
+  price,
+}) {
+  const clob = loadClob();
+  const { OrderType, Side } = clob;
+  const client = await createClobClient({ privateKey, proxyAddress, signatureType });
+
+  const limitPrice = Math.round(Math.min(Math.max(Number(price), 0.01), 0.99) * 100) / 100;
+  if (!(Number(price) >= 0.01 && Number(price) <= 0.99)) {
+    throw new Error('卖出目标价须在 0.01–0.99');
+  }
+
+  let size = Math.floor(Number(shares) * 100) / 100;
+  if (!(size >= 0.01)) {
+    size = await fetchTokenShares({ privateKey, proxyAddress, signatureType }, tokenId);
+  }
+  if (!(size >= 0.01)) throw new Error('无持仓可平');
+
+  let result;
+  try {
+    result = await client.createAndPostOrder(
+      {
+        tokenID: String(tokenId),
+        price: limitPrice,
+        size,
+        side: Side.SELL,
+      },
+      { tickSize: '0.01' },
+      OrderType.GTC
+    );
+  } catch (e) {
+    const data = e?.data;
+    let detail = '';
+    if (typeof data === 'string') detail = data;
+    else if (data && typeof data === 'object') {
+      detail = data.error || data.errorMsg || data.message
+        || (typeof data.error === 'object' ? JSON.stringify(data.error) : '')
+        || JSON.stringify(data).slice(0, 300);
+    }
+    const msg = (detail && String(detail)) || e?.message || String(e);
+    console.error('[polymarket/placeLimitSell]', e?.message || e, detail || '');
+    throw new Error(msg);
+  }
+
+  try {
+    return { ...assertOrderAccepted(result), soldShares: size, price: limitPrice };
+  } catch (e) {
+    console.error('[polymarket/limitSellResult]', JSON.stringify(result).slice(0, 800));
     throw e;
   }
 }
@@ -573,6 +633,7 @@ module.exports = {
   resolveSignatureType,
   placeMarketBuy,
   placeLimitBuy,
+  placeLimitSell,
   placeMarketSell,
   createClobClient,
   fetchUsdcBalance,

@@ -64,7 +64,6 @@ function emptyCondGroup() {
     strongRankMax: 'all',
     strongRankGt: 'all',
     strongRankLt: 'all',
-    gapMode: 'all',
     requireWonFirstSet: false,
     firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
@@ -400,7 +399,7 @@ function setCondField(bucket, gi, key, raw) {
   else if (key === 'name') g.name = String(raw || '').slice(0, 40)
   else if (key === 'requireWonFirstSet' || key === 'firstSetExcludeEnabled') g[key] = !!raw
   else if (key === 'firstSetExcludeScore') g[key] = String(raw || '').trim().slice(0, 12) || '7:5'
-  else if (['tour', 'pm', 'gapMode'].includes(key)) g[key] = raw
+  else if (['tour', 'pm'].includes(key)) g[key] = raw
   else g[key] = numOrAll(raw)
   groups[gi] = g
   b.condGroups = groups
@@ -861,9 +860,7 @@ async function saveAll() {
       }
     }
 
-    notice.value = (focus?.name
-      ? `已保存策略「${focus.name}」`
-      : '已保存：开赛前 / 比赛中 条件·金额·止损') + scheduleNote
+    notice.value = '保存成功' + (focus?.name ? `：策略「${focus.name}」` : '') + scheduleNote
     emit('saved')
     // 用保存接口返回值刷新快照，避免再拉一轮 engines
     if (saved && typeof saved === 'object') {
@@ -871,7 +868,7 @@ async function saveAll() {
     }
     setTimeout(() => { notice.value = '' }, 2500)
   } catch (e) {
-    error.value = e?.response?.data?.error || e?.message || '保存失败'
+    error.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
   } finally {
     saving.value = false
   }

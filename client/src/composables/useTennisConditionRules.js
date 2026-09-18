@@ -15,7 +15,6 @@ function emptyConditionGroup() {
     strongRankMax: 'all',
     strongRankGt: 'all',
     strongRankLt: 'all',
-    gapMode: 'all',
     requireWonFirstSet: false,
     firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
@@ -100,7 +99,6 @@ export function useTennisConditionRules({
     if (g.rankDiffMax != null && g.rankDiffMax !== '' && g.rankDiffMax !== 'all') parts.push(`排差≤${g.rankDiffMax}`)
     if (g.strongRankGt != null && g.strongRankGt !== '' && g.strongRankGt !== 'all') parts.push(`强现>${g.strongRankGt}`)
     if (g.strongRankLt != null && g.strongRankLt !== '' && g.strongRankLt !== 'all') parts.push(`强现<${g.strongRankLt}`)
-    if (g.gapMode && g.gapMode !== 'all') parts.push(`现差模式:${g.gapMode}`)
     if (g.requireWonFirstSet) {
       let s = '需赢首盘'
       if (g.firstSetExcludeEnabled) s += `·排除${g.firstSetExcludeScore || '7:5'}`
@@ -206,15 +204,15 @@ export function useTennisConditionRules({
       })
       if (kind === 'condition') {
         productSnapshot.value = { ...p, conditionSelect: [...productSelectCond.value] }
-        selectNotice.value = '列表筛选条件已保存'
+        selectNotice.value = '保存成功'
       } else {
         productSnapshot.value = { ...p, bettingSelect: [...productSelectBet.value] }
-        selectNotice.value = '投注买入条件已保存'
+        selectNotice.value = '保存成功'
       }
-      await getLoadOnce()({ quiet: true })
+      void getLoadOnce()({ quiet: true, deferSideEffects: true })
       setTimeout(() => { selectNotice.value = '' }, 2500)
     } catch (e) {
-      selectError.value = e?.response?.data?.error || e?.message || '保存失败'
+      selectError.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
     } finally {
       selectSaving.value = false
     }
@@ -319,12 +317,12 @@ export function useTennisConditionRules({
           },
         },
       })
-      rulesNotice.value = `${conditionBucketLabel.value}规则已保存，列表已按新规则刷新`
+      rulesNotice.value = '保存成功'
       libraryGroups.value = conditionGroups.value.map((g) => ({ ...g }))
-      await getLoadOnce()({ quiet: true })
+      void getLoadOnce()({ quiet: true, deferSideEffects: true })
       setTimeout(() => { rulesNotice.value = '' }, 2500)
     } catch (e) {
-      rulesError.value = e?.response?.data?.error || e?.message || '保存失败'
+      rulesError.value = `保存失败：${e?.response?.data?.error || e?.message || '请重试'}`
     } finally {
       rulesSaving.value = false
     }

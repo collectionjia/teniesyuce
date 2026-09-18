@@ -299,34 +299,60 @@ function isSetComplete(a, b) {
   return false;
 }
 
-function strongWonFirstSet(m, side) {
+function strongWonSet(m, side, setIndex = 1) {
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
   const hs = scoreSide(m, 'home');
   const as = scoreSide(m, 'away');
-  const h1 = periodScore(hs, 1);
-  const a1 = periodScore(as, 1);
-  if (h1 == null || a1 == null || h1 === a1) return false;
-  if (!isSetComplete(h1, a1)) return false;
-  const homeWon = h1 > a1;
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null || h === a) return false;
+  if (!isSetComplete(h, a)) return false;
+  const homeWon = h > a;
   return side === 'home' ? homeWon : !homeWon;
 }
 
-/** 盘中投注引擎 entry：赢首盘 + PM¢（现差规则已移除） */
+/** 指定盘：强方局分 − 弱方局分；缺分返回 null */
+function setGameGap(m, side, setIndex = 1) {
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
+  const hs = scoreSide(m, 'home');
+  const as = scoreSide(m, 'away');
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null) return null;
+  const strong = side === 'home' ? h : a;
+  const weak = side === 'home' ? a : h;
+  return strong - weak;
+}
+
+function strongWonFirstSet(m, side) {
+  return strongWonSet(m, side, 1);
+}
+
+/** 盘中投注引擎 entry：第几盘盘差（强−弱 > N）+ PM¢ */
 function passesInplayEngineEntry(m, rankings, entryCfg, bundle, side) {
   const tennisEngines = require('./tennisEngines');
   const e = tennisEngines.normalizeInplayBettingEntry(entryCfg);
   const homeR = currentRank(m.homePlayer || { name: m.home }, rankings);
   const awayR = currentRank(m.awayPlayer || { name: m.away }, rankings);
   if (homeR == null || awayR == null) return false;
-  if (e.requireWonFirstSet && !strongWonFirstSet(m, side)) return false;
+  const setIdx = e.wonSetIndex || 1;
+  if (e.setGapMin != null && e.setGapMin !== '' && e.setGapMin !== 'all') {
+    const gap = setGameGap(m, side, setIdx);
+    if (gap == null || !(gap > Number(e.setGapMin))) return false;
+  } else if (e.requireWonFirstSet) {
+    // 旧配置兜底：须赢指定盘
+    if (!strongWonSet(m, side, setIdx)) return false;
+  }
   if (e.requireWonFirstSet && e.firstSetExcludeEnabled) {
     const excludeRaw = e.firstSetExcludeScore != null && String(e.firstSetExcludeScore).trim()
       ? String(e.firstSetExcludeScore).trim()
       : '7:5';
-    if (firstSetMatchesExcludeScore(m, excludeRaw)) return false;
+    if (setMatchesExcludeScore(m, setIdx, excludeRaw)) return false;
   }
   if (e.pmCentsMax != null && e.pmCentsMax !== '' && e.pmCentsMax !== 'all') {
     const cents = strongPolyCents(m, bundle, side);
-    // 未拿到 PM 赔率时不把 PM 当作门槛
     if (cents != null && !(cents < Number(e.pmCentsMax))) return false;
   }
   return true;
@@ -344,18 +370,25 @@ function parseGameScorePair(raw) {
   return { hi: Math.max(a, b), lo: Math.min(a, b) };
 }
 
-/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
-function firstSetMatchesExcludeScore(m, excludeRaw) {
+/** 指定盘局分是否命中排除形（如 7:5，顺序无关） */
+function setMatchesExcludeScore(m, setIndex, excludeRaw) {
   const pair = parseGameScorePair(excludeRaw);
   if (!pair) return false;
+  const idx = Number(setIndex);
+  const i = Number.isFinite(idx) ? Math.max(1, Math.min(5, Math.round(idx))) : 1;
   const hs = scoreSide(m, 'home');
   const as = scoreSide(m, 'away');
-  const h1 = periodScore(hs, 1);
-  const a1 = periodScore(as, 1);
-  if (h1 == null || a1 == null) return false;
-  const hi = Math.max(h1, a1);
-  const lo = Math.min(h1, a1);
+  const h = periodScore(hs, i);
+  const a = periodScore(as, i);
+  if (h == null || a == null) return false;
+  const hi = Math.max(h, a);
+  const lo = Math.min(h, a);
   return hi === pair.hi && lo === pair.lo;
+}
+
+/** 首盘局分是否命中排除形（如 7:5，顺序无关） */
+function firstSetMatchesExcludeScore(m, excludeRaw) {
+  return setMatchesExcludeScore(m, 1, excludeRaw);
 }
 
 function analyzeSets(m, strongSide) {
@@ -545,6 +578,9 @@ async function runBucketPass({
   allowEventIds = null,
   orderType = 'market',
   limitPrice = null,
+  limitBuyPrice = null,
+  limitSellPrice = null,
+  shares = null,
 }) {
   const uid = String(uidNum);
   ensureUidState(state, uid);
@@ -643,6 +679,9 @@ async function runBucketPass({
         shares: sellShares,
         product,
         simulate: isSim,
+        orderType,
+        limitSellPrice,
+        limitPrice: limitSellPrice ?? limitPrice,
       });
       markSoldAfterSell(placed, sold, state, uid, product, sk, id, soldAll);
       soldOk += 1;
@@ -758,7 +797,9 @@ async function runBucketPass({
         strategyKey: primarySk,
         bucket: bucketKey,
         orderType,
-        limitPrice,
+        limitPrice: limitBuyPrice ?? limitPrice,
+        limitBuyPrice: limitBuyPrice ?? limitPrice,
+        shares,
       });
       for (const r of result.results || []) {
         const id = String(r.eventId);
@@ -1030,7 +1071,10 @@ async function runBettingPass({
         onlyStrategyKey: sk || null,
         allowEventIds,
         orderType: cfg.betting?.orderType || 'market',
-        limitPrice: cfg.betting?.limitPrice,
+        limitPrice: cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
+        limitBuyPrice: cfg.betting?.limitBuyPrice ?? cfg.betting?.limitPrice,
+        limitSellPrice: cfg.betting?.limitSellPrice,
+        shares: cfg.betting?.shares,
       }));
     }
   }

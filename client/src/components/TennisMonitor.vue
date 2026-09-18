@@ -61,8 +61,9 @@ function emptyConditionGroup() {
     strongRankMax: 'all',
     strongRankGt: 'all',
     strongRankLt: 'all',
-    gapMode: 'all',
     requireWonFirstSet: false,
+    wonSetIndex: 1,
+    setGapMin: 'all',
     firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
   }
@@ -151,8 +152,10 @@ function cloneBettingBuckets(src) {
 
 function emptyInplayEntry() {
   return {
-    requireWonFirstSet: true,
-    firstSetExcludeEnabled: true,
+    requireWonFirstSet: false,
+    wonSetIndex: 1,
+    setGapMin: 0,
+    firstSetExcludeEnabled: false,
     firstSetExcludeScore: '7:5',
     pmCentsMax: 91,
     rankGapRules: [],
@@ -162,21 +165,22 @@ function emptyInplayEntry() {
 function normalizeInplayEntryDraft(raw) {
   const d = emptyInplayEntry()
   if (!raw || typeof raw !== 'object') {
-    return {
-      requireWonFirstSet: d.requireWonFirstSet,
-      firstSetExcludeEnabled: d.firstSetExcludeEnabled,
-      firstSetExcludeScore: d.firstSetExcludeScore,
-      pmCentsMax: d.pmCentsMax,
-      rankGapRules: [],
-    }
+    return { ...d, rankGapRules: [] }
   }
   const excludeScore = raw.firstSetExcludeScore != null && String(raw.firstSetExcludeScore).trim()
     ? String(raw.firstSetExcludeScore).trim().slice(0, 12)
     : d.firstSetExcludeScore
+  const setIdx = Number(raw.wonSetIndex)
+  let setGapMin = d.setGapMin
+  if (raw.setGapMin === '' || raw.setGapMin === 'all') setGapMin = 'all'
+  else if (raw.setGapMin != null && Number.isFinite(Number(raw.setGapMin))) setGapMin = Number(raw.setGapMin)
+  else if (raw.setGapMin == null) setGapMin = raw.requireWonFirstSet === false ? 'all' : 0
+  const hasGap = setGapMin !== 'all' && Number.isFinite(Number(setGapMin))
   return {
-    requireWonFirstSet: raw.requireWonFirstSet !== false,
-    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true
-      || (raw.firstSetExcludeEnabled == null && raw.requireWonFirstSet !== false && d.firstSetExcludeEnabled),
+    requireWonFirstSet: hasGap || raw.requireWonFirstSet === true,
+    wonSetIndex: Number.isFinite(setIdx) ? Math.max(1, Math.min(5, Math.round(setIdx))) : 1,
+    setGapMin: hasGap ? Number(setGapMin) : 'all',
+    firstSetExcludeEnabled: raw.firstSetExcludeEnabled === true,
     firstSetExcludeScore: excludeScore || '7:5',
     pmCentsMax: raw.pmCentsMax === '' || raw.pmCentsMax == null ? 'all' : raw.pmCentsMax,
     rankGapRules: [],
@@ -683,11 +687,96 @@ const busy = computed(() => (
 
 function showNotice(msg) {
   notice.value = msg
+  error.value = ''
   if (noticeTimer) clearTimeout(noticeTimer)
   noticeTimer = setTimeout(() => {
     notice.value = ''
     noticeTimer = null
   }, 8000)
+}
+
+function showError(msg) {
+  const text = String(msg || '').trim()
+  if (!text) return
+  error.value = text
+  notice.value = ''
+  if (noticeTimer) clearTimeout(noticeTimer)
+  noticeTimer = setTimeout(() => {
+    // 失败提示与成功提示同样自动消失，避免一直占着
+    if (error.value === text) error.value = ''
+    noticeTimer = null
+  }, 8000)
+}
+
+let refreshInFlight = false
+
+async function refreshAll({ silent = false } = {}) {
+  if (refreshInFlight) return
+  refreshInFlight = true
+  if (!silent) {
+    refreshing.value = true
+    error.value = ''
+    notice.value = ''
+  }
+  const finish = (ok, msg) => {
+    if (!silent) {
+      refreshing.value = false
+      if (ok) showNotice(msg || '已刷新')
+      else showError(msg || '刷新失败')
+    }
+    refreshInFlight = false
+  }
+
+  if (isConfigOnlyPage.value) {
+    // 配置页：后台异步拉引擎配置，不挡录入
+    const background = !!engines.value
+    void loadEngines({ background, force: !background })
+      .then(() => {
+        if (!engines.value) {
+          finish(false, '引擎配置加载失败，请检查后端 / MySQL 后刷新')
+        } else {
+          const kept = conditionDraftDirty.value || bettingDraftDirty.value
+          finish(true, kept ? '已刷新（本地未保存修改已保留）' : '已刷新')
+        }
+      })
+      .catch((e) => {
+        finish(false, formatEngineConfigError(e?.response?.data?.error || e?.message || '加载失败'))
+      })
+    return
+  }
+
+  // 采集等页面：后台异步刷新，不阻塞按钮外的操作
+  void (async () => {
+    try {
+      loading.value = true
+      const essential = await Promise.allSettled([
+        loadEngines(),
+        loadDataSource(),
+        loadSchedule(),
+      ])
+      loading.value = false
+      const heavy = await Promise.allSettled([
+        loadStatus(),
+        loadTop100(false),
+        loadLive(),
+        loadLogs(),
+      ])
+      const failed = [...essential, ...heavy].find((r) => r.status === 'rejected')
+      if (failed) {
+        const reason = failed.reason
+        const msg = reason?.response?.data?.error || reason?.message || ''
+        if (msg && !/9004|监控服务|monitor/i.test(msg)) {
+          finish(false, formatMonitorError(msg))
+          return
+        }
+      }
+      finish(true, '已刷新')
+    } catch (e) {
+      finish(false, formatMonitorError(e?.response?.data?.error || e?.message || '加载失败'))
+    } finally {
+      loading.value = false
+    }
+  })()
 }
 
 function startTop100LoadingClock() {
@@ -859,65 +948,6 @@ async function clearCollectLogs() {
   }
 }
 
-async function refreshAll({ silent = false } = {}) {
-  if (!silent) {
-    refreshing.value = true
-    error.value = ''
-    notice.value = ''
-  }
-  try {
-    if (isConfigOnlyPage.value) {
-      // 配置页只拉引擎配置；有缓存/草稿时后台刷新，不挡录入
-      const background = !!engines.value
-      void loadEngines({ background, force: !background })
-        .then(() => {
-          if (!engines.value) {
-            error.value = error.value || '引擎配置加载失败，请检查后端 / MySQL 后刷新'
-          } else if (!silent) {
-            const kept = conditionDraftDirty.value || bettingDraftDirty.value
-            showNotice(kept ? '已刷新（本地未保存修改已保留）' : '已刷新')
-          }
-        })
-        .catch((e) => {
-          error.value = formatEngineConfigError(e?.response?.data?.error || e?.message || '加载失败')
-        })
-        .finally(() => {
-          if (!silent) refreshing.value = false
-        })
-      return
-    }
-
-    // 采集页：先出本地配置，status 后台补（避免卡在探测官网 monitor）
-    const essential = await Promise.allSettled([
-      loadEngines(),
-      loadDataSource(),
-      loadSchedule(),
-    ])
-    loading.value = false
-    refreshing.value = false
-
-    const heavy = await Promise.allSettled([
-      loadStatus(),
-      loadTop100(false),
-      loadLive(),
-      loadLogs(),
-    ])
-    const failed = [...essential, ...heavy].find((r) => r.status === 'rejected')
-    if (failed && !silent) {
-      const reason = failed.reason
-      const msg = reason?.response?.data?.error || reason?.message || ''
-      if (msg && !/9004|监控服务|monitor/i.test(msg)) {
-        error.value = formatMonitorError(msg)
-      }
-    }
-  } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '加载失败')
-  } finally {
-    loading.value = false
-    if (!isConfigOnlyPage.value) refreshing.value = false
-  }
-}
-
 async function waitCollectDone() {
   const deadline = Date.now() + 10 * 60 * 1000
   while (Date.now() < deadline) {
@@ -1037,10 +1067,10 @@ async function onHorizonChange(event) {
   try {
     const data = await api.updateTennisMonitorSchedule({ collect_horizon_days: days })
     schedule.value = data
-    await loadStatus()
-    showNotice(`采集范围已设为 ${HORIZON_OPTIONS.find((o) => o.days === days)?.label || days + '天'}（开始=今天）`)
+    void loadStatus()
+    showNotice(`保存成功：采集范围已设为 ${HORIZON_OPTIONS.find((o) => o.days === days)?.label || days + '天'}（开始=今天）`)
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新采集范围失败')
+    showError(`保存失败：${formatMonitorError(e?.response?.data?.error || e?.message || '更新采集范围失败')}`)
     event.target.value = String(collectHorizonDays.value)
   } finally {
     scheduleSaving.value = false
@@ -1055,26 +1085,26 @@ async function onLivePollIntervalChange(event) {
   try {
     const data = await api.updateTennisMonitorSchedule({ live_poll_interval_sec: sec })
     schedule.value = data
-    await Promise.all([loadStatus(), loadLive()])
-    showNotice(`进行中拉取已设为 ${LIVE_POLL_OPTIONS.find((o) => o.sec === sec)?.label || sec + ' 秒'}`)
+    void Promise.all([loadStatus(), loadLive()])
+    showNotice(`保存成功：进行中拉取已设为 ${LIVE_POLL_OPTIONS.find((o) => o.sec === sec)?.label || sec + ' 秒'}`)
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '更新进行中频度失败')
+    showError(`保存失败：${formatMonitorError(e?.response?.data?.error || e?.message || '更新进行中频度失败')}`)
     event.target.value = String(livePollIntervalSec.value)
   } finally {
     scheduleSaving.value = false
   }
 }
 
-async function patchEngines(patch) {
+async function patchEngines(patch, { quiet = false } = {}) {
   const hasCondition = !!patch?.condition
   const hasBetting = !!patch?.betting
   if (hasCondition) conditionSaving.value = true
   if (hasBetting) bettingSaving.value = true
   if (!hasCondition && !hasBetting) enginesSaving.value = true
-  error.value = ''
+  if (!quiet) error.value = ''
   try {
     engines.value = await api.updateTennisEngines(patch)
-  if (hasCondition) {
+    if (hasCondition) {
       conditionDraftDirty.value = false
       conditionDraft.value = cloneConditionBuckets(engines.value?.condition?.buckets)
     }
@@ -1082,13 +1112,17 @@ async function patchEngines(patch) {
       bettingDraftDirty.value = false
       bettingDraft.value = cloneBettingBuckets(engines.value?.betting?.buckets)
     }
-    showNotice('引擎配置已保存')
+    if (!quiet) showNotice('保存成功')
+    return true
   } catch (e) {
     const raw = e?.response?.data?.error || e?.message || '更新引擎失败'
-    error.value = (hasCondition || hasBetting)
+    const msg = (hasCondition || hasBetting)
       ? formatEngineConfigError(raw)
       : formatMonitorError(raw)
+    if (!quiet) showError(`保存失败：${msg}`)
+    else error.value = msg
     await loadEngines().catch(() => {})
+    return false
   } finally {
     if (hasCondition) conditionSaving.value = false
     if (hasBetting) bettingSaving.value = false
@@ -1109,16 +1143,35 @@ function onBettingOrderTypeChange(ev) {
   const orderType = String(ev?.target?.value || 'market').toLowerCase() === 'limit' ? 'limit' : 'market'
   patchEngines({ betting: { orderType } })
 }
-function onBettingLimitPriceChange(ev) {
+function onBettingSharesChange(ev) {
+  const n = Number(ev?.target?.value)
+  if (!Number.isFinite(n) || n <= 0) {
+    patchEngines({ betting: { shares: null } })
+    return
+  }
+  patchEngines({ betting: { shares: Math.round(n * 100) / 100 } })
+}
+function onBettingLimitBuyPriceChange(ev) {
   const raw = ev?.target?.value
   if (raw === '' || raw == null) {
-    patchEngines({ betting: { limitPrice: null } })
+    patchEngines({ betting: { limitBuyPrice: null, limitPrice: null } })
     return
   }
   const n = Number(raw)
   if (!Number.isFinite(n)) return
-  const limitPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
-  patchEngines({ betting: { limitPrice } })
+  const limitBuyPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
+  patchEngines({ betting: { limitBuyPrice, limitPrice: limitBuyPrice } })
+}
+function onBettingLimitSellPriceChange(ev) {
+  const raw = ev?.target?.value
+  if (raw === '' || raw == null) {
+    patchEngines({ betting: { limitSellPrice: null } })
+    return
+  }
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return
+  const limitSellPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
+  patchEngines({ betting: { limitSellPrice } })
 }
 
 function onListPollIntervalChange(field, ev) {
@@ -1149,6 +1202,17 @@ function setGroupField(groupIndex, key, raw) {
     g[key] = raw === 'and' ? 'and' : 'or'
   } else if (key === 'name') {
     g[key] = String(raw || '').slice(0, 40)
+  } else if (key === 'wonSetIndex') {
+    const n = Number(raw)
+    g[key] = Number.isFinite(n) ? Math.max(1, Math.min(5, Math.round(n))) : 1
+  } else if (key === 'setGapMin') {
+    const s = String(raw ?? '').trim()
+    if (s === '' || s === 'all') g[key] = 'all'
+    else {
+      const n = Number(s)
+      g[key] = Number.isFinite(n) ? n : 'all'
+    }
+    g.requireWonFirstSet = g[key] !== 'all'
   } else if (['requireWonFirstSet', 'firstSetExcludeEnabled', 'linkPrematch'].includes(key)) {
     g[key] = !!raw
   } else if (key === 'firstSetExcludeScore') {
@@ -1195,10 +1259,10 @@ function removeConditionGroup(index) {
   void saveConditionBucketAndEnable()
 }
 
-async function saveConditionBucketAndEnable() {
+async function saveConditionBucketAndEnable(opts = {}) {
   const tab = conditionTab.value
   const bucket = conditionDraft.value[tab]
-  await patchEngines({
+  return patchEngines({
     condition: {
       buckets: {
         [tab]: {
@@ -1212,7 +1276,7 @@ async function saveConditionBucketAndEnable() {
         },
       },
     },
-  })
+  }, opts)
 }
 
 function setBettingGroupField(groupIndex, key, raw) {
@@ -1347,7 +1411,20 @@ function setInplayEntryField(key, raw) {
   const cur = bettingDraft.value.inplay
   const entry = { ...normalizeInplayEntryDraft(cur.entry) }
   if (key === 'requireWonFirstSet') entry.requireWonFirstSet = !!raw
-  else if (key === 'firstSetExcludeEnabled') entry.firstSetExcludeEnabled = !!raw
+  else if (key === 'wonSetIndex') {
+    const n = Number(raw)
+    entry.wonSetIndex = Number.isFinite(n) ? Math.max(1, Math.min(5, Math.round(n))) : 1
+  } else if (key === 'setGapMin') {
+    const s = String(raw ?? '').trim()
+    if (s === '' || s === 'all') {
+      entry.setGapMin = 'all'
+      entry.requireWonFirstSet = false
+    } else {
+      const n = Number(s)
+      entry.setGapMin = Number.isFinite(n) ? n : 'all'
+      entry.requireWonFirstSet = entry.setGapMin !== 'all'
+    }
+  } else if (key === 'firstSetExcludeEnabled') entry.firstSetExcludeEnabled = !!raw
   else if (key === 'firstSetExcludeScore') {
     const s = String(raw ?? '').trim().slice(0, 12)
     entry.firstSetExcludeScore = s || '7:5'
@@ -1381,10 +1458,10 @@ function removeBettingGroup(index) {
   void saveBettingBucketAndEnable()
 }
 
-async function saveBettingBucketAndEnable() {
+async function saveBettingBucketAndEnable(opts = {}) {
   const tab = bettingTab.value
   const bucket = bettingDraft.value[tab]
-  await patchEngines({
+  return patchEngines({
     betting: {
       // 总开关已废弃：任意桶打开即可投注
       enabled: true,
@@ -1409,7 +1486,9 @@ async function saveBettingBucketAndEnable() {
             entry: (() => {
               const e = normalizeInplayEntryDraft(bucket.entry)
               return {
-                requireWonFirstSet: e.requireWonFirstSet !== false,
+                requireWonFirstSet: e.setGapMin !== 'all' && e.setGapMin != null,
+                wonSetIndex: Number(e.wonSetIndex) >= 1 ? Math.min(5, Math.round(Number(e.wonSetIndex))) : 1,
+                setGapMin: e.setGapMin === '' || e.setGapMin == null ? 'all' : e.setGapMin,
                 firstSetExcludeEnabled: !!e.firstSetExcludeEnabled,
                 firstSetExcludeScore: e.firstSetExcludeScore || '7:5',
                 pmCentsMax: e.pmCentsMax === '' || e.pmCentsMax == null ? 'all' : e.pmCentsMax,
@@ -1420,7 +1499,20 @@ async function saveBettingBucketAndEnable() {
         },
       },
     },
-  })
+  }, opts)
+}
+
+/** 条件页：一次保存条件桶 + 对应盘前/盘中投注参数 */
+async function saveConditionPageBucket() {
+  const tab = conditionTab.value
+  const okCond = await saveConditionBucketAndEnable({ quiet: true })
+  let okBet = true
+  if (tab === 'prematch' || tab === 'inplay') {
+    bettingTab.value = tab
+    okBet = await saveBettingBucketAndEnable({ quiet: true })
+  }
+  if (okCond && okBet) showNotice('保存成功')
+  else showError('保存失败：条件或投注参数未全部写入，请重试')
 }
 
 async function onSeedVirtualBuckets() {
@@ -1429,7 +1521,7 @@ async function onSeedVirtualBuckets() {
     const r = await api.seedTennisVirtualBuckets({ prematchCount: 12, inplayCount: 12 })
     const vs = r.virtualSim || {}
     showNotice(
-      `虚拟·txt（${r.txtSource || r.from || '-'} · ${r.date || '-'}）：`
+      `保存成功：虚拟·txt（${r.txtSource || r.from || '-'} · ${r.date || '-'}）：`
       + `盘前 ${r.prematch ?? vs.prematch ?? 0}`
       + ` · 盘中 ${r.inplay ?? vs.inplay ?? 0}`
       + ` · 盘后 ${r.settled ?? vs.settled ?? 0}`,
@@ -1441,7 +1533,7 @@ async function onSeedVirtualBuckets() {
     } catch (_) { /* ignore */ }
     api.refreshTennisCache().catch(() => {})
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '造盘前/盘中失败')
+    showError(`保存失败：${formatMonitorError(e?.response?.data?.error || e?.message || '造盘前/盘中失败')}`)
   } finally {
     enginesSaving.value = false
   }
@@ -1472,10 +1564,10 @@ async function onDataSourceChange(next, date) {
     if (next === 'docks500' && date) payload.date = date
     const data = await api.updateTennisMonitorDataSource(payload)
     dataSource.value = { ...(dataSource.value || {}), ...data }
-    showNotice(data.message || `已切换为 ${data.label || next}`)
+    showNotice(data.message || `保存成功：已切换为 ${data.label || next}`)
     api.refreshTennisCache().catch(() => {})
   } catch (e) {
-    error.value = formatMonitorError(e?.response?.data?.error || e?.message || '切换数据源失败')
+    showError(`保存失败：${formatMonitorError(e?.response?.data?.error || e?.message || '切换数据源失败')}`)
   } finally {
     dataSourceSaving.value = false
   }
@@ -1760,19 +1852,9 @@ onUnmounted(() => {
       </section>
 
       <section v-if="isConditionPage" class="engine-panel" id="engine-condition">
-        <div class="engine-panel-head">
-          <h3>条件引擎</h3>
-          <span v-if="engines" class="engine-panel-tag">分桶开关 · 打开即筛列表</span>
-          <span v-else-if="enginesLoading" class="engine-panel-tag muted">加载中…</span>
-        </div>
         <p v-if="enginesLoading && !engines" class="engines-note">配置加载中…</p>
         <p v-else-if="!engines" class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
         <template v-else>
-        <p class="engines-note" style="margin:0 0 8px">
-          各条件组相互独立。盘前组勾选「关联未开赛」并保存后，未开赛列表会按这些组筛选；也可在产品管理中挂载到具体产品以覆盖默认。
-          条件桶需打开。在调度中心添加「条件引擎」任务后，命中数据将自动调用投注（无需单独配置投注引擎）。
-        </p>
-
         <div class="settings-row engines-row">
           <label class="interval-select">
             <span>投注账号登录邮箱</span>
@@ -1784,7 +1866,10 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label class="interval-select">
+          <label
+            v-if="engines.betting?.orderType !== 'limit'"
+            class="interval-select"
+          >
             <span>默认金额 (USD)</span>
             <input
               type="number"
@@ -1795,7 +1880,7 @@ onUnmounted(() => {
               @change="onBettingAmountUsdChange"
             >
           </label>
-          <label class="interval-select" title="市价=立即成交(FOK)；限价=按目标价挂单(GTC)">
+          <label class="interval-select" title="市价=立即成交(FOK)；限价=填份额+买/卖目标价挂 GTC">
             <span>下单类型</span>
             <select
               style="width: 6.5rem"
@@ -1809,18 +1894,51 @@ onUnmounted(() => {
           <label
             v-if="engines.betting?.orderType === 'limit'"
             class="interval-select"
-            title="买入限价目标价（0.01–0.99），成交价不高于此价"
+            title="限价买入份额"
           >
-            <span>目标价</span>
+            <span>份额</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.shares ?? ''"
+              placeholder="10"
+              @change="onBettingSharesChange"
+            >
+          </label>
+          <label
+            v-if="engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="买入限价（0.01–0.99），成交价不高于此价"
+          >
+            <span>买入目标价</span>
             <input
               type="number"
               min="0.01"
               max="0.99"
               step="0.01"
               style="width: 5.5rem"
-              :value="engines.betting?.limitPrice ?? ''"
+              :value="engines.betting?.limitBuyPrice ?? engines.betting?.limitPrice ?? ''"
               placeholder="0.50"
-              @change="onBettingLimitPriceChange"
+              @change="onBettingLimitBuyPriceChange"
+            >
+          </label>
+          <label
+            v-if="engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="止损/卖出限价（0.01–0.99），成交价不低于此价"
+          >
+            <span>卖出目标价</span>
+            <input
+              type="number"
+              min="0.01"
+              max="0.99"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.limitSellPrice ?? ''"
+              placeholder="0.40"
+              @change="onBettingLimitSellPriceChange"
             >
           </label>
         </div>
@@ -1862,69 +1980,15 @@ onUnmounted(() => {
               <span class="toggle-state" :class="{ off: !activeBettingBucket.simulate }">{{ activeBettingBucket.simulate ? '模拟' : '实盘' }}</span>
             </label>
             <button type="button" class="btn ghost" @click="addConditionGroup">加一组条件</button>
-            <button type="button" class="btn primary" :disabled="conditionSaving" @click="saveConditionBucketAndEnable">
-              {{ conditionSaving ? '保存中…' : '保存本桶' }}
-            </button>
             <button
-              v-if="conditionTab === 'prematch' || conditionTab === 'inplay'"
               type="button"
-              class="btn ghost"
-              :disabled="bettingSaving"
-              @click="saveBettingBucketAndEnable"
-            >{{ bettingSaving ? '保存中…' : '保存投注参数' }}</button>
-            <span v-if="conditionDraftDirty" class="dirty-hint">有未保存修改</span>
-            <span v-else-if="bettingDraftDirty" class="dirty-hint">投注参数未保存</span>
-          </div>
-
-          <div v-if="conditionTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
-            <div class="condition-group-head">
-              <div class="condition-group-title">盘中自动买入条件</div>
-              <div class="condition-group-hint">列表「自动投注」与调度条件命中后的买入共用</div>
-            </div>
-            <div class="condition-fields">
-              <label class="collect-toggle">
-                <span>须赢首盘</span>
-                <input
-                  type="checkbox"
-                  :checked="!!activeBettingBucket.entry?.requireWonFirstSet"
-                  @change="setInplayEntryField('requireWonFirstSet', $event.target.checked)"
-                >
-              </label>
-              <label
-                v-if="activeBettingBucket.entry?.requireWonFirstSet"
-                class="collect-toggle"
-                title="首盘局分为该比分时不买入（顺序无关，默认 7:5）"
-              >
-                <span>排除首盘</span>
-                <input
-                  type="checkbox"
-                  :checked="!!activeBettingBucket.entry?.firstSetExcludeEnabled"
-                  @change="setInplayEntryField('firstSetExcludeEnabled', $event.target.checked)"
-                >
-              </label>
-              <label
-                v-if="activeBettingBucket.entry?.requireWonFirstSet && activeBettingBucket.entry?.firstSetExcludeEnabled"
-                title="仅排除第一盘该局分，如 7:5 / 7-5"
-              >
-                局分
-                <input
-                  type="text"
-                  :value="activeBettingBucket.entry?.firstSetExcludeScore || '7:5'"
-                  placeholder="7:5"
-                  @change="setInplayEntryField('firstSetExcludeScore', $event.target.value)"
-                >
-              </label>
-              <label>买入侧 PM¢&lt;
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  :value="activeBettingBucket.entry?.pmCentsMax === 'all' || activeBettingBucket.entry?.pmCentsMax == null || activeBettingBucket.entry?.pmCentsMax === '' ? '' : activeBettingBucket.entry.pmCentsMax"
-                  placeholder="不限"
-                  @change="setInplayEntryField('pmCentsMax', $event.target.value)"
-                >
-              </label>
-            </div>
+              class="btn primary"
+              :disabled="conditionSaving || bettingSaving"
+              @click="saveConditionPageBucket"
+            >
+              {{ (conditionSaving || bettingSaving) ? '保存中…' : '保存本桶' }}
+            </button>
+            <span v-if="conditionDraftDirty || bettingDraftDirty" class="dirty-hint">有未保存修改</span>
           </div>
 
           <div
@@ -2036,53 +2100,42 @@ onUnmounted(() => {
                   >
                 </label>
               </div>
-              <label v-if="conditionTab === 'inplay'" class="bf-field">
-                <span>现差分档</span>
-                <select :value="g.gapMode || 'all'" @change="setGroupField(gi, 'gapMode', $event.target.value)">
-                  <option value="all">不限</option>
-                  <option value="tier">分档达标</option>
+              <label
+                v-if="conditionTab === 'inplay' || conditionTab === 'settled'"
+                class="bf-field"
+                title="看该盘双方局分；强方=排名更高一侧"
+              >
+                <span>第几盘</span>
+                <select
+                  :value="g.wonSetIndex || 1"
+                  @change="setGroupField(gi, 'wonSetIndex', $event.target.value)"
+                >
+                  <option :value="1">第1盘</option>
+                  <option :value="2">第2盘</option>
+                  <option :value="3">第3盘</option>
+                  <option :value="4">第4盘</option>
+                  <option :value="5">第5盘</option>
                 </select>
               </label>
               <label
                 v-if="conditionTab === 'inplay' || conditionTab === 'settled'"
-                class="bf-check"
-                title="强者须已赢下第一盘"
-              >
-                <input
-                  type="checkbox"
-                  :checked="!!g.requireWonFirstSet"
-                  @change="setGroupField(gi, 'requireWonFirstSet', $event.target.checked)"
-                >
-                <span>赢首盘</span>
-              </label>
-              <label
-                v-if="(conditionTab === 'inplay' || conditionTab === 'settled') && g.requireWonFirstSet"
-                class="bf-check"
-                title="首盘局分为该比分时不入选（顺序无关，默认 7:5）"
-              >
-                <input
-                  type="checkbox"
-                  :checked="!!g.firstSetExcludeEnabled"
-                  @change="setGroupField(gi, 'firstSetExcludeEnabled', $event.target.checked)"
-                >
-                <span>排除首盘</span>
-              </label>
-              <label
-                v-if="(conditionTab === 'inplay' || conditionTab === 'settled') && g.requireWonFirstSet && g.firstSetExcludeEnabled"
                 class="bf-field"
-                title="仅排除第一盘该局分，如 7:5 / 7-5"
+                title="盘差：强方局分 − 弱方局分 > 此值；留空=不启用"
               >
-                <span>局分</span>
+                <span>盘差 &gt;</span>
                 <input
-                  type="text"
-                  :value="g.firstSetExcludeScore || '7:5'"
-                  placeholder="7:5"
-                  @change="setGroupField(gi, 'firstSetExcludeScore', $event.target.value)"
+                  type="number"
+                  min="0"
+                  step="1"
+                  style="width: 4.5rem"
+                  :value="g.setGapMin === 'all' || g.setGapMin == null || g.setGapMin === '' ? '' : g.setGapMin"
+                  placeholder="不限"
+                  @change="setGroupField(gi, 'setGapMin', $event.target.value)"
                 >
               </label>
             </div>
             <p class="condition-group-hint">
-              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可勾「赢首盘」并排除首盘局分（默认 7:5）。盘前组勾选「关联未开赛」后，到产品管理选用本组。
+              强现为开区间（如 0&lt;x&lt;10）；组内字段「且」。盘中/盘后可填「第几盘 + 盘差（强−弱 &gt; N）」。盘前组勾选「关联未开赛」后，到产品管理选用本组。
             </p>
             </div>
             </div>
@@ -2111,7 +2164,7 @@ onUnmounted(() => {
               @change="onBettingUserAccountChange"
             >
           </label>
-          <label v-if="isBettingPage" class="interval-select">
+          <label v-if="isBettingPage && engines.betting?.orderType !== 'limit'" class="interval-select">
             <span>默认金额 (USD)</span>
             <input
               type="number"
@@ -2125,7 +2178,7 @@ onUnmounted(() => {
           <label
             v-if="isBettingPage"
             class="interval-select"
-            title="市价=立即成交(FOK)；限价=按目标价挂单(GTC)"
+            title="市价=立即成交(FOK)；限价=填份额+买/卖目标价挂 GTC"
           >
             <span>下单类型</span>
             <select
@@ -2140,21 +2193,54 @@ onUnmounted(() => {
           <label
             v-if="isBettingPage && engines.betting?.orderType === 'limit'"
             class="interval-select"
-            title="买入限价目标价（0.01–0.99），成交价不高于此价"
+            title="限价买入份额"
           >
-            <span>目标价</span>
+            <span>份额</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.shares ?? ''"
+              placeholder="10"
+              @change="onBettingSharesChange"
+            >
+          </label>
+          <label
+            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="买入限价（0.01–0.99），成交价不高于此价"
+          >
+            <span>买入目标价</span>
             <input
               type="number"
               min="0.01"
               max="0.99"
               step="0.01"
               style="width: 5.5rem"
-              :value="engines.betting?.limitPrice ?? ''"
+              :value="engines.betting?.limitBuyPrice ?? engines.betting?.limitPrice ?? ''"
               placeholder="0.50"
-              @change="onBettingLimitPriceChange"
+              @change="onBettingLimitBuyPriceChange"
             >
           </label>
-          <label v-if="isBettingPage" class="interval-select" title="盘前/盘中列表按间隔自动刷新赛程；0=关闭">
+          <label
+            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="止损/卖出限价（0.01–0.99），成交价不低于此价"
+          >
+            <span>卖出目标价</span>
+            <input
+              type="number"
+              min="0.01"
+              max="0.99"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.limitSellPrice ?? ''"
+              placeholder="0.40"
+              @change="onBettingLimitSellPriceChange"
+            >
+          </label>
+          <label v-if="isBettingPage" class="interval-select" title="盘前/盘中列表按间隔后台异步刷新赛程，不挡操作；0=关闭">
             <span>页面刷新(秒)</span>
             <input
               type="number"
@@ -2193,7 +2279,7 @@ onUnmounted(() => {
           <span class="engines-note" style="margin:0">
             {{ isStopPage
               ? '止损组与条件引擎共用账号；保存后可在调度中心添加「止损引擎」任务'
-              : '各桶打开即投注；列表轮询 10–600 秒（页面刷新可填 0 关闭），改后刷新列表页生效' }}
+              : '各桶打开即投注；列表轮询 10–600 秒（页面刷新为后台异步，可填 0 关闭），改后刷新列表页生效' }}
           </span>
         </div>
 
@@ -2238,57 +2324,6 @@ onUnmounted(() => {
               {{ bettingSaving ? '保存中…' : '保存本桶' }}
             </button>
             <span v-if="bettingDraftDirty" class="dirty-hint">有未保存修改</span>
-          </div>
-
-          <div v-if="isBettingPage && bettingTab === 'inplay'" class="condition-group-wrap inplay-entry-panel">
-            <div class="condition-group-head">
-              <div class="condition-group-title">盘中自动买入条件</div>
-              <div class="condition-group-hint">列表「自动投注」与调度买入共用；默认即原写死规则，可改</div>
-            </div>
-            <div class="condition-fields">
-              <label class="collect-toggle">
-                <span>须赢首盘</span>
-                <input
-                  type="checkbox"
-                  :checked="!!activeBettingBucket.entry?.requireWonFirstSet"
-                  @change="setInplayEntryField('requireWonFirstSet', $event.target.checked)"
-                >
-              </label>
-              <label
-                v-if="activeBettingBucket.entry?.requireWonFirstSet"
-                class="collect-toggle"
-                title="首盘局分为该比分时不买入（顺序无关，默认 7:5）"
-              >
-                <span>排除首盘</span>
-                <input
-                  type="checkbox"
-                  :checked="!!activeBettingBucket.entry?.firstSetExcludeEnabled"
-                  @change="setInplayEntryField('firstSetExcludeEnabled', $event.target.checked)"
-                >
-              </label>
-              <label
-                v-if="activeBettingBucket.entry?.requireWonFirstSet && activeBettingBucket.entry?.firstSetExcludeEnabled"
-                title="仅排除第一盘该局分，如 7:5 / 7-5"
-              >
-                局分
-                <input
-                  type="text"
-                  :value="activeBettingBucket.entry?.firstSetExcludeScore || '7:5'"
-                  placeholder="7:5"
-                  @change="setInplayEntryField('firstSetExcludeScore', $event.target.value)"
-                >
-              </label>
-              <label>买入侧 PM¢&lt;
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  :value="activeBettingBucket.entry?.pmCentsMax === 'all' || activeBettingBucket.entry?.pmCentsMax == null || activeBettingBucket.entry?.pmCentsMax === '' ? '' : activeBettingBucket.entry.pmCentsMax"
-                  placeholder="不限"
-                  @change="setInplayEntryField('pmCentsMax', $event.target.value)"
-                >
-              </label>
-            </div>
           </div>
 
           <div
@@ -3267,12 +3302,24 @@ onUnmounted(() => {
   display: flex; align-items: center; gap: 6px;
   font-size: 0.75rem; color: #64748b; font-weight: 600;
 }
-.interval-select select {
+.interval-select select,
+.interval-select input[type="number"],
+.interval-select input[type="email"],
+.interval-select input[type="text"] {
   border: 1px solid #cbd5e1; border-radius: 8px;
   padding: 7px 10px; font-size: 0.8rem; font-weight: 600;
-  color: #334155; background: #fff; cursor: pointer;
+  color: #334155; background: #fff;
+  box-sizing: border-box;
 }
-.interval-select select:disabled { opacity: .55; cursor: not-allowed; }
+.interval-select select { cursor: pointer; }
+.interval-select select:disabled,
+.interval-select input:disabled { opacity: .55; cursor: not-allowed; }
+.interval-select input:focus,
+.interval-select select:focus {
+  outline: none;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
 .collect-toggle {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 6px 10px; border-radius: 10px;

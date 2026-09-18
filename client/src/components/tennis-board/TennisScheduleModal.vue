@@ -75,7 +75,7 @@ const emit = defineEmits([
             >
           </label>
         </div>
-        <p class="schedule-hint">写入投注引擎配置。页面刷新：盘前/盘中打开后按间隔拉最新赛程（含 PM）。自动投注/止损仍按各自间隔；与页面刷新相同时合并为一次请求。</p>
+        <p class="schedule-hint">写入投注引擎配置。页面刷新：盘前/盘中打开后按间隔后台异步拉最新赛程（含 PM），不挡操作。自动投注/止损仍按各自间隔；与页面刷新相同时合并为一次请求。</p>
         <div class="schedule-foot">
           <button type="button" class="chip-btn" :disabled="saving" @click="emit('update:open', false)">取消</button>
           <button type="button" class="chip-btn active" :disabled="saving" @click="emit('save')">

@@ -46,38 +46,32 @@ const emit = defineEmits(['update:open', 'update:bettingBucketOn', 'update:betti
         <div class="modal-body admin-rules-body">
           <template v-if="isInplayMode">
             <div class="admin-select-section-title admin-select-section-title--first">盘中自动买入</div>
-            <p class="admin-rules-hint">列表自动投注与调度买入共用；须赢首盘时可排除指定首盘局分（默认 7:5）。</p>
+            <p class="admin-rules-hint">列表自动投注与调度买入共用：选第几盘，填盘差（强方局分 − 弱方局分 &gt; N）。</p>
             <div class="admin-rule-fields">
-              <label class="admin-toggle">
-                <input
-                  type="checkbox"
-                  :checked="!!bettingEntryNorm.requireWonFirstSet"
+              <label>
+                <span>第几盘</span>
+                <select
+                  :value="bettingEntryNorm.wonSetIndex || 1"
                   :disabled="betRulesSaving || betRulesLoading"
-                  @change="setBettingEntryField('requireWonFirstSet', $event.target.checked)"
+                  @change="setBettingEntryField('wonSetIndex', $event.target.value)"
                 >
-                <span>须赢首盘</span>
+                  <option :value="1">第1盘</option>
+                  <option :value="2">第2盘</option>
+                  <option :value="3">第3盘</option>
+                  <option :value="4">第4盘</option>
+                  <option :value="5">第5盘</option>
+                </select>
               </label>
-              <label
-                v-if="bettingEntryNorm.requireWonFirstSet"
-                class="admin-toggle"
-                title="首盘局分为该比分时不买入（顺序无关）"
-              >
+              <label title="盘差：强方局分 − 弱方局分 > 此值；留空=不启用">
+                <span>盘差 &gt;</span>
                 <input
-                  type="checkbox"
-                  :checked="!!bettingEntryNorm.firstSetExcludeEnabled"
+                  type="number"
+                  min="0"
+                  step="1"
+                  :value="bettingEntryNorm.setGapMin === 'all' || bettingEntryNorm.setGapMin == null ? '' : bettingEntryNorm.setGapMin"
+                  placeholder="不限"
                   :disabled="betRulesSaving || betRulesLoading"
-                  @change="setBettingEntryField('firstSetExcludeEnabled', $event.target.checked)"
-                >
-                <span>排除首盘</span>
-              </label>
-              <label v-if="bettingEntryNorm.requireWonFirstSet && bettingEntryNorm.firstSetExcludeEnabled">
-                <span>局分</span>
-                <input
-                  type="text"
-                  :value="bettingEntryNorm.firstSetExcludeScore || '7:5'"
-                  placeholder="7:5"
-                  :disabled="betRulesSaving || betRulesLoading"
-                  @change="setBettingEntryField('firstSetExcludeScore', $event.target.value)"
+                  @change="setBettingEntryField('setGapMin', $event.target.value)"
                 >
               </label>
               <label>

@@ -16,6 +16,7 @@ function isActive(k) {
 }
 
 async function refresh() {
+  if (loading.value) return
   loading.value = true
   err.value = ''
   try {
@@ -117,7 +118,7 @@ onMounted(refresh)
           type="button"
           class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600"
           :disabled="loading"
-          @click="refresh"
+          @click="() => void refresh()"
         >刷新</button>
       </div>
       <p class="text-xs text-slate-500">
