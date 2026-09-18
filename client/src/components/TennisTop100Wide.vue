@@ -1333,6 +1333,14 @@ async function saveCollectSchedule() {
   const days = Number(data?.collect_horizon_days)
   if (COLLECT_HORIZON_OPTS.some((o) => o.days === days)) collectHorizonDays.value = days
 
+  let proxy = { top100: true, inplay_tick: true }
+  try {
+    const cur = await api.fetchTennisEngines()
+    if (cur?.collect?.proxy) proxy = { ...proxy, ...cur.collect.proxy }
+  } catch {
+    /* keep defaults */
+  }
+
   const eng = await api.updateTennisEngines({
     collect: {
       inplay_tick_enabled: true,
@@ -1340,6 +1348,7 @@ async function saveCollectSchedule() {
         score: (inplayFieldsSelected.value || []).includes('score'),
         odds: (inplayFieldsSelected.value || []).includes('odds'),
       },
+      proxy,
     },
   })
   const f = eng?.collect?.inplay_tick_fields || {}

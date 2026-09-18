@@ -29,7 +29,7 @@ async function runFull(body = {}) {
     if (collectRunner.isRunning()) {
       return { skipped: true, message: 'collect.py already running' };
     }
-    const started = collectRunner.startCollect({
+    const started = await collectRunner.startCollect({
       matchDate: body.matchDate || null,
       top100: body.top100 !== false,
     });

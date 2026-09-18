@@ -98,29 +98,57 @@ class HttpProxyAgent extends https.Agent {
   }
 }
 
-/** 解析代理并实例化 Agent（按 scope 缓存复用）；未配置代理时抛错（禁止直连）。 */
+/** Polymarket 默认允许无代理直连；其它 scope 未配置代理时抛错（禁止直连）。
+ * 管理员可关任务代理：COLLECT_TOP100_USE_PROXY / COLLECT_INPLAY_USE_PROXY=0 时强制直连。
+ */
 const _agents = new Map();
+const DIRECT_ALLOWED = new Set(['Polymarket', 'polymarket']);
+
+function jobWantsProxy() {
+  const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
+  const key = job.includes('inplay') ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
+  const v = String(process.env[key] || '1').trim().toLowerCase();
+  return !['0', 'false', 'no', 'off'].includes(v);
+}
 
 function requireProxyAgent(scope = '外网') {
-  if (_agents.has(scope)) return _agents.get(scope);
+  if (!jobWantsProxy()) {
+    const key = `${scope}|forced-direct`;
+    _agents.set(key, undefined);
+    return undefined;
+  }
+  const key = `${scope}|${proxyFromEnv() || 'direct'}`;
+  if (_agents.has(key)) return _agents.get(key);
   const url = proxyFromEnv();
   if (!url) {
+    if (DIRECT_ALLOWED.has(String(scope))) {
+      _agents.set(key, undefined);
+      return undefined;
+    }
     throw new Error(
-      `${scope} 采集必须经 IPWO 代理，禁止直连采集。请在 monitor.env 配置 IPWO_PROXY_HOST/IPWO_PROXY_PORT/IPWO_PROXY_USER/IPWO_PROXY_PASS（勿提交 Git）后重试。`
+      `${scope} 采集必须经 IPWO 代理，禁止直连。请到管理中心「采集代理」配置账号后重试。`
     );
   }
   const agent = new HttpProxyAgent(url);
-  _agents.set(scope, agent);
+  _agents.set(key, agent);
   return agent;
 }
 
-/** 经代理发起 HTTPS GET 并解析 JSON（禁止直连）。 */
-function httpsGetJson(url, { scope = '外网', timeoutMs = 8000, headers = {} } = {}) {
+/** 经代理发起 HTTPS GET 并解析 JSON。Polymarket scope 无代理时直连。 */
+function httpsGetJson(url, { scope = '外网', timeoutMs = 8000, headers = {}, allowDirect = false } = {}) {
+  const agent = (() => {
+    try {
+      return requireProxyAgent(scope);
+    } catch (e) {
+      if (allowDirect || DIRECT_ALLOWED.has(String(scope))) return undefined;
+      throw e;
+    }
+  })();
   return new Promise((resolve, reject) => {
     const req = https.get(
       url,
       {
-        agent: requireProxyAgent(scope),
+        ...(agent ? { agent } : {}),
         headers: { Accept: 'application/json', 'User-Agent': 'yuce-bid/1.0', ...headers },
       },
       (res) => {

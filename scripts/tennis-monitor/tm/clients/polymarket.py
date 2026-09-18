@@ -11,7 +11,7 @@ from typing import Any
 
 import requests
 
-from tm.clients.proxy import require_proxy
+from tm.clients.proxy import proxies_for
 
 GAMMA = (os.environ.get("POLY_GAMMA_BASE") or "https://gamma-api.polymarket.com").rstrip("/")
 CLOB = (os.environ.get("POLY_CLOB_BASE") or "https://clob.polymarket.com").rstrip("/")
@@ -33,7 +33,8 @@ def _poly_http_get(base: str, path: str, *, params: dict[str, Any] | None = None
     global _request_count
     _request_count += 1
     url = f"{base}/{path.lstrip('/')}"
-    proxies = require_proxy("Polymarket")
+    # 管理员可关代理：COLLECT_*_USE_PROXY；Polymarket 开代理时也可无凭证直连
+    proxies = proxies_for("Polymarket")
     resp = requests.get(
         url,
         params=params,

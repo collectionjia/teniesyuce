@@ -51,7 +51,7 @@ async function collectFullLocal(body = {}) {
     if (tennisCollectRunner.isRunning()) {
       return { skipped: true, message: 'collect.py already running' };
     }
-    const started = tennisCollectRunner.startCollect({
+    const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || body.date || null,
       top100: true,
     });

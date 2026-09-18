@@ -46,6 +46,50 @@ def sofa_proxy_map() -> dict[str, str]:
     return ipwo_proxy_urls()
 
 
+def _env_flag(name: str, default: bool = True) -> bool:
+    raw = (_env(name) or "").strip().lower()
+    if not raw:
+        return default
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
+def proxy_job() -> str:
+    """当前采集任务：top100 | inplay（由 Node spawn 注入 COLLECT_PROXY_JOB）。"""
+    job = (_env("COLLECT_PROXY_JOB") or "top100").strip().lower()
+    return "inplay" if job in {"inplay", "inplay_tick", "refresh"} else "top100"
+
+
+def use_proxy_for_job(job: str | None = None) -> bool:
+    """管理员可关：Top100 / 盘中刷新是否走代理。"""
+    j = (job or proxy_job()).strip().lower()
+    if j in {"inplay", "inplay_tick", "refresh"}:
+        return _env_flag("COLLECT_INPLAY_USE_PROXY", True)
+    return _env_flag("COLLECT_TOP100_USE_PROXY", True)
+
+
+def optional_proxy() -> dict[str, str]:
+    """有代理则用；无代理返回空 dict（允许直连）。"""
+    return sofa_proxy_map()
+
+
+def proxies_for(scope: str = "Sofascore", *, job: str | None = None) -> dict[str, str] | None:
+    """
+    按任务开关返回 proxies。
+    - 开关关：强制直连（返回 None）
+    - 开关开 + Sofascore：必须有代理
+    - 开关开 + Polymarket：有代理用代理，否则直连
+    """
+    if not use_proxy_for_job(job):
+        return None
+    if str(scope).lower() == "polymarket":
+        return optional_proxy() or None
+    return require_proxy(scope)
+
+
 def require_proxy(scope: str = "Sofascore") -> dict[str, str]:
     """禁止直连：未配置任何代理（IPWO 或 SOFA_HTTP_PROXY）时直接报错，不落地直连采集。"""
     proxies = sofa_proxy_map()

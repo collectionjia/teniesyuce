@@ -1074,7 +1074,7 @@ async function patchEngines(patch) {
   error.value = ''
   try {
     engines.value = await api.updateTennisEngines(patch)
-    if (hasCondition) {
+  if (hasCondition) {
       conditionDraftDirty.value = false
       conditionDraft.value = cloneConditionBuckets(engines.value?.condition?.buckets)
     }

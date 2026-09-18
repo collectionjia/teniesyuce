@@ -222,6 +222,34 @@ function loadMonitorEnvForChild() {
   return { file, env };
 }
 
+/** 从 engines 配置生成 Python/子进程代理环境（账号以库为准，覆盖 monitor.env） */
+async function proxyEnvForJob(job = 'top100') {
+  try {
+    const tennisEngines = require('./tennisEngines');
+    const cfg = await tennisEngines.getConfig();
+    return tennisEngines.buildProxyProcessEnv(cfg, job);
+  } catch (e) {
+    console.warn('[tennis/collect] proxy config read failed:', e.message);
+    const isInplay = String(job).toLowerCase().includes('inplay');
+    return {
+      COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
+      COLLECT_TOP100_USE_PROXY: '1',
+      COLLECT_INPLAY_USE_PROXY: '1',
+    };
+  }
+}
+
+/** 去掉旧版 env 里的代理键，避免盖过管理员库配置 */
+function stripLegacyProxyEnv(env = {}) {
+  const out = { ...env };
+  for (const k of Object.keys(out)) {
+    if (/^(IPWO_|SOFA_HTTP_PROXY|SOFA_HTTPS_PROXY|HTTP_PROXY|HTTPS_PROXY|ALL_PROXY)/i.test(k)) {
+      delete out[k];
+    }
+  }
+  return out;
+}
+
 function recentLiveLogTail(maxLines = 40) {
   return logBuffer.slice(-Math.max(5, maxLines)).join('\n').slice(0, 2500);
 }
@@ -305,7 +333,7 @@ function elapsedSecFromTiming(timing) {
   return typeof total === 'number' && Number.isFinite(total) ? Math.round(total * 10) / 10 : null;
 }
 
-function startCollect({ matchDate = null, top100 = true } = {}) {
+async function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
@@ -333,11 +361,21 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
   if (!top100) args.push('--all');
 
   const bin = pythonBin();
-  console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')}`);
+  const proxyEnv = await proxyEnvForJob('top100');
+  const monitorEnv = loadMonitorEnvForChild();
+  console.log(
+    `[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=${proxyEnv.COLLECT_TOP100_USE_PROXY} ipwo=${proxyEnv.IPWO_PROXY_USER ? 'yes' : 'no'}`,
+  );
 
   child = spawn(bin, ['-u', ...args], {
     cwd: MONITOR_DIR,
-    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+    env: {
+      ...stripLegacyProxyEnv({ ...process.env, ...monitorEnv.env }),
+      ...proxyEnv,
+      PYTHONUNBUFFERED: '1',
+      PYTHONIOENCODING: 'utf-8',
+    },
+    windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
@@ -432,30 +470,38 @@ function startLiveCollect() {
  * 轻量盘中刷新：只刷 Redis tennis:bundle:inplay 已有场次的比分(Sofascore) + Polymarket 赔率。
  * 不重跑 collect_live 全量发现。
  */
-function runInplayRefreshAndWait({
+async function runInplayRefreshAndWait({
   timeoutMs = 120000,
   scoresOnly = false,
   oddsOnly = false,
 } = {}) {
   const timeout = Math.max(15000, Number(timeoutMs) || 120000);
   if (!fs.existsSync(REFRESH_INPLAY_SCRIPT)) {
-    return Promise.resolve({
+    return {
       ok: false,
       error: `refresh_inplay.py not found: ${REFRESH_INPLAY_SCRIPT}`,
       upstream: 'ipwo',
-    });
+    };
   }
   const bin = pythonBin();
   const args = ['-u', REFRESH_INPLAY_SCRIPT];
   if (scoresOnly) args.push('--scores-only');
   if (oddsOnly) args.push('--odds-only');
   const envExtra = loadMonitorEnvForChild();
+  const proxyEnv = await proxyEnvForJob('inplay');
+  // 同步到当前 Node 进程，供 tennisPolymarket.js 直连判断
+  Object.assign(process.env, proxyEnv);
   return new Promise((resolve) => {
     const chunks = [];
     let settled = false;
     const childProc = spawn(bin, args, {
       cwd: MONITOR_DIR,
-      env: { ...process.env, ...envExtra.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+      env: {
+        ...stripLegacyProxyEnv({ ...process.env, ...envExtra.env }),
+        ...proxyEnv,
+        PYTHONUNBUFFERED: '1',
+        PYTHONIOENCODING: 'utf-8',
+      },
       windowsHide: true,
     });
     const finish = (payload) => {
@@ -611,19 +657,20 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
   };
   pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=${trigger} ===`);
   if (monitorEnv.file) {
-    pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}`);
+    pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}（代理账号以管理员库为准）`);
   } else {
-    pushLog('[env] 未找到 monitor.env*，若无进程内 IPWO_* 将无法采集');
+    pushLog('[env] 未找到 monitor.env*；代理请在管理中心「采集代理」配置');
   }
 
   const bin = pythonBin();
   const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
-  console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')}`);
+  const proxyEnv = await proxyEnvForJob('top100');
+  console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')} ipwo=${proxyEnv.IPWO_PROXY_USER ? 'yes' : 'no'}`);
   liveChild = spawn(bin, liveArgs, {
     cwd: MONITOR_DIR,
     env: {
-      ...process.env,
-      ...monitorEnv.env,
+      ...stripLegacyProxyEnv({ ...process.env, ...monitorEnv.env }),
+      ...proxyEnv,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
     },

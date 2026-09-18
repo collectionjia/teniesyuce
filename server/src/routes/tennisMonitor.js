@@ -765,7 +765,7 @@ router.get('/engines', async (_req, res) => {
   try {
     const tennisEngines = require('../services/tennisEngines');
     const cfg = await tennisEngines.getConfig();
-    res.json({ ok: true, ...cfg });
+    res.json({ ok: true, ...tennisEngines.toPublicConfig(cfg) });
   } catch (err) {
     console.error('[tennis-monitor/engines]', err);
     res.status(500).json({ ok: false, error: err.message || 'engines failed' });
@@ -951,7 +951,7 @@ router.post('/engines', async (req, res) => {
   try {
     const tennisEngines = require('../services/tennisEngines');
     const cfg = await tennisEngines.setConfig(req.body || {});
-    res.json({ ok: true, ...cfg });
+    res.json({ ok: true, ...tennisEngines.toPublicConfig(cfg) });
   } catch (err) {
     console.error('[tennis-monitor/engines]', err);
     res.status(err.status || 500).json({ ok: false, error: err.message || 'update engines failed' });

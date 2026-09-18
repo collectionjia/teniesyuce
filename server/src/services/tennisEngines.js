@@ -346,6 +346,16 @@ const DEFAULT_CONFIG = {
       score: true,
       odds: true,
     },
+    /** IPWO 代理：开关 + 账号（管理员页配置，不写 monitor.env） */
+    proxy: {
+      top100: true,
+      inplay_tick: true,
+      host: 'us.ipwo.net',
+      port: '7878',
+      user: '',
+      pass: '',
+      zone: '',
+    },
   },
   condition: {
     enabled: false,
@@ -504,6 +514,8 @@ function normalizeCollect(c = {}) {
     ...base.inplay_tick_fields,
     ...(c.inplay_tick_fields && typeof c.inplay_tick_fields === 'object' ? c.inplay_tick_fields : {}),
   };
+  const proxyIn = c.proxy && typeof c.proxy === 'object' ? c.proxy : {};
+  const baseProxy = base.proxy || {};
   return {
     enabled: c.enabled !== false,
     inplay_tick_enabled: c.inplay_tick_enabled !== false,
@@ -511,7 +523,49 @@ function normalizeCollect(c = {}) {
       score: fields.score !== false,
       odds: fields.odds !== false,
     },
+    proxy: {
+      top100: proxyIn.top100 !== false,
+      inplay_tick: proxyIn.inplay_tick !== false,
+      host: String(proxyIn.host != null ? proxyIn.host : baseProxy.host || 'us.ipwo.net').trim() || 'us.ipwo.net',
+      port: String(proxyIn.port != null ? proxyIn.port : baseProxy.port || '7878').trim() || '7878',
+      user: String(proxyIn.user != null ? proxyIn.user : baseProxy.user || '').trim(),
+      pass: String(proxyIn.pass != null ? proxyIn.pass : baseProxy.pass || '').trim(),
+      zone: String(proxyIn.zone != null ? proxyIn.zone : baseProxy.zone || '').trim(),
+    },
   };
+}
+
+/** API 对外：不回传明文密码 */
+function toPublicConfig(cfg) {
+  const next = cfg && typeof cfg === 'object' ? JSON.parse(JSON.stringify(cfg)) : normalizeConfig({});
+  const p = next?.collect?.proxy;
+  if (p && typeof p === 'object') {
+    p.passSet = !!String(p.pass || '').trim();
+    p.pass = '';
+  }
+  return next;
+}
+
+/** 生成子进程 / 本进程 IPWO 环境（以管理员库配置为准） */
+function buildProxyProcessEnv(cfg, job = 'top100') {
+  const p = cfg?.collect?.proxy || {};
+  const isInplay = String(job).toLowerCase().includes('inplay');
+  const env = {
+    COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
+    COLLECT_TOP100_USE_PROXY: p.top100 !== false ? '1' : '0',
+    COLLECT_INPLAY_USE_PROXY: p.inplay_tick !== false ? '1' : '0',
+  };
+  if (p.host) env.IPWO_PROXY_HOST = String(p.host);
+  if (p.port) env.IPWO_PROXY_PORT = String(p.port);
+  if (p.user) env.IPWO_PROXY_USER = String(p.user);
+  if (p.pass) env.IPWO_PROXY_PASS = String(p.pass);
+  if (p.zone) env.IPWO_PROXY_ZONE = String(p.zone);
+  // 清掉可能覆盖 IPWO 的直连代理 env，避免和库配置打架
+  env.SOFA_HTTP_PROXY = '';
+  env.SOFA_HTTPS_PROXY = '';
+  env.HTTP_PROXY = '';
+  env.HTTPS_PROXY = '';
+  return env;
 }
 
 function normalizeConfig(cfg) {
@@ -723,7 +777,19 @@ async function resolveBettingUser(patchBetting, nextBetting) {
 
 async function setConfig(patch) {
   const cur = await getConfig();
-  let next = deepMerge(cur, patch || {});
+  let incoming = patch && typeof patch === 'object' ? { ...patch } : {};
+  // 密码留空 = 保留原密码
+  if (incoming.collect?.proxy && typeof incoming.collect.proxy === 'object') {
+    const prox = { ...incoming.collect.proxy };
+    if (!String(prox.pass || '').trim()) {
+      prox.pass = cur.collect?.proxy?.pass || '';
+    }
+    incoming = {
+      ...incoming,
+      collect: { ...incoming.collect, proxy: prox },
+    };
+  }
+  let next = deepMerge(cur, incoming || {});
   // 整桶 groups 以 patch 为准（避免与旧组合并残留）
   const patchBuckets = patch?.condition?.buckets;
   if (patchBuckets && typeof patchBuckets === 'object') {
@@ -953,6 +1019,8 @@ module.exports = {
   getConfigPreferRedis,
   setConfig,
   writeConfig,
+  toPublicConfig,
+  buildProxyProcessEnv,
   DEFAULT_CONFIG,
   CONFIG_KEY,
   BUCKET_KEYS,

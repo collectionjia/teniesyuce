@@ -40,6 +40,14 @@ async function runInplayTick({ skipBetting = false } = {}) {
   // 确保盘中包有已开赛场次（从全量/赛前迁入），再只刷这些 id
   const admitLive = await tennisThreeBuckets.admitLiveFromFull();
 
+  Object.assign(process.env, (() => {
+    try {
+      return tennisEngines.buildProxyProcessEnv(cfg, 'inplay');
+    } catch {
+      return { COLLECT_PROXY_JOB: 'inplay', COLLECT_INPLAY_USE_PROXY: '1', COLLECT_TOP100_USE_PROXY: '1' };
+    }
+  })());
+
   let scores = { updated: 0, skipped: !wantScore, upstream: 'ipwo' };
   let prices = { updated: 0, failed: 0, skipped: !wantOdds };
   let refresh = null;

@@ -78,7 +78,7 @@ async function executeJobType(job, params = {}) {
       if (tennisCollectRunner.isRunning()) {
         return { skipped: true, message: 'collect.py already running' };
       }
-      const started = tennisCollectRunner.startCollect({
+      const started = await tennisCollectRunner.startCollect({
         matchDate: params.matchDate || null,
         top100: params.top100 !== false,
       });

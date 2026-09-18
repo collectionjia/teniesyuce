@@ -230,7 +230,7 @@ function elapsedSecFromTiming(timing) {
   return typeof total === 'number' && Number.isFinite(total) ? Math.round(total * 10) / 10 : null;
 }
 
-function startCollect({ matchDate = null, top100 = true } = {}) {
+async function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
@@ -257,12 +257,30 @@ function startCollect({ matchDate = null, top100 = true } = {}) {
   if (matchDate) args.push(String(matchDate));
   if (!top100) args.push('--all');
 
+  let proxyEnv = {
+    COLLECT_PROXY_JOB: 'top100',
+    COLLECT_TOP100_USE_PROXY: '1',
+    COLLECT_INPLAY_USE_PROXY: '1',
+  };
+  try {
+    const { svc } = require('./lib/serverBridge');
+    const cfg = await svc('tennisEngines').getConfig();
+    const p = cfg?.collect?.proxy || {};
+    proxyEnv = {
+      COLLECT_PROXY_JOB: 'top100',
+      COLLECT_TOP100_USE_PROXY: p.top100 !== false ? '1' : '0',
+      COLLECT_INPLAY_USE_PROXY: p.inplay_tick !== false ? '1' : '0',
+    };
+  } catch (e) {
+    console.warn('[collect] proxy config:', e.message);
+  }
+
   const bin = pythonBin();
-  console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')}`);
+  console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=${proxyEnv.COLLECT_TOP100_USE_PROXY}`);
 
   child = spawn(bin, ['-u', ...args], {
     cwd: MONITOR_DIR,
-    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+    env: { ...process.env, ...proxyEnv, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 

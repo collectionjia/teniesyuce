@@ -4,7 +4,7 @@ import os
 import time
 from typing import Any
 
-from tm.clients.proxy import require_proxy
+from tm.clients.proxy import proxies_for
 
 API_BASE = (os.environ.get("SOFA_API_BASE") or "https://www.sofascore.com/api/v1").rstrip("/")
 _IMPERSONATE = os.environ.get("SOFA_CURL_IMPERSONATE", "chrome131")
@@ -53,11 +53,14 @@ class SofascoreClient:
             raise RuntimeError("缺少 curl_cffi，请 pip install curl_cffi") from exc
 
         self._curl = curl_requests
-        proxies = require_proxy("Sofascore")
+        proxies = proxies_for("Sofascore")
         self.session = curl_requests.Session(impersonate=_IMPERSONATE)
-        self.session.proxies.update(proxies)
-        safe = (proxies.get("https") or proxies.get("http") or "").split("@")[-1]
-        print(f"[sofascore] curl_cffi/{_IMPERSONATE} proxy {safe}")
+        if proxies:
+            self.session.proxies.update(proxies)
+            safe = (proxies.get("https") or proxies.get("http") or "").split("@")[-1]
+            print(f"[sofascore] curl_cffi/{_IMPERSONATE} proxy {safe}")
+        else:
+            print(f"[sofascore] curl_cffi/{_IMPERSONATE} direct (proxy off)")
         self._last_request_at = 0.0
         self._skip_warm = skip_warm
         self._warmed = bool(skip_warm)

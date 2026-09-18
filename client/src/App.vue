@@ -10,6 +10,7 @@ import SchedulerCenter from './components/SchedulerCenter.vue'
 import TennisDocksEditor from './components/TennisDocksEditor.vue'
 import TennisTop100Wide from './components/TennisTop100Wide.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
+import CollectProxySettings from './components/CollectProxySettings.vue'
 import EngineServicesCenter from './components/EngineServicesCenter.vue'
 import WalletSettings from './components/WalletSettings.vue'
 import { PRODUCT_ICON_OPTIONS, productIconSvg } from './productIcons'
@@ -649,7 +650,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -691,7 +692,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'collect-proxy', 'tennis-monitor', 'btc-board', 'redeem-codes', 'daily-report', 'site-settings']
 /** 模拟数据编辑：独立全屏页（?page=docks-editor） */
 const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
@@ -807,6 +808,7 @@ const adminManageSections = [
     desc: '站点与其它数据看板配置',
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
+      { view: 'collect-proxy', label: '采集代理', desc: 'IPWO 账号 · Top100/盘中开关', icon: 'link', color: 'from-violet-500 to-indigo-600' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
     ],
   },
@@ -3706,6 +3708,13 @@ function productEmbedUrl(product) {
                   class="w-full py-2.5 rounded-xl bg-primary-600 text-white text-sm font-medium disabled:opacity-60"
                 >{{ siteSettingsForm.saving ? '保存中…' : '保存设置' }}</button>
               </div>
+            </section>
+
+            <section v-else-if="role==='admin' && view==='collect-proxy'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <CollectProxySettings />
             </section>
 
             <section v-else-if="role==='admin' && view==='btc-board'" class="space-y-3 fade-up">
