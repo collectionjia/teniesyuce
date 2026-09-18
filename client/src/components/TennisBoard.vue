@@ -1771,8 +1771,29 @@ function sanitizeBundleHint(raw) {
 
 const bundleHint = computed(() => {
   const msg = data.value?.message || data.value?.update?.message || ''
-  return sanitizeBundleHint(msg)
+  const base = sanitizeBundleHint(msg)
+  if (!isInplayMode.value) return base
+  const scoreAt = fmtRefreshClock(data.value?.score_updated_at || data.value?.tick_at)
+  const oddsAt = fmtRefreshClock(data.value?.odds_updated_at || data.value?.tick_at)
+  const parts = []
+  if (scoreAt) parts.push(`比分 ${scoreAt}`)
+  if (oddsAt) parts.push(`赔率 ${oddsAt}`)
+  if (!parts.length) return base
+  return base ? `${base} · ${parts.join(' · ')}` : parts.join(' · ')
 })
+
+function fmtRefreshClock(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
+}
 
 function eloOf(id) {
   const map = data.value?.eloByEvent || {}

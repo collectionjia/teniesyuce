@@ -18,7 +18,7 @@ defineProps({
 </script>
 
 <template>
-<div v-if="isInplayMode && allowBatchTrade" class="inplay-source-bar">
+<div v-if="isInplayMode && (allowBatchTrade || bundleHint)" class="inplay-source-bar">
       <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ inplayAutoRulesText }}</span>
       <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
     </div>

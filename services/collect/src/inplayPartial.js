@@ -1,5 +1,5 @@
 /**
- * 部分采集：盘中 tick（无投注；投注由 scheduler → betting 负责）
+ * 部分采集：盘中 tick（网球比分 + Polymarket 赔率；投注由 scheduler → betting 负责）
  */
 const { svc } = require('./lib/serverBridge');
 const { assertCollectEnabled } = require('./lib/engineGate');
@@ -20,6 +20,20 @@ async function runInplayPartial() {
     return { skipped: true, message: '虚拟(txt)模式跳过 tick / Polymarket 采集' };
   }
 
+  // 与 server tennisInplayTick 同源：比分(tennis) + 赔率(PM) 写入盘中包（投注由 betting 服务负责）
+  const tennisInplayTick = svc('tennisInplayTick');
+  if (tennisInplayTick?.runInplayTick) {
+    const r = await tennisInplayTick.runInplayTick({ skipBetting: true });
+    if (r && typeof r === 'object') {
+      return {
+        ...r,
+        message: r.ok === false ? (r.reason || 'inplay tick failed') : 'inplay partial done',
+      };
+    }
+    return r;
+  }
+
+  // 回退：旧逻辑（仅 PM + 迁桶）
   const tennisThreeBuckets = svc('tennisThreeBuckets');
   const tennisInplayCache = svc('tennisInplayCache');
   const tennisPolymarket = svc('tennisPolymarket');
@@ -34,8 +48,10 @@ async function runInplayPartial() {
 
   if (bundle && wantOdds) {
     prices = await tennisPolymarket.refreshPolymarketPrices(bundle);
-    bundle.tick_at = new Date().toISOString();
-    bundle.fetched_at = bundle.tick_at;
+    const tickAt = new Date().toISOString();
+    bundle.tick_at = tickAt;
+    bundle.fetched_at = tickAt;
+    bundle.odds_updated_at = tickAt;
     await tennisInplayCache.setCachedBundle(bundle);
   } else if (bundle && !wantOdds) {
     prices = { updated: 0, failed: 0, skipped: true, reason: 'odds field off' };

@@ -384,6 +384,7 @@ function kickSyncLiveBackground() {
 
 module.exports = {
   buildScoreText,
+  applyServiceEvent,
   isEndedStatus,
   isLiveStatusRaw,
   fetchMonitorLiveEvents,
