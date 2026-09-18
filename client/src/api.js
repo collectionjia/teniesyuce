@@ -912,4 +912,14 @@ export async function fetchAdminBtcState() {
   return data
 }
 
+export async function fetchAdminBtcKeys() {
+  const { data } = await api.get('/admin/btc-board/keys')
+  return data
+}
+
+export async function saveAdminBtcKeys(payload) {
+  const { data } = await api.put('/admin/btc-board/keys', payload)
+  return data
+}
+
 export default api

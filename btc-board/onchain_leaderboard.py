@@ -67,6 +67,17 @@ def _load_crawl_enabled_default() -> bool:
     return default
 
 
+def set_alchemy_key(key: str) -> None:
+    """热更新 Alchemy RPC（管理后台保存密钥时调用）"""
+    global ALCHEMY_KEY, RPC_URL
+    ALCHEMY_KEY = str(key or "").strip()
+    RPC_URL = f"https://polygon-mainnet.g.alchemy.com/v2/{ALCHEMY_KEY}" if ALCHEMY_KEY else ""
+    if ALCHEMY_KEY:
+        os.environ["ALCHEMY_KEY"] = ALCHEMY_KEY
+    elif "ALCHEMY_KEY" in os.environ:
+        del os.environ["ALCHEMY_KEY"]
+
+
 def is_crawl_enabled() -> bool:
     return _crawl_enabled.is_set()
 

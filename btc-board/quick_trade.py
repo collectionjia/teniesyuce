@@ -960,6 +960,64 @@ async def crawl_api(request):
     return web.json_response({"success": True, "enabled": olb.is_crawl_enabled()})
 
 
+async def runtime_keys_api(request):
+    """POST /api/runtime-keys — 管理后台热更新 Alchemy / QUICK 账号"""
+    global ALCHEMY_KEY, RPC_URL, ACCOUNTS, PRIVATE_KEY, FUNDER, _w3, _clob, _clob_account_idx
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        return web.json_response({"success": False, "message": "invalid body"}, status=400)
+
+    alchemy = str(data.get("ALCHEMY_KEY") or "").strip()
+    if alchemy:
+        ALCHEMY_KEY = alchemy
+        RPC_URL = f"https://polygon-mainnet.g.alchemy.com/v2/{ALCHEMY_KEY}"
+        os.environ["ALCHEMY_KEY"] = ALCHEMY_KEY
+        _w3 = None
+        try:
+            import onchain_leaderboard as olb
+            olb.set_alchemy_key(ALCHEMY_KEY)
+        except Exception as e:
+            print(f"[runtime-keys] olb alchemy sync: {e}")
+
+    pk = str(data.get("QUICK_PRIVATE_KEY") or "").strip()
+    fd = str(data.get("QUICK_FUNDER") or "").strip()
+    rk = str(data.get("QUICK_RELAYER_API_KEY") or "").strip()
+    ra = str(data.get("QUICK_RELAYER_API_KEY_ADDRESS") or "").strip()
+    if pk:
+        os.environ["QUICK_PRIVATE_KEY"] = pk
+    if "QUICK_FUNDER" in data:
+        if fd:
+            os.environ["QUICK_FUNDER"] = fd
+        elif "QUICK_FUNDER" in os.environ:
+            del os.environ["QUICK_FUNDER"]
+    if rk:
+        os.environ["QUICK_RELAYER_API_KEY"] = rk
+        os.environ["RELAYER_API_KEY"] = rk
+    if "QUICK_RELAYER_API_KEY_ADDRESS" in data:
+        if ra:
+            os.environ["QUICK_RELAYER_API_KEY_ADDRESS"] = ra
+            os.environ["RELAYER_API_KEY_ADDRESS"] = ra
+        else:
+            os.environ.pop("QUICK_RELAYER_API_KEY_ADDRESS", None)
+            os.environ.pop("RELAYER_API_KEY_ADDRESS", None)
+
+    ACCOUNTS = _load_accounts()
+    PRIVATE_KEY = ACCOUNTS[0]["private_key"] if ACCOUNTS else ""
+    FUNDER = ACCOUNTS[0]["funder"] if ACCOUNTS else ""
+    with _clob_lock:
+        _clob = None
+        _clob_account_idx = -1
+    print(f"[runtime-keys] accounts={len(ACCOUNTS)} alchemy={'yes' if ALCHEMY_KEY else 'no'}")
+    return web.json_response({
+        "success": True,
+        "accountCount": len(ACCOUNTS),
+        "alchemySet": bool(ALCHEMY_KEY),
+    })
+
+
 async def trade_api(request):
     data = await request.json()
     loop = asyncio.get_event_loop()
@@ -1056,6 +1114,7 @@ app.router.add_get("/trade", trade_page)
 app.router.add_get("/api/state", board_state_api)
 app.router.add_get("/api/crawl", crawl_api)
 app.router.add_post("/api/crawl", crawl_api)
+app.router.add_post("/api/runtime-keys", runtime_keys_api)
 app.router.add_post("/api/trade", trade_api)
 app.router.add_post("/api/switch_market", switch_market_api)
 app.router.add_post("/api/switch_account", switch_account_api)
