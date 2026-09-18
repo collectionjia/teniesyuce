@@ -45,8 +45,11 @@ def load_monitor_env(path: str | Path | None = None) -> Path | None:
             continue
         key, val = line.split("=", 1)
         key = key.strip()
-        if key in os.environ:
+        val = val.strip().strip("\r")
+        # 进程里已有非空值则保留；空字符串视为未配置，允许被 monitor.env 覆盖
+        cur = os.environ.get(key)
+        if cur is not None and str(cur).strip() != "":
             continue
-        os.environ[key] = val.strip().strip("\r")
+        os.environ[key] = val
     print(f"[env] loaded {p.name}")
     return p

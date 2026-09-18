@@ -57,15 +57,23 @@ async function runInplayTick({ skipBetting = false } = {}) {
       collectLive = await tennisCollectRunner.runLiveCollectAndWait();
       const bundleAfter = await tennisInplayCache.getBundle();
       const n = bundleAfter?.live?.matches?.length || 0;
+      const polyN = Object.keys(bundleAfter?.polymarketByEvent || {}).length;
       scores = {
         updated: collectLive?.ok ? n : 0,
         liveFeed: n,
+        polymarket: polyN,
         ok: !!collectLive?.ok,
         error: collectLive?.error || collectLive?.last?.error || null,
         timedOut: !!collectLive?.timedOut,
         upstream: 'ipwo',
         script: 'collect_live.py',
+        summary: collectLive?.summary || collectLive?.last || null,
+        log_tail: collectLive?.log_tail || collectLive?.last?.log_tail || null,
       };
+      if (!collectLive?.ok) {
+        console.warn('[inplay-tick] collect_live failed:', scores.error);
+        if (scores.log_tail) console.warn('[inplay-tick] log_tail:\n', scores.log_tail);
+      }
       if (bundleAfter) {
         // collect_live 已含比分 + PM；打上刷新时间供列表展示
         await stampInplayRefreshTimes(bundleAfter, {

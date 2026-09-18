@@ -64,7 +64,7 @@ const JOB_TYPE_META = {
   'collect.inplay_tick': {
     category: 'collect',
     intervalUnit: 'second',
-    intervalPresets: [30, 60],
+    intervalPresets: [30, 60, 120],
     defaultIntervalSec: 60,
     defaultName: '盘中比分刷新',
   },
@@ -122,6 +122,7 @@ const jobTypeOptions = computed(() => {
 })
 
 const isCollectJobType = computed(() => categoryOfJobType(form.value.jobType) === 'collect')
+const isInplayTickJobType = computed(() => form.value.jobType === 'collect.inplay_tick')
 
 const collectIntervalPresets = computed(() => {
   const def = jobTypeOptions.value.find((t) => t.jobType === form.value.jobType)
@@ -483,6 +484,10 @@ async function createJob() {
     params = { category: 'collect' }
     if (!form.value.intervalSec || form.value.intervalSec <= 0) {
       err.value = '请选择采集间隔'
+      return
+    }
+    if (form.value.jobType === 'collect.inplay_tick' && Number(form.value.intervalSec) < 10) {
+      err.value = '盘中比分刷新间隔至少 10 秒'
       return
     }
   } else {
@@ -854,6 +859,17 @@ onUnmounted(() => {
                     >{{ p.label }}</button>
                   </div>
                 </label>
+                <label v-if="isInplayTickJobType" class="span-full">
+                  <span>自定义间隔（秒）</span>
+                  <input
+                    v-model.number="form.intervalSec"
+                    type="number"
+                    min="10"
+                    step="1"
+                    placeholder="如 45、90"
+                  />
+                  <span class="field-hint">可选 30 / 60 / 120，或自行填写（建议 ≥10 秒）</span>
+                </label>
               </template>
               <template v-else>
                 <label>
@@ -1194,6 +1210,13 @@ onUnmounted(() => {
   color: #2563eb;
   background: #eff6ff;
   border-color: #93c5fd;
+}
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
 }
 @media (min-width: 640px) {
   .form-grid {

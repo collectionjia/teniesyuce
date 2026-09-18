@@ -182,6 +182,63 @@ function pushLog(chunk) {
   if (logBuffer.length > 4000) logBuffer = logBuffer.slice(-4000);
 }
 
+/** 读取 monitor.env*：补齐进程里缺失或为空的 IPWO/REDIS，避免空环境变量挡住文件配置 */
+function loadMonitorEnvForChild() {
+  const appEnv = String(process.env.APP_ENV || '').trim().toLowerCase();
+  const explicit = String(process.env.SOFA_MONITOR_ENV_FILE || '').trim();
+  const candidates = [];
+  if (explicit) {
+    candidates.push(path.isAbsolute(explicit) ? explicit : path.join(MONITOR_DIR, explicit));
+  }
+  if (appEnv === 'test') candidates.push(path.join(MONITOR_DIR, 'monitor.env.test'));
+  if (appEnv === 'production' || appEnv === 'prod') {
+    candidates.push(path.join(MONITOR_DIR, 'monitor.env.prod'));
+  }
+  candidates.push(path.join(MONITOR_DIR, 'monitor.env'));
+  let file = null;
+  for (const p of candidates) {
+    if (p && fs.existsSync(p)) {
+      file = p;
+      break;
+    }
+  }
+  if (!file) return { file: null, env: {} };
+  const env = {};
+  try {
+    for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#') || !line.includes('=')) continue;
+      const i = line.indexOf('=');
+      const key = line.slice(0, i).trim();
+      const val = line.slice(i + 1).trim().replace(/\r$/, '');
+      if (!key) continue;
+      const cur = process.env[key];
+      if (cur == null || String(cur).trim() === '') env[key] = val;
+    }
+  } catch (e) {
+    console.warn('[tennis/collect-live] load monitor.env failed:', e.message);
+  }
+  return { file, env };
+}
+
+function recentLiveLogTail(maxLines = 40) {
+  return logBuffer.slice(-Math.max(5, maxLines)).join('\n').slice(0, 2500);
+}
+
+function parseLiveCollectSummary(text) {
+  const t = String(text || '');
+  const m = t.match(/完成:\s*(\d+)\s*场进行中/);
+  const pm = t.match(/PM\s+(\d+)/);
+  const redisFail = /Redis 失败|未配置 REDIS_URL/.test(t);
+  const noProxy = /未配置 IPWO|必须经 IPWO|禁止直连/.test(t);
+  return {
+    total_events: m ? Number(m[1]) : (/完成:\s*无进行中比赛/.test(t) ? 0 : null),
+    polymarket_matched: pm ? Number(pm[1]) : null,
+    redis_failed: redisFail,
+    no_proxy: noProxy,
+  };
+}
+
 function readLatestBundleMeta() {
   try {
     if (!fs.existsSync(OUTPUT_DIR)) return null;
@@ -363,6 +420,14 @@ function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
       waited: true,
       timedOut: !!waited?.timedOut,
       last: { ...liveLast },
+      error: liveLast.error || null,
+      summary: {
+        total_events: liveLast.live_count ?? liveLast.total_events ?? null,
+        polymarket_matched: liveLast.polymarket_matched ?? null,
+        redis_failed: !!liveLast.redis_failed,
+        no_proxy: !!liveLast.no_proxy,
+      },
+      log_tail: liveLast.log_tail || recentLiveLogTail(40),
       upstream: 'ipwo',
     }));
   }
@@ -404,6 +469,8 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
 
   liveRunning = true;
   const startedAt = nowIso();
+  logBuffer = [];
+  const monitorEnv = loadMonitorEnvForChild();
   liveLast = {
     status: 'running',
     trigger,
@@ -412,15 +479,26 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
     error: null,
     events: [],
     live_count: null,
+    monitor_env: monitorEnv.file ? path.basename(monitorEnv.file) : null,
   };
   pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=${trigger} ===`);
+  if (monitorEnv.file) {
+    pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}`);
+  } else {
+    pushLog('[env] 未找到 monitor.env*，若无进程内 IPWO_* 将无法采集');
+  }
 
   const bin = pythonBin();
   const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
   console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')}`);
   liveChild = spawn(bin, liveArgs, {
     cwd: MONITOR_DIR,
-    env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+    env: {
+      ...process.env,
+      ...monitorEnv.env,
+      PYTHONUNBUFFERED: '1',
+      PYTHONIOENCODING: 'utf-8',
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 
@@ -432,7 +510,14 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
   const finish = (payload) => {
     liveRunning = false;
     liveChild = null;
-    liveLast = { ...liveLast, ...payload };
+    const text = logBuffer.join('\n');
+    const summary = parseLiveCollectSummary(text);
+    liveLast = {
+      ...liveLast,
+      ...payload,
+      ...summary,
+      log_tail: recentLiveLogTail(40),
+    };
     appendLogFile(logBuffer);
     try {
       const tennisRedis = require('./tennisRedis');
@@ -443,6 +528,8 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
         ok: payload.status === 'success',
         last: { ...liveLast },
         error: payload.error || null,
+        summary,
+        log_tail: liveLast.log_tail,
       });
     }
   };
@@ -463,13 +550,22 @@ function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = 
     const finishedAt = nowIso();
     const text = logBuffer.join('\n');
     const emptyRun = /完成:\s*无进行中比赛|无符合条件的比赛/.test(text);
+    const summary = parseLiveCollectSummary(text);
+    let error = null;
+    if (code !== 0) {
+      error = friendlyCollectError(code, text) || `collect_live.py 退出码 ${code}`;
+    } else if (summary.no_proxy) {
+      error = '未配置 IPWO 代理，无法采集比分/Polymarket';
+    } else if (summary.redis_failed) {
+      error = 'Redis 写入失败：请在 monitor.env 配置与 server 一致的 REDIS_URL';
+    }
     finish({
-      status: code === 0 ? 'success' : 'failed',
+      status: error ? 'failed' : 'success',
       finished_at: finishedAt,
       exit_code: code,
-      error: code === 0 ? null : (friendlyCollectError(code, text) || `collect_live.py 退出码 ${code}`),
+      error,
       events: [],
-      live_count: emptyRun ? 0 : null,
+      live_count: emptyRun ? 0 : (summary.total_events != null ? summary.total_events : null),
       fetched_at: finishedAt,
     });
   });

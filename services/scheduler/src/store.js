@@ -34,7 +34,7 @@ const JOB_TYPE_DEFS = {
     label: '盘中比分刷新',
     category: 'collect',
     intervalUnit: 'second',
-    intervalPresets: [30, 60],
+    intervalPresets: [30, 60, 120],
     defaultIntervalSec: 60,
     defaultName: '盘中比分刷新',
   },
