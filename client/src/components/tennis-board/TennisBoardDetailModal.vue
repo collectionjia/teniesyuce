@@ -266,7 +266,8 @@ defineProps({
             <button
               type="button"
               class="act-btn market"
-              :disabled="!isInplayMode && !polyUrlOf(detailMatch)"
+              :disabled="!polyUrlOf(detailMatch)"
+              :title="polyUrlOf(detailMatch) ? '打开 Polymarket' : '暂无对应外链'"
               @click="(onPolymarketAction || openMarket)(detailMatch)"
             >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
           </div>

@@ -181,10 +181,12 @@ defineProps({
               <button
                 type="button"
                 class="act-btn market"
-                :disabled="!isInplayMode && !polyUrlOf(m)"
-                :title="isInplayMode
-                  ? (collectUpdatedText ? `打开外链并刷新比分/赔率 · ${collectUpdatedText}` : '打开外链并刷新比分/赔率')
-                  : (polyUrlOf(m) ? '打开关联页' : '暂无对应外链')"
+                :disabled="!polyUrlOf(m)"
+                :title="polyUrlOf(m)
+                  ? (isInplayMode
+                    ? (collectUpdatedText ? `打开外链并刷新比分/赔率 · ${collectUpdatedText}` : '打开外链并刷新比分/赔率')
+                    : '打开关联页')
+                  : '暂无对应外链'"
                 @click="(onPolymarketAction || openMarket)(m)"
               >{{ collectRefreshing && isInplayMode ? '刷新中…' : '外链' }}</button>
               
