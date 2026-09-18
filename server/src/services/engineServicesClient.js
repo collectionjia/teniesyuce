@@ -86,8 +86,36 @@ async function collectFull(body = {}) {
   return request('collect', 'POST', '/internal/collect/full', body);
 }
 
+async function collectPartialLocal(body = {}) {
+  const tennisDataSource = require('./tennisDataSource');
+  if ((await tennisDataSource.get()) === 'docks500') {
+    return { skipped: true, message: '虚拟(txt)模式跳过 tick / Polymarket 采集' };
+  }
+  const tennisInplayTick = require('./tennisInplayTick');
+  const r = await tennisInplayTick.runInplayTick({
+    skipBetting: body.skipBetting !== false,
+  });
+  if (r && typeof r === 'object') {
+    return {
+      ...r,
+      message: r.ok === false ? (r.reason || 'inplay tick failed') : 'inplay partial done (local)',
+      local: true,
+    };
+  }
+  return r;
+}
+
 async function collectPartial(body = {}) {
-  return request('collect', 'POST', '/internal/collect/partial', body);
+  if (!baseUrl('collect')) return collectPartialLocal(body);
+  try {
+    return await request('collect', 'POST', '/internal/collect/partial', body);
+  } catch (e) {
+    // 采集服务不可达时回退到本机 tick，避免盘中页刷新只读到旧 Redis
+    if (e?.status === 503 || e?.status === 502 || e?.code === 'ECONNREFUSED') {
+      return collectPartialLocal(body);
+    }
+    throw e;
+  }
 }
 
 async function collectStatus(query = {}) {

@@ -7,6 +7,8 @@ defineProps({
   bundleHint: { type: String, default: '' },
   collectUpdatedText: { type: String, default: '' },
   collectRefreshing: { type: Boolean, default: false },
+  collectNotice: { type: String, default: '' },
+  collectError: { type: String, default: '' },
   refreshScoreOddsCollect: { type: Function, default: null },
   inplayAutoRulesText: { type: String, default: '' },
   settledStats: { type: Object, default: null },
@@ -40,6 +42,8 @@ defineProps({
         <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ inplayAutoRulesText }}</span>
         <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
       </div>
+      <div v-if="collectNotice" class="inplay-collect-notice">{{ collectNotice }}</div>
+      <div v-if="collectError" class="inplay-collect-error">{{ collectError }}</div>
     </div>
     <div v-if="isSettledMode && settledStats" class="settled-stats-bar">
       <span>合计 盈{{ pct(settledStats.total?.winRate) }} / 亏{{ pct(settledStats.total?.lossRate) }} · PnL {{ num(settledStats.total?.totalPnl) }}</span>
@@ -243,6 +247,17 @@ defineProps({
 .inplay-collect-extra {
   margin-top: 6px;
   color: #92400e;
+}
+.inplay-collect-notice {
+  margin-top: 6px;
+  color: #047857;
+  font-weight: 600;
+}
+.inplay-collect-error {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-weight: 600;
+  word-break: break-word;
 }
 .settled-stats-bar {
   display: flex;

@@ -1785,20 +1785,41 @@ const bundleHint = computed(() => {
 })
 
 const collectRefreshing = ref(false)
+const collectNotice = ref('')
+const collectError = ref('')
 
 /** 盘中：触发比分+Polymarket 赔率采集并刷新列表 */
 async function refreshScoreOddsCollect() {
   if (collectRefreshing.value) return
   collectRefreshing.value = true
+  collectNotice.value = ''
+  collectError.value = ''
   try {
-    if (props.canEditRules) {
-      try {
-        await api.runTennisInplayTick()
-      } catch {
-        /* 采集失败仍拉 Redis 最新包 */
+    let tick = null
+    try {
+      tick = await api.runTennisInplayTick()
+    } catch (e) {
+      const msg = e?.response?.data?.error || e?.message || '比分/赔率采集失败'
+      if (props.canEditRules || e?.response?.status !== 403) {
+        collectError.value = msg
       }
     }
     await loadOnce({ quiet: false })
+    if (tick && tick.ok === false && (tick.reason || tick.message)) {
+      collectError.value = tick.reason || tick.message
+    } else if (tick && !collectError.value) {
+      const s = tick.scores || {}
+      const p = tick.prices || {}
+      const scoreErr = s.error || (s.ok === false ? '比分采集失败' : '')
+      const oddsErr = p.error || (p.ok === false ? '赔率采集失败' : '')
+      if (scoreErr || oddsErr) {
+        collectError.value = [scoreErr, oddsErr].filter(Boolean).join(' · ')
+      } else {
+        const su = Number(s.updated) || 0
+        const pu = Number(p.updated) || 0
+        collectNotice.value = `已刷新 · 比分 ${su} · 赔率 ${pu}`
+      }
+    }
   } finally {
     collectRefreshing.value = false
   }
@@ -2453,6 +2474,8 @@ defineExpose({
       :bundle-hint="bundleHint"
       :collect-updated-text="collectUpdatedText"
       :collect-refreshing="collectRefreshing"
+      :collect-notice="collectNotice"
+      :collect-error="collectError"
       :refresh-score-odds-collect="refreshScoreOddsCollect"
       :inplay-auto-rules-text="INPLAY_AUTO_RULES_TEXT"
       :settled-stats="settledStats"
