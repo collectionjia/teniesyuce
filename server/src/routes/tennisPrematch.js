@@ -36,10 +36,12 @@ router.get('/today', async (req, res) => {
     }
     full = await bundleWithOptionalCondition(req, 'prematch', full);
     const tennisDataSource = require('../services/tennisDataSource');
+    // 缓存包里的 serverTime 可能是采集写入时的旧值；列表用它推算「现在」会导致已开赛仍显示未开赛
     res.json({
       ...full,
       member: true,
       source: full.source || 'redis-prematch',
+      serverTime: Math.floor(Date.now() / 1000),
       tradeSimulate: await tennisDataSource.shouldSimulateTrades(),
     });
   } catch (err) {

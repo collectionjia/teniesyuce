@@ -127,6 +127,66 @@ function normalizeDailyTime(v) {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
 }
 
+const PRESETS_SEEDED_KEY = 'scheduler_presets_seeded';
+
+async function ensureAppSettingsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      setting_key VARCHAR(64) PRIMARY KEY,
+      setting_value VARCHAR(512) NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+}
+
+async function getAppSetting(key) {
+  await ensureAppSettingsTable();
+  const [[row]] = await pool.query(
+    'SELECT setting_value FROM app_settings WHERE setting_key=? LIMIT 1',
+    [key],
+  );
+  return row?.setting_value ?? '';
+}
+
+async function setAppSetting(key, value) {
+  await ensureAppSettingsTable();
+  await pool.query(
+    `INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)`,
+    [key, String(value ?? '').slice(0, 512)],
+  );
+}
+
+/** 仅首次安装空库时写入预置；打标后用户删光任务也不会再自动恢复 */
+async function seedPresetJobsIfNeeded() {
+  if (await getAppSetting(PRESETS_SEEDED_KEY) === '1') return;
+  const [[{ c }]] = await pool.query(`SELECT COUNT(*) AS c FROM scheduler_jobs`);
+  if (Number(c) === 0) {
+    for (const j of PRESET_JOBS) {
+      await pool.query(
+        `INSERT INTO scheduler_jobs
+          (id, name, job_type, engine, enabled, schedule_mode, interval_sec,
+           mutex_key, skip_if_running, require_engine_on, timeout_sec)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          j.id,
+          j.name,
+          j.job_type,
+          j.engine,
+          j.enabled,
+          j.schedule_mode,
+          j.interval_sec,
+          j.mutex_key,
+          j.skip_if_running,
+          j.require_engine_on,
+          j.timeout_sec,
+        ],
+      );
+    }
+  }
+  await setAppSetting(PRESETS_SEEDED_KEY, '1');
+}
+
 async function ensureTables() {
   if (ready) return;
   await pool.query(`
@@ -168,55 +228,7 @@ async function ensureTables() {
       INDEX idx_sched_runs_job_started (job_id, started_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
-  const [[{ c }]] = await pool.query(`SELECT COUNT(*) AS c FROM scheduler_jobs`);
-  // 仅空表时写入预置；用户删除后重启不再自动插回
-  if (Number(c) === 0) {
-    for (const j of PRESET_JOBS) {
-      await pool.query(
-        `INSERT INTO scheduler_jobs
-          (id, name, job_type, engine, enabled, schedule_mode, interval_sec,
-           mutex_key, skip_if_running, require_engine_on, timeout_sec)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          j.id,
-          j.name,
-          j.job_type,
-          j.engine,
-          j.enabled,
-          j.schedule_mode,
-          j.interval_sec,
-          j.mutex_key,
-          j.skip_if_running,
-          j.require_engine_on,
-          j.timeout_sec,
-        ]
-      );
-    }
-  } else {
-    for (const presetId of ['job_collect_top100', 'job_collect_inplay_tick', 'job_condition_query']) {
-      const j = PRESET_JOBS.find((row) => row.id === presetId);
-      if (!j) continue;
-      await pool.query(
-        `INSERT IGNORE INTO scheduler_jobs
-          (id, name, job_type, engine, enabled, schedule_mode, interval_sec,
-           mutex_key, skip_if_running, require_engine_on, timeout_sec)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          j.id,
-          j.name,
-          j.job_type,
-          j.engine,
-          j.enabled,
-          j.schedule_mode,
-          j.interval_sec,
-          j.mutex_key,
-          j.skip_if_running,
-          j.require_engine_on,
-          j.timeout_sec,
-        ]
-      );
-    }
-  }
+  await seedPresetJobsIfNeeded();
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_full'`);
   await pool.query(
     `UPDATE scheduler_jobs SET name='盘中比分刷新' WHERE id='job_collect_inplay_tick' AND job_type='collect.inplay_tick'`,

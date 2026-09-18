@@ -574,8 +574,15 @@ let tickTimer = null
 /** 基于 API 返回的服务器时间推算当前秒级时间戳 */
 const nowSec = computed(() => {
   clockTick.value
-  if (serverTimeBase.value == null) return Math.floor(Date.now() / 1000)
-  return serverTimeBase.value + Math.floor((Date.now() - (loadedAtMs.value || Date.now())) / 1000)
+  const wall = Math.floor(Date.now() / 1000)
+  if (serverTimeBase.value == null || !Number.isFinite(Number(serverTimeBase.value))) return wall
+  const base = Number(serverTimeBase.value)
+  // 秒级时间戳；若误传毫秒则归一
+  const baseSec = base > 1e12 ? Math.floor(base / 1000) : Math.floor(base)
+  const derived = baseSec + Math.floor((Date.now() - (loadedAtMs.value || Date.now())) / 1000)
+  // 缓存里的 serverTime 过旧时，回退本机时间，避免已开赛仍显示「未开赛」
+  if (!Number.isFinite(derived) || Math.abs(derived - wall) > 120) return wall
+  return derived
 })
 
 function isLiveStatus(s) {
@@ -601,19 +608,36 @@ function isEndedStatus(s) {
   return t === 'ended' || t === 'finished' || t === 'closed' || t === 'walkover'
 }
 
+function statusRawText(v) {
+  if (v == null) return ''
+  if (typeof v === 'object') {
+    return String(v.description || v.type || v.name || '').trim()
+  }
+  return String(v).trim()
+}
+
+function startTimestampSec(m) {
+  const ts = Number(m?.startTimestamp ?? m?.start_time)
+  if (!Number.isFinite(ts) || ts <= 0) return null
+  return ts > 1e12 ? Math.floor(ts / 1000) : Math.floor(ts)
+}
+
 /** 开赛时间已到则视为进行中（与后端 serverTime 对齐）；仅对「未开赛」做超时兜底 */
 function effectiveStatus(m) {
   if (!m) return ''
-  const raw = m.status
-  const rawType = m.statusType
-  if (isEndedStatus(raw) || String(rawType).toLowerCase() === 'finished') return raw || 'Ended'
+  const raw = statusRawText(m.status)
+  const rawType = statusRawText(m.statusType || m.status?.type).toLowerCase().replace(/\s+/g, '')
+  if (isEndedStatus(raw) || rawType === 'finished' || isEndedStatus(rawType)) return raw || 'Ended'
   // 源已标明进行中（含 1st/2nd set）→ 信任源数据，绝不用开赛时长强行改成结束（大满贯长盘会误伤比分）
-  if (isLiveStatus(raw) || isLiveStatus(rawType)) return raw
-  const ts = Number(m.startTimestamp)
-  const age = Number.isFinite(ts) && ts > 0 ? nowSec.value - ts : null
+  if (isLiveStatus(raw) || isLiveStatus(rawType)) return raw || 'Live'
+  const ts = startTimestampSec(m)
+  const age = ts != null ? nowSec.value - ts : null
   const notStarted =
-    raw === 'Not started' || String(rawType || '').toLowerCase() === 'notstarted'
-  if (notStarted && Number.isFinite(ts) && ts > 0 && nowSec.value >= ts) {
+    /^not\s*started$/i.test(raw)
+    || rawType === 'notstarted'
+    || raw === '未开赛'
+    || (!raw && !rawType)
+  if (notStarted && ts != null && nowSec.value >= ts) {
     if (age != null && age > 6 * 3600) return 'Ended'
     return 'Live'
   }
@@ -767,7 +791,8 @@ function matchPassesFilter(m, statusFilter) {
   const poly = data.value?.polymarketByEvent || {}
   // 盘前/盘中/盘后：排名类条件由产品挂载的条件组在服务端筛；列表仅保留巡回/PM（盘后另保留盈亏）
   if (isPrematchMode.value) {
-    if (!isMatchNotStarted(m)) return false
+    // 盘前缓存里开赛时间已过的场次：状态显示「进行中」，仍留在本列表直至迁到盘中
+    if (isMatchEnded(m)) return false
     return applyPrematchFilters([m], {
       tour: tour.value,
       pm: pmFilter.value,
@@ -2132,7 +2157,11 @@ async function loadOnce({
       bettingEntry.value = normalizeInplayBettingEntry(bundle.bettingEntry)
     }
     if (bundle?.serverTime != null) {
-      serverTimeBase.value = Number(bundle.serverTime)
+      const st = Number(bundle.serverTime)
+      serverTimeBase.value = Number.isFinite(st) ? (st > 1e12 ? Math.floor(st / 1000) : Math.floor(st)) : null
+      loadedAtMs.value = Date.now()
+    } else {
+      serverTimeBase.value = Math.floor(Date.now() / 1000)
       loadedAtMs.value = Date.now()
     }
     if (isSettledMode.value) {
@@ -2204,7 +2233,7 @@ onMounted(() => {
     syncInplayPoll()
   })
 
-  tickTimer = setInterval(() => { clockTick.value++ }, 30000)
+  tickTimer = setInterval(() => { clockTick.value++ }, 5000)
 })
 
 watch(canEditConditionRules, (on) => {

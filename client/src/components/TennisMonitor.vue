@@ -1754,8 +1754,8 @@ onUnmounted(() => {
         <p v-else-if="!engines" class="engines-note">配置尚未加载。请确认后端已启动且 MySQL 可用，然后点右上角「刷新」。</p>
         <template v-else>
         <p class="engines-note" style="margin:0 0 8px">
-          各条件组相互独立。盘前组可勾选「关联未开赛产品」；产品管理选用后，打开该未开赛产品页即按该组条件筛选列表。
-          在调度中心添加「条件引擎」任务后，命中数据将自动调用投注（无需单独配置投注引擎）。
+          各条件组相互独立。盘前组勾选「关联未开赛」并保存后，未开赛列表会按这些组筛选；也可在产品管理中挂载到具体产品以覆盖默认。
+          条件桶需打开。在调度中心添加「条件引擎」任务后，命中数据将自动调用投注（无需单独配置投注引擎）。
         </p>
 
         <div class="settings-row engines-row">
@@ -1901,7 +1901,7 @@ onUnmounted(() => {
               <label
                 v-if="conditionTab === 'prematch'"
                 class="bf-check group-link-check"
-                title="勾选后可在产品管理中挂载到未开赛产品"
+                title="勾选后，未开赛列表默认按本组筛选；也可在产品管理中挂载到具体产品"
               >
                 <input
                   type="checkbox"

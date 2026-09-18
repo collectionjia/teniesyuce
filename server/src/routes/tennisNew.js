@@ -39,6 +39,7 @@ router.get('/today', auth(), async (_req, res) => {
       deprecated: true,
       forward: 'tennis-prematch',
       source: full.source || 'redis-prematch-via-new',
+      serverTime: Math.floor(Date.now() / 1000),
     });
   } catch (err) {
     console.error('[tennis-new/today→prematch]', err);

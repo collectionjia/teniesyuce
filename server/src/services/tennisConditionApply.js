@@ -291,6 +291,7 @@ async function resolveBucketFilterGroups(bucketKey, productId = null) {
   } else {
     product = await productService.findOnlineProductForBucket(bucketKey);
   }
+  // 产品已挂载条件组 → 优先用挂载
   if (product && Array.isArray(product.conditionSelect) && product.conditionSelect.length) {
     const groups = resolveGroupsFromProductSelect(library, product.conditionSelect);
     if (groups.length) {
@@ -304,24 +305,26 @@ async function resolveBucketFilterGroups(bucketKey, productId = null) {
       };
     }
   }
-  if (productId) {
+  // 盘前：产品未挂载或挂载无效时，用勾选了「关联未开赛」的条件组
+  if (bucketKey === 'prematch') {
+    const groups = linkedGroupsForBucket(bucketKey, library);
     return {
       ok: true,
       cfg,
       bucket,
       product,
-      groups: [],
-      source: 'product_no_selection',
+      groups,
+      source: groups.length ? 'engine_library_linked' : (productId ? 'product_no_selection' : 'no_groups'),
     };
   }
-  const groups = linkedGroupsForBucket(bucketKey, library);
+  // 盘中/盘后：无有效挂载则不筛
   return {
     ok: true,
     cfg,
     bucket,
     product,
     groups: [],
-    source: groups.length ? 'engine_library_linked' : 'no_groups',
+    source: productId ? 'product_no_selection' : 'no_groups',
   };
 }
 

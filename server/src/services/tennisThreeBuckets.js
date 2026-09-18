@@ -241,7 +241,12 @@ async function migratePrematchByStartTime(nowMs = Date.now()) {
       const ts = Number(e.startTimestamp || e.start_time || 0);
       const startMs = ts > 1e12 ? ts : ts * 1000;
       if (startMs > 0 && startMs <= nowMs && passesTop100(e, rankings)) {
-        move.push({ ...e, tournament: e.tournament || t.name, statusType: e.statusType || 'inprogress' });
+        move.push({
+          ...e,
+          tournament: e.tournament || t.name,
+          status: 'Live',
+          statusType: 'inprogress',
+        });
       } else {
         keep.push({ ...e, tournament: e.tournament || t.name });
       }
