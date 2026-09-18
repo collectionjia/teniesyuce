@@ -1,10 +1,11 @@
 /**
- * 刷新网球 bundle 中 Polymarket moneyline 隐含价（与外链页对齐）。
- * 日包只采一次价，完赛后外链已结算成 100/0 而详情仍显示中途价。
+ * 刷新网球 bundle 中 Polymarket moneyline 价。
+ * 优先 CLOB order book mid（贴盘口深度），无盘口时回退 Gamma outcomePrices。
  */
 const { httpsGetJson } = require('../lib/httpProxyAgent');
 
 const GAMMA = 'https://gamma-api.polymarket.com';
+const CLOB = process.env.POLY_CLOB_BASE || 'https://clob.polymarket.com';
 const CONCURRENCY = 4;
 
 function extractSlug(poly) {
@@ -48,6 +49,40 @@ function parsePrices(mkt) {
   return [a, b];
 }
 
+function parseTokenIds(mkt) {
+  const tokens = parseJsonField(mkt?.clobTokenIds, []);
+  if (!Array.isArray(tokens)) return [];
+  return tokens.filter(Boolean).map(String);
+}
+
+async function bookMidPrice(tokenId) {
+  if (!tokenId) return null;
+  try {
+    const book = await httpsGetJson(`${CLOB}/book?token_id=${encodeURIComponent(tokenId)}`, {
+      scope: 'Polymarket',
+    });
+    const bids = book?.bids || [];
+    const asks = book?.asks || [];
+    const bestBid = bids.length ? Math.max(...bids.map((b) => Number(b.price) || 0)) : 0;
+    const bestAsk = asks.length ? Math.min(...asks.map((a) => Number(a.price) || 0)) : 0;
+    if (bestBid > 0 && bestAsk > 0) return (bestBid + bestAsk) / 2;
+    if (bestBid > 0) return bestBid;
+    if (bestAsk > 0) return bestAsk;
+    return null;
+  } catch (e) {
+    console.warn(`[tennis/poly-clob] book ${String(tokenId).slice(0, 12)}…:`, e.message || e);
+    return null;
+  }
+}
+
+async function parsePricesFromClob(mkt) {
+  const tokens = parseTokenIds(mkt);
+  if (tokens.length < 2) return null;
+  const [a, b] = await Promise.all([bookMidPrice(tokens[0]), bookMidPrice(tokens[1])]);
+  if (a == null || b == null) return null;
+  return [a, b];
+}
+
 async function fetchEventBySlug(slug) {
   const body = await httpsGetJson(`${GAMMA}/events?slug=${encodeURIComponent(slug)}`, {
     scope: 'Polymarket',
@@ -56,28 +91,34 @@ async function fetchEventBySlug(slug) {
   return body;
 }
 
-function applyLivePrices(poly, ev) {
+async function applyLivePrices(poly, ev) {
   if (!poly || !ev) return poly;
   const mkt = pickMoneylineMarket(ev.markets);
-  const prices = parsePrices(mkt);
+  let source = 'clob';
+  let prices = await parsePricesFromClob(mkt);
+  if (!prices) {
+    source = 'gamma';
+    prices = parsePrices(mkt);
+  }
   if (!prices) return poly;
   const outcomes = parseJsonField(mkt.outcomes, poly.moneyline?.outcomes || []);
-  const next = {
+  return {
     ...poly,
     active: ev.active != null ? !!ev.active : poly.active,
     closed: ev.closed != null ? !!ev.closed : poly.closed,
     home_price: prices[0],
     away_price: prices[1],
+    priceSource: source,
     moneyline: {
       ...(poly.moneyline || {}),
       question: mkt.question || poly.moneyline?.question,
       slug: mkt.slug || poly.moneyline?.slug || poly.slug,
       outcomes: outcomes.length >= 2 ? outcomes : poly.moneyline?.outcomes,
       prices,
+      source,
     },
     pricesUpdatedAt: new Date().toISOString(),
   };
-  return next;
 }
 
 async function mapPool(items, limit, fn) {
@@ -115,7 +156,7 @@ async function refreshPolymarketPrices(bundle) {
         failed += 1;
         return;
       }
-      const next = applyLivePrices(poly, ev);
+      const next = await applyLivePrices(poly, ev);
       if (next !== poly && next.moneyline?.prices) {
         map[id] = next;
         updated += 1;

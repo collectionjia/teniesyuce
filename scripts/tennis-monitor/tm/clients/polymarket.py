@@ -1,4 +1,4 @@
-"""Polymarket Gamma API: tennis event match + moneyline prices."""
+"""Polymarket: tennis event match (Gamma) + moneyline prices (CLOB book mid)."""
 from __future__ import annotations
 
 import json
@@ -14,6 +14,7 @@ import requests
 from tm.clients.proxy import require_proxy
 
 GAMMA = (os.environ.get("POLY_GAMMA_BASE") or "https://gamma-api.polymarket.com").rstrip("/")
+CLOB = (os.environ.get("POLY_CLOB_BASE") or "https://clob.polymarket.com").rstrip("/")
 TENNIS_TAG_ID = int(os.environ.get("POLY_TENNIS_TAG_ID", "864"))
 CACHE_MS = int(os.environ.get("POLY_TENNIS_CACHE_MS", "120000"))
 MAX_OFFSET = int(os.environ.get("POLY_TENNIS_MAX_OFFSET", "500"))
@@ -28,10 +29,10 @@ def get_request_count() -> int:
     return _request_count
 
 
-def _gamma_get(path: str, *, params: dict[str, Any] | None = None) -> Any:
+def _poly_http_get(base: str, path: str, *, params: dict[str, Any] | None = None, label: str = "poly") -> Any:
     global _request_count
     _request_count += 1
-    url = f"{GAMMA}/{path.lstrip('/')}"
+    url = f"{base}/{path.lstrip('/')}"
     proxies = require_proxy("Polymarket")
     resp = requests.get(
         url,
@@ -41,8 +42,16 @@ def _gamma_get(path: str, *, params: dict[str, Any] | None = None) -> Any:
         proxies=proxies,
     )
     if resp.status_code >= 400:
-        raise RuntimeError(f"gamma HTTP {resp.status_code}: {path}")
+        raise RuntimeError(f"{label} HTTP {resp.status_code}: {path}")
     return resp.json()
+
+
+def _gamma_get(path: str, *, params: dict[str, Any] | None = None) -> Any:
+    return _poly_http_get(GAMMA, path, params=params, label="gamma")
+
+
+def _clob_get(path: str, *, params: dict[str, Any] | None = None) -> Any:
+    return _poly_http_get(CLOB, path, params=params, label="clob")
 
 
 def normalize_name(name: str | None) -> str:
@@ -110,6 +119,53 @@ def parse_prices(mkt: dict[str, Any] | None) -> list[float] | None:
     except (TypeError, ValueError):
         return None
     if a != a or b != b:
+        return None
+    return [a, b]
+
+
+def parse_token_ids(mkt: dict[str, Any] | None) -> list[str]:
+    if not mkt:
+        return []
+    tokens = _parse_json_field(mkt.get("clobTokenIds"), [])
+    if not isinstance(tokens, list):
+        return []
+    return [str(t) for t in tokens if t]
+
+
+def book_mid_price(token_id: str) -> float | None:
+    """Best-bid/ask mid from CLOB order book; closer to tradable depth than Gamma outcomePrices."""
+    if not token_id:
+        return None
+    try:
+        book = _clob_get("book", params={"token_id": token_id})
+    except Exception as exc:
+        print(f"[polymarket] clob book skip {token_id[:12]}…: {exc}")
+        return None
+    if not isinstance(book, dict):
+        return None
+    bids = book.get("bids") or []
+    asks = book.get("asks") or []
+    try:
+        best_bid = max((float(b["price"]) for b in bids), default=0.0) if bids else 0.0
+        best_ask = min((float(a["price"]) for a in asks), default=0.0) if asks else 0.0
+    except (TypeError, ValueError, KeyError):
+        return None
+    if best_bid > 0 and best_ask > 0:
+        return (best_bid + best_ask) / 2.0
+    if best_bid > 0:
+        return best_bid
+    if best_ask > 0:
+        return best_ask
+    return None
+
+
+def parse_prices_from_clob(mkt: dict[str, Any] | None) -> list[float] | None:
+    tokens = parse_token_ids(mkt)
+    if len(tokens) < 2:
+        return None
+    a = book_mid_price(tokens[0])
+    b = book_mid_price(tokens[1])
+    if a is None or b is None:
         return None
     return [a, b]
 
@@ -289,7 +345,11 @@ def fetch_event_by_slug(slug: str) -> dict[str, Any] | None:
 
 def apply_live_prices(poly: dict[str, Any], ev: dict[str, Any]) -> dict[str, Any]:
     mkt = pick_moneyline_market(ev.get("markets") or [])
-    prices = parse_prices(mkt)
+    source = "clob"
+    prices = parse_prices_from_clob(mkt)
+    if not prices:
+        source = "gamma"
+        prices = parse_prices(mkt)
     if not prices:
         return poly
     outcomes = parse_outcomes((mkt or {}).get("outcomes")) or (poly.get("moneyline") or {}).get("outcomes") or []
@@ -298,12 +358,14 @@ def apply_live_prices(poly: dict[str, Any], ev: dict[str, Any]) -> dict[str, Any
     next_poly["closed"] = bool(ev.get("closed")) if ev.get("closed") is not None else poly.get("closed")
     next_poly["home_price"] = prices[0]
     next_poly["away_price"] = prices[1]
+    next_poly["priceSource"] = source
     next_poly["moneyline"] = {
         **(poly.get("moneyline") or {}),
         "question": (mkt or {}).get("question") or (poly.get("moneyline") or {}).get("question"),
         "slug": (mkt or {}).get("slug") or (poly.get("moneyline") or {}).get("slug") or poly.get("slug"),
         "outcomes": outcomes if len(outcomes) >= 2 else (poly.get("moneyline") or {}).get("outcomes"),
         "prices": prices,
+        "source": source,
     }
     return next_poly
 
