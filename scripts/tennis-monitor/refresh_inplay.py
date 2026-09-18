@@ -64,12 +64,26 @@ def refresh_scores(matches: list[dict[str, Any]]) -> dict[str, Any]:
     skip_warm = os.environ.get("SOFA_SKIP_WARM_ON_LIVE", "1") == "1"
     error: str | None = None
     live_raw: list[dict] = []
-    with SofascoreClient(skip_warm=skip_warm) as client:
-        try:
-            live_raw = list((client.get_live_tennis_events().get("events") or []))
-        except Exception as exc:
-            error = str(exc)
-            print(f"[refresh_inplay] Sofascore live failed: {error}", flush=True)
+    try:
+        with SofascoreClient(skip_warm=skip_warm) as client:
+            try:
+                live_raw = list((client.get_live_tennis_events().get("events") or []))
+            except Exception as exc:
+                error = str(exc)
+                print(f"[refresh_inplay] Sofascore live failed: {error}", flush=True)
+    except Exception as exc:
+        # curl_cffi / 代理未配置等：Client 初始化失败也要落成 scores.error，避免整脚本崩掉
+        error = str(exc)
+        print(f"[refresh_inplay] Sofascore client failed: {error}", flush=True)
+        return {
+            "updated": 0,
+            "failed": len(want),
+            "live_feed": 0,
+            "tracked": len(want),
+            "missed": [],
+            "error": error,
+            "ok": False,
+        }
 
     by_id = {int(ev["id"]): ev for ev in live_raw if ev.get("id") is not None}
     updated = 0

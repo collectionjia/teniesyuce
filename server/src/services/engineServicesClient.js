@@ -110,8 +110,18 @@ async function collectPartial(body = {}) {
   try {
     return await request('collect', 'POST', '/internal/collect/partial', body);
   } catch (e) {
-    // 采集服务不可达时回退到本机 tick，避免盘中页刷新只读到旧 Redis
-    if (e?.status === 503 || e?.status === 502 || e?.code === 'ECONNREFUSED') {
+    // 采集服务挂掉 / 连不上时回退本机 tick（Node fetch 常无 status，只带 message/cause）
+    const code = e?.code || e?.cause?.code || e?.cause?.cause?.code;
+    const msg = String(e?.message || e || '');
+    const unreachable =
+      e?.status === 503
+      || e?.status === 502
+      || code === 'ECONNREFUSED'
+      || code === 'ENOTFOUND'
+      || code === 'ETIMEDOUT'
+      || /fetch failed|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|network|socket/i.test(msg);
+    if (unreachable) {
+      console.warn('[engines] collect partial unreachable, fallback local:', msg);
       return collectPartialLocal(body);
     }
     throw e;
