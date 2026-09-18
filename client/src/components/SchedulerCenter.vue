@@ -17,6 +17,8 @@ let logTimer = null
 const createOpen = ref(false)
 const logOpen = ref(false)
 const creating = ref(false)
+const detailOpen = ref(false)
+const detailRun = ref(null)
 
 const tgOpen = ref(false)
 const tgSaving = ref(false)
@@ -435,6 +437,52 @@ async function clearRuns() {
   }
 }
 
+function formatRunDetail(r) {
+  if (!r) return ''
+  const m = r.metrics
+  if (!m || typeof m !== 'object') {
+    return [r.error, r.message].filter(Boolean).join('\n') || '暂无详细日志（本次未写入 metrics）'
+  }
+  const parts = []
+  const head = {
+    tick_at: m.tick_at,
+    fields: m.fields,
+    scores: m.scores,
+    prices: m.prices,
+    inplay_matches: m.inplay_matches,
+    migrated_prematch_to_inplay: m.migrated_prematch_to_inplay,
+    admitted_live_from_full: m.admitted_live_from_full,
+    migrated_inplay_to_settled: m.migrated_inplay_to_settled,
+  }
+  parts.push(`=== 汇总 ===\n${JSON.stringify(head, null, 2)}`)
+  if (m.score_failures) {
+    parts.push(`=== 比分失败 ===\n${JSON.stringify(m.score_failures, null, 2)}`)
+  }
+  if (m.odds_failures?.length) {
+    parts.push(`=== 赔率失败 ===\n${JSON.stringify(m.odds_failures, null, 2)}`)
+  }
+  const tail = m.log_tail || m.refresh_inplay?.log_tail
+  if (tail) parts.push(`=== 执行日志 ===\n${tail}`)
+  if (m.refresh_inplay) {
+    parts.push(`=== refresh_inplay ===\n${JSON.stringify(m.refresh_inplay, null, 2)}`)
+  }
+  // 其它任务类型：整包 metrics
+  if (!m.scores && !m.prices && !tail) {
+    parts.push(`=== metrics ===\n${JSON.stringify(m, null, 2)}`)
+  }
+  return parts.join('\n\n')
+}
+
+function openRunDetail(r) {
+  detailRun.value = r
+  detailOpen.value = true
+}
+
+function closeRunDetail() {
+  detailOpen.value = false
+  detailRun.value = null
+}
+
 function pickCreatableJobTypeForTab(tab) {
   const hit = creatableJobTypeOptions.value.find(
     (t) => (t.category || categoryOfJobType(t.jobType)) === tab,
@@ -563,6 +611,7 @@ async function runNow(job) {
 function closeLogModal() {
   logOpen.value = false
   stopLogTimer()
+  closeRunDetail()
 }
 
 async function openLogModal(job) {
@@ -804,6 +853,7 @@ onUnmounted(() => {
                     <th>触发</th>
                     <th>状态</th>
                     <th>说明</th>
+                    <th class="col-act">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -812,6 +862,9 @@ onUnmounted(() => {
                     <td>{{ r.trigger }}</td>
                     <td :class="statusClass(r.status)">{{ r.status }}</td>
                     <td class="msg">{{ r.error || r.message || r.runId }}</td>
+                    <td class="col-act">
+                      <button type="button" class="link-btn primary" @click="openRunDetail(r)">详细日志</button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -820,8 +873,24 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-if="createOpen" class="modal-mask" @click.self="closeCreateModal">
-        <div class="modal-panel" role="dialog" aria-modal="true" aria-label="新增调度任务">
+      <div v-if="detailOpen" class="modal-mask detail-mask" @click.self="closeRunDetail">
+        <div class="modal-panel detail-modal" role="dialog" aria-modal="true" aria-label="详细日志">
+          <header class="modal-head">
+            <div>
+              <div class="modal-title">详细日志</div>
+              <div v-if="detailRun" class="modal-sub">
+                {{ detailRun.startedAt }} · {{ detailRun.trigger }} · {{ detailRun.status }}
+              </div>
+            </div>
+            <button type="button" class="btn ghost sm" @click="closeRunDetail">关闭</button>
+          </header>
+          <div class="modal-body detail-modal-body">
+            <pre class="detail-pre">{{ formatRunDetail(detailRun) }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="createOpen" class="modal-mask" @click.self="closeCreateModal">        <div class="modal-panel" role="dialog" aria-modal="true" aria-label="新增调度任务">
           <header class="modal-head">
             <div class="modal-title">新增任务</div>
             <button type="button" class="btn ghost sm" @click="closeCreateModal">关闭</button>
@@ -1130,6 +1199,36 @@ onUnmounted(() => {
 .modal-panel.log-modal {
   width: min(960px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
+}
+.modal-panel.detail-modal {
+  width: min(860px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+}
+.detail-mask {
+  z-index: 10000;
+}
+.detail-modal-body {
+  min-height: 0;
+  padding: 12px 14px 16px;
+}
+.detail-pre {
+  margin: 0;
+  max-height: min(70vh, 640px);
+  overflow: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.log-table .col-act {
+  width: 88px;
+  white-space: nowrap;
+  text-align: right;
 }
 .modal-sub {
   margin-top: 2px;

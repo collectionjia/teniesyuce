@@ -479,15 +479,21 @@ function runInplayRefreshAndWait({
       });
     }, timeout);
     childProc.stdout?.on('data', (buf) => {
-      chunks.push(String(buf));
+      const text = String(buf);
+      chunks.push(text);
+      pushLog(text);
     });
     childProc.stderr?.on('data', (buf) => {
-      chunks.push(String(buf));
+      const text = String(buf);
+      chunks.push(text);
+      pushLog(text);
     });
     childProc.on('error', (err) => {
+      const msg = err.message || String(err);
+      pushLog(`[refresh_inplay] spawn error: ${msg}`);
       finish({
         ok: false,
-        error: err.message || String(err),
+        error: msg,
         log_tail: chunks.slice(-40).join(''),
         upstream: 'ipwo',
       });
@@ -504,12 +510,21 @@ function runInplayRefreshAndWait({
         }
       }
       const ok = code === 0 && (!summary || summary.ok !== false);
+      const log_tail = text.split(/\r?\n/).slice(-40).join('\n');
+      try {
+        appendLogFile([
+          `=== refresh_inplay.py ${new Date().toISOString()} ===`,
+          ...text.split(/\r?\n/).filter(Boolean).slice(-80),
+        ]);
+      } catch {
+        /* ignore */
+      }
       finish({
         ok,
         code,
         summary,
         error: ok ? null : summary?.error || (code != null ? `exit ${code}` : 'refresh_inplay failed'),
-        log_tail: text.split(/\r?\n/).slice(-40).join('\n'),
+        log_tail,
         upstream: 'ipwo',
         script: 'refresh_inplay.py',
       });

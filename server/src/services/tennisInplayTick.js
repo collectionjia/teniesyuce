@@ -160,12 +160,17 @@ async function runInplayTick({ skipBetting = false } = {}) {
     upstream: 'ipwo',
     scores,
     prices,
+    // 失败明细：前端/指标可直接看，不必翻 Docker 日志
+    score_failures: wantScore ? (scores.summary?.missed || scores.error || null) : null,
+    odds_failures: wantOdds ? (prices.summary?.failures || null) : null,
+    log_tail: refresh?.log_tail || null,
     refresh_inplay: refresh
       ? {
           ok: !!refresh.ok,
           error: refresh.error || null,
           timedOut: !!refresh.timedOut,
           summary: refresh.summary || null,
+          log_tail: refresh.log_tail || null,
         }
       : null,
     admitted_live_from_full: admitLive?.admitted || 0,
