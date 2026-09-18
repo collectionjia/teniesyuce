@@ -114,11 +114,13 @@ class SofascoreClient:
             except Exception as exc:
                 last_exc = exc
                 if attempt + 1 >= _REQUEST_RETRIES or not _is_retryable(exc):
-                    raise
+                    detail = str(exc).strip() or repr(exc)
+                    raise RuntimeError(f"Sofascore 请求失败: {detail} | url={url}") from exc
                 self._warmed = False
                 self.warm_up()
                 time.sleep(_RETRY_BACKOFF * (attempt + 1))
-        raise last_exc or RuntimeError("request failed")
+        detail = str(last_exc).strip() if last_exc else "request failed"
+        raise RuntimeError(f"Sofascore 请求失败: {detail or repr(last_exc)} | url={url}") from last_exc
 
     def _api_get(self, path: str, *, referer: str | None = None) -> dict[str, Any]:
         if not self._warmed:

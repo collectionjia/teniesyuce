@@ -24,6 +24,7 @@ const MONITOR_DIR = resolveMonitorDir();
 const SCHEDULE_FILE = path.join(MONITOR_DIR, 'config', 'schedule.json');
 const COLLECT_SCRIPT = path.join(MONITOR_DIR, 'collect.py');
 const COLLECT_LIVE_SCRIPT = path.join(MONITOR_DIR, 'collect_live.py');
+const REFRESH_INPLAY_SCRIPT = path.join(MONITOR_DIR, 'refresh_inplay.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
 
@@ -273,11 +274,30 @@ function friendlyCollectError(code, text) {
   if (/CONNECT tunnel failed|curl:\s*\(7\)/i.test(t) || /代理被拒绝/i.test(t)) {
     return 'IPWO 代理被拒绝 (403)，请检查 monitor.env 代理账号/额度；采集禁止直连，请修复代理后重试';
   }
+  if (/Failed to perform|curl_cffi|ProxyError|Tunnel connection failed|SOCKS|Connection reset|timed out|Timeout/i.test(t)) {
+    const hit = [...t.split(/\r?\n/)].reverse().find((l) =>
+      /Failed to perform|ProxyError|Tunnel|SOCKS|Connection reset|timed out|Timeout|curl_cffi|采集失败/i.test(l),
+    );
+    if (hit) return hit.replace(/^采集失败:\s*/, '').slice(0, 240);
+    return 'Sofascore/代理网络失败（超时或隧道失败），请检查 IPWO 与容器出网';
+  }
   const failLine = [...t.split(/\r?\n/)].reverse().find((l) => /采集失败:/.test(l));
-  if (failLine) return failLine.replace(/^采集失败:\s*/, '').slice(0, 200);
-  const errLine = [...t.split(/\r?\n/)].reverse().find((l) => /Error:|Traceback|HTTP \d{3}/.test(l));
-  if (errLine) return errLine.slice(0, 200);
-  return `collect.py 退出码 ${code}`;
+  if (failLine) return failLine.replace(/^采集失败:\s*/, '').slice(0, 240);
+  // Traceback 最后一行常为 "RuntimeError: xxx"；空 message 时继续往前找有内容的异常行
+  const lines = t.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i];
+    if (/^(RuntimeError|Exception|OSError|ValueError|TypeError|KeyError|HTTPError|ProxyError)\b/.test(l)) {
+      const msg = l.replace(/^[A-Za-z.]+:\s*/, '').trim();
+      if (msg) return l.slice(0, 240);
+      // 空 message：带上前一行上下文
+      const prev = lines[i - 1] || '';
+      return `${l} (${prev.slice(0, 160) || `exit ${code}`})`.slice(0, 240);
+    }
+  }
+  const errLine = [...lines].reverse().find((l) => /Error:|Traceback|HTTP \d{3}/.test(l));
+  if (errLine) return errLine.slice(0, 240);
+  return `collect_live.py 退出码 ${code}`;
 }
 
 function elapsedSecFromTiming(timing) {
@@ -406,6 +426,95 @@ function startLiveCollect() {
   const r = beginLiveCollect({ trigger: 'admin-collect_live.py', wait: false });
   if (!r.ok) return r;
   return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
+}
+
+/**
+ * 轻量盘中刷新：只刷 Redis tennis:bundle:inplay 已有场次的比分(Sofascore) + Polymarket 赔率。
+ * 不重跑 collect_live 全量发现。
+ */
+function runInplayRefreshAndWait({
+  timeoutMs = 120000,
+  scoresOnly = false,
+  oddsOnly = false,
+} = {}) {
+  const timeout = Math.max(15000, Number(timeoutMs) || 120000);
+  if (!fs.existsSync(REFRESH_INPLAY_SCRIPT)) {
+    return Promise.resolve({
+      ok: false,
+      error: `refresh_inplay.py not found: ${REFRESH_INPLAY_SCRIPT}`,
+      upstream: 'ipwo',
+    });
+  }
+  const bin = pythonBin();
+  const args = ['-u', REFRESH_INPLAY_SCRIPT];
+  if (scoresOnly) args.push('--scores-only');
+  if (oddsOnly) args.push('--odds-only');
+  const envExtra = loadMonitorEnvForChild();
+  return new Promise((resolve) => {
+    const chunks = [];
+    let settled = false;
+    const childProc = spawn(bin, args, {
+      cwd: MONITOR_DIR,
+      env: { ...process.env, ...envExtra.env, PYTHONUNBUFFERED: '1', PYTHONIOENCODING: 'utf-8' },
+      windowsHide: true,
+    });
+    const finish = (payload) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(payload);
+    };
+    const timer = setTimeout(() => {
+      try {
+        childProc.kill('SIGTERM');
+      } catch {
+        /* ignore */
+      }
+      finish({
+        ok: false,
+        timedOut: true,
+        error: `refresh_inplay timed out after ${timeout}ms`,
+        log_tail: chunks.slice(-40).join(''),
+        upstream: 'ipwo',
+      });
+    }, timeout);
+    childProc.stdout?.on('data', (buf) => {
+      chunks.push(String(buf));
+    });
+    childProc.stderr?.on('data', (buf) => {
+      chunks.push(String(buf));
+    });
+    childProc.on('error', (err) => {
+      finish({
+        ok: false,
+        error: err.message || String(err),
+        log_tail: chunks.slice(-40).join(''),
+        upstream: 'ipwo',
+      });
+    });
+    childProc.on('close', (code) => {
+      const text = chunks.join('');
+      let summary = null;
+      const m = text.match(/SUMMARY\s+(\{.*\})\s*$/m) || text.match(/SUMMARY\s+(\{[\s\S]*\})/);
+      if (m) {
+        try {
+          summary = JSON.parse(m[1]);
+        } catch {
+          summary = null;
+        }
+      }
+      const ok = code === 0 && (!summary || summary.ok !== false);
+      finish({
+        ok,
+        code,
+        summary,
+        error: ok ? null : summary?.error || (code != null ? `exit ${code}` : 'refresh_inplay failed'),
+        log_tail: text.split(/\r?\n/).slice(-40).join('\n'),
+        upstream: 'ipwo',
+        script: 'refresh_inplay.py',
+      });
+    });
+  });
 }
 
 /**
@@ -654,6 +763,7 @@ module.exports = {
   startCollect,
   startLiveCollect,
   runLiveCollectAndWait,
+  runInplayRefreshAndWait,
   statusPayload,
   livePayload,
   schedulePayload,
@@ -667,5 +777,6 @@ module.exports = {
   isCollectEnabled,
   isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
   isLiveCollectAvailable: () => fs.existsSync(COLLECT_LIVE_SCRIPT),
+  isInplayRefreshAvailable: () => fs.existsSync(REFRESH_INPLAY_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

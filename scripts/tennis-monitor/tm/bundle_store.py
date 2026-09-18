@@ -278,18 +278,46 @@ def build_live_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def write_live_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
-    """写入盘中采集 Redis 键 tennis:bundle:inplay（与 server tennisInplayCache.js 一致）。"""
+def _redis_client():
+    """返回 (client|None, error_dict|None)。"""
     _load_redis_url_from_server_env()
     url = (os.environ.get("REDIS_URL") or "").strip()
     if not url:
-        return {"ok": False, "skipped": True, "reason": "未配置 REDIS_URL（可在 monitor.env 或 server/.env 填写）"}
+        return None, {
+            "ok": False,
+            "skipped": True,
+            "reason": "未配置 REDIS_URL（可在 monitor.env 或 server/.env 填写）",
+        }
     try:
         import redis
     except ImportError:
-        return {"ok": False, "error": "缺少 redis 包，请 pip install redis"}
+        return None, {"ok": False, "error": "缺少 redis 包，请 pip install redis"}
     try:
-        client = redis.from_url(url, decode_responses=True)
+        return redis.from_url(url, decode_responses=True), None
+    except Exception as exc:
+        return None, {"ok": False, "error": str(exc)}
+
+
+def read_live_bundle_redis() -> dict[str, Any]:
+    """读取 tennis:bundle:inplay；成功时 {ok, bundle}，失败时带 error/skipped。"""
+    client, err = _redis_client()
+    if err:
+        return err
+    try:
+        raw = client.get(INPLAY_BUNDLE_KEY)
+        if not raw:
+            return {"ok": True, "bundle": None, "key": INPLAY_BUNDLE_KEY}
+        return {"ok": True, "bundle": json.loads(raw), "key": INPLAY_BUNDLE_KEY}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+
+def write_live_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
+    """写入盘中采集 Redis 键 tennis:bundle:inplay（与 server tennisInplayCache.js 一致）。"""
+    client, err = _redis_client()
+    if err:
+        return err
+    try:
         payload = json.dumps(bundle, ensure_ascii=False)
         client.set(INPLAY_BUNDLE_KEY, payload, ex=TTL_SEC)
         client.set(INPLAY_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)

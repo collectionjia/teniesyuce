@@ -65,11 +65,17 @@ def main() -> int:
         print("错误: --limit 须 >= 1")
         return 2
     top100 = not args.all
-    result = run_tier_live_collect(
-        filter_conditions=args.filter,
-        top100=top100,
-        simple_limit=args.limit if not args.filter else None,
-    )
+    try:
+        result = run_tier_live_collect(
+            filter_conditions=args.filter,
+            top100=top100,
+            simple_limit=args.limit if not args.filter else None,
+        )
+    except Exception as exc:
+        # 保证调度日志能抓到可读原因（含空 message 的 RuntimeError）
+        detail = str(exc).strip() or repr(exc)
+        print(f"采集失败: {type(exc).__name__}: {detail}", flush=True)
+        raise
     timing = result.get("timing") or {}
     redis_info = (result.get("persist") or {}).get("redis") or {}
     if not result.get("total_events"):

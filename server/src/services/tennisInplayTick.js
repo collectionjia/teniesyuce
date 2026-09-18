@@ -1,8 +1,7 @@
 /**
- * 盘中 tick：IPWO collect_live 刷比分 + Polymarket 赔率 → 写入盘中包供「比赛进行中」展示
+ * 盘中 tick：读 Redis tennis:bundle:inplay 已有场次 → 只刷比分(Sofascore) + Polymarket 赔率
  */
 const tennisInplayCache = require('./tennisInplayCache');
-const tennisPolymarket = require('./tennisPolymarket');
 const tennisThreeBuckets = require('./tennisThreeBuckets');
 const tennisEngines = require('./tennisEngines');
 const tennisCollectRunner = require('./tennisCollectRunner');
@@ -38,90 +37,85 @@ async function runInplayTick({ skipBetting = false } = {}) {
   const wantScore = fields.score !== false;
 
   const migratePre = await tennisThreeBuckets.migratePrematchByStartTime();
+  // 确保盘中包有已开赛场次（从全量/赛前迁入），再只刷这些 id
+  const admitLive = await tennisThreeBuckets.admitLiveFromFull();
 
   let scores = { updated: 0, skipped: !wantScore, upstream: 'ipwo' };
   let prices = { updated: 0, failed: 0, skipped: !wantOdds };
-  let collectLive = null;
+  let refresh = null;
 
-  // 比分：经 IPWO 跑 collect_live.py（Sofascore live → Redis tennis:bundle:inplay）
-  // collect_live 同时会刷 Polymarket 价
-  if (wantScore) {
-    if (!tennisCollectRunner.isLiveCollectAvailable()) {
-      scores = {
-        updated: 0,
-        skipped: true,
-        error: 'collect_live.py not found',
-        upstream: 'ipwo',
-      };
+  let bundle = await tennisInplayCache.getBundle();
+  const matchCount = bundle?.live?.matches?.length || 0;
+
+  if (!matchCount) {
+    scores = {
+      updated: 0,
+      skipped: true,
+      reason: 'no inplay matches in redis',
+      upstream: 'ipwo',
+    };
+    prices = {
+      updated: 0,
+      failed: 0,
+      skipped: true,
+      reason: 'no inplay matches in redis',
+      upstream: 'ipwo',
+    };
+  } else if (wantScore || wantOdds) {
+    if (!tennisCollectRunner.isInplayRefreshAvailable()) {
+      const err = 'refresh_inplay.py not found';
+      if (wantScore) scores = { updated: 0, skipped: true, error: err, upstream: 'ipwo' };
+      if (wantOdds) prices = { updated: 0, failed: 0, skipped: true, error: err, upstream: 'ipwo' };
     } else {
-      collectLive = await tennisCollectRunner.runLiveCollectAndWait();
-      const bundleAfter = await tennisInplayCache.getBundle();
-      const n = bundleAfter?.live?.matches?.length || 0;
-      const polyN = Object.keys(bundleAfter?.polymarketByEvent || {}).length;
-      scores = {
-        updated: collectLive?.ok ? n : 0,
-        liveFeed: n,
-        polymarket: polyN,
-        ok: !!collectLive?.ok,
-        error: collectLive?.error || collectLive?.last?.error || null,
-        timedOut: !!collectLive?.timedOut,
-        upstream: 'ipwo',
-        script: 'collect_live.py',
-        summary: collectLive?.summary || collectLive?.last || null,
-        log_tail: collectLive?.log_tail || collectLive?.last?.log_tail || null,
-      };
-      if (!collectLive?.ok) {
-        console.warn('[inplay-tick] collect_live failed:', scores.error);
-        if (scores.log_tail) console.warn('[inplay-tick] log_tail:\n', scores.log_tail);
+      refresh = await tennisCollectRunner.runInplayRefreshAndWait({
+        scoresOnly: wantScore && !wantOdds,
+        oddsOnly: wantOdds && !wantScore,
+      });
+      const summary = refresh?.summary || {};
+      const s = summary.scores || {};
+      const p = summary.prices || {};
+      if (wantScore) {
+        scores = {
+          updated: Number(s.updated) || 0,
+          liveFeed: s.live_feed ?? null,
+          tracked: s.tracked ?? matchCount,
+          ok: refresh?.ok !== false && s.ok !== false,
+          error: s.error || (!refresh?.ok ? refresh?.error : null) || null,
+          timedOut: !!refresh?.timedOut,
+          upstream: 'ipwo',
+          script: 'refresh_inplay.py',
+          summary: s,
+        };
       }
-      if (bundleAfter) {
-        // collect_live 已含比分 + PM；打上刷新时间供列表展示
-        await stampInplayRefreshTimes(bundleAfter, {
-          score: true,
-          odds: wantOdds,
-        });
-        if (wantOdds) {
-          prices = {
-            updated: Object.keys(bundleAfter.polymarketByEvent || {}).length,
-            failed: 0,
-            skipped: false,
-            via: 'collect_live',
-            upstream: 'ipwo',
-          };
-        }
+      if (wantOdds) {
+        prices = {
+          updated: Number(p.updated) || 0,
+          failed: Number(p.failed) || 0,
+          skipped: !!p.skipped,
+          ok: refresh?.ok !== false && p.ok !== false,
+          error: p.error || (!refresh?.ok && !wantScore ? refresh?.error : null) || null,
+          via: 'polymarket-gamma',
+          upstream: 'ipwo',
+          script: 'refresh_inplay.py',
+          summary: p,
+        };
       }
-    }
-  }
-
-  // 仅开赔率、或比分采集失败时：单独经 IPWO 代理刷 Polymarket
-  if (wantOdds && (!wantScore || !collectLive?.ok)) {
-    let bundle = await tennisInplayCache.getBundle();
-    if (!bundle) {
-      const admitLive = await tennisThreeBuckets.admitLiveFromFull();
+      if (!refresh?.ok) {
+        console.warn('[inplay-tick] refresh_inplay failed:', refresh?.error);
+        if (refresh?.log_tail) console.warn('[inplay-tick] log_tail:\n', refresh.log_tail);
+      }
       bundle = await tennisInplayCache.getBundle();
-      prices = {
-        ...(prices || {}),
-        admitted_live_from_full: admitLive.admitted || 0,
-      };
+      if (bundle) {
+        await stampInplayRefreshTimes(bundle, {
+          score: wantScore && scores.ok !== false,
+          odds: wantOdds && prices.ok !== false,
+        });
+      }
     }
-    if (bundle) {
-      prices = await tennisPolymarket.refreshPolymarketPrices(bundle);
-      prices.upstream = 'ipwo';
-      await stampInplayRefreshTimes(bundle, { score: false, odds: true });
-    } else {
-      prices = { updated: 0, failed: 0, skipped: true, reason: 'no inplay bundle', upstream: 'ipwo' };
-    }
-  } else if (!wantOdds) {
-    prices = { updated: 0, failed: 0, skipped: true, reason: 'odds field off' };
-  }
-
-  // 比分关、赔率关时仍做迁桶；比分开时 collect_live 已重写盘中包
-  if (!wantScore) {
-    await tennisThreeBuckets.admitLiveFromFull();
   }
 
   const migrateEnd = await tennisThreeBuckets.migrateInplayEnded();
-  const bundle = await tennisInplayCache.getBundle();
+  bundle = await tennisInplayCache.getBundle();
   const tickAt = bundle?.tick_at || new Date().toISOString();
 
   let betting = null;
@@ -143,14 +137,15 @@ async function runInplayTick({ skipBetting = false } = {}) {
     upstream: 'ipwo',
     scores,
     prices,
-    collect_live: collectLive
+    refresh_inplay: refresh
       ? {
-          ok: !!collectLive.ok,
-          error: collectLive.error || null,
-          timedOut: !!collectLive.timedOut,
-          last: collectLive.last || null,
+          ok: !!refresh.ok,
+          error: refresh.error || null,
+          timedOut: !!refresh.timedOut,
+          summary: refresh.summary || null,
         }
       : null,
+    admitted_live_from_full: admitLive?.admitted || 0,
     migrated_prematch_to_inplay: migratePre.moved || 0,
     migrated_inplay_to_settled: migrateEnd.moved || 0,
     inplay_matches: bundle?.live?.matches?.length || 0,
@@ -158,4 +153,4 @@ async function runInplayTick({ skipBetting = false } = {}) {
   };
 }
 
-module.exports = { runInplayTick };
+module.exports = { runInplayTick, stampInplayRefreshTimes };
