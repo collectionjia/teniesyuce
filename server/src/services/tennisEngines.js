@@ -379,6 +379,10 @@ const DEFAULT_CONFIG = {
     userId: null,
     userAccount: null,
     amountUsd: 1,
+    /** market=市价 FOK；limit=限价 GTC */
+    orderType: 'market',
+    /** 限价目标价（0.01–0.99）；orderType=limit 时必填 */
+    limitPrice: null,
     /** 列表页「自动投注」刷新间隔（秒） */
     listAutoBetIntervalSec: 60,
     /** 列表页止损检查间隔（秒） */
@@ -499,6 +503,18 @@ function normalizeBetting(betting) {
     ? String(b.userAccount).trim()
     : null;
   b.amountUsd = b.amountUsd != null ? Number(b.amountUsd) || 1 : 1;
+  b.orderType = String(b.orderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
+  if (b.orderType === 'limit') {
+    const lp = Number(b.limitPrice);
+    b.limitPrice = (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null;
+  } else {
+    b.limitPrice = b.limitPrice != null && b.limitPrice !== ''
+      ? (() => {
+        const lp = Number(b.limitPrice);
+        return (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null;
+      })()
+      : null;
+  }
   b.listAutoBetIntervalSec = clampListPollSec(b.listAutoBetIntervalSec, 60);
   b.listStopLossIntervalSec = clampListPollSec(b.listStopLossIntervalSec, 60);
   b.listPageRefreshIntervalSec = clampPageRefreshSec(b.listPageRefreshIntervalSec);

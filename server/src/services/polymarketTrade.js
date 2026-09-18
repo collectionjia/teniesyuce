@@ -350,6 +350,84 @@ async function placeMarketBuy({
   }
 }
 
+function assertOrderAccepted(result) {
+  if (!result || typeof result !== 'object') {
+    throw new Error('下单无响应');
+  }
+  if ('error' in result && result.success !== true) {
+    throw new Error(formatClobError(result));
+  }
+  if (result.success === false) {
+    throw new Error(formatClobError(result));
+  }
+  const orderId = result.orderID || result.id || result.orderId || '';
+  const status = String(result.status || '').toLowerCase();
+  const okStatus = !status
+    || ['live', 'open', 'matched', 'delayed', 'unmatched'].includes(status);
+  if (result.success === true || orderId || okStatus) {
+    return result;
+  }
+  throw new Error(formatClobError(result));
+}
+
+/** GTC 限价买入：按目标价挂单，成交价不超过 limitPrice */
+async function placeLimitBuy({
+  privateKey,
+  proxyAddress,
+  signatureType,
+  tokenId,
+  amountUsd,
+  price,
+}) {
+  const clob = loadClob();
+  const { OrderType, Side } = clob;
+  const client = await createClobClient({ privateKey, proxyAddress, signatureType });
+
+  const amount = Math.round(Number(amountUsd) * 100) / 100;
+  if (!(amount >= 1)) throw new Error('投注金额至少 $1');
+
+  const limitPrice = Math.round(Math.min(Math.max(Number(price), 0.01), 0.99) * 100) / 100;
+  if (!(Number(price) >= 0.01 && Number(price) <= 0.99)) {
+    throw new Error('限价目标价须在 0.01–0.99');
+  }
+
+  const size = Math.floor((amount / limitPrice) * 100) / 100;
+  if (!(size > 0)) throw new Error('下单份额无效');
+
+  let result;
+  try {
+    result = await client.createAndPostOrder(
+      {
+        tokenID: String(tokenId),
+        price: limitPrice,
+        size,
+        side: Side.BUY,
+      },
+      { tickSize: '0.01' },
+      OrderType.GTC
+    );
+  } catch (e) {
+    const data = e?.data;
+    let detail = '';
+    if (typeof data === 'string') detail = data;
+    else if (data && typeof data === 'object') {
+      detail = data.error || data.errorMsg || data.message
+        || (typeof data.error === 'object' ? JSON.stringify(data.error) : '')
+        || JSON.stringify(data).slice(0, 300);
+    }
+    const msg = (detail && String(detail)) || e?.message || String(e);
+    console.error('[polymarket/placeLimitBuy]', e?.message || e, detail || '');
+    throw new Error(msg);
+  }
+
+  try {
+    return assertOrderAccepted(result);
+  } catch (e) {
+    console.error('[polymarket/limitOrderResult]', JSON.stringify(result).slice(0, 800));
+    throw e;
+  }
+}
+
 async function placeMarketSell({
   privateKey,
   proxyAddress,
@@ -494,6 +572,7 @@ module.exports = {
   assertOrderFilled,
   resolveSignatureType,
   placeMarketBuy,
+  placeLimitBuy,
   placeMarketSell,
   createClobClient,
   fetchUsdcBalance,

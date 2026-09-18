@@ -59,6 +59,8 @@ async function placeBatchOrders(userId, {
   simulate = false,
   strategyKey: batchStrategyKey = null,
   bucket: batchBucket = null,
+  orderType: batchOrderType = 'market',
+  limitPrice: batchLimitPrice = null,
 } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
@@ -69,6 +71,16 @@ async function placeBatchOrders(userId, {
 
   const amount = Number(amountUsd);
   if (!(amount >= 1)) throw new Error('每场投注金额至少 $1');
+
+  const orderType = String(batchOrderType || 'market').toLowerCase() === 'limit' ? 'limit' : 'market';
+  let limitPrice = null;
+  if (orderType === 'limit') {
+    const p = Number(batchLimitPrice);
+    if (!(p >= 0.01 && p <= 0.99)) {
+      throw new Error('限价单须填写目标价（0.01–0.99）');
+    }
+    limitPrice = Math.round(p * 100) / 100;
+  }
 
   const isSim = !!simulate;
   const secrets = isSim ? null : await btcWallet.loadWalletSecrets(userId);
@@ -132,6 +144,10 @@ async function placeBatchOrders(userId, {
     try {
       if (isSim) {
         const orderId = `sim_${Date.now().toString(36)}_${String(eventId).slice(-6)}`;
+        const simPrice = orderType === 'limit' ? limitPrice : 1;
+        const simShares = orderType === 'limit' && limitPrice > 0
+          ? Math.floor((amount / limitPrice) * 100) / 100
+          : amount;
         try {
           await tradeRecords.addTradeRecord(userId, {
             product: tradeProduct,
@@ -139,8 +155,8 @@ async function placeBatchOrders(userId, {
             market: String(eventId),
             side,
             amountUsd: amount,
-            shares: amount,
-            price: 1,
+            shares: simShares,
+            price: simPrice,
             label,
             orderId,
             strategyKey: String(item?.strategyKey || defaultSk || '').trim() || null,
@@ -155,12 +171,15 @@ async function placeBatchOrders(userId, {
           ok: true,
           side,
           amountUsd: amount,
+          price: simPrice,
+          shares: simShares,
           homeName,
           awayName,
           orderId,
           simulated: true,
           status: 'simulated',
-          takingAmount: String(amount),
+          orderType,
+          takingAmount: String(simShares),
           makingAmount: '',
         });
         continue;
@@ -173,17 +192,30 @@ async function placeBatchOrders(userId, {
         awayName
       );
 
-      const result = await polymarketTrade.placeMarketBuy({
-        privateKey: secrets.privateKey,
-        proxyAddress: secrets.proxyAddress,
-        signatureType: secrets.signatureType,
-        tokenId,
-        amountUsd: amount,
-      });
+      const result = orderType === 'limit'
+        ? await polymarketTrade.placeLimitBuy({
+          privateKey: secrets.privateKey,
+          proxyAddress: secrets.proxyAddress,
+          signatureType: secrets.signatureType,
+          tokenId,
+          amountUsd: amount,
+          price: limitPrice,
+        })
+        : await polymarketTrade.placeMarketBuy({
+          privateKey: secrets.privateKey,
+          proxyAddress: secrets.proxyAddress,
+          signatureType: secrets.signatureType,
+          tokenId,
+          amountUsd: amount,
+        });
 
       const orderId = result?.orderID || result?.id || result?.orderId || '';
-      const price = tradeRecords.priceFromFill(result, { action: 'buy', amountUsd: amount });
-      const shares = tradeRecords.sharesFromFill(result, { action: 'buy', amountUsd: amount, price });
+      const price = orderType === 'limit'
+        ? limitPrice
+        : tradeRecords.priceFromFill(result, { action: 'buy', amountUsd: amount });
+      const shares = orderType === 'limit'
+        ? Math.floor((amount / limitPrice) * 100) / 100
+        : tradeRecords.sharesFromFill(result, { action: 'buy', amountUsd: amount, price });
       try {
         await tradeRecords.addTradeRecord(userId, {
           product: tradeProduct,
@@ -214,6 +246,7 @@ async function placeBatchOrders(userId, {
         awayName,
         orderId,
         status: result?.status || '',
+        orderType,
         takingAmount: result?.takingAmount || '',
         makingAmount: result?.makingAmount || '',
       });
@@ -242,18 +275,20 @@ async function placeBatchOrders(userId, {
 
   const okCount = results.filter((r) => r.ok).length;
   const simTag = isSim ? '模拟' : '';
+  const doneVerb = orderType === 'limit' ? '挂单' : (isSim ? '记账' : '成交');
   return {
     ok: okCount > 0,
     total: results.length,
     success: okCount,
     failed: results.length - okCount,
     simulated: isSim,
+    orderType,
     results,
     message: okCount === 0
       ? `批量${simTag}下单失败，请查看错误详情`
       : okCount === results.length
-        ? `批量${simTag}下单完成：${okCount} 场已${isSim ? '记账' : '成交'}`
-        : `批量${simTag}下单：${okCount} 场已${isSim ? '记账' : '成交'}，${results.length - okCount} 场失败`,
+        ? `批量${simTag}下单完成：${okCount} 场已${doneVerb}`
+        : `批量${simTag}下单：${okCount} 场已${doneVerb}，${results.length - okCount} 场失败`,
   };
 }
 

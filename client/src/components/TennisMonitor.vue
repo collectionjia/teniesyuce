@@ -1105,6 +1105,21 @@ function onBettingAmountUsdChange(ev) {
   if (!Number.isFinite(n) || n <= 0) return
   patchEngines({ betting: { amountUsd: Math.round(n * 100) / 100 } })
 }
+function onBettingOrderTypeChange(ev) {
+  const orderType = String(ev?.target?.value || 'market').toLowerCase() === 'limit' ? 'limit' : 'market'
+  patchEngines({ betting: { orderType } })
+}
+function onBettingLimitPriceChange(ev) {
+  const raw = ev?.target?.value
+  if (raw === '' || raw == null) {
+    patchEngines({ betting: { limitPrice: null } })
+    return
+  }
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return
+  const limitPrice = Math.round(Math.min(Math.max(n, 0.01), 0.99) * 100) / 100
+  patchEngines({ betting: { limitPrice } })
+}
 
 function onListPollIntervalChange(field, ev) {
   const n = Number(ev?.target?.value)
@@ -1780,6 +1795,34 @@ onUnmounted(() => {
               @change="onBettingAmountUsdChange"
             >
           </label>
+          <label class="interval-select" title="市价=立即成交(FOK)；限价=按目标价挂单(GTC)">
+            <span>下单类型</span>
+            <select
+              style="width: 6.5rem"
+              :value="engines.betting?.orderType === 'limit' ? 'limit' : 'market'"
+              @change="onBettingOrderTypeChange"
+            >
+              <option value="market">市价单</option>
+              <option value="limit">限价单</option>
+            </select>
+          </label>
+          <label
+            v-if="engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="买入限价目标价（0.01–0.99），成交价不高于此价"
+          >
+            <span>目标价</span>
+            <input
+              type="number"
+              min="0.01"
+              max="0.99"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.limitPrice ?? ''"
+              placeholder="0.50"
+              @change="onBettingLimitPriceChange"
+            >
+          </label>
         </div>
 
         <div class="condition-tabs" role="tablist">
@@ -2077,6 +2120,38 @@ onUnmounted(() => {
               style="width: 6.5rem"
               :value="engines.betting?.amountUsd ?? 1"
               @change="onBettingAmountUsdChange"
+            >
+          </label>
+          <label
+            v-if="isBettingPage"
+            class="interval-select"
+            title="市价=立即成交(FOK)；限价=按目标价挂单(GTC)"
+          >
+            <span>下单类型</span>
+            <select
+              style="width: 6.5rem"
+              :value="engines.betting?.orderType === 'limit' ? 'limit' : 'market'"
+              @change="onBettingOrderTypeChange"
+            >
+              <option value="market">市价单</option>
+              <option value="limit">限价单</option>
+            </select>
+          </label>
+          <label
+            v-if="isBettingPage && engines.betting?.orderType === 'limit'"
+            class="interval-select"
+            title="买入限价目标价（0.01–0.99），成交价不高于此价"
+          >
+            <span>目标价</span>
+            <input
+              type="number"
+              min="0.01"
+              max="0.99"
+              step="0.01"
+              style="width: 5.5rem"
+              :value="engines.betting?.limitPrice ?? ''"
+              placeholder="0.50"
+              @change="onBettingLimitPriceChange"
             >
           </label>
           <label v-if="isBettingPage" class="interval-select" title="盘前/盘中列表按间隔自动刷新赛程；0=关闭">

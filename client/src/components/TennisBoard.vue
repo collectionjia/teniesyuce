@@ -262,6 +262,9 @@ let pageRefreshPollTimer = null
 const listAutoBetIntervalSec = ref(60)
 const listStopLossIntervalSec = ref(60)
 const listPageRefreshIntervalSec = ref(0)
+/** 与投注引擎一致：market | limit */
+const engineOrderType = ref('market')
+const engineLimitPrice = ref(null)
 const scheduleModalOpen = ref(false)
 const scheduleDraftAuto = ref(60)
 const scheduleDraftStop = ref(60)
@@ -290,10 +293,15 @@ async function loadListPollIntervals() {
     listAutoBetIntervalSec.value = clampPollSec(bet.listAutoBetIntervalSec, 60)
     listStopLossIntervalSec.value = clampPollSec(bet.listStopLossIntervalSec, 60)
     listPageRefreshIntervalSec.value = clampPageRefreshSec(bet.listPageRefreshIntervalSec)
+    engineOrderType.value = bet.orderType === 'limit' ? 'limit' : 'market'
+    const lp = Number(bet.limitPrice)
+    engineLimitPrice.value = (lp >= 0.01 && lp <= 0.99) ? Math.round(lp * 100) / 100 : null
   } catch {
     listAutoBetIntervalSec.value = 60
     listStopLossIntervalSec.value = 60
     listPageRefreshIntervalSec.value = 0
+    engineOrderType.value = 'market'
+    engineLimitPrice.value = null
   }
 }
 
@@ -1336,7 +1344,15 @@ function formatBatchResultLine(r, list) {
 const BATCH_TRADE_CHUNK = 20
 
 async function placeBatchTradeRequest(orders, amount) {
-  const payload = { orders, amountUsd: amount, simulate: !!useSimulateOrders.value }
+  const payload = {
+    orders,
+    amountUsd: amount,
+    simulate: !!useSimulateOrders.value,
+    orderType: engineOrderType.value,
+  }
+  if (engineOrderType.value === 'limit' && engineLimitPrice.value != null) {
+    payload.limitPrice = engineLimitPrice.value
+  }
   if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
   if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
   if (isLiveMode.value) return api.placeTennisLiveBatchTrade(payload)
@@ -1362,6 +1378,13 @@ async function submitBatchTrade({ auto = false } = {}) {
   if (!(amount >= 1)) {
     batchError.value = '每场金额至少 1 元'
     return
+  }
+  if (engineOrderType.value === 'limit') {
+    const lp = Number(engineLimitPrice.value)
+    if (!(lp >= 0.01 && lp <= 0.99)) {
+      batchError.value = '限价单请先在投注引擎填写目标价（0.01–0.99）'
+      return
+    }
   }
   batchSubmitting.value = true
   try {

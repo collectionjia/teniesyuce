@@ -201,12 +201,14 @@ router.get('/today', async (req, res) => {
 
 router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
-    const { orders, amountUsd } = req.body || {};
+    const { orders, amountUsd, orderType, limitPrice } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
       orders,
       amountUsd,
       product: 'tennis-inplay',
       simulate: !!req.tradeSimulate,
+      orderType,
+      limitPrice,
     });
     res.json({
       ...result,

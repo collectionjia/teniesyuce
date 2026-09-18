@@ -132,6 +132,8 @@ async function scan(body = {}) {
           amountUsd,
           product,
           simulate,
+          orderType: cfg.betting?.orderType || 'market',
+          limitPrice: cfg.betting?.limitPrice,
         });
         const byId = new Map(batch.map((o) => [String(o.eventId), o]));
         for (const r of result.results || []) {

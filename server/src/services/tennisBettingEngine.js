@@ -543,6 +543,8 @@ async function runBucketPass({
   mode = 'both',
   onlyStrategyKey = null,
   allowEventIds = null,
+  orderType = 'market',
+  limitPrice = null,
 }) {
   const uid = String(uidNum);
   ensureUidState(state, uid);
@@ -755,6 +757,8 @@ async function runBucketPass({
         simulate: isSim,
         strategyKey: primarySk,
         bucket: bucketKey,
+        orderType,
+        limitPrice,
       });
       for (const r of result.results || []) {
         const id = String(r.eventId);
@@ -788,8 +792,8 @@ async function runBucketPass({
           ok: !!r.ok,
           error: r.error || null,
           detail: r.ok
-            ? `条件满足，买入 $${r.amountUsd != null ? r.amountUsd : stake}${Number.isFinite(price) ? ` @ ${price}` : ''}`
-            : `条件满足，买入失败：${r.error || 'unknown'}`,
+            ? `条件满足，${orderType === 'limit' ? '限价挂单' : '买入'} $${r.amountUsd != null ? r.amountUsd : stake}${Number.isFinite(price) ? ` @ ${price}` : ''}`
+            : `条件满足，${orderType === 'limit' ? '限价挂单' : '买入'}失败：${r.error || 'unknown'}`,
           simulated: isSim,
         });
       }
@@ -1025,6 +1029,8 @@ async function runBettingPass({
         mode: effectiveMode,
         onlyStrategyKey: sk || null,
         allowEventIds,
+        orderType: cfg.betting?.orderType || 'market',
+        limitPrice: cfg.betting?.limitPrice,
       }));
     }
   }
