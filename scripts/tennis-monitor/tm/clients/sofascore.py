@@ -50,7 +50,10 @@ class SofascoreClient:
         try:
             from curl_cffi import requests as curl_requests
         except ImportError as exc:
-            raise RuntimeError("缺少 curl_cffi，请 pip install curl_cffi") from exc
+            raise RuntimeError(
+                f"缺少 curl_cffi（{exc}）。请在 scripts/tennis-monitor 执行: "
+                "python -m venv venv && venv/Scripts/python -m pip install -r requirements.txt"
+            ) from exc
 
         self._curl = curl_requests
         proxies = proxies_for("Sofascore")
