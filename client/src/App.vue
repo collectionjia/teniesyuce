@@ -774,20 +774,20 @@ const adminManageSections = [
   {
     key: 'services',
     title: '服务类',
-    desc: '五引擎微服务健康 · 手动触发 · 调度',
+    desc: '五引擎微服务 · 采集/条件/止损配置 · 调度',
     items: [
       { view: 'engine-services', label: '五引擎服务', desc: 'collect / rules / betting / stop-loss / scheduler 状态与操作', icon: 'grid', color: 'from-cyan-500 to-blue-600' },
+      { view: 'tennis-collect', label: '采集引擎', desc: 'Top100 采集 · 虚拟/真实源 · 采集范围', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
+      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 调度命中自动投注', icon: 'list', color: 'from-amber-500 to-yellow-500' },
+      { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },
       { view: 'scheduler-center', label: '调度中心', desc: '定时任务 · 立即执行 · 运行日志', icon: 'list', color: 'from-sky-500 to-indigo-500' },
     ],
   },
   {
     key: 'engines',
     title: '引擎类',
-    desc: '网球采集 / 条件 / 止损 配置',
+    desc: '虚拟日列表 · Top100 · API Key',
     items: [
-      { view: 'tennis-collect', label: '采集引擎', desc: 'Top100 采集 · 虚拟/真实源 · 采集范围', icon: 'chart', color: 'from-emerald-500 to-lime-500' },
-      { view: 'tennis-condition', label: '条件引擎', desc: '盘前/盘中/盘后分桶 · 调度命中自动投注', icon: 'list', color: 'from-amber-500 to-yellow-500' },
-      { view: 'tennis-stop', label: '止损引擎', desc: '止损组配置 · 可挂调度中心', icon: 'grid', color: 'from-rose-500 to-orange-500' },
       { view: 'tennis-docks-editor', label: '虚拟日列表', desc: '盘前/盘中/盘后筛选 · 分页编辑模拟场次', icon: 'list', color: 'from-teal-500 to-cyan-600' },
       { view: 'tennis-top100', label: 'Top100 宽屏', desc: 'ATP/WTA 并排 · 电脑全屏采购看板', icon: 'chart', color: 'from-sky-500 to-cyan-500' },
       { view: 'engine-api-keys', label: '引擎 API Key', desc: '签发 / 吊销 · 调用 /api/engine/*', icon: 'link', color: 'from-slate-500 to-zinc-600' },
@@ -804,6 +804,18 @@ const adminManageSections = [
     ],
   },
 ]
+const adminManageExpanded = ref({
+  manage: false,
+  services: false,
+  engines: false,
+  settings: false,
+})
+function toggleAdminManageSection(key) {
+  adminManageExpanded.value = {
+    ...adminManageExpanded.value,
+    [key]: !adminManageExpanded.value[key],
+  }
+}
 const tabs = computed(() => ({
   user: [{ view: 'home', label: '首页', icon: 'home' }, { view: 'mine', label: '我的', icon: 'user' }],
   agent: [
@@ -3560,11 +3572,23 @@ function productEmbedUrl(product) {
               <h2 class="text-xl font-semibold px-1">管理中心</h2>
               <p class="text-sm text-slate-500 px-1">按功能分类进入对应模块</p>
               <div v-for="section in adminManageSections" :key="section.key" class="space-y-2">
-                <div class="px-1 pt-1">
-                  <div class="text-sm font-semibold text-slate-700">{{ section.title }}</div>
-                  <div class="text-xs text-slate-400 mt-0.5">{{ section.desc }}</div>
-                </div>
-                <div class="grid grid-cols-4 gap-2">
+                <button
+                  type="button"
+                  class="w-full px-1 pt-1 flex items-start justify-between gap-2 text-left rounded-lg hover:bg-slate-50/80 transition-colors"
+                  :aria-expanded="!!adminManageExpanded[section.key]"
+                  @click="toggleAdminManageSection(section.key)"
+                >
+                  <div class="min-w-0">
+                    <div class="text-sm font-semibold text-slate-700">{{ section.title }}</div>
+                    <div class="text-xs text-slate-400 mt-0.5">{{ section.desc }}</div>
+                  </div>
+                  <span
+                    class="mt-0.5 text-slate-400 shrink-0 transition-transform duration-200"
+                    :class="adminManageExpanded[section.key] ? 'rotate-90' : ''"
+                    aria-hidden="true"
+                  >▸</span>
+                </button>
+                <div v-show="adminManageExpanded[section.key]" class="grid grid-cols-4 gap-2">
                   <button
                     v-for="item in section.items"
                     :key="item.key || item.view"

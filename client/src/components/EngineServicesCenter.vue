@@ -161,20 +161,16 @@ onUnmounted(() => {
       <p v-if="err" class="text-xs text-red-600 mt-2">{{ err }}</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div
         v-for="card in cards"
         :key="card.id"
-        class="bg-white rounded-2xl p-4 shadow-sm ring-1 ring-slate-100"
+        class="bg-white rounded-2xl p-4 shadow-sm ring-1 ring-slate-100 flex flex-col"
       >
-        <div class="flex items-start justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <div :class="['h-9 w-9 rounded-xl shrink-0 bg-gradient-to-br', card.color]" />
-            <div class="min-w-0">
-              <div class="font-medium text-sm truncate">{{ card.label }}</div>
-              <div class="text-[11px] text-slate-400">:{{ card.port }}</div>
-            </div>
-          </div>
+        <div class="font-semibold text-sm leading-tight">{{ card.label }}</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">:{{ card.port }}</div>
+        <div class="mt-2 flex items-center justify-between gap-2">
+          <div :class="['h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br', card.color]" />
           <div class="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
