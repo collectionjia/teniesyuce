@@ -118,12 +118,13 @@ const detailMatch = ref(null)
 /** 详情页字段说明是否展开 */
 const detailHelpOpen = ref(false)
 const batchAmountUsd = ref('1')
-/** 盘前手动批量：市价/限价、Up(home)/Down(away)/建议 */
+/** 盘前/盘中手动批量：市价/限价、Up(home)/Down(away)/建议 */
 const manualOrderType = ref('market')
 const manualSide = ref('suggest')
 const manualShares = ref('10')
 const manualLimitBuyPrice = ref('0.55')
-const showManualTradeOpts = computed(() => isPrematchMode.value && allowBatchTrade.value)
+const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value)
+const showManualTradeOpts = computed(() => isManualTradeBoard.value && allowBatchTrade.value)
 
 const {
   rulesLoading,
@@ -1301,10 +1302,11 @@ function canSelectMatch(m) {
   const id = String(m.id)
   if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
   if (!polyUrlOf(m)) return false
-  if (isInplayMode.value) return passesInplayAutoBet(m)
-  // 盘前手动选 Up/Down 时可不等建议侧
+  // 盘中手动：进行中即可勾选（不强制过自动进场条件）
+  if (isInplayMode.value && !isMatchLive(m)) return false
+  // 手动选 Up/Down 时可不等建议侧
   if (
-    isPrematchMode.value
+    isManualTradeBoard.value
     && (manualSide.value === 'home' || manualSide.value === 'away')
   ) {
     return true
@@ -1361,7 +1363,7 @@ function buildBatchOrders({ manual = false } = {}) {
     const id = String(eventId)
     if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return null
     const m = matches.value.find((x) => String(x.id) === eventId)
-    const side = manual && isPrematchMode.value ? resolveManualSide(m) : pickSide(m)
+    const side = manual && isManualTradeBoard.value ? resolveManualSide(m) : pickSide(m)
     if (!m || !side) return null
     return {
       eventId,
@@ -1387,7 +1389,7 @@ function formatBatchResultLine(r, list) {
 const BATCH_TRADE_CHUNK = 20
 
 async function placeBatchTradeRequest(orders, amount, { manual = false } = {}) {
-  const useManual = manual && isPrematchMode.value
+  const useManual = manual && isManualTradeBoard.value
   const orderType = useManual
     ? (manualOrderType.value === 'limit' ? 'limit' : 'market')
     : engineOrderType.value
@@ -1434,7 +1436,7 @@ async function submitBatchTrade({ auto = false } = {}) {
     batchError.value = '默认不下单。请先开启「自动投注」，或配置钱包后手动实盘批量'
     return
   }
-  const manual = !auto && isPrematchMode.value
+  const manual = !auto && isManualTradeBoard.value
   const orders = buildBatchOrders({ manual })
   if (!orders.length) {
     if (!auto) batchError.value = '请先勾选可同步的场次'

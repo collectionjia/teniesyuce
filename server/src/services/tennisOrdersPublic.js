@@ -1,5 +1,7 @@
 /**
- * 网球对外下单/读数公共 helpers（邮箱定位用户，无需 JWT）
+ * 网球对外下单/读数公共 helpers
+ * - 页面：登录 JWT → 用当前用户钱包
+ * - 对外：body.email / body.account 定位用户（无需 JWT）
  */
 const pool = require('../db');
 const btcWallet = require('./btcWallet');
@@ -26,6 +28,16 @@ async function resolveUserByEmail(email) {
   return row || null;
 }
 
+async function resolveUserById(userId) {
+  const id = Number(userId);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const [[row]] = await pool.query(
+    'SELECT id, account FROM users WHERE id=? LIMIT 1',
+    [id],
+  );
+  return row || null;
+}
+
 async function resolveSimulate(bodySimulate) {
   const force = await tennisDataSource.shouldSimulateTrades();
   return force || wantBool(bodySimulate, false);
@@ -46,12 +58,28 @@ async function ensureWalletForLive(userId, simulate) {
   }
 }
 
-/** 从 body.email / body.account 解析用户，写入 req.tennisUser */
+/**
+ * 解析下单用户 → req.tennisUser
+ * 优先 JWT（页面登录）；否则 body.email / body.account（对外 API）
+ * 需配合 optionalAuth() 使用（有 token 时写入 req.user）
+ */
 async function attachUserFromEmailBody(req, res, next) {
   try {
+    if (req.user?.id) {
+      const user = await resolveUserById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ ok: false, error: '登录用户不存在' });
+      }
+      req.tennisUser = user;
+      return next();
+    }
+
     const email = pickEmail(req.body);
     if (!email) {
-      return res.status(400).json({ ok: false, error: '请填写 email（或 account）' });
+      return res.status(400).json({
+        ok: false,
+        error: '请登录，或填写 email（或 account）',
+      });
     }
     const user = await resolveUserByEmail(email);
     if (!user) {
@@ -87,6 +115,7 @@ module.exports = {
   pickEmail,
   wantBool,
   resolveUserByEmail,
+  resolveUserById,
   resolveSimulate,
   ensureWalletForLive,
   attachUserFromEmailBody,

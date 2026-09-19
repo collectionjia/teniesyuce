@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { auth } = require('../middleware/auth');
+const { auth, optionalAuth } = require('../middleware/auth');
 const tennisInplayCache = require('../services/tennisInplayCache');
 const tennisTrade = require('../services/tennisTrade');
 const tennisDataSource = require('../services/tennisDataSource');
@@ -199,9 +199,9 @@ router.get('/today', async (req, res) => {
   }
 });
 
-router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
-    const { orders, amountUsd, orderType, limitPrice, limitBuyPrice, shares } = req.body || {};
+    const { orders, amountUsd, orderType, limitPrice, limitBuyPrice, shares, allowAnySide } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
       orders,
       amountUsd,
@@ -211,6 +211,7 @@ router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic,
       limitPrice: limitBuyPrice ?? limitPrice,
       limitBuyPrice: limitBuyPrice ?? limitPrice,
       shares,
+      allowAnySide: !!allowAnySide,
     });
     res.json({
       ...result,
@@ -224,7 +225,7 @@ router.post('/trade/batch', attachUserFromEmailBody, resolveTradeSimulatePublic,
   }
 });
 
-router.post('/trade/sell', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+router.post('/trade/sell', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
     const { eventId, side, shares, orderType, limitSellPrice, limitPrice } = req.body || {};
     const result = await tennisTrade.placeSellOrder(req.tennisUser.id, {

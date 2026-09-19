@@ -1,5 +1,7 @@
 /**
- * 网球下单 API（按邮箱找用户钱包，无需 JWT）
+ * 网球下单 API
+ * - 页面登录：JWT → 当前用户钱包
+ * - 对外：body.email / account 定位用户
  * POST /api/tennis/orders/buy
  * POST /api/tennis/orders/sell
  * POST /api/tennis/orders/batch
@@ -7,10 +9,12 @@
 const { Router } = require('express');
 const tennisTrade = require('../services/tennisTrade');
 const tennisBettingEngine = require('../services/tennisBettingEngine');
+const { optionalAuth } = require('../middleware/auth');
 const {
   pickEmail,
   wantBool,
   resolveUserByEmail,
+  resolveUserById,
   resolveSimulate,
   ensureWalletForLive,
   attachUserFromEmailBody,
@@ -26,13 +30,18 @@ function normalizeProduct(raw) {
   return PRODUCTS.has(p) ? p : null;
 }
 
-router.post('/buy', async (req, res) => {
+async function resolveOrderUser(req) {
+  if (req.user?.id) {
+    return resolveUserById(req.user.id);
+  }
+  const email = pickEmail(req.body || {});
+  if (!email) return null;
+  return resolveUserByEmail(email);
+}
+
+router.post('/buy', optionalAuth(), async (req, res) => {
   try {
     const body = req.body || {};
-    const email = pickEmail(body);
-    if (!email) {
-      return res.status(400).json({ ok: false, error: '请填写 email（或 account）' });
-    }
     const product = normalizeProduct(body.product);
     if (!product) {
       return res.status(400).json({ ok: false, error: 'product 须为 tennis-prematch 或 tennis-inplay' });
@@ -50,8 +59,11 @@ router.post('/buy', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'amountUsd 至少为 1' });
     }
 
-    const user = await resolveUserByEmail(email);
+    const user = await resolveOrderUser(req);
     if (!user) {
+      if (!req.user?.id && !pickEmail(body)) {
+        return res.status(400).json({ ok: false, error: '请登录，或填写 email（或 account）' });
+      }
       return res.status(404).json({ ok: false, error: '邮箱对应用户不存在' });
     }
 
@@ -140,13 +152,9 @@ router.post('/buy', async (req, res) => {
   }
 });
 
-router.post('/sell', async (req, res) => {
+router.post('/sell', optionalAuth(), async (req, res) => {
   try {
     const body = req.body || {};
-    const email = pickEmail(body);
-    if (!email) {
-      return res.status(400).json({ ok: false, error: '请填写 email（或 account）' });
-    }
     const product = normalizeProduct(body.product);
     if (!product) {
       return res.status(400).json({ ok: false, error: 'product 须为 tennis-prematch 或 tennis-inplay' });
@@ -163,8 +171,11 @@ router.post('/sell', async (req, res) => {
       ? 'all'
       : body.shares;
 
-    const user = await resolveUserByEmail(email);
+    const user = await resolveOrderUser(req);
     if (!user) {
+      if (!req.user?.id && !pickEmail(body)) {
+        return res.status(400).json({ ok: false, error: '请登录，或填写 email（或 account）' });
+      }
       return res.status(404).json({ ok: false, error: '邮箱对应用户不存在' });
     }
 
@@ -227,7 +238,7 @@ router.post('/sell', async (req, res) => {
 });
 
 /** 批量买入（1～20 场，每场同 amountUsd） */
-router.post('/batch', attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+router.post('/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
     const body = req.body || {};
     const product = normalizeProduct(body.product);
