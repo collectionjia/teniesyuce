@@ -284,6 +284,40 @@ def collect_tennis_events(
     return kept
 
 
+def refresh_live_set_scores(client, events: list[dict]) -> list[dict]:
+    """经 IPWO 拉每场 event 详情，补齐 period1..5（各盘局分）。"""
+    if not events:
+        return events
+    out: list[dict] = []
+    ok = 0
+    for ev in events:
+        eid = ev.get("id")
+        if eid is None:
+            out.append(ev)
+            continue
+        try:
+            payload = client.get_event(eid)
+        except Exception as exc:
+            print(f"[events/live] 局分 {eid} 失败: {exc}")
+            out.append(ev)
+            continue
+        inner = payload.get("event") if isinstance(payload, dict) else None
+        if not isinstance(inner, dict):
+            out.append(ev)
+            continue
+        merged = dict(ev)
+        if isinstance(inner.get("homeScore"), dict):
+            merged["homeScore"] = inner["homeScore"]
+        if isinstance(inner.get("awayScore"), dict):
+            merged["awayScore"] = inner["awayScore"]
+        if isinstance(inner.get("status"), dict):
+            merged["status"] = inner["status"]
+        out.append(merged)
+        ok += 1
+    print(f"[events/live] 盘局比分 {ok}/{len(events)}")
+    return out
+
+
 def collect_live_tennis_events(client) -> list[dict]:
     """仅拉取进行中 tier 赛事（GS/500/1000），供 collect_live.py 使用。"""
     global _last_collect_stats

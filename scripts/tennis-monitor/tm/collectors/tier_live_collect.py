@@ -14,6 +14,7 @@ from tm.collectors.events import (
     collect_live_events_simple,
     collect_live_tennis_events,
     get_collect_stats,
+    refresh_live_set_scores,
     today_bj,
 )
 from tm.collectors.rankings import fetch_rank_board
@@ -33,6 +34,40 @@ from tm.db.writer import collect_mysql_policy_message, log_collect_mysql_policy
 
 
 _SIMPLE_LIMIT_DEFAULT = int(os.environ.get("SOFA_LIVE_SIMPLE_LIMIT", "20"))
+
+
+_SCORE_KEYS = ("scoreText", "score", "homeScore", "awayScore", "home_score", "away_score")
+
+
+def _has_outer_link(poly: dict | None) -> bool:
+    url = str((poly or {}).get("url") or "")
+    return "polymarket.com/event/" in url.lower()
+
+
+def _apply_linked_scores(client, raw_events: list[dict], slim_events: list[dict], polymarket_by_event: dict) -> list[dict]:
+    """只给有 Polymarket 外链的场次拉盘局比分；没有外链的不保留比分。"""
+    raw_by_id = {str(ev.get("id")): ev for ev in raw_events if ev.get("id") is not None}
+    linked_raw = []
+    for ev in slim_events:
+        eid = str(ev.get("id"))
+        if _has_outer_link(polymarket_by_event.get(eid)) and eid in raw_by_id:
+            linked_raw.append(raw_by_id[eid])
+    refreshed = {str(ev.get("id")): slim_event(ev) for ev in refresh_live_set_scores(client, linked_raw)}
+    out = []
+    for ev in slim_events:
+        eid = str(ev.get("id"))
+        if eid in refreshed:
+            row = refreshed[eid]
+            print(f"      {row.get('home')} vs {row.get('away')}  {row.get('scoreText') or '-'}")
+            out.append(row)
+            continue
+        for key in _SCORE_KEYS:
+            ev.pop(key, None)
+        out.append(ev)
+    skipped = len(slim_events) - len(refreshed)
+    if skipped:
+        print(f"      无外链，跳过比分 {skipped} 场")
+    return out
 
 
 def log_live_collect_header(*, filter_conditions: bool = False, top100: bool = True, simple_limit: int = _SIMPLE_LIMIT_DEFAULT) -> str:
@@ -123,6 +158,7 @@ def run_tier_live_collect(
                 t0 = time.perf_counter()
                 poly_requests_before = get_request_count()
                 polymarket_by_event = enrich_events_polymarket(slim_events)
+                slim_events = _apply_linked_scores(client, raw_events, slim_events, polymarket_by_event)
                 timing["step3"] = time.perf_counter() - t0
                 log_step_done(3, _STEP_LABELS[2], timing["step3"])
 
