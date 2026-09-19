@@ -123,6 +123,7 @@ const manualOrderType = ref('market')
 const manualSide = ref('suggest')
 const manualShares = ref('10')
 const manualLimitBuyPrice = ref('0.55')
+const manualLimitSellPrice = ref('0.70')
 const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value)
 const showManualTradeOpts = computed(() => isManualTradeBoard.value && allowBatchTrade.value)
 
@@ -1535,15 +1536,26 @@ async function maybeAutoBatchTrade() {
 }
 
 async function placeStopSell(m, side, { simulate } = {}) {
+  const useManualLimit = isManualTradeBoard.value && manualOrderType.value === 'limit'
+  const orderType = useManualLimit ? 'limit' : engineOrderType.value
   const payload = {
     eventId: String(m.id),
     side,
     shares: 'all',
     simulate: simulate != null ? !!simulate : !!useSimulateOrders.value,
-    orderType: engineOrderType.value,
+    orderType,
   }
-  if (engineOrderType.value === 'limit' && engineLimitSellPrice.value != null) {
-    payload.limitSellPrice = engineLimitSellPrice.value
+  if (orderType === 'limit') {
+    if (useManualLimit) {
+      const sp = Number(manualLimitSellPrice.value)
+      if (sp >= 0.01 && sp <= 0.99) {
+        payload.limitSellPrice = Math.round(sp * 100) / 100
+        payload.limitPrice = payload.limitSellPrice
+      }
+    } else if (engineLimitSellPrice.value != null) {
+      payload.limitSellPrice = engineLimitSellPrice.value
+      payload.limitPrice = engineLimitSellPrice.value
+    }
   }
   if (isPrematchMode.value) return api.placeTennisPrematchSell(payload)
   return api.placeTennisInplaySell(payload)
@@ -2788,6 +2800,7 @@ defineExpose({
       v-model:manual-side="manualSide"
       v-model:manual-shares="manualShares"
       v-model:manual-limit-buy-price="manualLimitBuyPrice"
+      v-model:manual-limit-sell-price="manualLimitSellPrice"
       :batch-submitting="batchSubmitting"
       :batch-notice="batchNotice"
       :batch-error="batchError"

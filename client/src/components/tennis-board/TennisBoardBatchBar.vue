@@ -15,6 +15,7 @@ defineProps({
   manualSide: { type: String, default: 'suggest' },
   manualShares: { type: [String, Number], default: '10' },
   manualLimitBuyPrice: { type: [String, Number], default: '0.55' },
+  manualLimitSellPrice: { type: [String, Number], default: '0.70' },
   toggleAutoBet: { type: Function, required: true },
   toggleSelectPage: { type: Function, required: true },
   submitBatchTrade: { type: Function, required: true },
@@ -27,6 +28,7 @@ const emit = defineEmits([
   'update:manualSide',
   'update:manualShares',
   'update:manualLimitBuyPrice',
+  'update:manualLimitSellPrice',
 ])
 </script>
 
@@ -102,10 +104,22 @@ const emit = defineEmits([
               />
             </label>
             <label class="batch-amount" title="买入目标价 0.01–0.99">
-              <span>价</span>
+              <span>买</span>
               <input
                 :value="manualLimitBuyPrice"
                 @input="emit('update:manualLimitBuyPrice', $event.target.value)"
+                type="number"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+                inputmode="decimal"
+              />
+            </label>
+            <label class="batch-amount" title="卖出目标价 0.01–0.99（平仓/止损限价）">
+              <span>卖</span>
+              <input
+                :value="manualLimitSellPrice"
+                @input="emit('update:manualLimitSellPrice', $event.target.value)"
                 type="number"
                 min="0.01"
                 max="0.99"
