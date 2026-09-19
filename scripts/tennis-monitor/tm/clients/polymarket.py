@@ -1,4 +1,4 @@
-"""Polymarket: tennis event match (Gamma) + moneyline prices (CLOB book mid)."""
+"""Polymarket: Gamma events (tennis/NBA/Dota) + moneyline prices (CLOB book mid)."""
 from __future__ import annotations
 
 import json
@@ -16,12 +16,17 @@ from tm.clients.proxy import proxies_for
 GAMMA = (os.environ.get("POLY_GAMMA_BASE") or "https://gamma-api.polymarket.com").rstrip("/")
 CLOB = (os.environ.get("POLY_CLOB_BASE") or "https://clob.polymarket.com").rstrip("/")
 TENNIS_TAG_ID = int(os.environ.get("POLY_TENNIS_TAG_ID", "864"))
+NBA_TAG_ID = int(os.environ.get("POLY_NBA_TAG_ID", "745"))
+# 若 Polymarket 有专用 Dota tag id，设 POLY_DOTA_TAG_ID；否则用 tag_slug（默认 dota-2）
+_DOTA_TAG_RAW = (os.environ.get("POLY_DOTA_TAG_ID") or "").strip()
+DOTA_TAG_ID = int(_DOTA_TAG_RAW) if _DOTA_TAG_RAW.isdigit() else None
+DOTA_TAG_SLUG = (os.environ.get("POLY_DOTA_TAG_SLUG") or "dota-2").strip() or "dota-2"
 CACHE_MS = int(os.environ.get("POLY_TENNIS_CACHE_MS", "120000"))
 MAX_OFFSET = int(os.environ.get("POLY_TENNIS_MAX_OFFSET", "500"))
 MAX_DATE_DRIFT_MS = 4 * 24 * 60 * 60 * 1000
 _TIMEOUT = int(os.environ.get("POLY_REQUEST_TIMEOUT_SEC", "15"))
 
-_poly_cache: dict[str, Any] = {"at": 0.0, "items": []}
+_poly_caches: dict[str, dict[str, Any]] = {}
 _request_count = 0
 
 
@@ -235,29 +240,52 @@ def slim_gamma_event(ev: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def fetch_polymarket_tennis_events() -> list[dict[str, Any]]:
+def fetch_polymarket_events_by_tag(
+    tag_id: int | None = None,
+    *,
+    tag_slug: str | None = None,
+    cache_key: str | None = None,
+    max_offset: int | None = None,
+    raise_on_total_failure: bool = False,
+    include_closed: bool = True,
+) -> list[dict[str, Any]]:
+    """按 Gamma tag_id 或 tag_slug 分页拉取 active 事件；默认 closed=false/true 两趟。"""
+    if tag_id is None and not tag_slug:
+        raise ValueError("tag_id or tag_slug required")
+    key = cache_key or (f"tag:{tag_id}" if tag_id is not None else f"slug:{tag_slug}")
+    if not include_closed:
+        key = f"{key}:open"
     now = time.time() * 1000
-    cached = _poly_cache.get("items") or []
-    if cached and now - float(_poly_cache.get("at") or 0) < CACHE_MS:
+    bucket = _poly_caches.get(key) or {}
+    cached = bucket.get("items") or []
+    if cached and now - float(bucket.get("at") or 0) < CACHE_MS:
         return list(cached)
+
     by_slug: dict[str, dict[str, Any]] = {}
     page_size = 100
-    for closed in ("false", "true"):
+    offset_cap = MAX_OFFSET if max_offset is None else int(max_offset)
+    pages_ok = 0
+    last_err: Exception | None = None
+    label = f"tag_id={tag_id}" if tag_id is not None else f"tag_slug={tag_slug}"
+    closed_passes = ("false", "true") if include_closed else ("false",)
+    for closed in closed_passes:
         offset = 0
-        while offset <= MAX_OFFSET:
+        while offset <= offset_cap:
             try:
-                rows = _gamma_get(
-                    "events",
-                    params={
-                        "tag_id": TENNIS_TAG_ID,
-                        "active": "true",
-                        "closed": closed,
-                        "limit": page_size,
-                        "offset": offset,
-                    },
-                )
+                params: dict[str, Any] = {
+                    "active": "true",
+                    "closed": closed,
+                    "limit": page_size,
+                    "offset": offset,
+                }
+                if tag_id is not None:
+                    params["tag_id"] = tag_id
+                else:
+                    params["tag_slug"] = tag_slug
+                rows = _gamma_get("events", params=params)
                 if not isinstance(rows, list):
                     break
+                pages_ok += 1
                 for ev in rows:
                     if ev.get("slug"):
                         by_slug[str(ev["slug"])] = ev
@@ -265,12 +293,105 @@ def fetch_polymarket_tennis_events() -> list[dict[str, Any]]:
                     break
                 offset += page_size
             except Exception as exc:
-                print(f"[polymarket] gamma page skip: {exc}")
+                last_err = exc
+                print(f"[polymarket] gamma page skip {label}: {exc}")
                 break
+
+    if not by_slug and pages_ok == 0 and last_err is not None:
+        msg = f"gamma fetch {label} failed: {last_err}"
+        if raise_on_total_failure:
+            raise RuntimeError(msg) from last_err
+        print(f"[polymarket] {msg}")
+
     items = [slim_gamma_event(ev) for ev in by_slug.values()]
-    _poly_cache["at"] = now
-    _poly_cache["items"] = items
+    if not include_closed:
+        items = [x for x in items if not x.get("closed")]
+    _poly_caches[key] = {"at": now, "items": items}
     return items
+
+
+def fetch_polymarket_tennis_events() -> list[dict[str, Any]]:
+    return fetch_polymarket_events_by_tag(TENNIS_TAG_ID, cache_key="tennis")
+
+
+def is_sport_match_event(item: dict[str, Any]) -> bool:
+    """只要对阵赛事（A vs B），排除 Yes/No 舆情、自由市场、冠军盘等命题。"""
+    side_a = str(item.get("sideA") or "").strip()
+    side_b = str(item.get("sideB") or "").strip()
+    if not side_a or not side_b:
+        return False
+    if re.match(r"^(yes|no)$", side_a, re.I) or re.match(r"^(yes|no)$", side_b, re.I):
+        return False
+    title = str(item.get("title") or "")
+    slug = str(item.get("slug") or "")
+    blob = f"{title} {slug}"
+    if not re.search(r"\bvs\.?\b", blob, re.I):
+        return False
+    low_slug = slug.lower()
+    low_title = title.lower()
+    # 同场附加盘 / 舆情命题
+    if "more-markets" in low_slug or "more markets" in low_title:
+        return False
+    if any(x in low_slug or x in low_title for x in ("free-agency", "free agency", "next-team", "next team")):
+        return False
+    if low_title.startswith("will ") or low_slug.startswith("will-"):
+        return False
+    if "champion" in low_slug and "vs" not in low_slug:
+        return False
+    return True
+
+
+def _prices_of(item: dict[str, Any]) -> tuple[float, float] | None:
+    prices = item.get("prices")
+    if not isinstance(prices, (list, tuple)) or len(prices) < 2:
+        return None
+    try:
+        return float(prices[0]), float(prices[1])
+    except (TypeError, ValueError):
+        return None
+
+
+def is_open_priced_match(item: dict[str, Any], *, eps: float = 0.005) -> bool:
+    """未关闭，且双方价格都不在 0%/100%（排除已实质落定盘）。"""
+    if item.get("closed"):
+        return False
+    pair = _prices_of(item)
+    if pair is None:
+        return False
+    a, b = pair
+    if a <= eps or a >= 1.0 - eps or b <= eps or b >= 1.0 - eps:
+        return False
+    return True
+
+
+def fetch_polymarket_nba_events(*, raise_on_total_failure: bool = True) -> list[dict[str, Any]]:
+    """未结束且双方未到 100% 的 NBA 对阵。"""
+    items = fetch_polymarket_events_by_tag(
+        NBA_TAG_ID,
+        cache_key="nba",
+        raise_on_total_failure=raise_on_total_failure,
+        include_closed=False,
+    )
+    return [x for x in items if is_sport_match_event(x) and is_open_priced_match(x)]
+
+
+def fetch_polymarket_dota_events(*, raise_on_total_failure: bool = True) -> list[dict[str, Any]]:
+    """未结束且双方未到 100% 的 Dota 对阵。"""
+    if DOTA_TAG_ID is not None:
+        items = fetch_polymarket_events_by_tag(
+            DOTA_TAG_ID,
+            cache_key="dota",
+            raise_on_total_failure=raise_on_total_failure,
+            include_closed=False,
+        )
+    else:
+        items = fetch_polymarket_events_by_tag(
+            tag_slug=DOTA_TAG_SLUG,
+            cache_key="dota",
+            raise_on_total_failure=raise_on_total_failure,
+            include_closed=False,
+        )
+    return [x for x in items if is_sport_match_event(x) and is_open_priced_match(x)]
 
 
 def search_gamma_pair(home: str | None, away: str | None) -> list[dict[str, Any]]:

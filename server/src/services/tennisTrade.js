@@ -63,6 +63,7 @@ async function placeBatchOrders(userId, {
   limitPrice: batchLimitPrice = null,
   limitBuyPrice: batchLimitBuyPrice = null,
   shares: batchShares = null,
+  allowAnySide = false,
 } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
@@ -143,7 +144,7 @@ async function placeBatchOrders(userId, {
     const homeName = match.homePlayer?.name || match.home || '';
     const awayName = match.awayPlayer?.name || match.away || '';
     const suggested = pickSide(match, bundle.rankingsByPlayer);
-    if (suggested && side !== suggested) {
+    if (!allowAnySide && suggested && side !== suggested) {
       results.push({ eventId, ok: false, error: '仅支持按建议侧下单' });
       continue;
     }

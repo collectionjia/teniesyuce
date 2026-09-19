@@ -18,8 +18,9 @@
 3. [定期采集后的数据接口](#3-定期采集后的数据接口)
 4. [单场赛事下单（邮箱）](#4-单场赛事下单邮箱)
 5. [批量下单（邮箱）](#5-批量下单邮箱)
-6. [错误码约定](#6-错误码约定)
-7. [完整调用样例](#7-完整调用样例)
+6. [限价单（邮箱）](#6-限价单邮箱)
+7. [错误码约定](#7-错误码约定)
+8. [完整调用样例](#8-完整调用样例)
 
 ---
 
@@ -29,7 +30,7 @@
 |----------|----------|
 | 健康检查 | 无需登录 |
 | 采集数据（盘前 / 盘中 / 盘后 / 单场进行中） | **无需 JWT**，公开读 Redis 快照 |
-| 单场 / 批量 买入 / 卖出 | **无需 JWT**；请求体带 `email`（= `users.account`）定位钱包 |
+| 单场 / 批量 / 限价 买入 / 卖出 | **无需 JWT**；请求体带 `email`（= `users.account`）定位钱包 |
 
 共性：
 
@@ -516,10 +517,10 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/sell' \
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/tennis/orders/batch` | 统一批量买入（body 带 `product`） |
-| POST | `/api/tennis-prematch/trade/batch` | 盘前批量买入 |
-| POST | `/api/tennis-inplay/trade/batch` | 盘中批量买入 |
-| POST | `/api/tennis-prematch/trade/sell` | 盘前单场卖出 |
-| POST | `/api/tennis-inplay/trade/sell` | 盘中单场卖出 |
+| POST | `/api/tennis-prematch/trade/batch` | 盘前批量买入（支持限价，见 §6） |
+| POST | `/api/tennis-inplay/trade/batch` | 盘中批量买入（支持限价，见 §6） |
+| POST | `/api/tennis-prematch/trade/sell` | 盘前单场卖出（支持限价，见 §6） |
+| POST | `/api/tennis-inplay/trade/sell` | 盘中单场卖出（支持限价，见 §6） |
 
 共性：
 
@@ -527,6 +528,9 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/sell' \
 - Body 必填 **`email`**（或 `account`）定位用户
 - 实盘需已配置钱包；`simulate: true` 走模拟
 - 虚拟采集（docks500）时强制模拟
+- 默认 `orderType` 为市价（`market` / FOK）；限价见 [§6](#6-限价单邮箱)
+
+> 注意：统一入口 `/api/tennis/orders/buy` · `/sell` · `/batch` **当前不传限价参数**，限价请用盘前/盘中 `/trade/batch` 与 `/trade/sell`。
 
 ---
 
@@ -682,12 +686,191 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 
 ---
 
-## 6. 错误码约定
+## 6. 限价单（邮箱）
+
+在 Polymarket CLOB 上挂 **GTC**（Good Till Cancelled）限价单：按**份额 + 目标价**挂单，成交或取消前一直挂在盘口。与市价 FOK（立即全部成交否则取消）不同。
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/tennis-prematch/trade/batch` | 盘前限价买入（可多场，参数相同） |
+| POST | `/api/tennis-inplay/trade/batch` | 盘中限价买入 |
+| POST | `/api/tennis-prematch/trade/sell` | 盘前限价卖出 |
+| POST | `/api/tennis-inplay/trade/sell` | 盘中限价卖出 |
+
+共性：
+
+- 鉴权与 §4 / §5 相同：body 带 `email`，**无需 JWT**
+- `orderType` 必须为 **`limit`**（缺省或其它值走市价）
+- 目标价范围：**0.01～0.99**（小数概率价，tick `0.01`）
+- 成功表示**挂单已被接受**（可能尚未成交）；响应里常有 `orderId`、`status`（如 `live` / `open` / `matched`）
+- `simulate: true` 时仅记账，不打 Polymarket
+
+---
+
+### 6.1 限价买入 · `POST /api/tennis-prematch/trade/batch`
+
+（盘中把路径换成 `/api/tennis-inplay/trade/batch`。）
+
+限价买入**按份额下单**，金额由服务端推算：`amountUsd ≈ shares × limitBuyPrice`（不再要求 body 里的 `amountUsd ≥ 1`）。
+
+#### 参数
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `email` | string | 是* | 用户邮箱；也可用 `account` |
+| `orderType` | string | 是 | 固定填 **`limit`** |
+| `limitBuyPrice` | number | 是* | 买入目标价 0.01–0.99；也可用 `limitPrice` |
+| `limitPrice` | number | 是* | 与 `limitBuyPrice` 二选一（优先 `limitBuyPrice`） |
+| `shares` | number | 是 | 买入份额，**> 0**（向下取到 0.01） |
+| `orders` | array | 是 | 场次数组，**1～20** 条 |
+| `orders[].eventId` | string/number | 是 | 比赛 id；也可用 `id` |
+| `orders[].side` | string | 是 | `home` / `away` |
+| `simulate` | boolean | 否 | 默认 false |
+| `amountUsd` | number | 否 | 限价时**忽略**；由份额×目标价推算 |
+
+单场挂单时 `orders` 只放一条即可。
+
+#### 请求样例
+
+```bash
+curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/batch' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "user@example.com",
+    "orderType": "limit",
+    "limitBuyPrice": 0.55,
+    "shares": 10,
+    "simulate": true,
+    "orders": [
+      { "eventId": "12345678", "side": "home" }
+    ]
+  }'
+```
+
+#### 成功响应样例
+
+```json
+{
+  "ok": true,
+  "message": "批量模拟下单完成：1 场已挂单",
+  "simulated": true,
+  "orderType": "limit",
+  "email": "user@example.com",
+  "userId": 12,
+  "product": "tennis-prematch",
+  "total": 1,
+  "success": 1,
+  "failed": 0,
+  "results": [
+    {
+      "ok": true,
+      "eventId": "12345678",
+      "side": "home",
+      "homeName": "Sloane Stephens",
+      "awayName": "Caroline Dolehide",
+      "amountUsd": 5.5,
+      "price": 0.55,
+      "shares": 10,
+      "orderId": "sim_xxxx_5678",
+      "status": "simulated",
+      "orderType": "limit",
+      "simulated": true
+    }
+  ]
+}
+```
+
+实盘时 `orderId` 为 CLOB 订单号，`status` 多为 `live` / `open`（挂单中）或 `matched`（已成交）。
+
+#### 参数错误（HTTP 400）
+
+```json
+{ "ok": false, "error": "限价单须填写买入目标价（0.01–0.99）" }
+```
+
+```json
+{ "ok": false, "error": "限价单须填写份额" }
+```
+
+---
+
+### 6.2 限价卖出 · `POST /api/tennis-prematch/trade/sell`
+
+（盘中：`/api/tennis-inplay/trade/sell`。）
+
+#### 参数
+
+| 参数 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| `email` | string | 是* | — | 用户邮箱 |
+| `eventId` | string/number | 是 | — | 比赛 id |
+| `side` | string | 是 | — | `home` / `away` |
+| `orderType` | string | 是 | — | 固定填 **`limit`** |
+| `limitSellPrice` | number | 是* | — | 卖出目标价 0.01–0.99；也可用 `limitPrice` |
+| `limitPrice` | number | 是* | — | 与 `limitSellPrice` 二选一（优先 `limitSellPrice`） |
+| `shares` | string/number | 否 | `"all"` | 卖出份额；`"all"` / 空 = 全部持仓 |
+| `simulate` | boolean | 否 | `false` | 模拟 |
+
+#### 请求样例
+
+```bash
+curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "user@example.com",
+    "eventId": "12345678",
+    "side": "home",
+    "orderType": "limit",
+    "limitSellPrice": 0.70,
+    "shares": 10,
+    "simulate": true
+  }'
+```
+
+#### 成功响应样例
+
+```json
+{
+  "ok": true,
+  "email": "user@example.com",
+  "userId": 12,
+  "product": "tennis-prematch",
+  "eventId": "12345678",
+  "side": "home",
+  "orderId": "0xdef...",
+  "soldShares": 10,
+  "price": 0.70,
+  "amountUsd": 7,
+  "orderType": "limit",
+  "status": "live",
+  "homeName": "Sloane Stephens",
+  "awayName": "Caroline Dolehide",
+  "simulated": false
+}
+```
+
+---
+
+### 6.3 市价 vs 限价对照
+
+| | 市价（默认） | 限价 `orderType=limit` |
+|--|-------------|------------------------|
+| CLOB 类型 | FOK（立即全成否则取消） | GTC（挂单直至成交/取消） |
+| 买入计量 | `amountUsd`（美元） | `shares` + `limitBuyPrice` |
+| 卖出计量 | `shares`（可选 `"all"`） | `shares` + `limitSellPrice` |
+| 接口 | §4 / §5 均可；限价仅 §6 路径 | 仅盘前/盘中 `/trade/batch` · `/trade/sell` |
+| 成功含义 | 通常已成交 | 挂单已接受（未必立刻成交） |
+
+底层实现：`server/src/services/polymarketTrade.js` → `placeLimitBuy` / `placeLimitSell`。Polymarket 原生 REST/SDK 细节见 [`Polymarket限价单API说明.md`](./Polymarket限价单API说明.md)。
+
+---
+
+## 7. 错误码约定
 
 | HTTP | 典型场景 |
 |------|----------|
 | 200 | 业务结果（单场/批量条目可能 `ok: false`） |
-| 400 | 参数错误 / 未配钱包 / 批量超限 |
+| 400 | 参数错误 / 未配钱包 / 批量超限 / 限价缺份额或目标价 |
 | 404 | 邮箱用户不存在 |
 | 500 | 服务端异常 |
 
@@ -695,9 +878,9 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 
 ---
 
-## 7. 完整调用样例
+## 8. 完整调用样例
 
-### 7.1 读单场进行中
+### 8.1 读单场进行中
 
 ```bash
 BASE='https://www.yuce.bid'
@@ -706,7 +889,7 @@ EVENT_ID='12345679'
 curl -s "$BASE/api/tennis-inplay/match/$EVENT_ID"
 ```
 
-### 7.2 读盘前 → 邮箱单场模拟买入
+### 8.2 读盘前 → 邮箱单场模拟买入
 
 ```bash
 BASE='https://www.yuce.bid'
@@ -725,7 +908,7 @@ curl -s -X POST "$BASE/api/tennis/orders/buy" \
   }'
 ```
 
-### 7.3 邮箱批量买入两场
+### 8.3 邮箱批量买入两场
 
 ```bash
 curl -s -X POST "$BASE/api/tennis/orders/batch" \
@@ -742,7 +925,40 @@ curl -s -X POST "$BASE/api/tennis/orders/batch" \
   }'
 ```
 
-### 7.4 从盘前响应取 eventId（Python）
+### 8.4 限价买入（盘前，单场）
+
+```bash
+curl -s -X POST "$BASE/api/tennis-prematch/trade/batch" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "user@example.com",
+    "orderType": "limit",
+    "limitBuyPrice": 0.55,
+    "shares": 10,
+    "simulate": true,
+    "orders": [
+      { "eventId": "12345678", "side": "home" }
+    ]
+  }'
+```
+
+### 8.5 限价卖出（盘前）
+
+```bash
+curl -s -X POST "$BASE/api/tennis-prematch/trade/sell" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "user@example.com",
+    "eventId": "12345678",
+    "side": "home",
+    "orderType": "limit",
+    "limitSellPrice": 0.70,
+    "shares": 10,
+    "simulate": true
+  }'
+```
+
+### 8.6 从盘前响应取 eventId（Python）
 
 ```python
 import json
@@ -764,7 +980,7 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 
 ---
 
-## 8. 相关说明与代码
+## 9. 相关说明与代码
 
 | 说明 | 内容 |
 |------|------|
@@ -772,10 +988,12 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 | 进行中刷新 | `collect_live` / inplay tick（与全量独立） |
 | 邮箱下单公共逻辑 | `server/src/services/tennisOrdersPublic.js` |
 | 单场 / 统一批量 | `server/src/routes/tennisOrders.js` |
-| 盘前批量 | `server/src/routes/tennisPrematch.js` → `/trade/batch` |
+| 盘前批量 / 限价 | `server/src/routes/tennisPrematch.js` → `/trade/batch` · `/trade/sell` |
 | 盘中列表 / 单场 | `server/src/routes/tennisInplay.js` → `/today` · `/match/:eventId` |
-| 盘中批量 | `server/src/routes/tennisInplay.js` → `/trade/batch` |
+| 盘中批量 / 限价 | `server/src/routes/tennisInplay.js` → `/trade/batch` · `/trade/sell` |
+| 限价 CLOB | `server/src/services/polymarketTrade.js` → `placeLimitBuy` / `placeLimitSell` |
 | 全量采集脚本 | `scripts/tennis-monitor/collect.py` |
 | 进行中采集 | `scripts/tennis-monitor/collect_live.py` |
 
 引擎调度 / API Key 见：[`引擎API对外中心-接口文档.md`](./引擎API对外中心-接口文档.md)（仍使用 API Key，与本文件无关）。
+限价底层 REST/SDK 见：[`Polymarket限价单API说明.md`](./Polymarket限价单API说明.md)。

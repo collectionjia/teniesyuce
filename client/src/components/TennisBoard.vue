@@ -118,6 +118,12 @@ const detailMatch = ref(null)
 /** 详情页字段说明是否展开 */
 const detailHelpOpen = ref(false)
 const batchAmountUsd = ref('1')
+/** 盘前手动批量：市价/限价、Up(home)/Down(away)/建议 */
+const manualOrderType = ref('market')
+const manualSide = ref('suggest')
+const manualShares = ref('10')
+const manualLimitBuyPrice = ref('0.55')
+const showManualTradeOpts = computed(() => isPrematchMode.value && allowBatchTrade.value)
 
 const {
   rulesLoading,
@@ -1296,6 +1302,13 @@ function canSelectMatch(m) {
   if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return false
   if (!polyUrlOf(m)) return false
   if (isInplayMode.value) return passesInplayAutoBet(m)
+  // 盘前手动选 Up/Down 时可不等建议侧
+  if (
+    isPrematchMode.value
+    && (manualSide.value === 'home' || manualSide.value === 'away')
+  ) {
+    return true
+  }
   return pickSide(m) != null
 }
 
@@ -1338,12 +1351,17 @@ function toggleSelectPage() {
   selectedIds.value = next
 }
 
-function buildBatchOrders() {
+function resolveManualSide(m) {
+  if (manualSide.value === 'home' || manualSide.value === 'away') return manualSide.value
+  return pickSide(m)
+}
+
+function buildBatchOrders({ manual = false } = {}) {
   return [...selectedIds.value].map((eventId) => {
     const id = String(eventId)
     if (autoPlacedIds.value.has(id) || autoSoldIds.value.has(id)) return null
     const m = matches.value.find((x) => String(x.id) === eventId)
-    const side = pickSide(m)
+    const side = manual && isPrematchMode.value ? resolveManualSide(m) : pickSide(m)
     if (!m || !side) return null
     return {
       eventId,
@@ -1368,19 +1386,37 @@ function formatBatchResultLine(r, list) {
 
 const BATCH_TRADE_CHUNK = 20
 
-async function placeBatchTradeRequest(orders, amount) {
+async function placeBatchTradeRequest(orders, amount, { manual = false } = {}) {
+  const useManual = manual && isPrematchMode.value
+  const orderType = useManual
+    ? (manualOrderType.value === 'limit' ? 'limit' : 'market')
+    : engineOrderType.value
   const payload = {
     orders,
     amountUsd: amount,
     simulate: !!useSimulateOrders.value,
-    orderType: engineOrderType.value,
+    orderType,
   }
-  if (engineOrderType.value === 'limit') {
-    if (engineShares.value != null) payload.shares = engineShares.value
-    if (engineLimitBuyPrice.value != null) {
-      payload.limitBuyPrice = engineLimitBuyPrice.value
-      payload.limitPrice = engineLimitBuyPrice.value
+  if (orderType === 'limit') {
+    if (useManual) {
+      const sh = Math.floor(Number(manualShares.value) * 100) / 100
+      const lp = Number(manualLimitBuyPrice.value)
+      if (sh > 0) payload.shares = sh
+      if (lp >= 0.01 && lp <= 0.99) {
+        payload.limitBuyPrice = Math.round(lp * 100) / 100
+        payload.limitPrice = payload.limitBuyPrice
+      }
+    } else {
+      if (engineShares.value != null) payload.shares = engineShares.value
+      if (engineLimitBuyPrice.value != null) {
+        payload.limitBuyPrice = engineLimitBuyPrice.value
+        payload.limitPrice = engineLimitBuyPrice.value
+      }
     }
+  }
+  // 手动选 Up/Down 时放行非建议侧
+  if (useManual && (manualSide.value === 'home' || manualSide.value === 'away')) {
+    payload.allowAnySide = true
   }
   if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
   if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
@@ -1398,21 +1434,27 @@ async function submitBatchTrade({ auto = false } = {}) {
     batchError.value = '默认不下单。请先开启「自动投注」，或配置钱包后手动实盘批量'
     return
   }
-  const orders = buildBatchOrders()
+  const manual = !auto && isPrematchMode.value
+  const orders = buildBatchOrders({ manual })
   if (!orders.length) {
     if (!auto) batchError.value = '请先勾选可同步的场次'
     return
   }
   let amount = resolveBatchStakeUsd()
-  if (engineOrderType.value === 'limit') {
-    const sh = Number(engineShares.value)
-    const lp = Number(engineLimitBuyPrice.value)
+  const orderType = manual
+    ? (manualOrderType.value === 'limit' ? 'limit' : 'market')
+    : engineOrderType.value
+  if (orderType === 'limit') {
+    const sh = manual ? Number(manualShares.value) : Number(engineShares.value)
+    const lp = manual ? Number(manualLimitBuyPrice.value) : Number(engineLimitBuyPrice.value)
     if (!(sh > 0)) {
-      batchError.value = '限价单请先在投注引擎填写份额'
+      batchError.value = manual ? '限价单请填写份额' : '限价单请先在投注引擎填写份额'
       return
     }
     if (!(lp >= 0.01 && lp <= 0.99)) {
-      batchError.value = '限价单请先在投注引擎填写买入目标价（0.01–0.99）'
+      batchError.value = manual
+        ? '限价单请填写买入目标价（0.01–0.99）'
+        : '限价单请先在投注引擎填写买入目标价（0.01–0.99）'
       return
     }
     amount = Math.round(sh * lp * 100) / 100
@@ -1431,7 +1473,7 @@ async function submitBatchTrade({ auto = false } = {}) {
     let success = 0
     let failed = 0
     for (const chunk of chunks) {
-      const resp = await placeBatchTradeRequest(chunk, amount)
+      const resp = await placeBatchTradeRequest(chunk, amount, { manual })
       const part = Array.isArray(resp?.results) ? resp.results : []
       allResults.push(...part)
       success += Number(resp?.success) || part.filter((r) => r?.ok).length
@@ -2739,6 +2781,11 @@ defineExpose({
       :page-selectable="pageSelectable"
       :selected-count="selectedCount"
       v-model:batch-amount-usd="batchAmountUsd"
+      :show-manual-trade-opts="showManualTradeOpts"
+      v-model:manual-order-type="manualOrderType"
+      v-model:manual-side="manualSide"
+      v-model:manual-shares="manualShares"
+      v-model:manual-limit-buy-price="manualLimitBuyPrice"
       :batch-submitting="batchSubmitting"
       :batch-notice="batchNotice"
       :batch-error="batchError"

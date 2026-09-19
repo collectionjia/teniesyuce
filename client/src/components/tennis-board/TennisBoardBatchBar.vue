@@ -9,13 +9,25 @@ defineProps({
   batchSubmitting: { type: Boolean, default: false },
   batchNotice: { type: String, default: '' },
   batchError: { type: String, default: '' },
+  /** 未开赛：展示市价/限价、Up/Down */
+  showManualTradeOpts: { type: Boolean, default: false },
+  manualOrderType: { type: String, default: 'market' },
+  manualSide: { type: String, default: 'suggest' },
+  manualShares: { type: [String, Number], default: '10' },
+  manualLimitBuyPrice: { type: [String, Number], default: '0.55' },
   toggleAutoBet: { type: Function, required: true },
   toggleSelectPage: { type: Function, required: true },
   submitBatchTrade: { type: Function, required: true },
   clearSelection: { type: Function, required: true },
 })
 
-const emit = defineEmits(['update:batchAmountUsd'])
+const emit = defineEmits([
+  'update:batchAmountUsd',
+  'update:manualOrderType',
+  'update:manualSide',
+  'update:manualShares',
+  'update:manualLimitBuyPrice',
+])
 </script>
 
 <template>
@@ -36,10 +48,82 @@ const emit = defineEmits(['update:batchAmountUsd'])
           <span>全选</span>
         </label>
         <span class="batch-count">{{ selectedCount }}</span>
-        <label class="batch-amount">
+
+        <template v-if="showManualTradeOpts">
+          <div class="seg" title="手动批量：市价 FOK / 限价 GTC">
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ on: manualOrderType === 'market' }"
+              :disabled="batchSubmitting"
+              @click="emit('update:manualOrderType', 'market')"
+            >市价</button>
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ on: manualOrderType === 'limit' }"
+              :disabled="batchSubmitting"
+              @click="emit('update:manualOrderType', 'limit')"
+            >限价</button>
+          </div>
+          <div class="seg" title="Up=主队 home，Down=客队 away；建议=按排名优侧">
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ on: manualSide === 'suggest' }"
+              :disabled="batchSubmitting"
+              @click="emit('update:manualSide', 'suggest')"
+            >建议</button>
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ on: manualSide === 'home' }"
+              :disabled="batchSubmitting"
+              @click="emit('update:manualSide', 'home')"
+            >Up</button>
+            <button
+              type="button"
+              class="seg-btn"
+              :class="{ on: manualSide === 'away' }"
+              :disabled="batchSubmitting"
+              @click="emit('update:manualSide', 'away')"
+            >Down</button>
+          </div>
+          <template v-if="manualOrderType === 'limit'">
+            <label class="batch-amount" title="限价买入份额">
+              <span>份</span>
+              <input
+                :value="manualShares"
+                @input="emit('update:manualShares', $event.target.value)"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputmode="decimal"
+              />
+            </label>
+            <label class="batch-amount" title="买入目标价 0.01–0.99">
+              <span>价</span>
+              <input
+                :value="manualLimitBuyPrice"
+                @input="emit('update:manualLimitBuyPrice', $event.target.value)"
+                type="number"
+                min="0.01"
+                max="0.99"
+                step="0.01"
+                inputmode="decimal"
+              />
+            </label>
+          </template>
+          <label v-else class="batch-amount">
+            <span>元</span>
+            <input :value="batchAmountUsd" @input="emit('update:batchAmountUsd', $event.target.value)" type="number" min="1" step="1" inputmode="decimal" />
+          </label>
+        </template>
+        <label v-else class="batch-amount">
           <span>元</span>
           <input :value="batchAmountUsd" @input="emit('update:batchAmountUsd', $event.target.value)" type="number" min="1" step="1" inputmode="decimal" />
         </label>
+
         <button
           type="button"
           class="batch-btn"
@@ -74,12 +158,9 @@ const emit = defineEmits(['update:batchAmountUsd'])
 }
 .batch-bar-controls {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
 }
 .auto-bet-toggle {
   display: inline-flex;
@@ -103,18 +184,6 @@ const emit = defineEmits(['update:batchAmountUsd'])
 .auto-bet-toggle input {
   accent-color: #16a34a;
 }
-.sim-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #6d28d9;
-  background: #f5f3ff;
-  border: 1px solid #ddd6fe;
-  flex-shrink: 0;
-}
 .batch-check-all {
   display: inline-flex;
   align-items: center;
@@ -135,6 +204,37 @@ const emit = defineEmits(['update:batchAmountUsd'])
   font-weight: 700;
   color: var(--primary);
   flex-shrink: 0;
+}
+.seg {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #fff;
+}
+.seg-btn {
+  border: 0;
+  border-right: 1px solid #e0e7ff;
+  background: transparent;
+  color: #64748b;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.seg-btn:last-child {
+  border-right: 0;
+}
+.seg-btn.on {
+  background: #eef2ff;
+  color: #3730a3;
+}
+.seg-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .batch-amount {
   display: inline-flex;
