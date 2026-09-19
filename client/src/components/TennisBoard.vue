@@ -1461,6 +1461,11 @@ async function submitBatchTrade({ auto = false } = {}) {
       return
     }
     amount = Math.round(sh * lp * 100) / 100
+    if (!(amount >= 1)) {
+      const minShares = Math.ceil((1 / lp) * 100) / 100
+      batchError.value = `限价买入 份额×买价=$${amount}，须 ≥ $1（建议至少 ${minShares} 份）`
+      return
+    }
   } else if (!(amount >= 1)) {
     batchError.value = '每场金额至少 1 元'
     return

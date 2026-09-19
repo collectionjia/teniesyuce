@@ -395,6 +395,13 @@ async function placeLimitBuy({
     if (amount >= 1) size = Math.floor((amount / limitPrice) * 100) / 100;
   }
   if (!(size > 0)) throw new Error('限价单须填写份额');
+  const notional = Math.round(size * limitPrice * 100) / 100;
+  if (!(notional >= 1)) {
+    const minShares = Math.ceil((1 / limitPrice) * 100) / 100;
+    throw new Error(
+      `限价买入金额 $${notional} 不足 $1（Polymarket 最低），请提高份额（当前价建议至少 ${minShares} 份）`,
+    );
+  }
 
   let result;
   try {

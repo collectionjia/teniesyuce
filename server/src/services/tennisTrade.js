@@ -89,6 +89,12 @@ async function placeBatchOrders(userId, {
     shares = Math.floor(Number(batchShares) * 100) / 100;
     if (!(shares > 0)) throw new Error('限价单须填写份额');
     amount = Math.round(shares * limitBuyPrice * 100) / 100;
+    if (!(amount >= 1)) {
+      const minShares = Math.ceil((1 / limitBuyPrice) * 100) / 100;
+      throw new Error(
+        `限价买入金额 $${amount} 不足 $1（Polymarket 最低），请提高份额（当前价建议至少 ${minShares} 份）`,
+      );
+    }
   } else if (!(amount >= 1)) {
     throw new Error('每场投注金额至少 $1');
   }
