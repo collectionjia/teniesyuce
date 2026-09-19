@@ -95,11 +95,17 @@ function openBoardScheduleModal() {
 }
 
 const sellingPlacedId = ref(null)
+const sellingAllPlaced = ref(false)
+
 async function sellBoardPlacedOrder(row) {
-  if (!row?.id || row.sold || sellingPlacedId.value) return
+  if (!row?.id || row.sold || sellingPlacedId.value || sellingAllPlaced.value) return
   sellingPlacedId.value = String(row.id)
   try {
-    await tennisBoardRef.value?.sellPlacedOrder?.(row.id)
+    const resp = await tennisBoardRef.value?.sellPlacedOrder?.(row.id)
+    if (resp?.limitPending) {
+      showToast('已挂限价卖单，尚未成交；要立刻平仓请改市价', 'error')
+      return
+    }
     showToast(row.simulated ? '已模拟卖出，该场不再自动下单' : '已卖出，该场不再自动下单', 'success')
     placedCartTab.value = 'sell'
   } catch (e) {
@@ -107,6 +113,53 @@ async function sellBoardPlacedOrder(row) {
   } finally {
     sellingPlacedId.value = null
   }
+}
+
+/** 购物车一键平仓：按当前市价/限价设置逐场卖出买入持仓 */
+async function sellAllBoardPlacedOrders() {
+  const rows = boardPlacedBuys.value.slice()
+  if (!rows.length) {
+    showToast('暂无买入持仓', 'error')
+    return
+  }
+  if (sellingPlacedId.value || sellingAllPlaced.value) return
+  if (!window.confirm(`确认一键平仓 ${rows.length} 场买入持仓？将按当前批量栏「市价/限价」设置卖出。`)) return
+  sellingAllPlaced.value = true
+  placedCartOpen.value = true
+  placedCartTab.value = 'buy'
+  let ok = 0
+  let pending = 0
+  let fail = 0
+  const errors = []
+  try {
+    for (const row of rows) {
+      if (!row?.id || row.sold) continue
+      sellingPlacedId.value = String(row.id)
+      try {
+        const resp = await tennisBoardRef.value?.sellPlacedOrder?.(row.id)
+        if (resp?.limitPending) pending += 1
+        else ok += 1
+      } catch (e) {
+        fail += 1
+        const msg = e?.response?.data?.error || e?.message || '失败'
+        if (errors.length < 3) errors.push(`${placedBetPlayerName(row) || row.id}：${msg}`)
+      }
+    }
+  } finally {
+    sellingPlacedId.value = null
+    sellingAllPlaced.value = false
+  }
+  if (ok > 0) placedCartTab.value = 'sell'
+  const parts = [
+    ok ? `成交 ${ok}` : null,
+    pending ? `挂单待成 ${pending}` : null,
+    fail ? `失败 ${fail}` : null,
+  ].filter(Boolean)
+  const detail = errors.length ? `\n${errors.join('\n')}` : ''
+  showToast(
+    (parts.length ? parts.join('，') : '未处理任何场次') + detail,
+    fail && !ok ? 'error' : 'success',
+  )
 }
 
 function clearBoardSoldOrders() {
@@ -3194,6 +3247,14 @@ function productEmbedUrl(product) {
                       class="absolute -top-1 -right-1 min-w-[1rem] h-4 px-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold leading-4 text-center"
                     >{{ boardPlacedBuyCount > 99 ? '99+' : boardPlacedBuyCount }}</span>
                   </button>
+                  <button
+                    v-if="boardPlacedBuyCount > 0"
+                    type="button"
+                    class="shrink-0 px-2 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold hover:bg-rose-100 disabled:opacity-45"
+                    :disabled="sellingAllPlaced || !!sellingPlacedId"
+                    title="按当前市价/限价设置一键平仓全部买入持仓"
+                    @click="sellAllBoardPlacedOrders"
+                  >{{ sellingAllPlaced ? '平仓中…' : '一键平仓' }}</button>
                 </div>
               </template>
               <div v-else class="flex items-center gap-2 min-h-0">
@@ -4911,6 +4972,14 @@ function productEmbedUrl(product) {
                     @click="placedCartTab = 'sell'"
                   >卖出 {{ boardPlacedSells.length }}</button>
                 </div>
+                <div v-if="placedCartTab === 'buy'" class="flex justify-end">
+                  <button
+                    type="button"
+                    class="text-[11px] font-semibold text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-40 px-2.5 py-1 rounded-lg"
+                    :disabled="!boardPlacedBuyCount || sellingAllPlaced || !!sellingPlacedId"
+                    @click="sellAllBoardPlacedOrders"
+                  >{{ sellingAllPlaced ? '平仓中…' : '一键平仓' }}</button>
+                </div>
                 <div v-if="placedCartTab === 'sell'" class="flex justify-end">
                   <button
                     type="button"
@@ -4951,7 +5020,7 @@ function productEmbedUrl(product) {
                           v-if="placedCartTab === 'buy'"
                           type="button"
                           class="text-[10px] font-semibold text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 px-2 py-0.5 rounded"
-                          :disabled="sellingPlacedId === String(row.id)"
+                          :disabled="sellingAllPlaced || sellingPlacedId === String(row.id)"
                           @click="sellBoardPlacedOrder(row)"
                         >{{ sellingPlacedId === String(row.id) ? '…' : '卖出' }}</button>
                       </div>

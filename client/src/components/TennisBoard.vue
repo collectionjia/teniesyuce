@@ -1624,14 +1624,28 @@ async function sellPlacedOrder(eventId) {
         }
       }
     }
-    const sold = new Set(autoSoldIds.value)
-    sold.add(id)
-    autoSoldIds.value = sold
-    saveTennisAutoState()
-    notifyPlacedOrdersChange()
-    syncInplayPoll()
-    batchNotice.value = `已卖出${simulate ? '（模拟）' : ''}：${row?.label || id}（不再自动下单）`
-    return { ok: true, ...resp }
+    const st = String(resp?.status || '').toLowerCase()
+    const limitPending = !simulate
+      && !resp?.localOnly
+      && String(resp?.orderType || '').toLowerCase() === 'limit'
+      && st
+      && !['matched', 'filled'].includes(st)
+    // 限价仅挂单未成交：不标已卖出，避免误以为已平仓
+    if (!limitPending) {
+      const sold = new Set(autoSoldIds.value)
+      sold.add(id)
+      autoSoldIds.value = sold
+      saveTennisAutoState()
+      notifyPlacedOrdersChange()
+      syncInplayPoll()
+    }
+    if (limitPending) {
+      const px = resp?.price != null ? ` @ ${resp.price}` : ''
+      batchNotice.value = `已挂限价卖单${px}（${st || 'live'}），尚未成交。卖价偏高会一直挂着；要立刻平仓请改「市价」再卖：${row?.label || id}`
+    } else {
+      batchNotice.value = `已卖出${simulate ? '（模拟）' : ''}：${row?.label || id}（不再自动下单）`
+    }
+    return { ok: true, ...resp, limitPending: !!limitPending }
   } finally {
     stopLossBusy.value = false
   }
