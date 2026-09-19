@@ -117,7 +117,27 @@ const filtersOpen = ref(false)
 const detailMatch = ref(null)
 /** 详情页字段说明是否展开 */
 const detailHelpOpen = ref(false)
-const batchAmountUsd = ref('1')
+const BATCH_AMOUNT_KEY_PREMATCH = 'yuce.tennisPrematch.batchAmountUsd.v1'
+const BATCH_AMOUNT_KEY_INPLAY = 'yuce.tennisInplay.batchAmountUsd.v1'
+
+function batchAmountStorageKey() {
+  if (props.boardMode === 'inplay') return BATCH_AMOUNT_KEY_INPLAY
+  if (props.boardMode === 'prematch') return BATCH_AMOUNT_KEY_PREMATCH
+  return ''
+}
+
+function loadPersistedBatchAmount() {
+  const key = batchAmountStorageKey()
+  if (!key) return '1'
+  try {
+    const raw = localStorage.getItem(key)
+    const n = Number(raw)
+    if (Number.isFinite(n) && n >= 1) return String(Math.round(n * 100) / 100)
+  } catch { /* ignore */ }
+  return '1'
+}
+
+const batchAmountUsd = ref(loadPersistedBatchAmount())
 /** 盘前/盘中手动批量：市价/限价、Up(home)/Down(away)/建议 */
 const manualOrderType = ref('market')
 const manualSide = ref('suggest')
@@ -126,6 +146,16 @@ const manualLimitBuyPrice = ref('0.55')
 const manualLimitSellPrice = ref('0.70')
 const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value)
 const showManualTradeOpts = computed(() => isManualTradeBoard.value && allowBatchTrade.value)
+
+watch(batchAmountUsd, (v) => {
+  const key = batchAmountStorageKey()
+  if (!key) return
+  const n = Number(v)
+  if (!(Number.isFinite(n) && n >= 1)) return
+  try {
+    localStorage.setItem(key, String(Math.round(n * 100) / 100))
+  } catch { /* ignore */ }
+})
 
 const {
   rulesLoading,
@@ -1212,7 +1242,11 @@ function shouldInplayStopLoss(m) {
 
 function resolveBatchStakeUsd() {
   const fromInput = Number(batchAmountUsd.value)
-  return fromInput >= 1 ? fromInput : 1
+  // 以列表「元」输入为准；仅非法/空时才回退 1
+  if (Number.isFinite(fromInput) && fromInput >= 1) {
+    return Math.round(fromInput * 100) / 100
+  }
+  return 1
 }
 
 function resolveAutoBetConditionGroups() {
@@ -1389,7 +1423,7 @@ function formatBatchResultLine(r, list) {
 
 const BATCH_TRADE_CHUNK = 20
 
-async function placeBatchTradeRequest(orders, amount, { manual = false } = {}) {
+async function placeBatchTradeRequest(orders, amount, { manual = false, limitShares = null } = {}) {
   const useManual = manual && isManualTradeBoard.value
   const orderType = useManual
     ? (manualOrderType.value === 'limit' ? 'limit' : 'market')
@@ -1402,7 +1436,9 @@ async function placeBatchTradeRequest(orders, amount, { manual = false } = {}) {
   }
   if (orderType === 'limit') {
     if (useManual) {
-      const sh = Math.floor(Number(manualShares.value) * 100) / 100
+      const sh = limitShares != null
+        ? limitShares
+        : Math.floor(Number(manualShares.value) * 100) / 100
       const lp = Number(manualLimitBuyPrice.value)
       if (sh > 0) payload.shares = sh
       if (lp >= 0.01 && lp <= 0.99) {
@@ -1410,7 +1446,8 @@ async function placeBatchTradeRequest(orders, amount, { manual = false } = {}) {
         payload.limitPrice = payload.limitBuyPrice
       }
     } else {
-      if (engineShares.value != null) payload.shares = engineShares.value
+      const sh = limitShares != null ? limitShares : engineShares.value
+      if (sh != null && Number(sh) > 0) payload.shares = Number(sh)
       if (engineLimitBuyPrice.value != null) {
         payload.limitBuyPrice = engineLimitBuyPrice.value
         payload.limitPrice = engineLimitBuyPrice.value
@@ -1447,19 +1484,27 @@ async function submitBatchTrade({ auto = false } = {}) {
   const orderType = manual
     ? (manualOrderType.value === 'limit' ? 'limit' : 'market')
     : engineOrderType.value
+  let limitSharesForRequest = null
   if (orderType === 'limit') {
-    const sh = manual ? Number(manualShares.value) : Number(engineShares.value)
     const lp = manual ? Number(manualLimitBuyPrice.value) : Number(engineLimitBuyPrice.value)
-    if (!(sh > 0)) {
-      batchError.value = manual ? '限价单请填写份额' : '限价单请先在投注引擎填写份额'
-      return
-    }
     if (!(lp >= 0.01 && lp <= 0.99)) {
       batchError.value = manual
         ? '限价单请填写买入目标价（0.01–0.99）'
         : '限价单请先在投注引擎填写买入目标价（0.01–0.99）'
       return
     }
+    // 自动投注：优先用客户列表「元」反推份额，不被默认 1 元/引擎份额覆盖
+    let sh = manual ? Number(manualShares.value) : Number(engineShares.value)
+    if (!manual && amount >= 1) {
+      sh = Math.floor((amount / lp) * 100) / 100
+    } else if (manual && !(sh > 0) && amount >= 1) {
+      sh = Math.floor((amount / lp) * 100) / 100
+    }
+    if (!(sh > 0)) {
+      batchError.value = manual ? '限价单请填写份额或「元」' : '请在列表填写「元」（自动投注金额）'
+      return
+    }
+    limitSharesForRequest = sh
     amount = Math.round(sh * lp * 100) / 100
     if (!(amount >= 1)) {
       const minShares = Math.ceil((1 / lp) * 100) / 100
@@ -1481,7 +1526,10 @@ async function submitBatchTrade({ auto = false } = {}) {
     let success = 0
     let failed = 0
     for (const chunk of chunks) {
-      const resp = await placeBatchTradeRequest(chunk, amount, { manual })
+      const resp = await placeBatchTradeRequest(chunk, amount, {
+        manual,
+        limitShares: limitSharesForRequest,
+      })
       const part = Array.isArray(resp?.results) ? resp.results : []
       allResults.push(...part)
       success += Number(resp?.success) || part.filter((r) => r?.ok).length
@@ -1511,6 +1559,30 @@ async function submitBatchTrade({ auto = false } = {}) {
       }
       selectedIds.value = next
       rememberPlacedOrders(orders, allResults, amount)
+      // 限价：买入成交后才挂卖出目标价
+      const wantFollowSell = orderType === 'limit' && (
+        (manual && Number(manualLimitSellPrice.value) >= 0.01 && Number(manualLimitSellPrice.value) <= 0.99)
+        || (!manual && engineLimitSellPrice.value != null
+          && Number(engineLimitSellPrice.value) >= 0.01
+          && Number(engineLimitSellPrice.value) <= 0.99)
+      )
+      if (wantFollowSell) {
+        const sellRes = await placeLimitSellsAfterFilledBuys(orders, allResults, { manual })
+        if (sellRes.lines.length) {
+          batchNotice.value = [
+            batchNotice.value,
+            '—— 卖出挂单 ——',
+            ...sellRes.lines.slice(0, 6),
+            sellRes.lines.length > 6 ? `…另有 ${sellRes.lines.length - 6} 条` : null,
+          ].filter(Boolean).join('\n')
+        }
+        if (sellRes.failed > 0) {
+          batchError.value = [
+            batchError.value,
+            sellRes.lines.filter((l) => l.includes('挂卖失败') || l.includes('无法确定方向')).join('\n'),
+          ].filter(Boolean).join('\n')
+        }
+      }
     } else if (!auto) {
       batchNotice.value = ''
     }
@@ -1540,9 +1612,75 @@ async function maybeAutoBatchTrade() {
   await submitBatchTrade({ auto: true })
 }
 
-async function placeStopSell(m, side, { simulate } = {}) {
-  const useManualLimit = isManualTradeBoard.value && manualOrderType.value === 'limit'
-  const orderType = useManualLimit ? 'limit' : engineOrderType.value
+function isBuyFilledForFollowSell(r) {
+  if (!r?.ok || r.eventId == null) return false
+  if (r.simulated) return true
+  const st = String(r.status || '').toLowerCase()
+  if (['matched', 'filled'].includes(st)) return true
+  const taking = Number(r.takingAmount)
+  const making = Number(r.makingAmount)
+  if ((Number.isFinite(taking) && taking > 0) || (Number.isFinite(making) && making > 0)) return true
+  // 限价仅挂单未成交：不算买入成功持仓
+  if (['live', 'open', 'unmatched', 'delayed'].includes(st)) return false
+  if (String(r.orderType || '').toLowerCase() === 'limit') return false
+  return true
+}
+
+/** 限价买入成交后，再挂卖出目标价 */
+async function placeLimitSellsAfterFilledBuys(orders, results, { manual = false } = {}) {
+  const sellPx = manual
+    ? Number(manualLimitSellPrice.value)
+    : Number(engineLimitSellPrice.value)
+  if (!(sellPx >= 0.01 && sellPx <= 0.99)) return { hung: 0, skipped: 0, failed: 0, lines: [] }
+
+  const byOrder = new Map((orders || []).map((o) => [String(o.eventId), o]))
+  let hung = 0
+  let skipped = 0
+  let failed = 0
+  const lines = []
+  for (const r of results || []) {
+    if (!r?.ok || r.eventId == null) continue
+    if (!isBuyFilledForFollowSell(r)) {
+      skipped += 1
+      lines.push(`${r.homeName || r.eventId}：买入未成交，暂不挂卖单`)
+      continue
+    }
+    const fromOrder = byOrder.get(String(r.eventId))
+    const side = r.side || fromOrder?.side
+    if (!side) {
+      failed += 1
+      lines.push(`${r.eventId}：无法确定方向，未挂卖单`)
+      continue
+    }
+    const m = matches.value.find((x) => String(x.id) === String(r.eventId))
+      || { id: r.eventId }
+    try {
+      const resp = await placeStopSell(m, side, {
+        simulate: !!(r.simulated || useSimulateOrders.value),
+        forceLimitSellPrice: sellPx,
+      })
+      const st = String(resp?.status || '').toLowerCase()
+      hung += 1
+      lines.push(
+        `${r.homeName || fromOrder?.homeName || r.eventId}：已挂卖单 @ ${sellPx}${st ? ` (${st})` : ''}`,
+      )
+    } catch (e) {
+      failed += 1
+      lines.push(`${r.eventId}：挂卖失败 ${e?.response?.data?.error || e?.message || ''}`)
+    }
+  }
+  return { hung, skipped, failed, lines }
+}
+
+async function placeStopSell(m, side, { simulate, forceLimitSellPrice } = {}) {
+  const forcePx = Number(forceLimitSellPrice)
+  const useForcedLimit = forcePx >= 0.01 && forcePx <= 0.99
+  const useManualLimit = !useForcedLimit
+    && isManualTradeBoard.value
+    && manualOrderType.value === 'limit'
+  const orderType = (useForcedLimit || useManualLimit)
+    ? 'limit'
+    : engineOrderType.value
   const payload = {
     eventId: String(m.id),
     side,
@@ -1551,7 +1689,10 @@ async function placeStopSell(m, side, { simulate } = {}) {
     orderType,
   }
   if (orderType === 'limit') {
-    if (useManualLimit) {
+    if (useForcedLimit) {
+      payload.limitSellPrice = Math.round(forcePx * 100) / 100
+      payload.limitPrice = payload.limitSellPrice
+    } else if (useManualLimit) {
       const sp = Number(manualLimitSellPrice.value)
       if (sp >= 0.01 && sp <= 0.99) {
         payload.limitSellPrice = Math.round(sp * 100) / 100
