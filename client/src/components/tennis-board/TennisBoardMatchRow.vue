@@ -83,7 +83,7 @@ defineProps({
           </div>
         </div>
         <div class="row-main">
-          <div v-if="isMatchLive(m)" class="matchup is-live-board">
+          <div v-if="isMatchLive(m) || liveSetCells(m, 'home').length || m.pmSettled || matchWinnerSide(m)" class="matchup is-live-board">
             <div class="matchup-line">
               <span class="name live-player-top" :class="{ pick: isMember && pickSide(m) === 'home', 'live-side': true }">
                 <span v-if="isMember && listRankOf(m, 'home') != null" class="list-rank">
@@ -95,6 +95,7 @@ defineProps({
                 </span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+                <span v-if="matchWinnerSide(m) === 'home'" class="win-tag">赢</span>
               </span>
               <div class="live-set-scores" aria-label="主队盘分">
                 <span
@@ -118,6 +119,7 @@ defineProps({
                 </span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
                 <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+                <span v-if="matchWinnerSide(m) === 'away'" class="win-tag">赢</span>
               </span>
               <div class="live-set-scores" aria-label="客队盘分">
                 <span
@@ -129,6 +131,7 @@ defineProps({
                 <span v-if="livePointText(m, 'away')" class="live-point">{{ livePointText(m, 'away') }}</span>
               </div>
             </div>
+            <div v-if="m.scoreText || m.score_text" class="set-score-line">{{ m.scoreText || m.score_text }}</div>
           </div>
           <div v-else class="matchup is-stacked">
             <div class="matchup-line">
@@ -370,6 +373,14 @@ defineProps({
   gap: 6px;
   padding: 0 2px;
   flex-shrink: 0;
+}
+.set-score-line {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  padding: 1px 0 0;
 }
 .live-set-scores .set-cell {
   font-variant-numeric: tabular-nums;

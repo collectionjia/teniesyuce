@@ -79,21 +79,17 @@ async function lookupMatchByEventId(eventId) {
     const raw = findEventInBundle(bundle, id);
     if (!raw) continue;
 
-    const pastStart = isPastStartTime(raw, serverTime);
-    const inPlay = resolveInPlay(raw);
-    if (!pastStart && !inPlay) continue;
-
-    const event = {
-      ...raw,
-      inPlay,
-      pastStart,
-    };
+    const poly = bundle?.polymarketByEvent?.[String(raw.id)]
+      || bundle?.polymarketByEvent?.[raw.id]
+      || null;
+    const event = enrichEvent(raw, serverTime, poly);
+    if (!event.pastStart && !event.inPlay && !event.pmSettled) continue;
     return {
       bucket,
       bundle,
       event,
-      pastStart,
-      inPlay,
+      pastStart: event.pastStart,
+      inPlay: event.inPlay,
       serverTime,
     };
   }
@@ -146,10 +142,61 @@ function iterBundleEvents(bundle) {
   return out;
 }
 
-function enrichEvent(event, serverTime = Math.floor(Date.now() / 1000)) {
+/** 价格归一到 0–1；>1.5 视为美分 */
+function priceToUnit(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n > 1.5 ? n / 100 : n;
+}
+
+function polySidePrices(poly) {
+  if (!poly || typeof poly !== 'object') return { home: null, away: null };
+  let home = priceToUnit(poly.home_price);
+  let away = priceToUnit(poly.away_price);
+  const objPrices = [poly.prices, poly.moneyline?.prices];
+  for (const p of objPrices) {
+    if (!p || typeof p !== 'object' || Array.isArray(p)) continue;
+    if (home == null) home = priceToUnit(p.home);
+    if (away == null) away = priceToUnit(p.away);
+  }
+  return { home, away };
+}
+
+/** 一侧 ≥ 0.995（≈100¢）视为已结算，价高的一侧获胜 */
+function applyPmSettle(event, poly) {
+  const { home, away } = polySidePrices(poly);
+  const TH = 0.995;
+  let winner = null;
+  if (home != null && home >= TH && (away == null || home >= away)) winner = 'home';
+  else if (away != null && away >= TH) winner = 'away';
+  if (!winner) return event;
+  const homeName = event.homePlayer?.name || event.home || '';
+  const awayName = event.awayPlayer?.name || event.away || '';
+  return {
+    ...event,
+    winner,
+    winnerName: winner === 'home' ? homeName : awayName,
+    pmSettled: true,
+    inPlay: false,
+    statusType: 'finished',
+    status: 'Ended',
+    pmHomePrice: home,
+    pmAwayPrice: away,
+  };
+}
+
+function enrichEvent(event, serverTime = Math.floor(Date.now() / 1000), poly = null) {
   const pastStart = isPastStartTime(event, serverTime);
-  const inPlay = resolveInPlay(event);
-  return { ...event, pastStart, inPlay };
+  let inPlay = resolveInPlay(event);
+  let out = { ...event, pastStart, inPlay };
+  if (poly) out = applyPmSettle(out, poly);
+  if (out.pmSettled) {
+    out.inPlay = false;
+    out.statusType = 'finished';
+    out.status = out.status && String(out.status).toLowerCase() !== 'not started' ? out.status : 'Ended';
+    if (!/ended|finished/i.test(String(out.status || ''))) out.status = 'Ended';
+  }
+  return out;
 }
 
 /** 开赛已过或真正进行中的场次；inplay 桶优先 */
@@ -163,8 +210,11 @@ async function listInplayEligibleEvents() {
   ];
   for (const { priority, bundle } of buckets) {
     for (const raw of iterBundleEvents(bundle)) {
-      const row = enrichEvent(raw, serverTime);
-      if (!row.pastStart && !row.inPlay) continue;
+      const poly = bundle?.polymarketByEvent?.[String(raw.id)]
+        || bundle?.polymarketByEvent?.[raw.id]
+        || null;
+      const row = enrichEvent(raw, serverTime, poly);
+      if (!row.pastStart && !row.inPlay && !row.pmSettled) continue;
       const id = String(raw.id);
       const prev = byId.get(id);
       if (!prev || priority < prev.priority) {
@@ -185,6 +235,7 @@ module.exports = {
   findEventInBundle,
   iterBundleEvents,
   enrichEvent,
+  applyPmSettle,
   lookupMatchByEventId,
   buildPublicMatchPayload,
   listInplayEligibleEvents,

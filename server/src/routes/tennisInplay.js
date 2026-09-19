@@ -176,10 +176,19 @@ router.get('/today', async (req, res) => {
     full.inPlayCount = eligible.filter((e) => e.inPlay).length;
     full = await bundleWithOptionalCondition(req, 'inplay', full);
     if (Array.isArray(full.live?.matches)) {
-      full.live.matches = full.live.matches.map((m) => enrichEvent(m, serverTime));
+      full.live.matches = full.live.matches.map((m) => {
+        const id = String(m.id);
+        const poly = full.polymarketByEvent?.[id] || full.polymarketByEvent?.[m.id] || null;
+        return enrichEvent(m, serverTime, poly);
+      });
       full.live.eventCount = full.live.matches.length;
       full.events = full.live.matches.length;
       full.inPlayCount = full.live.matches.filter((e) => e.inPlay).length;
+      try {
+        require('../services/tennisPmResults').queuePmSettled(full.live.matches, full.rankingsByPlayer);
+      } catch (e) {
+        console.warn('[tennis-inplay/today] pm results', e.message);
+      }
     }
     let bettingEntry = null;
     try {

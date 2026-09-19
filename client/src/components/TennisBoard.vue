@@ -689,8 +689,31 @@ function effectiveStatus(m) {
   return raw || ''
 }
 
+function pmUnit(v) {
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0) return null
+  return n > 1.5 ? n / 100 : n
+}
+
+/** Polymarket 一侧 ≥ 99.5¢ 视为已结束，返回胜方 */
+function pmSettleSide(m) {
+  if (!m) return null
+  if (m.pmSettled) {
+    const w = String(m.winner || '').toLowerCase()
+    if (w === 'home' || w === 'away') return w
+  }
+  const poly = polyOf(m.id)
+  if (!poly) return null
+  const home = pmUnit(poly.home_price ?? poly.prices?.home)
+  const away = pmUnit(poly.away_price ?? poly.prices?.away)
+  if (home != null && home >= 0.995 && (away == null || home >= away)) return 'home'
+  if (away != null && away >= 0.995) return 'away'
+  return null
+}
+
 function isMatchEnded(m) {
   if (!m) return false
+  if (pmSettleSide(m)) return true
   const eff = effectiveStatus(m)
   if (isEndedStatus(eff)) return true
   const raw = m.status
@@ -2214,6 +2237,8 @@ function isSetCompleteScore(a, b) {
 /** 完赛胜方 home|away|null（盘后标记「赢」用） */
 function matchWinnerSide(m) {
   if (!m) return null
+  const pm = pmSettleSide(m)
+  if (pm) return pm
   const w = String(m.winner || m.winnerCode || m.winner_code || '').toLowerCase()
   if (w === 'home' || w === '1' || w === 'h') return 'home'
   if (w === 'away' || w === '2' || w === 'a') return 'away'
@@ -2491,21 +2516,19 @@ function parsePeriodScoreSides(m) {
   return { home: home.join(' '), away: away.join(' ') }
 }
 
-function liveSetPairs(m) {
-  const combined = m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')
-  if (combined) {
-    const parts = String(combined).replace(/,\s*/g, ' ').trim().split(/\s+/).filter(Boolean)
-    const pairs = []
-    for (const part of parts) {
-      const hit = part.match(/^(\d+)-(\d+)$/)
-      if (!hit) continue
-      pairs.push({ home: Number(hit[1]), away: Number(hit[2]) })
-    }
-    if (pairs.length > 1 && pairs[pairs.length - 1].home === 0 && pairs[pairs.length - 1].away === 0) {
-      pairs.pop()
-    }
-    if (pairs.length) return pairs
+function pairsFromScoreText(text) {
+  if (!text) return []
+  const parts = String(text).replace(/,\s*/g, ' ').trim().split(/\s+/).filter(Boolean)
+  const pairs = []
+  for (const part of parts) {
+    const hit = part.match(/^(\d+)-(\d+)$/)
+    if (!hit) continue
+    pairs.push({ home: Number(hit[1]), away: Number(hit[2]) })
   }
+  return pairs
+}
+
+function pairsFromPeriods(m) {
   const hs = m.home_score ?? m.homeScore
   const as = m.away_score ?? m.awayScore
   if (!hs || typeof hs !== 'object' || !as || typeof as !== 'object') return []
@@ -2516,6 +2539,22 @@ function liveSetPairs(m) {
     }
   }
   return pairs
+}
+
+function trimTrailingZeroSet(pairs) {
+  if (pairs.length > 1) {
+    const last = pairs[pairs.length - 1]
+    if (last.home === 0 && last.away === 0) return pairs.slice(0, -1)
+  }
+  return pairs
+}
+
+function liveSetPairs(m) {
+  const fromText = trimTrailingZeroSet(pairsFromScoreText(m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')))
+  const fromPeriod = pairsFromPeriods(m)
+  if (fromPeriod.length > fromText.length) return fromPeriod
+  if (fromText.length) return fromText
+  return fromPeriod
 }
 
 function liveSetCells(m, side) {
@@ -2538,7 +2577,7 @@ function livePointText(m, side) {
 }
 
 function playerLiveScoreText(m, side) {
-  if (!isMatchLive(m)) return ''
+  if (!isMatchLive(m) && !m?.pmSettled && !liveSetPairs(m).length) return ''
   const combined = m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')
   if (combined) {
     const parsed = parseScoreTextSides(combined)
