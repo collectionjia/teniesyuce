@@ -828,7 +828,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 .vs-row {
@@ -849,6 +849,7 @@ defineExpose({
   gap: 4px;
   flex-wrap: wrap;
   min-width: 0;
+  flex: 1;
 }
 .matchup .name.pick { color: var(--primary); }
 .player-name {
@@ -878,7 +879,7 @@ defineExpose({
 .side-nums {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   font-style: normal;
 }
@@ -888,10 +889,10 @@ defineExpose({
   font-size: 0.78rem;
   font-weight: 700;
   color: #334155;
-  min-width: 3.2em;
+  min-width: 3em;
   text-align: right;
 }
-.side-nums em.pm { color: #64748b; min-width: 2.4em; }
+.side-nums em.pm { color: #64748b; min-width: 2.2em; }
 .row-actions {
   display: flex;
   gap: 4px;
@@ -916,6 +917,25 @@ defineExpose({
   border-color: var(--primary);
 }
 .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 420px) {
+  .wrap { padding: 4px; }
+  .row-card { padding: 6px; gap: 4px; }
+  .row-main {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .matchup.is-stacked { flex: 1 1 100%; }
+  .row-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .act-btn { padding: 5px 9px; font-size: 0.74rem; }
+  .matchup .name { font-size: 0.9rem; }
+  .side-nums em { font-size: 0.72rem; min-width: 2.7em; }
+  .side-nums em.pm { min-width: 2em; }
+}
 
 .pager {
   display: flex;

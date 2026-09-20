@@ -101,6 +101,19 @@ function extractEventSides(ev) {
   return [null, null];
 }
 
+function parseTimeMs(raw) {
+  if (raw == null || raw === '') return null;
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return raw > 1e12 ? raw : raw * 1000;
+  }
+  const s = String(raw).trim();
+  if (!s) return null;
+  // "2026-07-12 09:10:00+00" → ISO-ish
+  const normalized = s.includes('T') ? s : s.replace(' ', 'T');
+  const ms = Date.parse(normalized);
+  return Number.isFinite(ms) ? ms : null;
+}
+
 function slimGammaEvent(ev) {
   const mk = pickMoneylineMarket(ev.markets || []);
   const prices = parsePrices(mk);
@@ -115,6 +128,12 @@ function slimGammaEvent(ev) {
     sideB = outcomes[1];
   }
   const slug = String(ev?.slug || '');
+  // 真实开赛时间优先取 market.gameStartTime / eventStartTime，避免用挂盘 startDate
+  const startMs = parseTimeMs(mk?.gameStartTime)
+    || parseTimeMs(mk?.eventStartTime)
+    || parseTimeMs(ev?.startTime)
+    || parseTimeMs(ev?.startDate);
+  const endMs = parseTimeMs(mk?.endDate) || parseTimeMs(ev?.endDate);
   return {
     slug,
     title: ev?.title || '',
@@ -126,7 +145,8 @@ function slimGammaEvent(ev) {
     outcomes,
     closed: !!ev?.closed,
     active: ev?.active,
-    startMs: ev?.startDate ? Date.parse(ev.startDate) : null,
+    startMs,
+    endMs,
   };
 }
 
@@ -153,6 +173,20 @@ function isOpenPricedMatch(item, eps = 0.005) {
   const b = Number(prices[1]);
   if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
   if (a <= eps || a >= 1 - eps || b <= eps || b >= 1 - eps) return false;
+  return true;
+}
+
+/** 未开赛盘：开赛未过太久，且结算截止未过（过滤卡在 Gamma 上的陈旧盘） */
+function isUpcomingOrLiveMatch(item, now = Date.now()) {
+  const graceMs = Number(process.env.DOTA2_START_GRACE_MS);
+  // 默认开赛后仍保留 6 小时（BO3/BO5），更早的一律丢掉
+  const startGrace = Number.isFinite(graceMs) && graceMs >= 0 ? graceMs : 6 * 60 * 60 * 1000;
+  if (item.endMs != null && Number.isFinite(item.endMs) && item.endMs < now) {
+    return false;
+  }
+  if (item.startMs != null && Number.isFinite(item.startMs)) {
+    if (item.startMs < now - startGrace) return false;
+  }
   return true;
 }
 
@@ -189,7 +223,7 @@ async function fetchPolymarketDotaEvents() {
 
   return [...bySlug.values()]
     .map(slimGammaEvent)
-    .filter((x) => !x.closed && isSportMatchEvent(x) && isOpenPricedMatch(x));
+    .filter((x) => !x.closed && isSportMatchEvent(x) && isOpenPricedMatch(x) && isUpcomingOrLiveMatch(x));
 }
 
 function normalizeTeamName(name) {
@@ -377,6 +411,9 @@ async function collectOnce() {
       if (!!b.passList !== !!a.passList) {
         return b.passList ? 1 : -1;
       }
+      const sa = a.startMs || Number.MAX_SAFE_INTEGER;
+      const sb = b.startMs || Number.MAX_SAFE_INTEGER;
+      if (sa !== sb) return sa - sb;
       return (b.eloDiff || 0) - (a.eloDiff || 0);
     });
     const bundle = {
