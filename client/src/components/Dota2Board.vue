@@ -129,6 +129,7 @@ function notifyPlaced() {
 const stats = computed(() => {
   const rows = marketRows.value
   const hc = rows.filter((m) => m.is_high_confidence || m.passAutoBet).length
+  const edge = rows.filter((m) => m.passList).length
   const date = marketMeta.value?.fetched_at
     ? fmtTime(marketMeta.value.fetched_at)
     : '—'
@@ -139,9 +140,10 @@ const stats = computed(() => {
     tournaments: 1,
     collected: marketMeta.value?.scanned ?? rows.length,
     open: rows.length,
+    edge: marketMeta.value?.edgeCount ?? edge,
     live: 0,
     ended: 0,
-    hc,
+    hc: marketMeta.value?.hcCount ?? hc,
   }
 })
 
@@ -164,19 +166,28 @@ const selectedCount = computed(() => selectedIds.value.size)
 const emptyListHint = computed(() => {
   const scanned = marketMeta.value?.scanned
   if (scanned > 0 && !marketRows.value.length) {
-    return `Polymarket 扫描 ${scanned} 场，暂无同时匹配 dota2elo 且过阈值的场次`
+    return `Polymarket 扫描 ${scanned} 场，暂无同时匹配 dota2elo 的场次`
   }
   return '暂无盘口（刷新采集 Polymarket Dota 对阵）'
 })
 
 const bundleHint = computed(() => {
   const t = marketMeta.value?.thresholds
-  const edge = marketMeta.value?.edgeCount
-  const hc = marketMeta.value?.hcCount ?? stats.value.hc
   if (!t) return ''
-  const edgePart = edge != null ? ` · 过线 ${edge}` : ''
-  return `已匹配 dota2elo · HC ${hc}${edgePart}（Elo≥${t.eloDiffMin}/胜率≥${pct(t.winProbMin)}）· 自动投注仅 HC`
+  return `自动投注仅 HC · 过线条件 Elo≥${t.eloDiffMin} 或 胜率≥${pct(t.winProbMin)}`
 })
+
+function pmPrice(m, side) {
+  const i = side === 'a' ? 0 : 1
+  const v = m?.prices?.[i]
+  return v != null && Number.isFinite(Number(v)) ? Number(v).toFixed(2) : '—'
+}
+
+function sideProb(m, side) {
+  const pA = Number(m?.pA)
+  if (!Number.isFinite(pA)) return '—'
+  return side === 'a' ? pct(pA) : pct(1 - pA)
+}
 
 function isSelected(m) {
   return selectedIds.value.has(String(m.id))
@@ -265,7 +276,7 @@ async function refreshCollect() {
     marketMeta.value = data
     marketRows.value = normalizeRows(data?.matches)
     await loadMarkets({ quiet: true })
-    batchNotice.value = `已刷新 · ${marketRows.value.length} 场过阈值`
+    batchNotice.value = `已刷新 · ${marketRows.value.length} 场`
     if (autoSimBetEnabled.value) void runAutoBet()
   } catch (e) {
     error.value = e?.response?.data?.error || e.message || '刷新失败'
@@ -373,9 +384,8 @@ async function placeOrders(orders, { auto = false } = {}) {
 }
 
 async function submitBatchTrade() {
-  const amount = Math.round(Number(batchAmountUsd.value) * 100) / 100
   const selected = marketRows.value.filter((m) => selectedIds.value.has(String(m.id)))
-  const orders = buildOrdersFromMatches(selected, amount)
+  const orders = buildOrdersFromMatches(selected, Number(batchAmountUsd.value))
   if (!orders.length) {
     batchError.value = '请先勾选可下单场次'
     return
@@ -385,9 +395,8 @@ async function submitBatchTrade() {
 
 async function runAutoBet() {
   if (!autoSimBetEnabled.value || !allowBatchTrade.value || autoBetRunning || batchSubmitting.value) return
-  const amount = Math.round(Number(batchAmountUsd.value) * 100) / 100
   const hc = marketRows.value.filter((m) => m.passAutoBet || m.is_high_confidence)
-  const orders = buildOrdersFromMatches(hc, amount).slice(0, 10)
+  const orders = buildOrdersFromMatches(hc, Number(batchAmountUsd.value)).slice(0, 10)
   if (!orders.length) return
   autoBetRunning = true
   try {
@@ -431,19 +440,19 @@ defineExpose({
     <div class="topbar">
       <span class="meta-chip">{{ stats.date }}</span>
       <span class="meta-chip">{{ loading ? '…' : `${stats.shown}/${stats.collected || stats.all}` }}</span>
-      <div class="stats">
-        <div class="stat"><b>{{ stats.collected }}</b><span>扫</span></div>
-        <div class="stat stat-static active"><b>{{ stats.open }}</b><span>过线</span></div>
-        <div class="stat"><b>{{ stats.hc }}</b><span>HC</span></div>
-      </div>
       <button
         type="button"
-        class="refresh-btn"
+        class="btn ghost"
         :disabled="loading || refreshing"
         @click="refreshCollect"
       >{{ refreshing ? '采集中…' : '刷新' }}</button>
+      <div class="stats">
+        <div class="stat"><b>{{ stats.collected }}</b><span>扫</span></div>
+        <div class="stat stat-static active"><b>{{ stats.open }}</b><span>未开</span></div>
+        <div class="stat"><b>{{ stats.edge }}</b><span>过线</span></div>
+        <div class="stat"><b>{{ stats.hc }}</b><span>HC</span></div>
+      </div>
     </div>
-    <p v-if="bundleHint" class="hint-line">{{ bundleHint }}</p>
 
     <TennisBoardBatchBar
       v-if="showAutoBetBar"
@@ -467,6 +476,7 @@ defineExpose({
     <div v-else-if="error && !marketRows.length" class="empty err">{{ error }}</div>
     <div v-else-if="!marketRows.length" class="empty" role="status">
       {{ emptyListHint }}
+      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
     </div>
     <template v-else>
       <div class="list">
@@ -498,6 +508,7 @@ defineExpose({
                 {{ fmtTime(m.startTimestamp) }}
               </span>
               <span class="start-status">未开</span>
+              <span class="tour-title">差 {{ num(m.eloDiff) }}</span>
               <div class="badges">
                 <span v-if="m.is_high_confidence" class="badge hc">HC</span>
                 <span v-else-if="m.passList" class="badge edge">过线</span>
@@ -506,33 +517,40 @@ defineExpose({
               </div>
             </div>
             <div class="row-main">
-              <div class="matchup">
-                <span class="name" :class="{ pick: m.pickSide === 'a' }">
-                  <span class="list-rank">Elo {{ num(m.teamA?.rating) }}</span>
-                  <span class="player-name">{{ m.home }}</span>
-                  <span v-if="m.pickSide === 'a'" class="pick-tag">优</span>
-                </span>
-                <span class="vs">vs</span>
-                <span class="name" :class="{ pick: m.pickSide === 'b' }">
-                  <span class="list-rank">Elo {{ num(m.teamB?.rating) }}</span>
-                  <span class="player-name">{{ m.away }}</span>
-                  <span v-if="m.pickSide === 'b'" class="pick-tag">优</span>
-                </span>
+              <div class="matchup is-stacked">
+                <div class="matchup-line">
+                  <span class="name" :class="{ pick: m.pickSide === 'a' }">
+                    <span class="list-rank">{{ num(m.teamA?.rating) }}</span>
+                    <span class="player-name">{{ m.home }}</span>
+                    <span v-if="m.pickSide === 'a'" class="pick-tag">优</span>
+                  </span>
+                  <span class="side-nums">
+                    <em>{{ sideProb(m, 'a') }}</em>
+                    <em class="pm">{{ pmPrice(m, 'a') }}</em>
+                  </span>
+                </div>
+                <span class="vs-row">VS</span>
+                <div class="matchup-line">
+                  <span class="name" :class="{ pick: m.pickSide === 'b' }">
+                    <span class="list-rank">{{ num(m.teamB?.rating) }}</span>
+                    <span class="player-name">{{ m.away }}</span>
+                    <span v-if="m.pickSide === 'b'" class="pick-tag">优</span>
+                  </span>
+                  <span class="side-nums">
+                    <em>{{ sideProb(m, 'b') }}</em>
+                    <em class="pm">{{ pmPrice(m, 'b') }}</em>
+                  </span>
+                </div>
               </div>
-              <div class="meta-row">
-                <span>PM {{ m.prices?.[0] != null ? Number(m.prices[0]).toFixed(2) : '—' }}/{{ m.prices?.[1] != null ? Number(m.prices[1]).toFixed(2) : '—' }}</span>
-                <span>胜率 {{ pct(m.pA) }}/{{ pct(1 - Number(m.pA || 0.5)) }}</span>
-                <span>Elo差 {{ num(m.eloDiff) }}</span>
+              <div class="row-actions">
+                <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
+                <button
+                  type="button"
+                  class="act-btn market"
+                  :disabled="!m.url"
+                  @click="openMarket(m)"
+                >外链</button>
               </div>
-            </div>
-            <div class="row-actions">
-              <button type="button" class="link-btn" @click="openDetail(m)">详情</button>
-              <button
-                v-if="m.url"
-                type="button"
-                class="link-btn poly"
-                @click="openMarket(m)"
-              >PM</button>
             </div>
           </div>
         </article>
@@ -552,16 +570,23 @@ defineExpose({
             <div class="modal-title">详情</div>
             <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
             <div class="modal-meta">
-              {{ fmtTime(detailMatch.startTimestamp) }} · 未开
+              <span :class="{ today: isStartSameDay(detailMatch.startTimestamp) }">{{ fmtTime(detailMatch.startTimestamp) }}</span>
+              · 未开
               <template v-if="detailMatch.is_high_confidence"> · 高置信度</template>
+            </div>
+            <div class="badges modal-badges">
+              <span v-if="detailMatch.is_high_confidence" class="badge hc">HC</span>
+              <span v-else-if="detailMatch.passList" class="badge edge">过线</span>
+              <span v-if="detailMatch.url" class="badge poly">外</span>
+              <span v-if="detailMatch.pickSide" class="badge pick">优</span>
             </div>
           </div>
           <div class="duel">
             <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'a' }">
               <div class="duel-elo">Elo {{ num(detailMatch.teamA?.rating) }}</div>
               <div class="duel-name">{{ detailMatch.home }}</div>
-              <div class="duel-prob">{{ pct(detailMatch.pA) }}</div>
-              <div class="duel-pm">PM {{ detailMatch.prices?.[0] != null ? Number(detailMatch.prices[0]).toFixed(2) : '—' }}</div>
+              <div class="duel-prob">{{ sideProb(detailMatch, 'a') }}</div>
+              <div class="duel-pm">PM {{ pmPrice(detailMatch, 'a') }}</div>
             </div>
             <div class="duel-mid">
               <div class="bar-wrap">
@@ -574,18 +599,18 @@ defineExpose({
             <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'b' }">
               <div class="duel-elo">Elo {{ num(detailMatch.teamB?.rating) }}</div>
               <div class="duel-name">{{ detailMatch.away }}</div>
-              <div class="duel-prob">{{ pct(1 - Number(detailMatch.pA || 0.5)) }}</div>
-              <div class="duel-pm">PM {{ detailMatch.prices?.[1] != null ? Number(detailMatch.prices[1]).toFixed(2) : '—' }}</div>
+              <div class="duel-prob">{{ sideProb(detailMatch, 'b') }}</div>
+              <div class="duel-pm">PM {{ pmPrice(detailMatch, 'b') }}</div>
             </div>
           </div>
           <div class="modal-actions">
             <button
-              v-if="detailMatch.url"
               type="button"
-              class="modal-btn"
+              class="act-btn market"
+              :disabled="!detailMatch.url"
               @click="openMarket(detailMatch)"
-            >打开 Polymarket</button>
-            <button type="button" class="modal-btn ghost" @click="closeDetail">关闭</button>
+            >外链</button>
+            <button type="button" class="act-btn" @click="closeDetail">关闭</button>
           </div>
         </div>
       </div>
@@ -595,192 +620,303 @@ defineExpose({
 
 <style scoped>
 .wrap {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --card-2: #f1f5f9;
+  --line: #e2e8f0;
+  --text: #1e293b;
+  --muted: #94a3b8;
   --primary: #4f46e5;
-  --card: #fff;
-  padding: 8px 6px 12px;
-  background: #f8fafc;
+  --primary-soft: #eef2ff;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  color: var(--text);
+  background: var(--bg);
+  padding: 6px;
+  border-radius: 0;
   min-height: 280px;
-  color: #0f172a;
 }
 .topbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 6px;
+  overflow-x: auto;
 }
-.meta-chip {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #64748b;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
-  padding: 3px 8px;
-}
-.stats { display: flex; gap: 4px; flex-wrap: wrap; }
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 36px;
-  padding: 3px 6px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  line-height: 1.15;
-}
-.stat b { font-size: 0.85rem; font-weight: 800; }
-.stat span { font-size: 0.58rem; color: #94a3b8; font-weight: 700; }
-.stat-static.active {
-  border-color: #6366f1;
-  background: #eef2ff;
-}
-.stat-static.active b { color: #4338ca; }
-.refresh-btn {
-  margin-left: auto;
-  border: 0;
-  background: #0f172a;
-  color: #fff;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.refresh-btn:disabled { opacity: 0.6; }
-.hint-line {
-  margin: 0 0 6px;
-  font-size: 0.68rem;
-  color: #64748b;
-}
-.empty {
-  text-align: center;
-  color: #94a3b8;
-  padding: 28px 12px;
-  font-size: 0.85rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-}
-.empty.err { color: #dc2626; }
-.list { display: grid; gap: 5px; }
-.row-card {
-  position: relative;
-  display: flex;
-  gap: 6px;
-  align-items: stretch;
+.meta-chip,
+.btn {
+  border: 1px solid var(--line);
   background: var(--card);
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 8px 8px 6px;
-}
-.row-card.selected { border-color: #818cf8; background: #f8faff; }
-.row-check {
-  display: flex;
-  align-items: flex-start;
-  padding-top: 4px;
-}
-.row-check.disabled { opacity: 0.35; }
-.placed-badge {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 0.58rem;
-  font-weight: 800;
-  color: #047857;
-  background: #ecfdf5;
-  border: 1px solid #6ee7b7;
+  color: #64748b;
   border-radius: 999px;
-  padding: 1px 6px;
+  padding: 5px 11px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  line-height: 1.3;
 }
-.row-body { flex: 1; min-width: 0; display: grid; gap: 4px; }
-.row-time {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+.btn.ghost {
+  cursor: pointer;
+  color: var(--primary);
+  border-color: #c7d2fe;
+  background: var(--primary-soft);
+  padding: 6px 12px;
+  font-size: 0.82rem;
 }
-.start-value {
+.btn:disabled { opacity: 0.5; cursor: wait; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  margin: 0 0 0 auto;
+  min-width: 148px;
+  flex: 1;
+  max-width: 220px;
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 4px;
+  text-align: center;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+.stat b {
+  color: var(--primary);
   font-size: 0.72rem;
   font-weight: 700;
-  color: #64748b;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
-.start-value.today { color: #0f172a; }
-.start-status {
-  font-size: 0.62rem;
-  font-weight: 800;
-  color: #6366f1;
-  background: #eef2ff;
-  border-radius: 999px;
-  padding: 1px 6px;
+.stat span { color: var(--muted); font-size: 0.58rem; line-height: 1.2; }
+.stat-static { cursor: default; }
+.stat-static.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
 }
-.badges { display: flex; gap: 4px; flex-wrap: wrap; }
-.badge {
-  font-size: 0.58rem;
-  font-weight: 800;
-  border-radius: 999px;
-  padding: 1px 6px;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  background: #f8fafc;
+.stat-static.active span { color: #6366f1; font-weight: 600; }
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 16px 8px;
+  font-size: 0.86rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
 }
-.badge.hc { color: #b45309; background: #fffbeb; border-color: #fbbf24; }
-.badge.edge { color: #047857; background: #ecfdf5; border-color: #6ee7b7; }
-.badge.poly { color: #1d4ed8; background: #eff6ff; border-color: #93c5fd; }
-.badge.pick { color: #fff; background: var(--primary); border-color: var(--primary); }
-.matchup {
+.empty.err { color: var(--danger); }
+.empty .hint { margin-top: 6px; font-size: 0.68rem; opacity: 0.85; }
+
+.list { display: grid; gap: 5px; }
+.row-card {
+  background: var(--card);
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 6px 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+}
+.row-card.selected {
+  border-color: #c7d2fe;
+  background: #fafaff;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.12);
+}
+.row-check {
+  flex-shrink: 0;
+  padding-top: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+}
+.row-check.disabled { opacity: 0.35; cursor: not-allowed; }
+.row-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: inherit;
+}
+.placed-badge {
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+.row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.row-time {
+  display: flex;
   align-items: center;
-  gap: 6px 10px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.row-time .start-value {
+  color: #0f172a;
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.row-time .start-value.today { color: #dc2626; }
+.row-time .start-status {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.row-time .tour-title {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+}
+.badge.hc { background: #fffbeb; color: #b45309; }
+.badge.edge { background: #ecfdf5; color: #047857; }
+.badge.poly { background: #f5f3ff; color: #6d28d9; }
+.badge.pick { background: var(--primary); color: #fff; }
+.row-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.matchup.is-stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.matchup-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.vs-row {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+  padding: 1px 0;
+  flex-shrink: 0;
 }
 .matchup .name {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #0f172a;
+  min-width: 0;
 }
 .matchup .name.pick { color: var(--primary); }
+.player-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .list-rank {
   color: #64748b;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 .pick-tag {
   display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   padding: 1px 5px;
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.35;
   color: #fff;
   background: var(--primary);
 }
-.vs { color: #94a3b8; font-size: 0.72rem; font-weight: 800; }
-.meta-row {
-  display: flex;
-  flex-wrap: wrap;
+.side-nums {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  font-size: 0.68rem;
-  color: #64748b;
+  flex-shrink: 0;
+  font-style: normal;
+}
+.side-nums em {
+  font-style: normal;
   font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  min-width: 3.2em;
+  text-align: right;
 }
-.row-actions { display: flex; gap: 8px; }
-.link-btn {
-  border: 0;
-  background: transparent;
+.side-nums em.pm { color: #64748b; min-width: 2.4em; }
+.row-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.act-btn {
+  border: 1px solid #c7d2fe;
+  background: var(--primary-soft);
   color: var(--primary);
-  font-size: 0.72rem;
-  font-weight: 800;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
-  padding: 0;
+  white-space: nowrap;
+  line-height: 1.2;
 }
-.link-btn.poly { color: #1d4ed8; }
+.act-btn.market {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 .pager {
   display: flex;
   align-items: center;
@@ -790,17 +926,29 @@ defineExpose({
   padding-top: 8px;
   border-top: 1px solid #f1f5f9;
 }
+.pager-info {
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 600;
+  min-width: 5.5em;
+  text-align: center;
+}
 .pager-btn {
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: #475569;
   border-radius: 8px;
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
   cursor: pointer;
 }
-.pager-btn:disabled { opacity: 0.45; }
-.pager-info { font-size: 0.72rem; color: #64748b; font-weight: 700; }
+.pager-btn:hover:not(:disabled) {
+  border-color: #c7d2fe;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .modal-mask {
   position: fixed;
@@ -824,6 +972,8 @@ defineExpose({
 .modal-title { font-size: 1rem; font-weight: 800; }
 .modal-sub { margin-top: 2px; font-size: 0.9rem; font-weight: 700; color: #334155; }
 .modal-meta { margin-top: 4px; font-size: 0.72rem; color: #94a3b8; }
+.modal-meta .today { color: #dc2626; font-weight: 700; }
+.modal-badges { margin-top: 8px; }
 .duel {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -845,7 +995,7 @@ defineExpose({
   overflow: hidden;
   margin-bottom: 8px;
 }
-.bar { height: 100%; background: #16a34a; }
+.bar { height: 100%; background: var(--success); }
 .muted { font-size: 0.68rem; color: #94a3b8; }
 .pick-line { margin-top: 6px; font-size: 0.75rem; font-weight: 800; color: var(--primary); }
 .modal-actions {
@@ -853,19 +1003,5 @@ defineExpose({
   gap: 8px;
   margin-top: 16px;
   justify-content: flex-end;
-}
-.modal-btn {
-  border: 0;
-  background: #0f172a;
-  color: #fff;
-  border-radius: 10px;
-  padding: 8px 14px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.modal-btn.ghost {
-  background: #f1f5f9;
-  color: #334155;
 }
 </style>
