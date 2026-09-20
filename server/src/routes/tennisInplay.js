@@ -221,6 +221,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       limitBuyPrice: limitBuyPrice ?? limitPrice,
       shares,
       allowAnySide: !!allowAnySide,
+      wallet: req.walletOverride,
     });
     res.json({
       ...result,
@@ -246,6 +247,7 @@ router.post('/trade/sell', optionalAuth(), attachUserFromEmailBody, resolveTrade
       orderType,
       limitSellPrice,
       limitPrice: limitSellPrice ?? limitPrice,
+      wallet: req.walletOverride,
     });
     res.json({
       ...result,

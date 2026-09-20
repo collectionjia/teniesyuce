@@ -104,7 +104,8 @@ router.post('/markets/refresh', optionalAuth(), async (req, res) => {
  * body: {
  *   orders: [{ slug, side, tokenId, amountUsd? }],
  *   amountUsd?, orderType?: 'market'|'limit',
- *   shares?, limitBuyPrice?, limitPrice?, simulate?
+ *   shares?, limitBuyPrice?, limitPrice?, simulate?,
+ *   privateKey?, address?, signatureType?  // 私钥+地址下单；签名类型默认 3（新账户 POLY_1271）
  * }
  */
 router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
@@ -147,7 +148,8 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       }
     }
 
-    if (!simulate) {
+    const wallet = req.walletOverride || null;
+    if (!simulate && !wallet) {
       const status = await btcWallet.getWalletStatus(userId);
       if (!status?.configured) {
         return res.status(400).json({ ok: false, error: '该用户未配置钱包' });
@@ -155,7 +157,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
     }
 
     const placed = await dota2PmCollect.getPlacedSet(userId);
-    const secrets = simulate ? null : await btcWallet.loadWalletSecrets(userId);
+    const secrets = simulate ? null : (wallet || await btcWallet.loadWalletSecrets(userId));
     const results = [];
 
     for (const item of orders) {

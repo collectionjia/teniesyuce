@@ -6,6 +6,7 @@
 const pool = require('../db');
 const btcWallet = require('./btcWallet');
 const tennisDataSource = require('./tennisDataSource');
+const { normalizePrivateKey, normalizeAddress } = require('./cryptoSecret');
 
 function pickEmail(body = {}) {
   const email = String(body.email || '').trim();
@@ -59,6 +60,31 @@ async function ensureWalletForLive(userId, simulate) {
 }
 
 /**
+ * 对外下单可直接带私钥和地址，覆盖账号里保存的钱包。
+ * 两者都空则返回 null（走已保存钱包）；只填一个则 400。
+ */
+function walletOverrideFromBody(body = {}) {
+  const privateKeyRaw = String(body.privateKey || body.private_key || '').trim();
+  const addressRaw = String(
+    body.address || body.proxyAddress || body.proxy_address || '',
+  ).trim();
+  if (!privateKeyRaw && !addressRaw) return null;
+  if (!privateKeyRaw || !addressRaw) {
+    const err = new Error('私钥和地址须同时填写');
+    err.status = 400;
+    throw err;
+  }
+  const sigRaw = body.signatureType ?? body.signature_type;
+  // 3=POLY_1271 V2 存款钱包（新账户常用）；未传或非法时默认 3
+  const signatureType = [0, 1, 2, 3].includes(Number(sigRaw)) ? Number(sigRaw) : 3;
+  return {
+    privateKey: normalizePrivateKey(privateKeyRaw),
+    proxyAddress: normalizeAddress(addressRaw),
+    signatureType,
+  };
+}
+
+/**
  * 解析下单用户 → req.tennisUser
  * 优先 JWT（页面登录）；否则 body.email / body.account（对外 API）
  * 需配合 optionalAuth() 使用（有 token 时写入 req.user）
@@ -99,7 +125,11 @@ async function resolveTradeSimulatePublic(req, res, next) {
     const forceSim = await tennisDataSource.shouldSimulateTrades();
     const wantSim = forceSim || wantBool(req.body?.simulate, false);
     req.tradeSimulate = wantSim;
-    if (req.tradeSimulate) return next();
+    req.walletOverride = null;
+    if (!req.tradeSimulate) {
+      req.walletOverride = walletOverrideFromBody(req.body);
+    }
+    if (req.tradeSimulate || req.walletOverride) return next();
     if (!req.tennisUser?.id) {
       return res.status(400).json({ ok: false, error: '缺少用户' });
     }
@@ -118,6 +148,7 @@ module.exports = {
   resolveUserById,
   resolveSimulate,
   ensureWalletForLive,
+  walletOverrideFromBody,
   attachUserFromEmailBody,
   resolveTradeSimulatePublic,
 };

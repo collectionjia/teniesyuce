@@ -38,6 +38,7 @@
 - **不要**带 `Authorization`（本文件所列接口均不需要 JWT）
 - `email` 须为已注册账号；也可用字段名 `account`
 - `simulate=false` 时该用户须已配置可用钱包；`simulate=true` 可跳过
+- 也可在请求体同时带 `privateKey`（或 `private_key`）和 `address`（或 `proxyAddress` / `proxy_address`）。两者都填时用这对凭证下单，不必预先保存钱包；只填一个返回 400。可选 `signatureType`（或 `signature_type`），默认 **`3`**（POLY_1271 / V2 存款钱包，新账户常用）；也可用 `0` EOA、`1` Proxy 旧、`2` Gnosis Safe。适用于本文买入 / 卖出 / 批量接口，以及 `POST /api/dota2/trade/batch`
 - 虚拟采集（docks500）时服务端会**强制模拟**
 
 > 生产环境建议限制来源 IP 或加网关密钥，避免接口被滥用。
@@ -377,6 +378,9 @@ curl -s 'https://www.yuce.bid/api/tennis-settled/today'
 | `side` | string | 是 | — | `home` / `away` |
 | `amountUsd` | number | 是 | — | 金额 USD，**≥ 1** |
 | `simulate` | boolean | 否 | `false` | 模拟下单 |
+| `privateKey` | string | 否 | — | 下单私钥（64 位十六进制，可带 `0x`）；也可用 `private_key`。须与地址同时填写 |
+| `address` | string | 否 | — | 代理钱包地址（`0x` + 40 位十六进制）；也可用 `proxyAddress` / `proxy_address` |
+| `signatureType` | number | 否 | `3` | 签名类型：`3` POLY_1271（新账户常用）、`0` EOA、`1` Proxy 旧、`2` Gnosis Safe；也可用 `signature_type` |
 | `strategyKey` | string | 否 | `_` | 策略去重键 |
 | `markPlaced` | boolean | 否 | `true` | 成功后标记引擎已下单 |
 

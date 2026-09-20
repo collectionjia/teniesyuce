@@ -64,6 +64,7 @@ async function placeBatchOrders(userId, {
   limitBuyPrice: batchLimitBuyPrice = null,
   shares: batchShares = null,
   allowAnySide = false,
+  wallet = null,
 } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
     throw new Error('请至少选择一场');
@@ -100,7 +101,7 @@ async function placeBatchOrders(userId, {
   }
 
   const isSim = !!simulate;
-  const secrets = isSim ? null : await btcWallet.loadWalletSecrets(userId);
+  const secrets = isSim ? null : (wallet || await btcWallet.loadWalletSecrets(userId));
   const tradeProduct = String(product || 'tennis').toLowerCase();
   const defaultBucket = batchBucket || bucketFromProduct(tradeProduct);
   const defaultSk = batchStrategyKey != null ? String(batchStrategyKey).trim().slice(0, 48) : '';
@@ -328,6 +329,7 @@ async function placeSellOrder(userId, {
   orderType: sellOrderType = 'market',
   limitSellPrice = null,
   limitPrice = null,
+  wallet = null,
 } = {}) {
   const tradeProduct = String(product || 'tennis-inplay').toLowerCase();
   const sideKey = String(side || '').toLowerCase();
@@ -389,7 +391,7 @@ async function placeSellOrder(userId, {
     };
   }
 
-  const secrets = await btcWallet.loadWalletSecrets(userId);
+  const secrets = wallet || await btcWallet.loadWalletSecrets(userId);
   const bundle = await resolveBundle(tradeProduct);
   if (!bundle) throw new Error('网球数据尚未就绪');
 

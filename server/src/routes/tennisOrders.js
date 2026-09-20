@@ -17,6 +17,7 @@ const {
   resolveUserById,
   resolveSimulate,
   ensureWalletForLive,
+  walletOverrideFromBody,
   attachUserFromEmailBody,
   resolveTradeSimulatePublic,
 } = require('../services/tennisOrdersPublic');
@@ -68,13 +69,15 @@ router.post('/buy', optionalAuth(), async (req, res) => {
     }
 
     const simulate = await resolveSimulate(body.simulate);
-    await ensureWalletForLive(user.id, simulate);
+    const wallet = walletOverrideFromBody(body);
+    if (!wallet) await ensureWalletForLive(user.id, simulate);
 
     const batch = await tennisTrade.placeBatchOrders(user.id, {
       orders: [{ eventId, side }],
       amountUsd,
       product,
       simulate,
+      wallet,
     });
     const one = Array.isArray(batch?.results) ? batch.results[0] : null;
     if (!one) {
@@ -180,7 +183,8 @@ router.post('/sell', optionalAuth(), async (req, res) => {
     }
 
     const simulate = await resolveSimulate(body.simulate);
-    await ensureWalletForLive(user.id, simulate);
+    const wallet = walletOverrideFromBody(body);
+    if (!wallet) await ensureWalletForLive(user.id, simulate);
 
     const sellRes = await tennisTrade.placeSellOrder(user.id, {
       eventId,
@@ -188,6 +192,7 @@ router.post('/sell', optionalAuth(), async (req, res) => {
       shares,
       product,
       simulate,
+      wallet,
     });
 
     let markedSold = false;
@@ -251,6 +256,7 @@ router.post('/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimul
       amountUsd,
       product,
       simulate: !!req.tradeSimulate,
+      wallet: req.walletOverride,
     });
     res.json({
       ...result,
