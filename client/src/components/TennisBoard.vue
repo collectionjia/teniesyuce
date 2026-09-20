@@ -261,7 +261,7 @@ const DETAIL_TIPS = [
   { k: 'L', t: '实时排名（live ranking）。' },
   { k: 'U', t: 'UTR 评分参考。' },
   { k: '现排名差', t: '双方现排名之差（弱−强），衡量实力落差。' },
-  { k: '历史最高排名差', t: '强者现排名 − 弱者历史最高排名。' },
+  { k: '排差', t: '弱者历史最高排名 − 强者现排名。' },
   { k: 'Elo', t: 'Tennis Abstract 等来源的胜率/优势估计；edge 为相对报价的优势百分比。' },
   { k: '报价', t: '博彩全场胜负赔率（欧赔小数）。' },
   { k: '外链价', t: 'Polymarket 对应市场价格（美分/隐含概率）。' },
@@ -800,7 +800,7 @@ function matchMetrics(m) {
   if (homeR == null || awayR == null) {
     return { gap: -1, rankDiff: 0, ready: false, hasRankDiff: false, strongRank: null }
   }
-  // 现差 = 弱现−强现；排差 = 强者现排名 − 弱者历史最高
+  // 现差 = 弱现−强现；排差 = 弱者历史最高 − 强者现排名
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const strongNow = homeStronger ? homeR : awayR
@@ -810,7 +810,7 @@ function matchMetrics(m) {
     ? (awayDetail.best != null ? Number(awayDetail.best) : null)
     : (homeDetail.best != null ? Number(homeDetail.best) : null)
   const hasRankDiff = Number.isFinite(weakBest)
-  const rankDiff = hasRankDiff ? strongNow - weakBest : 0
+  const rankDiff = hasRankDiff ? weakBest - strongNow : 0
   return { gap, rankDiff, ready: true, hasRankDiff, strongRank: strongNow }
 }
 
@@ -2845,7 +2845,7 @@ function gapInfo(m) {
   const homeR = currentRankOf(home)
   const awayR = currentRankOf(away)
   if (homeR == null || awayR == null) return { ready: false }
-  // 现排名差 = 弱−强；排差 = 强者现排名 − 弱者历史最高
+  // 现排名差 = 弱−强；排差 = 弱者历史最高 − 强者现排名
   const gap = Math.max(homeR, awayR) - Math.min(homeR, awayR)
   const homeStronger = homeR < awayR
   const better = homeStronger ? shortName(home.name) : shortName(away.name)
@@ -2860,7 +2860,7 @@ function gapInfo(m) {
   const hasBest = Number.isFinite(homeBest) && Number.isFinite(awayBest)
   const bestHigh = hasBest ? Math.min(homeBest, awayBest) : null
   const bestLow = hasBest ? Math.max(homeBest, awayBest) : null
-  const rankDiff = Number.isFinite(weakBest) ? strongNow - weakBest : null
+  const rankDiff = Number.isFinite(weakBest) ? weakBest - strongNow : null
   return {
     ready: true,
     gap,

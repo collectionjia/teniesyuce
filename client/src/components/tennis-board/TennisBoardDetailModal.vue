@@ -187,7 +187,7 @@ defineProps({
                   <div class="kv" v-if="gapInfo(detailMatch).rankDiff != null">
                     <span class="k">排差</span>
                     <span class="v rank-best">{{ gapInfo(detailMatch).rankDiff }}</span>
-                    <span class="s">强现 {{ rankText(gapInfo(detailMatch).strongNow) }} − 现弱历史最高 {{ rankText(gapInfo(detailMatch).weakBest) }}</span>
+                    <span class="s">弱史高 {{ rankText(gapInfo(detailMatch).weakBest) }} − 强现 {{ rankText(gapInfo(detailMatch).strongNow) }}</span>
                   </div>
                   <div class="kv" v-else>
                     <span class="k">排差</span>

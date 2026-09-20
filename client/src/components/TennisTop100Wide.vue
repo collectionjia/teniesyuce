@@ -51,7 +51,7 @@ const COLUMN_DEFS = [
   { key: 'away', label: '客', locked: false },
   { key: 'side', label: '建议', locked: false },
   { key: 'gap', label: '现差', locked: false },
-  { key: 'rankDiff', label: '历史最高排位差', locked: false },
+  { key: 'rankDiff', label: '排差', locked: false },
   { key: 'strong', label: '强现', locked: false },
   { key: 'score', label: '比分', locked: false },
   { key: 'odds', label: '赔率', locked: false },
@@ -509,11 +509,11 @@ function metricsOf(m) {
   return rankMetrics(m, bundle.value?.rankingsByPlayer || {})
 }
 
-/** 历史最高排位差：强现 − 弱者史高 = 结果 */
+/** 排差：弱史高 − 强现 = 结果 */
 function rankDiffText(m) {
   const mx = metricsOf(m)
   if (!mx.ready || mx.strongRank == null || mx.weakBest == null || mx.rankDiff == null) return '—'
-  return `${mx.strongRank}−${mx.weakBest}=${mx.rankDiff}`
+  return `${mx.weakBest}−${mx.strongRank}=${mx.rankDiff}`
 }
 
 /** 北京时间 */
@@ -635,7 +635,7 @@ const filterSummary = computed(() => {
   if (pmFilter.value === 'yes') parts.push('有PM')
   if (pmFilter.value === 'no') parts.push('无PM')
   if (gapMin.value !== 'all') parts.push(`现差≥${gapMin.value}`)
-  if (rankDiffMax.value !== 'all') parts.push(`史高排差≤${rankDiffMax.value}`)
+  if (rankDiffMax.value !== 'all') parts.push(`排差≤${rankDiffMax.value}`)
   if (strongRankMax.value !== 'all') parts.push(`强现≤${strongRankMax.value}`)
   if (levelFilter.value !== 'all') parts.push(`级别${levelFilter.value}`)
   if (query.value.trim()) parts.push(`搜:${query.value.trim()}`)
@@ -1584,7 +1584,7 @@ onUnmounted(stopPoll)
       </div>
 
       <div class="filter-row">
-        <span class="label">历史最高排位差</span>
+        <span class="label">排差</span>
         <button type="button" class="chip" :class="{ on: rankDiffMax === 'all' }" @click="rankDiffMax = 'all'">不限</button>
         <button type="button" class="chip" :class="{ on: rankDiffMax === '0' }" @click="rankDiffMax = '0'">≤0</button>
         <button type="button" class="chip" :class="{ on: rankDiffMax === '-10' }" @click="rankDiffMax = '-10'">≤-10</button>
@@ -1634,8 +1634,8 @@ onUnmounted(stopPoll)
             <th v-if="colOn('side')" class="c-side">建议</th>
             <th v-if="colOn('gap')" class="c-gap">现差</th>
             <th v-if="colOn('rankDiff')" class="c-gap c-rankdiff">
-              <div class="rankdiff-h">历史最高排位差</div>
-              <div class="rankdiff-sub">※ 强者现排名 − 弱者历史最高</div>
+              <div class="rankdiff-h">排差</div>
+              <div class="rankdiff-sub">※ 弱者历史最高 − 强者现排名</div>
             </th>
             <th v-if="colOn('strong')" class="c-gap">强现</th>
             <th v-if="colOn('score')" class="c-score">比分</th>
@@ -1698,7 +1698,7 @@ onUnmounted(stopPoll)
             </td>
             <td v-if="colOn('side')" class="c-side">{{ row.side === 'home' ? '主' : (row.side === 'away' ? '客' : '—') }}</td>
             <td v-if="colOn('gap')" class="c-gap">{{ row.gap }}</td>
-            <td v-if="colOn('rankDiff')" class="c-gap c-rankdiff" title="强者现排名 − 弱者历史最高">
+            <td v-if="colOn('rankDiff')" class="c-gap c-rankdiff" title="弱者历史最高 − 强者现排名">
               {{ row.rankDiff }}
             </td>
             <td v-if="colOn('strong')" class="c-gap">{{ row.strong }}</td>

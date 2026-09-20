@@ -29,9 +29,10 @@ function rankMetrics(m, rankingsByPlayer = {}) {
   return {
     ready: true,
     gap: weakRank - strongRank,
-    // 排差 = 强者现排名 − 弱者历史最高
-    rankDiff: weakBest != null ? strongRank - weakBest : null,
+    // 排差 = 弱者历史最高排名 − 强者现排名
+    rankDiff: weakBest != null ? weakBest - strongRank : null,
     strongRank,
+    weakRank,
     weakBest,
     strongBest,
   };
