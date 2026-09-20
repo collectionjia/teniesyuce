@@ -963,4 +963,20 @@ export async function fetchDota2Matches(limit = 30) {
   return data
 }
 
+export async function fetchDota2Markets() {
+  const { data } = await api.get('/dota2/markets')
+  return data
+}
+
+export async function refreshDota2Markets() {
+  const { data } = await api.post('/dota2/markets/refresh')
+  return data
+}
+
+/** 市价批量买入 HC 场次 · orders: [{ slug, side, tokenId, amountUsd }] */
+export async function placeDota2TradeBatch(payload) {
+  const { data } = await api.post('/dota2/trade/batch', payload)
+  return data
+}
+
 export default api

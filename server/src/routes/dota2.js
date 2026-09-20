@@ -1,10 +1,25 @@
 /**
  * 代理 dota2elo 服务 JSON API（Vue 直出，不走 iframe）
+ * + Polymarket 盘口 bundle / 高置信度市价买入
  * 上游：DOTA2ELO_URL 或 DOTA2ELO_PRODUCT_URL，默认 http://dota2elo:3001
  */
 const express = require('express');
+const { optionalAuth } = require('../middleware/auth');
+const {
+  attachUserFromEmailBody,
+  resolveTradeSimulatePublic,
+} = require('../services/tennisOrdersPublic');
+const btcWallet = require('../services/btcWallet');
+const polymarketTrade = require('../services/polymarketTrade');
+const dota2PmCollect = require('../services/dota2PmCollect');
 
 const router = express.Router();
+
+try {
+  dota2PmCollect.startCollectLoop();
+} catch (err) {
+  console.warn('[dota2] collect loop start failed', err.message || err);
+}
 
 function upstreamBase() {
   const raw = process.env.DOTA2ELO_URL
@@ -45,5 +60,150 @@ router.get('/players', proxyJson);
 router.get('/players/:playerId', proxyJson);
 router.get('/calibration', proxyJson);
 router.get('/backtest', proxyJson);
+
+/** Polymarket 过滤盘口（读 Redis bundle） */
+router.get('/markets', optionalAuth(), async (req, res) => {
+  try {
+    let bundle = await dota2PmCollect.readBundle();
+    if (!bundle) {
+      bundle = {
+        ok: true,
+        empty: true,
+        sport: 'dota2',
+        matches: [],
+        matchCount: 0,
+        thresholds: dota2PmCollect.thresholds(),
+        fetched_at: null,
+        message: '盘口尚未采集，请刷新',
+      };
+    }
+    let placed = [];
+    if (req.user?.id) {
+      const set = await dota2PmCollect.getPlacedSet(req.user.id);
+      placed = [...set];
+    }
+    res.json({ ...bundle, placed, member: !!req.user });
+  } catch (err) {
+    console.error('[dota2/markets]', err);
+    res.status(500).json({ ok: false, error: err.message || 'failed to load markets' });
+  }
+});
+
+router.post('/markets/refresh', optionalAuth(), async (req, res) => {
+  try {
+    const bundle = await dota2PmCollect.collectOnce();
+    res.json(bundle || { ok: false, error: 'collect returned empty' });
+  } catch (err) {
+    console.error('[dota2/markets/refresh]', err);
+    res.status(500).json({ ok: false, error: err.message || 'refresh failed' });
+  }
+});
+
+/**
+ * 市价批量买入：仅传 collect 已解析的 tokenId
+ * body: { orders: [{ slug, side, tokenId, amountUsd }], simulate? }
+ */
+router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+  try {
+    const userId = req.tennisUser?.id;
+    if (!userId) {
+      return res.status(401).json({ ok: false, error: '请先登录' });
+    }
+    const simulate = !!req.tradeSimulate;
+    const orders = Array.isArray(req.body?.orders) ? req.body.orders : [];
+    if (!orders.length) {
+      return res.status(400).json({ ok: false, error: '请至少选择一场' });
+    }
+    if (orders.length > 20) {
+      return res.status(400).json({ ok: false, error: '单次最多批量下单 20 场' });
+    }
+
+    if (!simulate) {
+      const status = await btcWallet.getWalletStatus(userId);
+      if (!status?.configured) {
+        return res.status(400).json({ ok: false, error: '该用户未配置钱包' });
+      }
+    }
+
+    const placed = await dota2PmCollect.getPlacedSet(userId);
+    const secrets = simulate ? null : await btcWallet.loadWalletSecrets(userId);
+    const results = [];
+
+    for (const item of orders) {
+      const slug = String(item?.slug || '').trim();
+      const side = String(item?.side || item?.pickSide || '').toLowerCase();
+      const tokenId = String(item?.tokenId || item?.pickTokenId || '').trim();
+      const amountUsd = Number(item?.amountUsd ?? req.body?.amountUsd ?? 1);
+      const placeKey = `${slug}:${side}`;
+
+      if (!slug || !tokenId) {
+        results.push({ slug, side, ok: false, error: '缺少 slug 或 tokenId' });
+        continue;
+      }
+      if (!['a', 'b'].includes(side)) {
+        results.push({ slug, side, ok: false, error: 'side 须为 a|b' });
+        continue;
+      }
+      if (!(amountUsd >= 1)) {
+        results.push({ slug, side, ok: false, error: '金额至少 $1' });
+        continue;
+      }
+      if (placed.has(placeKey)) {
+        results.push({ slug, side, ok: true, skipped: true, reason: 'already_placed' });
+        continue;
+      }
+
+      try {
+        if (simulate) {
+          await dota2PmCollect.markPlaced(userId, placeKey);
+          placed.add(placeKey);
+          results.push({
+            slug,
+            side,
+            ok: true,
+            simulate: true,
+            tokenId,
+            amountUsd,
+            orderId: `sim-dota2-${Date.now()}`,
+          });
+          continue;
+        }
+
+        const order = await polymarketTrade.placeMarketBuy({
+          privateKey: secrets.privateKey,
+          proxyAddress: secrets.proxyAddress,
+          signatureType: secrets.signatureType,
+          tokenId,
+          amountUsd,
+        });
+        await dota2PmCollect.markPlaced(userId, placeKey);
+        placed.add(placeKey);
+        results.push({
+          slug,
+          side,
+          ok: true,
+          tokenId,
+          amountUsd,
+          orderId: order?.orderID || order?.id || null,
+          result: order,
+        });
+      } catch (e) {
+        results.push({ slug, side, ok: false, error: e.message || String(e) });
+      }
+    }
+
+    res.json({
+      ok: true,
+      email: req.tennisUser.account,
+      userId,
+      product: 'dota2',
+      simulate,
+      results,
+    });
+  } catch (e) {
+    console.error('[dota2/trade/batch]', e);
+    res.status(400).json({ ok: false, error: e.message || '批量下单失败' });
+  }
+});
 
 module.exports = router;
