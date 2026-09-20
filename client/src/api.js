@@ -942,4 +942,25 @@ export async function saveAdminBtcKeys(payload) {
   return data
 }
 
+// --- Dota2 Elo（经 server 代理 dota2elo）---
+export async function fetchDota2Rankings(limit = 100) {
+  const { data } = await api.get('/dota2/rankings', { params: { limit } })
+  return data
+}
+
+export async function searchDota2Teams(q) {
+  const { data } = await api.get('/dota2/teams', { params: { q } })
+  return data
+}
+
+export async function fetchDota2Predict(params) {
+  const { data } = await api.get('/dota2/predict', { params })
+  return data
+}
+
+export async function fetchDota2Matches(limit = 30) {
+  const { data } = await api.get('/dota2/matches', { params: { limit } })
+  return data
+}
+
 export default api

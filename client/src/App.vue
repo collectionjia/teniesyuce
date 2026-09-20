@@ -10,6 +10,7 @@ import SchedulerCenter from './components/SchedulerCenter.vue'
 import TennisDocksEditor from './components/TennisDocksEditor.vue'
 import TennisTop100Wide from './components/TennisTop100Wide.vue'
 import TennisSettledResults from './components/TennisSettledResults.vue'
+import Dota2Board from './components/Dota2Board.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
 import CollectProxySettings from './components/CollectProxySettings.vue'
 import EngineServicesCenter from './components/EngineServicesCenter.vue'
@@ -392,6 +393,7 @@ const listSearch = reactive({
   users: '',
   clients: '',
   withdrawals: '',
+  manage: '',
 })
 
 function filterBySearch(list, query, fields) {
@@ -977,6 +979,30 @@ function toggleAdminManageSection(key) {
     ...adminManageExpanded.value,
     [key]: !adminManageExpanded.value[key],
   }
+}
+
+const filteredAdminManageSections = computed(() => {
+  const q = String(listSearch.manage || '').trim().toLowerCase()
+  if (!q) {
+    return adminManageSections.map((s) => ({ ...s, items: s.items, forceOpen: false }))
+  }
+  return adminManageSections
+    .map((s) => {
+      const sectionHit = String(s.title || '').toLowerCase().includes(q)
+        || String(s.desc || '').toLowerCase().includes(q)
+      const items = (s.items || []).filter((item) => {
+        if (sectionHit) return true
+        return [item.label, item.desc, item.view]
+          .some((v) => String(v || '').toLowerCase().includes(q))
+      })
+      return { ...s, items, forceOpen: items.length > 0 }
+    })
+    .filter((s) => s.items.length > 0)
+})
+
+function isAdminManageSectionOpen(section) {
+  if (section.forceOpen) return true
+  return !!adminManageExpanded.value[section.key]
 }
 const tabs = computed(() => ({
   user: [{ view: 'home', label: '首页', icon: 'home' }, { view: 'mine', label: '我的', icon: 'user' }],
@@ -2868,7 +2894,8 @@ function isNativeBoardProduct(product) {
     isTennisInplayProduct(product) ||
     isTennisPrematchProduct(product) ||
     isTennisSettledProduct(product) ||
-    isBtcBoardProduct(product)
+    isBtcBoardProduct(product) ||
+    isDota2Product(product)
   )
 }
 
@@ -3422,10 +3449,8 @@ function productEmbedUrl(product) {
                 <p class="text-sm text-slate-500 mt-3">{{ openedProduct.desc }}</p>
               </div>
               <div
-                :class="isNativeBoardProduct(openedProduct) || isDota2Product(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct) || isTennisPrematchProduct(openedProduct) || isTennisSettledProduct(openedProduct) || isDota2Product(openedProduct))
-                    ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
-                    : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
+                :class="isNativeBoardProduct(openedProduct)
+                  ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
               >
                 <!-- 盘前/盘中：未订阅本产品时与「网球」未订阅预览一致 -->
@@ -3509,10 +3534,27 @@ function productEmbedUrl(product) {
                     @auto-bet-change="onBoardAutoBetChange"
                   />
                 </div>
+                <div v-else-if="isDota2Product(openedProduct)" class="p-0 relative">
+                  <Dota2Board :is-member="canAccessProduct(openedProduct.id)" />
+                  <div
+                    v-if="!canAccessProduct(openedProduct.id)"
+                    class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 gap-3 z-10"
+                  >
+                    <div class="h-16 w-16 rounded-full bg-danger/10 flex items-center justify-center text-danger">
+                      <span v-html="icon('lock')" class="w-8 h-8"></span>
+                    </div>
+                    <div class="text-lg font-semibold">{{ statusOf(openedProduct.id)==='expired' ? '订阅已过期' : '尚未订阅' }}</div>
+                    <button
+                      type="button"
+                      class="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold"
+                      @click="openRedeem(openedProduct)"
+                    >兑换码兑换</button>
+                  </div>
+                </div>
                 <div
                   v-else
                   class="relative bg-slate-50"
-                  :style="isDota2Product(openedProduct) || isDirectProduct(openedProduct)
+                  :style="isDirectProduct(openedProduct)
                     ? { height: 'min(78vh, 720px)', minHeight: '420px' }
                     : { height: 'min(60vh, 520px)', minHeight: '320px' }"
                 >
@@ -3909,11 +3951,24 @@ function productEmbedUrl(product) {
             <section v-else-if="role==='admin' && view==='manage'" class="space-y-4 fade-up">
               <h2 class="text-xl font-semibold px-1">管理中心</h2>
               <p class="text-sm text-slate-500 px-1">按功能分类进入对应模块</p>
-              <div v-for="section in adminManageSections" :key="section.key" class="space-y-2">
+              <div class="list-search-wrap">
+                <span class="list-search-icon" v-html="icon('search')"></span>
+                <input
+                  v-model="listSearch.manage"
+                  type="search"
+                  placeholder="搜索分类或模块…"
+                  class="list-search-input"
+                />
+              </div>
+              <p
+                v-if="listSearch.manage.trim() && !filteredAdminManageSections.length"
+                class="text-sm text-slate-400 px-1"
+              >未找到匹配的模块</p>
+              <div v-for="section in filteredAdminManageSections" :key="section.key" class="space-y-2">
                 <button
                   type="button"
                   class="w-full px-1 pt-1 flex items-start justify-between gap-2 text-left rounded-lg hover:bg-slate-50/80 transition-colors"
-                  :aria-expanded="!!adminManageExpanded[section.key]"
+                  :aria-expanded="isAdminManageSectionOpen(section)"
                   @click="toggleAdminManageSection(section.key)"
                 >
                   <div class="min-w-0">
@@ -3922,11 +3977,11 @@ function productEmbedUrl(product) {
                   </div>
                   <span
                     class="mt-0.5 text-slate-400 shrink-0 transition-transform duration-200"
-                    :class="adminManageExpanded[section.key] ? 'rotate-90' : ''"
+                    :class="isAdminManageSectionOpen(section) ? 'rotate-90' : ''"
                     aria-hidden="true"
                   >▸</span>
                 </button>
-                <div v-show="adminManageExpanded[section.key]" class="grid grid-cols-4 gap-2">
+                <div v-show="isAdminManageSectionOpen(section)" class="grid grid-cols-4 gap-2">
                   <button
                     v-for="item in section.items"
                     :key="item.key || item.view"
