@@ -14,6 +14,8 @@ const COLLECT_INTERVAL_MS = Math.max(
 
 let collectBusy = false;
 let intervalHandle = null;
+/** Redis 不可用时的进程内兜底（本机开发常见） */
+let memoryBundle = null;
 
 function thresholds() {
   const eloDiffMin = Number(process.env.DOTA2_ELO_DIFF_MIN);
@@ -100,11 +102,18 @@ function extractEventSides(ev) {
 }
 
 function slimGammaEvent(ev) {
-  const [sideA, sideB] = extractEventSides(ev);
   const mk = pickMoneylineMarket(ev.markets || []);
   const prices = parsePrices(mk);
   const tokens = parseTokenIds(mk);
   const outcomes = parseOutcomes(mk?.outcomes);
+  let [sideA, sideB] = extractEventSides(ev);
+  // title 解析失败时，用 moneyline outcomes 作为队名
+  if ((!sideA || !sideB) && outcomes.length >= 2
+    && !/^(yes|no)$/i.test(outcomes[0])
+    && !/^(yes|no)$/i.test(outcomes[1])) {
+    sideA = outcomes[0];
+    sideB = outcomes[1];
+  }
   const slug = String(ev?.slug || '');
   return {
     slug,
@@ -283,7 +292,8 @@ async function enrichEvent(ev, thr) {
   const passList = isHighConfidence
     || eloDiff >= thr.eloDiffMin
     || strongProb >= thr.winProbMin;
-  if (!passList) return null;
+  // 列表：两侧队名都匹配到 dota2elo 即展示（与网球未开赛一致，先有场次再看强弱）
+  // passList / HC 仅作标记；自动投注仍只走 passAutoBet=HC
 
   const tokens = ev.tokenIds || [];
   const pickTokenId = pickSide === 'a' ? (tokens[0] || null) : (tokens[1] || null);
@@ -314,13 +324,14 @@ async function enrichEvent(ev, thr) {
     pickTokenId,
     pickPrice,
     is_high_confidence: isHighConfidence,
-    passList: true,
+    passList,
     passAutoBet: isHighConfidence,
     risk_points: pred?.risk_points ?? null,
   };
 }
 
 async function writeBundle(bundle) {
+  memoryBundle = bundle;
   const client = await redis.getClient();
   if (!client) return false;
   await client.set(BUNDLE_KEY, JSON.stringify(bundle));
@@ -329,18 +340,23 @@ async function writeBundle(bundle) {
 
 async function readBundle() {
   const client = await redis.getClient();
-  if (!client) return null;
-  const raw = await client.get(BUNDLE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
+  if (client) {
+    try {
+      const raw = await client.get(BUNDLE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        memoryBundle = parsed;
+        return parsed;
+      }
+    } catch {
+      /* fall through to memory */
+    }
   }
+  return memoryBundle;
 }
 
 async function collectOnce() {
-  if (collectBusy) return readBundle();
+  if (collectBusy) return (await readBundle()) || memoryBundle;
   collectBusy = true;
   const thr = thresholds();
   try {
@@ -358,6 +374,9 @@ async function collectOnce() {
       if (!!b.is_high_confidence !== !!a.is_high_confidence) {
         return b.is_high_confidence ? 1 : -1;
       }
+      if (!!b.passList !== !!a.passList) {
+        return b.passList ? 1 : -1;
+      }
       return (b.eloDiff || 0) - (a.eloDiff || 0);
     });
     const bundle = {
@@ -367,11 +386,13 @@ async function collectOnce() {
       fetched_at: new Date().toISOString(),
       thresholds: thr,
       matchCount: matches.length,
+      edgeCount: matches.filter((m) => m.passList).length,
+      hcCount: matches.filter((m) => m.is_high_confidence).length,
       scanned: events.length,
       matches,
     };
     await writeBundle(bundle);
-    console.log(`[dota2-pm] collected ${matches.length}/${events.length} (elo≥${thr.eloDiffMin} or p≥${thr.winProbMin} or HC)`);
+    console.log(`[dota2-pm] collected ${matches.length}/${events.length} (edge ${bundle.edgeCount} HC ${bundle.hcCount})`);
     return bundle;
   } catch (err) {
     console.error('[dota2-pm] collect failed', err.message || err);

@@ -3535,7 +3535,12 @@ function productEmbedUrl(product) {
                   />
                 </div>
                 <div v-else-if="isDota2Product(openedProduct)" class="p-0 relative">
-                  <Dota2Board :is-member="canAccessProduct(openedProduct.id)" />
+                  <Dota2Board
+                    :is-member="canAccessProduct(openedProduct.id)"
+                    :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
+                    @auto-bet-change="onBoardAutoBetChange"
+                    @placed-orders-change="onBoardPlacedOrdersChange"
+                  />
                   <div
                     v-if="!canAccessProduct(openedProduct.id)"
                     class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 gap-3 z-10"
