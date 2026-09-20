@@ -100,8 +100,12 @@ router.post('/markets/refresh', optionalAuth(), async (req, res) => {
 });
 
 /**
- * 市价批量买入：仅传 collect 已解析的 tokenId
- * body: { orders: [{ slug, side, tokenId, amountUsd }], simulate? }
+ * 批量买入：市价 FOK / 限价 GTC
+ * body: {
+ *   orders: [{ slug, side, tokenId, amountUsd? }],
+ *   amountUsd?, orderType?: 'market'|'limit',
+ *   shares?, limitBuyPrice?, limitPrice?, simulate?
+ * }
  */
 router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
@@ -116,6 +120,31 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
     }
     if (orders.length > 20) {
       return res.status(400).json({ ok: false, error: '单次最多批量下单 20 场' });
+    }
+
+    const orderType = String(req.body?.orderType || 'market').toLowerCase() === 'limit'
+      ? 'limit'
+      : 'market';
+    let limitBuyPrice = null;
+    let shares = null;
+    if (orderType === 'limit') {
+      const buyRaw = req.body?.limitBuyPrice ?? req.body?.limitPrice;
+      const p = Number(buyRaw);
+      if (!(p >= 0.01 && p <= 0.99)) {
+        return res.status(400).json({ ok: false, error: '限价单须填写买入目标价（0.01–0.99）' });
+      }
+      limitBuyPrice = Math.round(p * 100) / 100;
+      shares = Math.floor(Number(req.body?.shares) * 100) / 100;
+      if (!(shares > 0)) {
+        return res.status(400).json({ ok: false, error: '限价单须填写份额' });
+      }
+      const notional = Math.round(shares * limitBuyPrice * 100) / 100;
+      if (!(notional >= 1)) {
+        return res.status(400).json({
+          ok: false,
+          error: `限价买入金额 $${notional} 不足 $1，请提高份额`,
+        });
+      }
     }
 
     if (!simulate) {
@@ -144,7 +173,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
         results.push({ slug, side, ok: false, error: 'side 须为 a|b' });
         continue;
       }
-      if (!(amountUsd >= 1)) {
+      if (orderType === 'market' && !(amountUsd >= 1)) {
         results.push({ slug, side, ok: false, error: '金额至少 $1' });
         continue;
       }
@@ -162,28 +191,51 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
             side,
             ok: true,
             simulate: true,
+            orderType,
             tokenId,
-            amountUsd,
+            amountUsd: orderType === 'limit'
+              ? Math.round(shares * limitBuyPrice * 100) / 100
+              : amountUsd,
+            shares: orderType === 'limit' ? shares : undefined,
+            limitBuyPrice: orderType === 'limit' ? limitBuyPrice : undefined,
             orderId: `sim-dota2-${Date.now()}`,
           });
           continue;
         }
 
-        const order = await polymarketTrade.placeMarketBuy({
-          privateKey: secrets.privateKey,
-          proxyAddress: secrets.proxyAddress,
-          signatureType: secrets.signatureType,
-          tokenId,
-          amountUsd,
-        });
+        let order;
+        if (orderType === 'limit') {
+          order = await polymarketTrade.placeLimitBuy({
+            privateKey: secrets.privateKey,
+            proxyAddress: secrets.proxyAddress,
+            signatureType: secrets.signatureType,
+            tokenId,
+            shares,
+            price: limitBuyPrice,
+            amountUsd,
+          });
+        } else {
+          order = await polymarketTrade.placeMarketBuy({
+            privateKey: secrets.privateKey,
+            proxyAddress: secrets.proxyAddress,
+            signatureType: secrets.signatureType,
+            tokenId,
+            amountUsd,
+          });
+        }
         await dota2PmCollect.markPlaced(userId, placeKey);
         placed.add(placeKey);
         results.push({
           slug,
           side,
           ok: true,
+          orderType,
           tokenId,
-          amountUsd,
+          amountUsd: orderType === 'limit'
+            ? Math.round(shares * limitBuyPrice * 100) / 100
+            : amountUsd,
+          shares: orderType === 'limit' ? shares : undefined,
+          limitBuyPrice: orderType === 'limit' ? limitBuyPrice : undefined,
           orderId: order?.orderID || order?.id || null,
           result: order,
         });
@@ -198,6 +250,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       userId,
       product: 'dota2',
       simulate,
+      orderType,
       results,
     });
   } catch (e) {

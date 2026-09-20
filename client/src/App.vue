@@ -3534,27 +3534,13 @@ function productEmbedUrl(product) {
                     @auto-bet-change="onBoardAutoBetChange"
                   />
                 </div>
-                <div v-else-if="isDota2Product(openedProduct)" class="p-0 relative">
+                <div v-else-if="isDota2Product(openedProduct)" class="p-0">
                   <Dota2Board
                     :is-member="canAccessProduct(openedProduct.id)"
                     :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
                   />
-                  <div
-                    v-if="!canAccessProduct(openedProduct.id)"
-                    class="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 gap-3 z-10"
-                  >
-                    <div class="h-16 w-16 rounded-full bg-danger/10 flex items-center justify-center text-danger">
-                      <span v-html="icon('lock')" class="w-8 h-8"></span>
-                    </div>
-                    <div class="text-lg font-semibold">{{ statusOf(openedProduct.id)==='expired' ? '订阅已过期' : '尚未订阅' }}</div>
-                    <button
-                      type="button"
-                      class="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold"
-                      @click="openRedeem(openedProduct)"
-                    >兑换码兑换</button>
-                  </div>
                 </div>
                 <div
                   v-else

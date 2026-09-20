@@ -40,6 +40,11 @@ const batchError = ref('')
 const selectedIds = ref(new Set())
 const autoPlacedIds = ref(new Set())
 const placedOrders = ref([])
+const manualOrderType = ref('market')
+const manualSide = ref('suggest') // suggest | home(a) | away(b)
+const manualShares = ref('10')
+const manualLimitBuyPrice = ref('0.55')
+const manualLimitSellPrice = ref('0.70')
 
 let pollTimer = null
 let autoBetRunning = false
@@ -49,6 +54,8 @@ const allowBatchTrade = computed(() => {
   if (props.isMember) return true
   return false
 })
+
+const showManualTradeOpts = computed(() => allowBatchTrade.value)
 
 const showAutoBetBar = computed(() => props.canBatchTrade || props.isMember)
 
@@ -84,8 +91,28 @@ function isStartSameDay(ms) {
     && d.getDate() === now.getDate()
 }
 
+function placeKeyOf(slug, side) {
+  return `${slug}:${side}`
+}
+
 function placeKey(m) {
-  return `${m.slug}:${m.pickSide}`
+  return placeKeyOf(m.slug, m.pickSide)
+}
+
+/** suggest→优侧；home→A；away→B（对齐网球 Up/Down） */
+function resolveTradeSide(m, { manual = false } = {}) {
+  if (manual) {
+    if (manualSide.value === 'home') return 'a'
+    if (manualSide.value === 'away') return 'b'
+  }
+  return m?.pickSide || null
+}
+
+function tokenForSide(m, side) {
+  if (!m || !side) return null
+  if (side === m.pickSide && m.pickTokenId) return m.pickTokenId
+  const tokens = Array.isArray(m.tokenIds) ? m.tokenIds : []
+  return side === 'a' ? (tokens[0] || null) : (tokens[1] || null)
 }
 
 function normalizeRows(raw) {
@@ -195,8 +222,12 @@ function isSelected(m) {
 
 function canSelectMatch(m) {
   if (!allowBatchTrade.value) return false
-  if (!m?.pickTokenId || !m?.slug || !m?.pickSide) return false
-  if (autoPlacedIds.value.has(placeKey(m)) || autoPlacedIds.value.has(String(m.id))) return false
+  const side = resolveTradeSide(m, { manual: true })
+  const tokenId = tokenForSide(m, side)
+  if (!m?.slug || !side || !tokenId) return false
+  if (autoPlacedIds.value.has(placeKeyOf(m.slug, side)) || autoPlacedIds.value.has(String(m.id))) {
+    return false
+  }
   return true
 }
 
@@ -229,6 +260,7 @@ function goPage(p) {
 }
 
 function openDetail(m) {
+  if (!props.isMember) return
   detailMatch.value = m
 }
 
@@ -237,6 +269,7 @@ function closeDetail() {
 }
 
 function openMarket(m) {
+  if (!props.isMember) return
   const url = m?.url
   if (url) window.open(url, '_blank', 'noopener')
 }
@@ -299,19 +332,24 @@ function toggleAutoBet() {
   if (autoSimBetEnabled.value) void runAutoBet()
 }
 
-function buildOrdersFromMatches(list, amount) {
+function buildOrdersFromMatches(list, amount, { manual = false } = {}) {
   return list
-    .filter((m) => m.pickTokenId && m.slug && m.pickSide)
-    .filter((m) => !autoPlacedIds.value.has(placeKey(m)))
-    .map((m) => ({
-      slug: m.slug,
-      side: m.pickSide,
-      tokenId: m.pickTokenId,
-      amountUsd: amount,
-      id: m.id,
-      label: `${m.home} vs ${m.away}`,
-      pickName: m.pickName,
-    }))
+    .map((m) => {
+      const side = resolveTradeSide(m, { manual })
+      const tokenId = tokenForSide(m, side)
+      if (!m.slug || !side || !tokenId) return null
+      if (autoPlacedIds.value.has(placeKeyOf(m.slug, side))) return null
+      return {
+        slug: m.slug,
+        side,
+        tokenId,
+        amountUsd: amount,
+        id: m.id,
+        label: `${m.home} vs ${m.away}`,
+        pickName: side === 'a' ? m.home : m.away,
+      }
+    })
+    .filter(Boolean)
 }
 
 async function placeOrders(orders, { auto = false } = {}) {
@@ -321,22 +359,47 @@ async function placeOrders(orders, { auto = false } = {}) {
     return
   }
   const amount = Math.round(Number(batchAmountUsd.value) * 100) / 100
-  if (!(amount >= 1)) {
+  const orderType = (!auto && manualOrderType.value === 'limit') ? 'limit' : 'market'
+
+  if (orderType === 'market' && !(amount >= 1)) {
     batchError.value = '投注金额至少 $1'
     return
   }
+
+  const payload = {
+    orders: orders.map((o) => ({
+      slug: o.slug,
+      side: o.side,
+      tokenId: o.tokenId,
+      amountUsd: amount,
+    })),
+    amountUsd: amount,
+    orderType,
+  }
+
+  if (orderType === 'limit') {
+    const shares = Math.floor(Number(manualShares.value) * 100) / 100
+    const lp = Number(manualLimitBuyPrice.value)
+    if (!(shares > 0)) {
+      batchError.value = '限价单须填写份额'
+      return
+    }
+    if (!(lp >= 0.01 && lp <= 0.99)) {
+      batchError.value = '买入目标价须在 0.01–0.99'
+      return
+    }
+    payload.shares = shares
+    payload.limitBuyPrice = Math.round(lp * 100) / 100
+    payload.limitPrice = payload.limitBuyPrice
+  }
+  if (!auto && (manualSide.value === 'home' || manualSide.value === 'away')) {
+    payload.allowAnySide = true
+  }
+
   batchSubmitting.value = true
   batchError.value = ''
-  batchNotice.value = ''
+  if (!auto) batchNotice.value = ''
   try {
-    const payload = {
-      orders: orders.map((o) => ({
-        slug: o.slug,
-        side: o.side,
-        tokenId: o.tokenId,
-        amountUsd: amount,
-      })),
-    }
     const resp = await placeDota2TradeBatch(payload)
     const results = Array.isArray(resp?.results) ? resp.results : []
     let ok = 0
@@ -347,7 +410,9 @@ async function placeOrders(orders, { auto = false } = {}) {
     for (let i = 0; i < results.length; i += 1) {
       const r = results[i]
       const src = orders[i]
-      const key = r.slug && r.side ? `${r.slug}:${r.side}` : (src ? placeKey(src) : '')
+      const key = r.slug && r.side
+        ? placeKeyOf(r.slug, r.side)
+        : (src ? placeKeyOf(src.slug, src.side) : '')
       if (r.ok && r.skipped) {
         skip += 1
         if (key) nextPlaced.add(key)
@@ -361,6 +426,7 @@ async function placeOrders(orders, { auto = false } = {}) {
           label: src?.label || key,
           side: r.side,
           amountUsd: amount,
+          orderType,
           at: Date.now(),
           pickName: src?.pickName,
         })
@@ -373,7 +439,8 @@ async function placeOrders(orders, { auto = false } = {}) {
     savePersisted()
     notifyPlaced()
     clearSelection()
-    batchNotice.value = `${auto ? '自动' : '手动'}下单：成功 ${ok} · 跳过 ${skip} · 失败 ${fail}`
+    const kind = orderType === 'limit' ? '限价' : '市价'
+    batchNotice.value = `${auto ? '自动' : '手动'}${kind}：成功 ${ok} · 跳过 ${skip} · 失败 ${fail}`
     const firstErr = results.find((r) => !r.ok)?.error
     if (fail && firstErr) batchError.value = firstErr
   } catch (e) {
@@ -385,7 +452,7 @@ async function placeOrders(orders, { auto = false } = {}) {
 
 async function submitBatchTrade() {
   const selected = marketRows.value.filter((m) => selectedIds.value.has(String(m.id)))
-  const orders = buildOrdersFromMatches(selected, Number(batchAmountUsd.value))
+  const orders = buildOrdersFromMatches(selected, Number(batchAmountUsd.value), { manual: true })
   if (!orders.length) {
     batchError.value = '请先勾选可下单场次'
     return
@@ -396,7 +463,7 @@ async function submitBatchTrade() {
 async function runAutoBet() {
   if (!autoSimBetEnabled.value || !allowBatchTrade.value || autoBetRunning || batchSubmitting.value) return
   const hc = marketRows.value.filter((m) => m.passAutoBet || m.is_high_confidence)
-  const orders = buildOrdersFromMatches(hc, Number(batchAmountUsd.value)).slice(0, 10)
+  const orders = buildOrdersFromMatches(hc, Number(batchAmountUsd.value), { manual: false }).slice(0, 10)
   if (!orders.length) return
   autoBetRunning = true
   try {
@@ -418,6 +485,9 @@ function syncPoll() {
 }
 
 watch(batchAmountUsd, () => savePersisted())
+watch(manualSide, () => {
+  clearSelection()
+})
 
 onMounted(async () => {
   loadPersisted()
@@ -462,7 +532,12 @@ defineExpose({
       :page-selectable="pageSelectable"
       :selected-count="selectedCount"
       v-model:batch-amount-usd="batchAmountUsd"
-      :show-manual-trade-opts="false"
+      :show-manual-trade-opts="showManualTradeOpts"
+      v-model:manual-order-type="manualOrderType"
+      v-model:manual-side="manualSide"
+      v-model:manual-shares="manualShares"
+      v-model:manual-limit-buy-price="manualLimitBuyPrice"
+      v-model:manual-limit-sell-price="manualLimitSellPrice"
       :batch-submitting="batchSubmitting"
       :batch-notice="batchNotice"
       :batch-error="batchError"
@@ -508,8 +583,8 @@ defineExpose({
                 {{ fmtTime(m.startTimestamp) }}
               </span>
               <span class="start-status">未开</span>
-              <span class="tour-title">差 {{ num(m.eloDiff) }}</span>
-              <div class="badges">
+              <span v-if="isMember" class="tour-title">差 {{ num(m.eloDiff) }}</span>
+              <div v-if="isMember" class="badges">
                 <span v-if="m.is_high_confidence" class="badge hc">HC</span>
                 <span v-else-if="m.passList" class="badge edge">过线</span>
                 <span v-if="m.url" class="badge poly">外</span>
@@ -519,30 +594,30 @@ defineExpose({
             <div class="row-main">
               <div class="matchup is-stacked">
                 <div class="matchup-line">
-                  <span class="name" :class="{ pick: m.pickSide === 'a' }">
-                    <span class="list-rank">{{ num(m.teamA?.rating) }}</span>
+                  <span class="name" :class="{ pick: isMember && m.pickSide === 'a' }">
+                    <span v-if="isMember" class="list-rank">{{ num(m.teamA?.rating) }}</span>
                     <span class="player-name">{{ m.home }}</span>
-                    <span v-if="m.pickSide === 'a'" class="pick-tag">优</span>
+                    <span v-if="isMember && m.pickSide === 'a'" class="pick-tag">优</span>
                   </span>
-                  <span class="side-nums">
+                  <span v-if="isMember" class="side-nums">
                     <em>{{ sideProb(m, 'a') }}</em>
                     <em class="pm">{{ pmPrice(m, 'a') }}</em>
                   </span>
                 </div>
                 <span class="vs-row">VS</span>
                 <div class="matchup-line">
-                  <span class="name" :class="{ pick: m.pickSide === 'b' }">
-                    <span class="list-rank">{{ num(m.teamB?.rating) }}</span>
+                  <span class="name" :class="{ pick: isMember && m.pickSide === 'b' }">
+                    <span v-if="isMember" class="list-rank">{{ num(m.teamB?.rating) }}</span>
                     <span class="player-name">{{ m.away }}</span>
-                    <span v-if="m.pickSide === 'b'" class="pick-tag">优</span>
+                    <span v-if="isMember && m.pickSide === 'b'" class="pick-tag">优</span>
                   </span>
-                  <span class="side-nums">
+                  <span v-if="isMember" class="side-nums">
                     <em>{{ sideProb(m, 'b') }}</em>
                     <em class="pm">{{ pmPrice(m, 'b') }}</em>
                   </span>
                 </div>
               </div>
-              <div class="row-actions">
+              <div v-if="isMember" class="row-actions">
                 <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
                 <button
                   type="button"
@@ -639,11 +714,10 @@ defineExpose({
 }
 .topbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   margin-bottom: 6px;
-  overflow-x: auto;
 }
 .meta-chip,
 .btn {
@@ -670,9 +744,9 @@ defineExpose({
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 3px;
-  margin: 0 0 0 auto;
+  margin-left: auto;
   min-width: 148px;
-  flex: 1;
+  flex: 1 1 148px;
   max-width: 220px;
 }
 .stat {
