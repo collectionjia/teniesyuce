@@ -2853,6 +2853,12 @@ function isBtcBoardProduct(product) {
   return /btc.*持仓|持仓看板|btc.*board/i.test(String(product?.name || ''))
 }
 
+function isDota2Product(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'dota2' || tag === 'dota') return true
+  return /dota2|刀塔|dota/i.test(String(product?.name || ''))
+}
+
 function isNativeBoardProduct(product) {
   return (
     isTennisProduct(product) ||
@@ -3316,7 +3322,7 @@ function productEmbedUrl(product) {
             </section>
 
             <section v-else-if="showProductDetail" class="space-y-2 fade-up">
-              <template v-if="isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct)">
+              <template v-if="isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isDota2Product(openedProduct)">
                 <button
                   type="button"
                   @click="go(shopRoute())"
@@ -3387,7 +3393,7 @@ function productEmbedUrl(product) {
               <div v-else class="flex items-center gap-2 min-h-0">
                 <button @click="go(shopRoute())" class="text-xs text-primary-700 flex items-center gap-0.5 shrink-0 py-0.5"><span v-html="icon('back')"></span>返回</button>
               </div>
-              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
+              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isDota2Product(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
                 <div class="flex items-center gap-3">
                   <ProductIcon :product="openedProduct" size="md" />
                   <div>
@@ -3416,8 +3422,8 @@ function productEmbedUrl(product) {
                 <p class="text-sm text-slate-500 mt-3">{{ openedProduct.desc }}</p>
               </div>
               <div
-                :class="isNativeBoardProduct(openedProduct)
-                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct) || isTennisPrematchProduct(openedProduct) || isTennisSettledProduct(openedProduct))
+                :class="isNativeBoardProduct(openedProduct) || isDota2Product(openedProduct)
+                  ? ((isBtcBoardProduct(openedProduct) || isTennisProduct(openedProduct) || isTennisRangeProduct(openedProduct) || isTennisLiveProduct(openedProduct) || isTennisNewProduct(openedProduct) || isTennisInplayProduct(openedProduct) || isTennisPrematchProduct(openedProduct) || isTennisSettledProduct(openedProduct) || isDota2Product(openedProduct))
                     ? 'rounded-xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm'
                     : 'rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 shadow-sm')
                   : 'rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm'"
@@ -3506,7 +3512,7 @@ function productEmbedUrl(product) {
                 <div
                   v-else
                   class="relative bg-slate-50"
-                  :style="isDirectProduct(openedProduct)
+                  :style="isDota2Product(openedProduct) || isDirectProduct(openedProduct)
                     ? { height: 'min(78vh, 720px)', minHeight: '420px' }
                     : { height: 'min(60vh, 520px)', minHeight: '320px' }"
                 >
@@ -3514,7 +3520,7 @@ function productEmbedUrl(product) {
                     v-if="canAccessProduct(openedProduct.id) && openedProduct.url && productEmbedUrl(openedProduct)"
                     :key="openedProduct.id + '-' + openedProduct.url"
                     :src="productEmbedUrl(openedProduct)"
-                    class="w-full h-full border-0 bg-white"
+                    class="w-full h-full border-0 bg-slate-50"
                     :title="openedProduct.name + ' 内容'"
                     referrerpolicy="no-referrer-when-downgrade"
                   ></iframe>

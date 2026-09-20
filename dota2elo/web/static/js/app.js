@@ -11,6 +11,12 @@ function escapeHtml(s) {
 }
 
 (function () {
+  try {
+    if (window.self !== window.top) document.body.classList.add('embedded');
+  } catch (_) {
+    document.body.classList.add('embedded');
+  }
+
   const search = document.getElementById('globalSearch');
   const popup = document.getElementById('searchResults');
   if (!search || !popup) return;
