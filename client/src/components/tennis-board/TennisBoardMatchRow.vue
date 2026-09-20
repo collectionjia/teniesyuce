@@ -78,7 +78,7 @@ defineProps({
               class="badge"
               :class="settledPnlBadge(m).cls"
             >{{ settledPnlBadge(m).text }}</span>
-            <span v-if="isSettledMode && isMember && pickSide(m)" class="badge pick" title="推荐侧">荐</span>
+            <span v-if="isSettledMode && isMember && pickSide(m)" class="badge pick" title="平台推荐">优</span>
             <span v-if="isSettledMode && matchWinnerSide(m)" class="badge win" title="实际胜方">赢</span>
           </div>
         </div>
@@ -150,8 +150,7 @@ defineProps({
                   >({{ listBestOf(m, 'home') }})</span>
                 </span>
                 <span class="player-name">{{ matchHomeName(m) }}</span>
-                <span v-if="isSettledMode && isMember && pickSide(m) === 'home'" class="pick-tag">荐</span>
-                <span v-else-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
+                <span v-if="isMember && pickSide(m) === 'home'" class="pick-tag">优</span>
                 <span v-if="isSettledMode && matchWinnerSide(m) === 'home'" class="win-tag">赢</span>
               </span>
             </div>
@@ -172,8 +171,7 @@ defineProps({
                   >({{ listBestOf(m, 'away') }})</span>
                 </span>
                 <span class="player-name">{{ matchAwayName(m) }}</span>
-                <span v-if="isSettledMode && isMember && pickSide(m) === 'away'" class="pick-tag">荐</span>
-                <span v-else-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
+                <span v-if="isMember && pickSide(m) === 'away'" class="pick-tag">优</span>
                 <span v-if="isSettledMode && matchWinnerSide(m) === 'away'" class="win-tag">赢</span>
               </span>
             </div>

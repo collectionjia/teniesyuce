@@ -47,6 +47,16 @@ const currentUser = reactive({ id: null, name: '', account: '', role: 'user', in
 const products = ref([])
 const productCategories = ref([])
 const shopCategoryFilter = ref('all') // all | none | categoryId
+/** 首页点「网球」分类时，分类下方展示完赛推荐胜负副标题 */
+const shopTennisSettledSub = reactive({
+  loaded: false,
+  matchCount: 0,
+  win: 0,
+  loss: 0,
+  total: 0,
+  winRate: '—',
+  lossRate: '—',
+})
 const adminProducts = ref([])
 const adminCategories = ref([])
 const categoryForm = reactive({ name: '', sortOrder: '', saving: false, editingId: null })
@@ -285,7 +295,7 @@ function productFormBucket(form) {
   const tag = String(form?.tag || '').toLowerCase()
   const name = String(form?.name || '')
   if (tag === 'tennis-prematch' || /盘前网球/.test(name)) return 'prematch'
-  if (tag === 'tennis-settled' || /盘后网球/.test(name)) return 'settled'
+  if (tag === 'tennis-settled' || /盘后网球|比赛结束的网球|比赛结束.*网球/.test(name)) return 'settled'
   if (tag === 'tennis-inplay' || (/盘中采集|盘中网球/.test(name) && !/盘前|盘后/.test(name))) return 'inplay'
   return null
 }
@@ -446,6 +456,54 @@ const filteredShopProducts = computed(() => {
 const shopHasUncategorized = computed(() =>
   products.value.some((p) => !p.categoryId && (role.value === 'admin' || !p.adminOnly))
 )
+
+const shopTennisCategorySelected = computed(() => {
+  const catId = shopCategoryFilter.value
+  if (catId === 'all' || catId === 'none') return false
+  const cat = productCategories.value.find((c) => String(c.id) === String(catId))
+  return /网球/.test(String(cat?.name || ''))
+})
+
+async function loadShopTennisSettledSub() {
+  if (!shopTennisCategorySelected.value) {
+    shopTennisSettledSub.loaded = false
+    return
+  }
+  try {
+    const bundle = await api.fetchTennisSettledToday({})
+    const matches = bundle?.live?.matches || []
+    let win = 0
+    let loss = 0
+    for (const m of matches) {
+      if (m?.pickHit === 1) win += 1
+      else if (m?.pickHit === 0) loss += 1
+    }
+    const total = win + loss
+    const pct = (n) => (total ? `${Math.round((n / total) * 1000) / 10}%` : '—')
+    shopTennisSettledSub.matchCount = matches.length
+    shopTennisSettledSub.win = win
+    shopTennisSettledSub.loss = loss
+    shopTennisSettledSub.total = total
+    shopTennisSettledSub.winRate = pct(win)
+    shopTennisSettledSub.lossRate = pct(loss)
+    shopTennisSettledSub.loaded = true
+  } catch {
+    shopTennisSettledSub.matchCount = 0
+    shopTennisSettledSub.win = 0
+    shopTennisSettledSub.loss = 0
+    shopTennisSettledSub.total = 0
+    shopTennisSettledSub.winRate = '—'
+    shopTennisSettledSub.lossRate = '—'
+    shopTennisSettledSub.loaded = true
+  }
+}
+
+watch(shopCategoryFilter, () => {
+  void loadShopTennisSettledSub()
+})
+watch(shopTennisCategorySelected, (on) => {
+  if (on) void loadShopTennisSettledSub()
+})
 const filteredMineSubs = computed(() =>
   filterBySearch(mySubs.value, listSearch.mine, ['name', 'desc', 'tag'])
 )
@@ -759,43 +817,48 @@ const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
 /** Top100 采购：独立宽屏页（?page=top100） */
 const standaloneTop100 = ref(false)
-/** 完赛网球：独立页（?page=settled-results） */
+/** 完赛网球（管理中心）：独立页（?page=settled-results） */
 const standaloneSettledResults = ref(false)
 /** 独立页：/auth/me 后台校验中（有 token 时先出页面） */
 const standaloneAuthPending = ref(false)
 
 const ROLE_CACHE_KEY = 'yuce.standalone.role'
 
+function anyStandalonePage() {
+  return standaloneDocksEditor.value
+    || standaloneTop100.value
+    || standaloneSettledResults.value
+}
+
+function clearStandalonePages() {
+  standaloneDocksEditor.value = false
+  standaloneDocksDate.value = ''
+  standaloneTop100.value = false
+  standaloneSettledResults.value = false
+}
+
 function readStandalonePages() {
   try {
     const params = new URLSearchParams(window.location.search)
     const page = params.get('page')
     if (page === 'docks-editor') {
+      clearStandalonePages()
       standaloneDocksEditor.value = true
       standaloneDocksDate.value = String(params.get('date') || '').trim()
-      standaloneTop100.value = false
-      standaloneSettledResults.value = false
       return true
     }
     if (page === 'top100') {
+      clearStandalonePages()
       standaloneTop100.value = true
-      standaloneDocksEditor.value = false
-      standaloneDocksDate.value = ''
-      standaloneSettledResults.value = false
       return true
     }
     if (page === 'settled-results') {
+      clearStandalonePages()
       standaloneSettledResults.value = true
-      standaloneTop100.value = false
-      standaloneDocksEditor.value = false
-      standaloneDocksDate.value = ''
       return true
     }
   } catch (_) { /* ignore */ }
-  standaloneDocksEditor.value = false
-  standaloneDocksDate.value = ''
-  standaloneTop100.value = false
-  standaloneSettledResults.value = false
+  clearStandalonePages()
   return false
 }
 
@@ -2026,7 +2089,7 @@ async function refreshRoleData({ deferSecondary = true } = {}) {
 
 async function initSession() {
   readStandalonePages()
-  const standalone = standaloneDocksEditor.value || standaloneTop100.value || standaloneSettledResults.value
+  const standalone = anyStandalonePage()
 
   // 独立宽屏页：有 token 立刻出壳，/auth/me 后台校验，不挡首屏
   if (standalone) {
@@ -2104,7 +2167,7 @@ async function doLogin() {
     const data = await api.login(f.account, f.password)
     setUser(data.user)
     authed.value = true
-    if (!standaloneDocksEditor.value && !standaloneTop100.value && !standaloneSettledResults.value) {
+    if (!anyStandalonePage()) {
       view.value = defaultViewForRole(data.user.role)
       await refreshRoleData()
     }
@@ -2731,7 +2794,7 @@ function isTennisPrematchProduct(product) {
 function isTennisSettledProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-settled') return true
-  return /盘后网球/.test(String(product?.name || ''))
+  return /盘后网球|比赛结束的网球|比赛结束.*网球/.test(String(product?.name || ''))
 }
 
 /** Sofascore Courtline 网球：详情页用 Vue 直出，不用 iframe */
@@ -3214,6 +3277,22 @@ function productEmbedUrl(product) {
                   @click="shopCategoryFilter = 'none'"
                 >未分类</button>
               </div>
+              <p
+                v-if="shopTennisCategorySelected && shopTennisSettledSub.loaded"
+                class="shop-tennis-sub"
+              >
+                <span>全部日期 · {{ shopTennisSettledSub.matchCount }} 场</span>
+                <span> · 胜 </span>
+                <span class="stat-win">{{ shopTennisSettledSub.total ? shopTennisSettledSub.win : '—' }}</span>
+                <span> 场</span>
+                <span> · 输 </span>
+                <span class="stat-loss">{{ shopTennisSettledSub.total ? shopTennisSettledSub.loss : '—' }}</span>
+                <span> 场</span>
+                <span> · 胜率 </span>
+                <span class="stat-win">{{ shopTennisSettledSub.winRate }}</span>
+                <span> · 亏损 </span>
+                <span class="stat-loss">{{ shopTennisSettledSub.lossRate }}</span>
+              </p>
               <div v-if="shopLoadError" class="shop-empty text-amber-700 bg-amber-50 rounded-2xl px-4 py-6">
                 {{ shopLoadError }}
               </div>
@@ -3374,13 +3453,7 @@ function productEmbedUrl(product) {
                   />
                 </div>
                 <div v-else-if="isTennisSettledProduct(openedProduct)" class="p-0">
-                  <TennisBoard
-                    board-mode="settled"
-                    :show-filters="true"
-                    :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="false"
-                    @auto-bet-change="onBoardAutoBetChange"
-                  />
+                  <TennisSettledResults embedded />
                 </div>
                 <div v-else-if="isTennisLiveProduct(openedProduct)" class="p-0">
                   <TennisBoard

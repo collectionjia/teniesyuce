@@ -2212,9 +2212,11 @@ function polyOf(id) {
   return map[id] || map[String(id)] || null
 }
 
-/** 建议投注侧：现排名更高（数字更小）的一侧；缺一方排名则不建议 */
+/** 建议投注侧：现排名更高（数字更小）的一侧；缺一方排名则不建议。盘后可回落 MySQL 已存 pickSide。 */
 function pickSide(m) {
   if (!m) return null
+  const stored = String(m.pickSide || m.pick_side || '').toLowerCase()
+  if (stored === 'home' || stored === 'away') return stored
   const home = m.homePlayer || { name: m.home, ranking: null }
   const away = m.awayPlayer || { name: m.away, ranking: null }
   const homeR = currentRankOf(home)

@@ -336,6 +336,22 @@ html, body { margin: 0; background: #0f172a; }
   background: #eef2ff;
   color: #4338ca;
 }
+.shop-tennis-sub {
+  margin: 0 0 8px;
+  padding: 0 2px;
+  color: #0f172a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.shop-tennis-sub .stat-win {
+  color: #16a34a;
+  font-weight: 800;
+}
+.shop-tennis-sub .stat-loss {
+  color: #dc2626;
+  font-weight: 800;
+}
 .shop-empty {
   background: #fff;
   border: 1px solid #e2e8f0;
