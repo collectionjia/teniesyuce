@@ -17,6 +17,8 @@ defineProps({
   tour: { type: String, default: 'all' },
   pmFilter: { type: String, default: 'all' },
   settledPnlMark: { type: String, default: 'all' },
+  settledDate: { type: String, default: 'all' },
+  availableSettledDates: { type: Array, default: () => [] },
   gapMin: { type: String, default: 'all' },
   diffMax: { type: String, default: 'all' },
   strongRankMax: { type: String, default: 'all' },
@@ -30,6 +32,7 @@ const emit = defineEmits([
   'update:tour',
   'update:pmFilter',
   'update:settledPnlMark',
+  'update:settledDate',
   'update:gapMin',
   'update:diffMax',
   'update:strongRankMax',
@@ -42,6 +45,36 @@ const emit = defineEmits([
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '20' }" @click="emit('update:topPoolMax', '20')">Top20</button>
       <button type="button" class="chip-btn" :class="{ active: topPoolMax === '50' }" @click="emit('update:topPoolMax', '50')">Top50</button>
       <span class="new-pool-hint">{{ newPoolRulesText }}</span>
+    </div>
+
+    <div v-if="isSettledMode" class="filter-panel settled-date-panel">
+      <div class="filter-body settled-body">
+        <div class="filter-row">
+          <span class="label">日期</span>
+          <button type="button" class="chip-btn" :class="{ active: settledDate === 'all' }" @click="emit('update:settledDate', 'all')">全部</button>
+          <button
+            v-for="d in availableSettledDates.slice(0, 8)"
+            :key="d.date"
+            type="button"
+            class="chip-btn"
+            :class="{ active: settledDate === d.date }"
+            @click="emit('update:settledDate', d.date)"
+          >{{ d.date.slice(5) }}·{{ d.count }}</button>
+          <input
+            class="date-input"
+            type="date"
+            :value="settledDate !== 'all' ? settledDate : ''"
+            @change="emit('update:settledDate', $event.target.value || 'all')"
+          />
+        </div>
+        <div class="filter-row">
+          <span class="label">盈亏</span>
+          <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'all' }" @click="emit('update:settledPnlMark', 'all')">全部</button>
+          <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'bet' }" @click="emit('update:settledPnlMark', 'bet')">有投注</button>
+          <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'win' }" @click="emit('update:settledPnlMark', 'win')">盈利</button>
+          <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'loss' }" @click="emit('update:settledPnlMark', 'loss')">亏损</button>
+        </div>
+      </div>
     </div>
 
     <div v-if="showFilters && !isPrematchMode && !isInplayMode && !isSettledMode" class="filter-panel">
@@ -75,17 +108,7 @@ const emit = defineEmits([
           <button type="button" class="chip-btn" :class="{ active: pmFilter === 'no' }" @click="emit('update:pmFilter', 'no')">无外链</button>
         </div>
 
-        <template v-if="isSettledMode">
-          <div class="filter-row">
-            <span class="label">盈亏</span>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'all' }" @click="emit('update:settledPnlMark', 'all')">全部</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'bet' }" @click="emit('update:settledPnlMark', 'bet')">有投注</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'win' }" @click="emit('update:settledPnlMark', 'win')">盈利</button>
-            <button type="button" class="chip-btn" :class="{ active: settledPnlMark === 'loss' }" @click="emit('update:settledPnlMark', 'loss')">亏损</button>
-          </div>
-        </template>
-
-        <template v-else-if="classicRankFiltersOn">
+        <template v-if="classicRankFiltersOn">
           <div class="filter-row">
             <span class="label">现差</span>
             <button type="button" class="chip-btn" :class="{ active: gapMin === 'all' }" @click="emit('update:gapMin', 'all')">不限</button>
@@ -164,6 +187,18 @@ const emit = defineEmits([
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
+}
+.settled-body {
+  display: block !important;
+  padding: 8px 10px;
+}
+.date-input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 0.82rem;
+  color: #334155;
+  background: #fff;
 }
 .filter-toggle {
   width: 100%;

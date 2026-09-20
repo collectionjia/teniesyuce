@@ -1,11 +1,20 @@
 /**
- * Polymarket 一侧到 100¢ 时写入赛果（幂等）。
+ * Polymarket 一侧到 100¢ 时写入赛果（幂等）；盘后列表从此表读取。
  */
 const pool = require('../db');
 const { pickSide } = require('./tennisTrade');
 
 let tableReady = false;
 const written = new Set();
+
+function shanghaiDateKey(d = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d instanceof Date ? d : new Date(d));
+}
 
 async function ensureTable() {
   if (tableReady) return;
@@ -109,8 +118,126 @@ function queuePmSettled(matches, rankingsByPlayer) {
   }
 }
 
+function rowToMatch(row) {
+  const winner = row.winner_side === 'away' ? 'away' : 'home';
+  const home = row.home_name || '';
+  const away = row.away_name || '';
+  const settledAt = row.settled_at ? new Date(row.settled_at) : null;
+  const startTs = settledAt && !Number.isNaN(settledAt.getTime())
+    ? Math.floor(settledAt.getTime() / 1000)
+    : null;
+  return {
+    id: Number(row.event_id),
+    home,
+    away,
+    homePlayer: { name: home },
+    awayPlayer: { name: away },
+    status: 'Ended',
+    statusType: 'finished',
+    scoreText: row.score_text || '',
+    winner,
+    winnerName: row.winner_name || (winner === 'home' ? home : away),
+    pmSettled: true,
+    pickSide: row.pick_side || null,
+    pickName: row.pick_name || null,
+    pickHit: row.pick_hit == null ? null : Number(row.pick_hit),
+    pmHomePrice: row.home_price != null ? Number(row.home_price) : null,
+    pmAwayPrice: row.away_price != null ? Number(row.away_price) : null,
+    startTimestamp: startTs,
+    settledAt: settledAt ? settledAt.toISOString() : null,
+    source: row.source || 'polymarket_100',
+  };
+}
+
+function polyFromRow(row) {
+  const home = row.home_price != null ? Number(row.home_price) : null;
+  const away = row.away_price != null ? Number(row.away_price) : null;
+  return {
+    home_price: home,
+    away_price: away,
+    moneyline: {
+      outcomes: [row.home_name || 'Home', row.away_name || 'Away'],
+      prices: [home, away],
+    },
+    closed: true,
+    source: 'tennis_pm_results',
+  };
+}
+
+/**
+ * @param {{ date?: string|null }} opts date=YYYY-MM-DD（北京日）；空则全部完赛
+ */
+async function listSettledBundle({ date } = {}) {
+  await ensureTable();
+  const dateKey = date && /^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())
+    ? String(date).trim()
+    : null;
+  let rows;
+  if (dateKey) {
+    const [r] = await pool.query(
+      `SELECT *
+       FROM tennis_pm_results
+       WHERE DATE(CONVERT_TZ(settled_at, @@session.time_zone, '+08:00')) = ?
+       ORDER BY settled_at DESC`,
+      [dateKey],
+    );
+    rows = r;
+  } else {
+    const [r] = await pool.query(
+      `SELECT * FROM tennis_pm_results ORDER BY settled_at DESC LIMIT 500`,
+    );
+    rows = r;
+  }
+  const matches = (rows || []).map(rowToMatch);
+  const polymarketByEvent = {};
+  for (const row of rows || []) {
+    polymarketByEvent[String(row.event_id)] = polyFromRow(row);
+  }
+  const [dateRows] = await pool.query(
+    `SELECT DATE_FORMAT(CONVERT_TZ(settled_at, @@session.time_zone, '+08:00'), '%Y-%m-%d') AS day,
+            COUNT(*) AS n
+     FROM tennis_pm_results
+     GROUP BY day
+     ORDER BY day DESC
+     LIMIT 60`,
+  );
+  const availableDates = (dateRows || []).map((d) => ({
+    date: d.day,
+    count: Number(d.n) || 0,
+  }));
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    ok: true,
+    empty: matches.length === 0,
+    sport: 'tennis',
+    source: 'mysql-tennis_pm_results',
+    dataSource: 'tennis_pm_results',
+    date: dateKey || 'all',
+    availableDates,
+    scheduled: { tournaments: [], tournamentCount: 0, eventCount: 0 },
+    live: {
+      matches,
+      tournaments: [],
+      tournamentCount: 0,
+      eventCount: matches.length,
+    },
+    rankingsByPlayer: {},
+    oddsByEvent: {},
+    polymarketByEvent,
+    events: matches.length,
+    serverTime: now,
+    fetched_at: new Date().toISOString(),
+    message: dateKey
+      ? `盘后 · ${dateKey} · ${matches.length} 场`
+      : `盘后 · 全部 · ${matches.length} 场`,
+    update: { message: 'tennis_pm_results' },
+  };
+}
+
 module.exports = {
   ensureTable,
   upsertPmResult,
   queuePmSettled,
+  listSettledBundle,
+  shanghaiDateKey,
 };

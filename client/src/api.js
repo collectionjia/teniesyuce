@@ -882,9 +882,9 @@ export async function placeTennisPrematchSell(payload) {
   return data
 }
 
-export async function fetchTennisSettledToday() {
+export async function fetchTennisSettledToday(params = {}) {
   const { data } = await api.get('/tennis-settled/today', {
-    params: { _: Date.now() },
+    params: { ...params, _: Date.now() },
     headers: { 'Cache-Control': 'no-cache' },
   })
   return data

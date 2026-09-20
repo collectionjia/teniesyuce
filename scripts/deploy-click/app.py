@@ -142,51 +142,63 @@ PAGE = """<!DOCTYPE html>
 <style>
   body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 24px; background: #0f172a; color: #e2e8f0; }
   h1 { margin: 0 0 8px; font-size: 1.4rem; }
-  h2 { margin: 0 0 8px; font-size: 1rem; color: #cbd5e1; }
-  .meta { color: #94a3b8; margin: 0 0 12px; font-size: 0.9rem; }
-  .panel { margin-top: 20px; }
-  button, .run-btn {
+  .meta { color: #94a3b8; margin: 0 0 14px; font-size: 0.9rem; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
+  .tab {
+    background: #1e293b; color: #94a3b8; border: 1px solid #334155; border-radius: 8px;
+    padding: 8px 16px; font-weight: 700; cursor: pointer;
+  }
+  .tab.active { background: #22c55e; color: #052e16; border-color: #22c55e; }
+  .pane { display: none; }
+  .pane.active { display: block; }
+  button {
     background: #22c55e; color: #052e16; border: 0; border-radius: 8px;
     padding: 10px 18px; font-weight: 700; cursor: pointer;
   }
-  button:disabled, .run-btn:disabled { opacity: .5; cursor: not-allowed; }
-  .log, .term {
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .log {
     margin-top: 10px; background: #020617; color: #cbd5e1; border-radius: 8px;
-    padding: 12px; height: 36vh; overflow: auto; white-space: pre-wrap;
+    padding: 12px; height: 62vh; overflow: auto; white-space: pre-wrap;
     font: 13px/1.45 ui-monospace, Consolas, monospace;
   }
-  .term-wrap { border: 1px solid #1e293b; border-radius: 8px; overflow: hidden; }
-  .term { margin: 0; height: 40vh; border-radius: 0; }
-  .term-bar {
-    display: flex; gap: 8px; align-items: center; padding: 8px; background: #020617;
-    border-top: 1px solid #1e293b;
+  .term-wrap {
+    margin-top: 10px; background: #000; color: #e2e8f0; border: 1px solid #1e293b;
+    border-radius: 8px; height: 68vh; overflow: auto; padding: 12px 14px;
+    font: 13px/1.45 ui-monospace, Consolas, monospace; cursor: text;
+    outline: none; white-space: pre-wrap; word-break: break-word;
   }
-  .cwd { color: #64748b; font: 12px ui-monospace, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 28%; }
-  .prompt { color: #22c55e; font: 13px ui-monospace, Consolas, monospace; flex-shrink: 0; }
-  #cmd {
-    flex: 1; min-width: 0; background: #0f172a; color: #e2e8f0; border: 1px solid #334155;
-    border-radius: 6px; padding: 8px 10px; font: 13px ui-monospace, Consolas, monospace;
+  .term-wrap:focus { box-shadow: inset 0 0 0 1px #22c55e55; }
+  .term-wrap.busy { cursor: wait; }
+  #hist { color: #cbd5e1; }
+  .prompt-line { color: #e2e8f0; }
+  .ps1 { color: #22c55e; }
+  .cwd-tag { color: #64748b; }
+  .cursor {
+    display: inline-block; width: 8px; height: 1.05em; background: #e2e8f0;
+    vertical-align: text-bottom; margin-left: 1px; animation: blink 1s step-end infinite;
   }
-  #cmd:focus { outline: 1px solid #22c55e; }
+  .term-wrap.busy .cursor { visibility: hidden; }
+  @keyframes blink { 50% { opacity: 0; } }
 </style>
 </head>
 <body>
-  <h1>一键部署</h1>
-  <p class="meta">执行 <code>scripts/deploy-145.sh</code>（git pull + 重建容器）。同一时间只能跑一次。</p>
-  <button id="go" type="button">开始部署</button>
-  <div id="log" class="log">等待操作…</div>
+  <h1>服务器运维</h1>
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="deploy">部署</button>
+    <button type="button" class="tab" data-tab="shell">命令行</button>
+  </div>
 
-  <div class="panel">
-    <h2>命令行</h2>
-    <p class="meta">在服务器上执行 bash 命令（需 token）。工作目录可 <code>cd</code> 切换。</p>
-    <div class="term-wrap">
-      <div id="term" class="term">$ 等待输入…</div>
-      <div class="term-bar">
-        <span id="cwd" class="cwd"></span>
-        <span class="prompt">$</span>
-        <input id="cmd" type="text" autocomplete="off" spellcheck="false" placeholder="例如：docker ps"/>
-        <button id="run" class="run-btn" type="button">执行</button>
-      </div>
+  <div id="pane-deploy" class="pane active">
+    <p class="meta">执行 <code>scripts/deploy-145.sh</code>（git pull + 重建容器）。同一时间只能跑一次。</p>
+    <button id="go" type="button">开始部署</button>
+    <div id="log" class="log">等待操作…</div>
+  </div>
+
+  <div id="pane-shell" class="pane">
+    <p class="meta">点击终端后直接输入，Enter 执行，↑/↓ 历史。Ctrl+L 清屏，Ctrl+C 取消输入。</p>
+    <div id="term" class="term-wrap" tabindex="0" role="textbox" aria-label="终端">
+      <div id="hist"></div>
+      <div class="prompt-line"><span class="cwd-tag" id="cwd"></span> <span class="ps1">$</span> <span id="live"></span><span class="cursor"></span></div>
     </div>
   </div>
 
@@ -194,14 +206,30 @@ PAGE = """<!DOCTYPE html>
 const token = new URLSearchParams(location.search).get('token') || '';
 const logEl = document.getElementById('log');
 const btn = document.getElementById('go');
-const termEl = document.getElementById('term');
+const term = document.getElementById('term');
+const histEl = document.getElementById('hist');
+const liveEl = document.getElementById('live');
 const cwdEl = document.getElementById('cwd');
-const cmdEl = document.getElementById('cmd');
-const runBtn = document.getElementById('run');
 let seen = 0;
 let shellSeen = 0;
 let hist = [];
 let histIdx = -1;
+let draft = '';
+let shellRunning = false;
+let shellCwd = '';
+
+function setTab(name) {
+  document.querySelectorAll('.tab').forEach((el) => {
+    el.classList.toggle('active', el.dataset.tab === name);
+  });
+  document.querySelectorAll('.pane').forEach((el) => {
+    el.classList.toggle('active', el.id === 'pane-' + name);
+  });
+  if (name === 'shell') term.focus();
+}
+document.querySelectorAll('.tab').forEach((el) => {
+  el.onclick = () => setTab(el.dataset.tab);
+});
 
 function paint(lines, running) {
   if (lines.length) logEl.textContent = lines.join('');
@@ -209,13 +237,17 @@ function paint(lines, running) {
   btn.disabled = !!running;
   btn.textContent = running ? '部署中…' : '开始部署';
 }
+function renderLive() {
+  liveEl.textContent = draft;
+  cwdEl.textContent = shellCwd || '';
+  term.scrollTop = term.scrollHeight;
+}
 function paintShell(lines, running, cwd) {
-  if (lines.length) termEl.textContent = lines.join('');
-  else if (!running) termEl.textContent = '$ 等待输入…';
-  termEl.scrollTop = termEl.scrollHeight;
-  cwdEl.textContent = cwd || '';
-  runBtn.disabled = !!running;
-  cmdEl.disabled = !!running;
+  shellRunning = !!running;
+  shellCwd = cwd || shellCwd;
+  term.classList.toggle('busy', shellRunning);
+  histEl.textContent = lines.length ? lines.join('') : '';
+  renderLive();
 }
 async function poll() {
   const r = await fetch('/api/logs?token=' + encodeURIComponent(token) + '&from=' + seen);
@@ -238,13 +270,14 @@ btn.onclick = async () => {
   if (!r.ok) logEl.textContent = data.error || '启动失败';
   poll();
 };
-async function runCmd() {
-  const cmd = cmdEl.value.trim();
-  if (!cmd) return;
+async function runCmd(cmd) {
+  if (!cmd || shellRunning) return;
   hist.push(cmd);
   histIdx = hist.length;
-  cmdEl.value = '';
-  runBtn.disabled = true;
+  draft = '';
+  renderLive();
+  shellRunning = true;
+  term.classList.add('busy');
   const r = await fetch('/api/shell?token=' + encodeURIComponent(token), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -252,30 +285,71 @@ async function runCmd() {
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) {
-    termEl.textContent += (termEl.textContent.endsWith('\\n') ? '' : '\\n') + '[error] ' + (data.error || '执行失败') + '\\n';
-    runBtn.disabled = false;
+    histEl.textContent += (histEl.textContent.endsWith('\\n') ? '' : '\\n') + '[error] ' + (data.error || '执行失败') + '\\n';
+    shellRunning = false;
+    term.classList.remove('busy');
+    renderLive();
   }
   pollShell();
 }
-runBtn.onclick = runCmd;
-cmdEl.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') { e.preventDefault(); runCmd(); return; }
+term.addEventListener('click', () => term.focus());
+term.addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('.tab')) return;
+  if (shellRunning) {
+    if (e.key === 'c' && e.ctrlKey) e.preventDefault();
+    return;
+  }
+  if (e.key === 'l' && e.ctrlKey) {
+    e.preventDefault();
+    histEl.textContent = '';
+    return;
+  }
+  if (e.key === 'c' && e.ctrlKey) {
+    e.preventDefault();
+    draft = '';
+    renderLive();
+    return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const cmd = draft.trim();
+    if (!cmd) return;
+    runCmd(cmd);
+    return;
+  }
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    draft = draft.slice(0, -1);
+    histIdx = hist.length;
+    renderLive();
+    return;
+  }
   if (e.key === 'ArrowUp') {
     e.preventDefault();
     if (!hist.length) return;
     histIdx = Math.max(0, histIdx - 1);
-    cmdEl.value = hist[histIdx] || '';
-  } else if (e.key === 'ArrowDown') {
+    draft = hist[histIdx] || '';
+    renderLive();
+    return;
+  }
+  if (e.key === 'ArrowDown') {
     e.preventDefault();
     histIdx = Math.min(hist.length, histIdx + 1);
-    cmdEl.value = histIdx >= hist.length ? '' : (hist[histIdx] || '');
+    draft = histIdx >= hist.length ? '' : (hist[histIdx] || '');
+    renderLive();
+    return;
+  }
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    draft += e.key;
+    histIdx = hist.length;
+    renderLive();
   }
 });
 poll();
 pollShell();
 setInterval(poll, 1000);
 setInterval(pollShell, 800);
-cmdEl.focus();
 </script>
 </body>
 </html>

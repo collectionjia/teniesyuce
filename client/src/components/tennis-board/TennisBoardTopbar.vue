@@ -23,28 +23,6 @@ defineProps({
 </script>
 
 <template>
-<div v-if="isInplayMode" class="inplay-source-bar">
-      <div class="inplay-collect-row">
-        <div class="inplay-collect-main">
-          <span class="inplay-collect-label">polymarket赔率 · 比分和赔率采集</span>
-          <span v-if="collectUpdatedText" class="inplay-collect-time">更新 {{ collectUpdatedText }}</span>
-          <span v-else class="inplay-collect-time muted">暂无更新时间</span>
-        </div>
-        <button
-          v-if="refreshScoreOddsCollect"
-          type="button"
-          class="inplay-refresh-btn"
-          :disabled="collectRefreshing || loading"
-          @click="refreshScoreOddsCollect()"
-        >{{ collectRefreshing ? '刷新中…' : '刷新' }}</button>
-      </div>
-      <div v-if="allowBatchTrade || bundleHint" class="inplay-collect-extra">
-        <span v-if="allowBatchTrade" class="inplay-auto-rules">自动投注：{{ inplayAutoRulesText }}</span>
-        <span v-if="bundleHint">{{ allowBatchTrade ? ' · ' : '' }}{{ bundleHint }}</span>
-      </div>
-      <div v-if="collectNotice" class="inplay-collect-notice">{{ collectNotice }}</div>
-      <div v-if="collectError" class="inplay-collect-error">{{ collectError }}</div>
-    </div>
     <div v-if="isSettledMode && settledStats" class="settled-stats-bar">
       <span>合计 盈{{ pct(settledStats.total?.winRate) }} / 亏{{ pct(settledStats.total?.lossRate) }} · PnL {{ num(settledStats.total?.totalPnl) }}</span>
       <span>盘前 盈{{ pct(settledStats.prematch?.winRate) }} / 亏{{ pct(settledStats.prematch?.lossRate) }}</span>

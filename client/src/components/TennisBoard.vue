@@ -115,6 +115,9 @@ const pmFilter = ref('all') // all | yes | no — 是否只看有 Polymarket 外
 const topPoolMax = ref('50') // 20 | 50（新网球列表 · Top50 池内筛选）
 /** 盘后：盈亏标记筛选 */
 const settledPnlMark = ref('all') // all | bet | win | loss
+/** 盘后：完赛日期（北京日）all | YYYY-MM-DD */
+const settledDate = ref('all')
+const availableSettledDates = ref([])
 const filtersOpen = ref(false)
 const detailMatch = ref(null)
 /** 详情页字段说明是否展开 */
@@ -916,7 +919,7 @@ function matchPassesFilter(m, statusFilter) {
 
 function allMatches(bundle) {
   if (!bundle) return []
-  if (isInplayMode.value) {
+  if (isInplayMode.value || isSettledMode.value) {
     return (bundle.live?.matches || []).map((e) => ({ ...e }))
   }
   const tournaments = bundle.scheduled?.tournaments || []
@@ -2055,6 +2058,8 @@ const filterSummary = computed(() => {
     }
     if (strongRankMax.value !== 'all') parts.push(`强者现≤${strongRankMax.value}`)
   } else if (isSettledMode.value) {
+    if (settledDate.value && settledDate.value !== 'all') parts.push(settledDate.value)
+    else parts.push('全部日期')
     if (settledPnlMark.value === 'bet') parts.push('有投注')
     else if (settledPnlMark.value === 'win') parts.push('盈利')
     else if (settledPnlMark.value === 'loss') parts.push('亏损')
@@ -2618,6 +2623,9 @@ async function loadOnce({
     if (props.productId != null && props.productId !== '') {
       qs.set('productId', String(props.productId))
     }
+    if (isSettledMode.value && settledDate.value && settledDate.value !== 'all') {
+      qs.set('date', settledDate.value)
+    }
     const query = qs.toString()
     const res = await fetch(`${apiPath.value}/today${query ? `?${query}` : ''}`, {
       cache: 'no-store',
@@ -2637,6 +2645,9 @@ async function loadOnce({
         ? payload
         : payload?.data || payload
     data.value = bundle
+    if (isSettledMode.value && Array.isArray(bundle?.availableDates)) {
+      availableSettledDates.value = bundle.availableDates
+    }
     hydrateConditionFromBundle(bundle)
     if (isInplayMode.value && bundle?.bettingEntry) {
       bettingEntry.value = normalizeInplayBettingEntry(bundle.bettingEntry)
@@ -2651,7 +2662,10 @@ async function loadOnce({
     }
     if (isSettledMode.value) {
       try {
-        settledStats.value = await api.fetchTennisSettledStats()
+        const statsParams = settledDate.value && settledDate.value !== 'all'
+          ? { date: settledDate.value }
+          : {}
+        settledStats.value = await api.fetchTennisSettledStats(statsParams)
       } catch {
         settledStats.value = null
       }
@@ -2764,7 +2778,7 @@ watch(
 )
 
 watch(
-  [tour, pmFilter, gapMin, diffMax, strongRankMax, settledPnlMark],
+  [tour, pmFilter, gapMin, diffMax, strongRankMax, settledPnlMark, settledDate],
   () => {
     if (isPrematchMode.value) {
       saveFilters('prematch', {
@@ -2781,10 +2795,17 @@ watch(
         tour: tour.value,
         pm: pmFilter.value,
         pnlMark: settledPnlMark.value,
+        date: settledDate.value,
       })
     }
   },
 )
+
+watch(settledDate, () => {
+  if (!isSettledMode.value) return
+  loadOnce({ quiet: false })
+})
+
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
   clearListPollTimers()
@@ -2981,6 +3002,8 @@ defineExpose({
       v-model:tour="tour"
       v-model:pm-filter="pmFilter"
       v-model:settled-pnl-mark="settledPnlMark"
+      v-model:settled-date="settledDate"
+      :available-settled-dates="availableSettledDates"
       v-model:gap-min="gapMin"
       v-model:diff-max="diffMax"
       v-model:strong-rank-max="strongRankMax"

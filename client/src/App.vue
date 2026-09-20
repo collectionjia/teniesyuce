@@ -9,6 +9,7 @@ import TennisMonitor from './components/TennisMonitor.vue'
 import SchedulerCenter from './components/SchedulerCenter.vue'
 import TennisDocksEditor from './components/TennisDocksEditor.vue'
 import TennisTop100Wide from './components/TennisTop100Wide.vue'
+import TennisSettledResults from './components/TennisSettledResults.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
 import CollectProxySettings from './components/CollectProxySettings.vue'
 import EngineServicesCenter from './components/EngineServicesCenter.vue'
@@ -710,7 +711,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'tennis-settled-results': '完赛网球', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -758,6 +759,8 @@ const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
 /** Top100 采购：独立宽屏页（?page=top100） */
 const standaloneTop100 = ref(false)
+/** 完赛网球：独立页（?page=settled-results） */
+const standaloneSettledResults = ref(false)
 /** 独立页：/auth/me 后台校验中（有 token 时先出页面） */
 const standaloneAuthPending = ref(false)
 
@@ -771,10 +774,19 @@ function readStandalonePages() {
       standaloneDocksEditor.value = true
       standaloneDocksDate.value = String(params.get('date') || '').trim()
       standaloneTop100.value = false
+      standaloneSettledResults.value = false
       return true
     }
     if (page === 'top100') {
       standaloneTop100.value = true
+      standaloneDocksEditor.value = false
+      standaloneDocksDate.value = ''
+      standaloneSettledResults.value = false
+      return true
+    }
+    if (page === 'settled-results') {
+      standaloneSettledResults.value = true
+      standaloneTop100.value = false
       standaloneDocksEditor.value = false
       standaloneDocksDate.value = ''
       return true
@@ -783,6 +795,7 @@ function readStandalonePages() {
   standaloneDocksEditor.value = false
   standaloneDocksDate.value = ''
   standaloneTop100.value = false
+  standaloneSettledResults.value = false
   return false
 }
 
@@ -797,6 +810,12 @@ function buildDocksEditorUrl(date) {
 function buildTop100WideUrl() {
   const q = new URLSearchParams()
   q.set('page', 'top100')
+  return `${window.location.origin}${window.location.pathname}?${q.toString()}`
+}
+
+function buildSettledResultsUrl() {
+  const q = new URLSearchParams()
+  q.set('page', 'settled-results')
   return `${window.location.origin}${window.location.pathname}?${q.toString()}`
 }
 
@@ -815,6 +834,10 @@ function openTop100WidePage() {
   window.open(buildTop100WideUrl(), '_blank', 'noopener')
 }
 
+function openSettledResultsPage() {
+  window.open(buildSettledResultsUrl(), '_blank', 'noopener')
+}
+
 function onManageItemClick(item) {
   if (item?.view === 'tennis-docks-editor') {
     openDocksEditorPage()
@@ -822,6 +845,10 @@ function onManageItemClick(item) {
   }
   if (item?.view === 'tennis-top100') {
     openTop100WidePage()
+    return
+  }
+  if (item?.view === 'tennis-settled-results') {
+    openSettledResultsPage()
     return
   }
   go(item.view)
@@ -860,6 +887,7 @@ const adminManageSections = [
     items: [
       { view: 'tennis-docks-editor', label: '虚拟日列表', desc: '盘前/盘中/盘后筛选 · 分页编辑模拟场次', icon: 'list', color: 'from-teal-500 to-cyan-600' },
       { view: 'tennis-top100', label: 'Top100 宽屏', desc: 'ATP/WTA 并排 · 电脑全屏采购看板', icon: 'chart', color: 'from-sky-500 to-cyan-500' },
+      { view: 'tennis-settled-results', label: '完赛网球', desc: 'MySQL 完赛场次 · 按日期筛选 · 独立页面', icon: 'list', color: 'from-emerald-500 to-teal-600' },
       { view: 'engine-api-keys', label: '引擎 API Key', desc: '签发 / 吊销 · 调用 /api/engine/*', icon: 'link', color: 'from-slate-500 to-zinc-600' },
     ],
   },
@@ -1998,7 +2026,7 @@ async function refreshRoleData({ deferSecondary = true } = {}) {
 
 async function initSession() {
   readStandalonePages()
-  const standalone = standaloneDocksEditor.value || standaloneTop100.value
+  const standalone = standaloneDocksEditor.value || standaloneTop100.value || standaloneSettledResults.value
 
   // 独立宽屏页：有 token 立刻出壳，/auth/me 后台校验，不挡首屏
   if (standalone) {
@@ -2076,7 +2104,7 @@ async function doLogin() {
     const data = await api.login(f.account, f.password)
     setUser(data.user)
     authed.value = true
-    if (!standaloneDocksEditor.value && !standaloneTop100.value) {
+    if (!standaloneDocksEditor.value && !standaloneTop100.value && !standaloneSettledResults.value) {
       view.value = defaultViewForRole(data.user.role)
       await refreshRoleData()
     }
@@ -2855,6 +2883,31 @@ function productEmbedUrl(product) {
       </div>
 
       <div
+        v-else-if="standaloneSettledResults"
+        class="min-h-screen bg-slate-50"
+      >
+        <div v-if="!authed" class="min-h-screen flex items-center justify-center px-4">
+          <div class="w-full max-w-sm bg-white rounded-2xl p-6 shadow-sm space-y-4">
+            <div>
+              <div class="text-lg font-semibold">完赛网球</div>
+              <p class="text-sm text-slate-500 mt-1">请使用管理员账号登录后查看</p>
+            </div>
+            <p v-if="loginError" class="text-sm text-danger">{{ loginError }}</p>
+            <input v-model="f.account" type="email" placeholder="邮箱" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" />
+            <input v-model="f.password" type="password" placeholder="密码" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-primary-400" @keyup.enter="doLogin" />
+            <button type="button" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium" @click="doLogin">登录</button>
+          </div>
+        </div>
+        <div v-else-if="!standaloneAuthPending && role !== 'admin'" class="min-h-screen flex items-center justify-center px-4">
+          <div class="bg-white rounded-2xl p-6 shadow-sm text-center space-y-3 max-w-sm">
+            <p class="text-slate-700">仅管理员可查看完赛网球</p>
+            <button type="button" class="chip-btn px-4 py-2 rounded-xl border border-slate-200 text-sm" @click="logout">退出</button>
+          </div>
+        </div>
+        <TennisSettledResults v-else standalone />
+      </div>
+
+      <div
         v-else
         class="relative mx-auto max-w-md min-h-screen bg-slate-50 flex flex-col phone-shadow overflow-hidden"
       >
@@ -3216,11 +3269,6 @@ function productEmbedUrl(product) {
                     rel="noopener noreferrer"
                     class="shrink-0 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
                   >兑换码购买</a>
-                </div>
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-primary-700 font-medium px-0.5 w-full">
-                  <span v-for="pl in plans" :key="pl.key">
-                    ¥{{ planPriceInfo(openedProduct, pl.key).current }}/{{ planText(pl.key) }}
-                  </span>
                 </div>
                 <div
                   v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || boardAutoBetOn || showBoardEngineButtons)"
