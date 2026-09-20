@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.local
+*.egg-info/
+build/
+dist/
+
+# Project runtime data（种子库 calibration.json / dota2elo.db 纳入版本库）
+data/*.db-journal
+data/*.log
+data/ingest.log
+data/ingest.err
+data/external/
+data/auto_update.log
+data/auto_update_status.json
+data/hc85_result.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 临时文件
+*.tmp
+*.bak
+*.log
+
+# 缓存
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 项目打包产物
+*.zip
+
+# 旧版本残留目录（可手动清理）
+# 注意：只匹配带空格的旧目录名，不能用通配符（会误伤 dota2elo/ 包目录）
+/dota2elo 2/
+/配置服务环境/

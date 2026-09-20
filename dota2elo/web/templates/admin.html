@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}管理后台 - Dota2 Elo{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>管理后台</h1>
+  <p class="muted">触发数据更新、查看缓存与任务状态</p>
+</section>
+
+<section class="card">
+  <h2>触发数据更新</h2>
+  <form id="ingestForm" class="admin-form">
+    <div>
+      <label>数据源</label>
+      <select name="source" id="ingestSource">
+        <option value="auto">auto（自动选源）</option>
+        <option value="opendota">opendota（仅 OpenDota）</option>
+        <option value="stratz">stratz（仅 Stratz，需要 key）</option>
+        <option value="multi">multi（多源 + 兜底）</option>
+      </select>
+    </div>
+    <div>
+      <label>拉取页数（每页 100 场）</label>
+      <input type="number" name="max_pages" value="10" min="1" max="200" />
+    </div>
+    <div>
+      <label>补全战队数</label>
+      <input type="number" name="enrich_top_n" value="50" min="0" max="500" />
+    </div>
+    <button type="submit" class="btn primary">启动</button>
+  </form>
+  <p class="muted small" id="ingestMsg"></p>
+</section>
+
+<section class="card">
+  <h2>最近任务</h2>
+  <div class="table-actions">
+    <button class="btn" id="refreshBtn">刷新</button>
+    <span class="muted small" id="lastUpdate"></span>
+  </div>
+  <table class="jobs">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>源</th>
+        <th>页数</th>
+        <th>状态</th>
+        <th>开始</th>
+        <th>耗时</th>
+        <th>结果</th>
+      </tr>
+    </thead>
+    <tbody id="jobsTbody">
+      <tr><td colspan="7" class="muted">加载中...</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>缓存</h2>
+  <div class="cache-stats">
+    <div><div class="big" id="cacheTotal">-</div><div class="muted small">条目总数</div></div>
+    <div><div class="big" id="cacheExpired">-</div><div class="muted small">已过期</div></div>
+    <button class="btn" id="clearCacheBtn">清空缓存</button>
+  </div>
+  <p class="muted small">
+    缓存策略：match 元数据 TTL 1h、team 元数据 TTL 24h。环境变量 <code>DOTA2ELO_CACHE=0</code> 可关闭。
+  </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  async function loadCache() {
+    const s = await fetch('/api/admin/cache/stats').then(r => r.json());
+    document.getElementById('cacheTotal').textContent = s.total;
+    document.getElementById('cacheExpired').textContent = s.expired;
+  }
+
+  async function loadJobs() {
+    const list = await fetch('/api/admin/jobs?limit=20').then(r => r.json());
+    const tbody = document.getElementById('jobsTbody');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="muted">暂无任务</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(j => {
+      const dur = j.started_at && j.finished_at
+        ? ((new Date(j.finished_at) - new Date(j.started_at)) / 1000).toFixed(1) + 's'
+        : (j.started_at ? '运行中...' : '-');
+      const statusCls = {
+        pending: 'muted', running: 'win', done: 'win', error: 'lose',
+      }[j.status] || '';
+      const result = j.status === 'done' && j.result
+        ? `${j.result.new_matches || 0} 新比赛, ${j.result.matches_processed || 0} 重算`
+        : (j.error ? j.error.slice(0, 40) : '-');
+      return `
+        <tr>
+          <td><code>${j.id}</code></td>
+          <td>${escapeHtml(j.source)}</td>
+          <td>${j.max_pages}</td>
+          <td class="${statusCls}">${j.status}</td>
+          <td class="muted">${j.started_at ? new Date(j.started_at).toLocaleString() : '-'}</td>
+          <td>${dur}</td>
+          <td class="muted small">${escapeHtml(result)}</td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('lastUpdate').textContent = '更新于 ' + new Date().toLocaleTimeString();
+  }
+
+  document.getElementById('ingestForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const params = new URLSearchParams(fd);
+    const msg = document.getElementById('ingestMsg');
+    msg.textContent = '启动中...';
+    try {
+      const r = await fetch('/api/admin/ingest?' + params.toString(), { method: 'POST' });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.detail || 'failed');
+      msg.textContent = `已启动任务 ${data.job_id}，可在下方表格看进度`;
+      loadJobs();
+    } catch (err) {
+      msg.textContent = '启动失败：' + err.message;
+    }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+    loadJobs();
+    loadCache();
+  });
+
+  document.getElementById('clearCacheBtn').addEventListener('click', async () => {
+    if (!confirm('清空全部缓存？下次请求会重新拉远端。')) return;
+    const r = await fetch('/api/admin/cache/clear', { method: 'POST' }).then(r => r.json());
+    alert('已清空 ' + r.cleared + ' 条');
+    loadCache();
+  });
+
+  Promise.all([loadCache(), loadJobs()]);
+  // 自动刷新任务列表
+  setInterval(loadJobs, 5000);
+})();
+</script>
+{% endblock %}

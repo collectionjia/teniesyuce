@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{% block title %}Dota2 Elo{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <a class="brand" href="/">⚔ Dota2 Elo</a>
+    <nav>
+      <a href="/">排行榜</a>
+      <a href="/predict">胜率预测</a>
+      <a href="/admin">管理</a>
+      <a href="/docs" target="_blank" rel="noopener">API</a>
+    </nav>
+    <input id="globalSearch" placeholder="搜索战队..." />
+  </div>
+</header>
+
+<main class="container">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="container">
+    数据来源 <a href="https://docs.opendota.com/" target="_blank" rel="noopener">OpenDota API</a> · 公共数据，仅供分析参考
+  </div>
+</footer>
+
+<div id="searchResults" class="search-popup" hidden></div>
+
+<script src="/static/js/app.js" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

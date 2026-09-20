@@ -10,6 +10,7 @@
 | `server/` | Node API |
 | `scripts/tennis-monitor/` | 网球数据采集 |
 | `btc-board/` | BTC 看板 |
+| `dota2elo/` | Dota2 Elo 评分（Docker :8892） |
 | `deploy/` | Docker 测试 / 生产 env |
 | `docs/` | 产品与接口说明 |
 

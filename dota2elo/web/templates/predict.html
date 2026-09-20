@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Dota2 比赛胜率预测{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>胜率预测</h1>
+  <p class="muted">基于当前 Elo 评分的 logistic 期望胜率</p>
+</section>
+
+<section class="card">
+  <div class="predict-form">
+    <div class="team-select">
+      <label>战队 A</label>
+      <input id="teamA" type="text" placeholder="输入战队名（如 Team Spirit）" />
+      <div id="teamA-suggest" class="suggest"></div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="team-select">
+      <label>战队 B</label>
+      <input id="teamB" type="text" placeholder="输入战队名（如 Team Liquid）" />
+      <div id="teamB-suggest" class="suggest"></div>
+    </div>
+  </div>
+  <button id="predictBtn" class="btn primary">预测</button>
+</section>
+
+<section class="card" id="result" hidden>
+  <h2>预测结果</h2>
+  <div class="predict-result">
+    <div class="side" id="sideA">
+      <div class="team-name" id="nameA">-</div>
+      <div class="rating" id="ratingA">-</div>
+      <div class="prob" id="probA">-</div>
+    </div>
+    <div class="bar-wrap">
+      <div class="bar" id="probBar"></div>
+    </div>
+    <div class="side" id="sideB">
+      <div class="team-name" id="nameB">-</div>
+      <div class="rating" id="ratingB">-</div>
+      <div class="prob" id="probB">-</div>
+    </div>
+  </div>
+  <p class="muted small" id="errMsg" hidden></p>
+</section>
+
+<section class="card" id="winrate75Card" hidden>
+  <div id="winrate75Content"></div>
+</section>
+
+<section class="card" id="extraInfo" hidden></section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const inpA = document.getElementById('teamA');
+  const inpB = document.getElementById('teamB');
+  const sugA = document.getElementById('teamA-suggest');
+  const sugB = document.getElementById('teamB-suggest');
+  const btn = document.getElementById('predictBtn');
+  const result = document.getElementById('result');
+  const err = document.getElementById('errMsg');
+
+  let teamA = null, teamB = null;
+
+  function suggest(box, list) {
+    box.innerHTML = list.map(t => `
+      <div class="suggest-item" data-id="${t.id}" data-name="${escapeHtml(t.name)}">
+        <span>${escapeHtml(t.name)}</span>
+        <span class="muted small">${t.rating}</span>
+      </div>
+    `).join('');
+    box.querySelectorAll('.suggest-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = +el.dataset.id;
+        const name = el.dataset.name;
+        if (box === sugA) { teamA = { id, name }; inpA.value = name; sugA.innerHTML = ''; }
+        else { teamB = { id, name }; inpB.value = name; sugB.innerHTML = ''; }
+      });
+    });
+  }
+
+  let timer = null;
+  function bindSearch(input, sugBox, setter) {
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = input.value.trim();
+      if (!q) { sugBox.innerHTML = ''; setter(null); return; }
+      timer = setTimeout(async () => {
+        const list = await fetch('/api/teams?q=' + encodeURIComponent(q)).then(r => r.json());
+        suggest(sugBox, list.slice(0, 8));
+      }, 200);
+    });
+  }
+  bindSearch(inpA, sugA, v => teamA = v);
+  bindSearch(inpB, sugB, v => teamB = v);
+
+  btn.addEventListener('click', async () => {
+    err.hidden = true;
+    if (!teamA || !teamB) {
+      err.textContent = '请从下拉中选择两支战队';
+      err.hidden = false;
+      return;
+    }
+    const params = new URLSearchParams({a: teamA.id, b: teamB.id});
+    const data = await fetch(`/api/predict?${params}`).then(r => r.json()).catch(e => ({error: e.message}));
+    if (data.error || data.detail) {
+      err.textContent = '预测失败：' + (data.detail || data.error);
+      err.hidden = false;
+      return;
+    }
+    document.getElementById('extraInfo').hidden = false;
+    document.getElementById('nameA').textContent = data.team_a_name;
+    document.getElementById('nameB').textContent = data.team_b_name;
+    document.getElementById('ratingA').textContent = `Elo ${data.team_a_rating}`;
+    document.getElementById('ratingB').textContent = `Elo ${data.team_b_rating}`;
+    document.getElementById('probA').textContent = `${(data.p_a_win * 100).toFixed(1)}%`;
+    document.getElementById('probB').textContent = `${(data.p_b_win * 100).toFixed(1)}%`;
+    const bar = document.getElementById('probBar');
+    bar.style.width = (data.p_a_win * 100).toFixed(1) + '%';
+    bar.style.background = 'linear-gradient(90deg, #4caf50, #2196f3)';
+    result.hidden = false;
+
+    // 75% 实战胜率条件展示
+    const wr75Card = document.getElementById('winrate75Card');
+    const wr75Content = document.getElementById('winrate75Content');
+    if (wr75Card && wr75Content) {
+      const meets75 = data.meets_75_condition;
+      const wr75 = data.winrate_75_expected || 0;
+      const signal = data.winrate_75_best_signal || '';
+      const conditions = data.winrate_75_conditions || [];
+      const cal = data.calibrated_p_a_win || 0;
+      const eloDiff = data.elo_diff || 0;
+
+      if (meets75) {
+        wr75Content.innerHTML = `
+          <div class="wr75-banner wr75-positive">
+            <div class="wr75-icon">🟢</div>
+            <div class="wr75-body">
+              <div class="wr75-title">满足 75% 胜率条件</div>
+              <div class="wr75-signal">${escapeHtml(signal)}</div>
+              <div class="wr75-conditions">
+                ${conditions.map(c => `<span class="wr75-tag">${escapeHtml(c)}</span>`).join('')}
+              </div>
+            </div>
+            <div class="wr75-stat">
+              <div class="wr75-big">${(wr75 * 100).toFixed(1)}%</div>
+              <div class="wr75-sub">历史胜率</div>
+            </div>
+          </div>
+          <div class="muted small" style="margin-top: 8px">
+            Elo 差 <b>${eloDiff.toFixed(0)}</b> · 校准后 <b>${(cal * 100).toFixed(1)}%</b> · 数据来源：2012 场职业比赛回测
+          </div>
+        `;
+        wr75Card.hidden = false;
+      } else {
+        // 不满足条件：显示但弱化
+        wr75Content.innerHTML = `
+          <div class="wr75-banner wr75-neutral">
+            <div class="wr75-icon">⚪</div>
+            <div class="wr75-body">
+              <div class="wr75-title">未满足 75% 胜率条件</div>
+              <div class="wr75-sub muted small">
+                Elo 差 <b>${eloDiff.toFixed(0)}</b> 不够大 / 强队不是 Top 20 / 近期状态未达 70%
+              </div>
+            </div>
+            <div class="wr75-stat muted">
+              <div class="wr75-big">${(cal * 100).toFixed(1)}%</div>
+              <div class="wr75-sub">校准预测</div>
+            </div>
+          </div>
+        `;
+        wr75Card.hidden = false;
+      }
+    }
+
+    // 融合版新字段展示
+    const extra = document.getElementById('extraInfo');
+    if (extra) {
+      const adj = data.upset_adjusted_prob;
+      const risk = data.risk_points;
+      const hc = data.is_high_confidence;
+      const compDiff = data.composite_elo_diff;
+      const bd = data.risk_breakdown || {};
+      const flags = [];
+      if (bd.new_patch_week) flags.push('新版本第一周');
+      if (bd.favorite_roster_change) flags.push('热门方换人');
+      if (bd.favorite_hidden_pool) flags.push('热门方有隐藏池');
+      if (bd.bo1) flags.push('BO1');
+      if (bd.underdog_win_streak) flags.push('弱方连胜');
+      if (bd.manual_extra) flags.push(`手动 +${bd.manual_extra}`);
+      extra.innerHTML = `
+        <div class="meta-grid">
+          <div><span class="muted small">复合 Elo 差</span><b>${compDiff > 0 ? '+' : ''}${compDiff}</b></div>
+          <div><span class="muted small">Upset 调整后</span><b>${(adj * 100).toFixed(1)}%</b></div>
+          <div><span class="muted small">Risk 总分</span><b>${risk}</b></div>
+          <div><span class="muted small">K 因子</span><b>${data.k_factor}</b></div>
+          <div><span class="muted small">高置信 (5 条联合)</span><b class="${hc ? 'win' : 'muted'}">${hc ? '✓ 是' : '✗ 否'}</b></div>
+        </div>
+        ${flags.length ? `<div class="muted small" style="margin-top: 8px">触发因素：${flags.join('、')}</div>` : ''}
+        ${data.last_league ? `<div class="muted small">上次联赛：${escapeHtml(data.last_league)}</div>` : ''}
+      `;
+    }
+  });
+})();
+</script>
+{% endblock %}

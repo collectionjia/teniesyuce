@@ -43,7 +43,15 @@ dota2elo-deploy.tgz
 dota2elo-extract/
 dota2elo-v1.0.0/
 dota2elo-v1.0.0.zip
-dota2elo/
+# dota2elo 服务目录纳入版本库；仅忽略运行时/本地产物
+dota2elo/.venv/
+dota2elo/venv/
+dota2elo/data/*.log
+dota2elo/data/auto_update*.json
+dota2elo/data/*.db-journal
+dota2elo/data/external/
+dota2elo/data/ingest.*
+dota2elo/**/__pycache__/
 
 # temp / local scratch
 tmp_*

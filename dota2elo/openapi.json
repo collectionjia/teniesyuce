@@ -1,0 +1,671 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Dota2 Elo",
+    "description": "全球 Dota2 战队 Elo 评分 + 胜率预测系统。\n\n**数据源**：OpenDota / Stratz（多源 fallback） + dota-pro-db 预构建数据集。\n\n**算法**：标准 Elo + 按联赛级别分级的 K 因子（TI=60, Major=50, DPC=40, ...）。\n\n**前端**：Jinja2 服务端渲染 + Chart.js 趋势图。\n\n详细说明见 [API.md](https://github.com/yourname/dota2elo/blob/main/API.md)。",
+    "contact": {
+      "name": "Dota2 Elo"
+    },
+    "license": {
+      "name": "MIT"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "页面"
+        ],
+        "summary": "排行榜首页",
+        "description": "战队 Elo 排行榜页面（按 Elo 降序）。",
+        "operationId": "page_rankings__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict": {
+      "get": {
+        "tags": [
+          "页面"
+        ],
+        "summary": "胜率预测页面",
+        "description": "两支战队胜率预测页面。",
+        "operationId": "page_predict_predict_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/team/{team_id}": {
+      "get": {
+        "tags": [
+          "页面"
+        ],
+        "summary": "战队详情页",
+        "description": "单队详情：当前 Elo、最近比赛、完整 Elo 历史趋势。",
+        "operationId": "page_team_team__team_id__get",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Team Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin": {
+      "get": {
+        "tags": [
+          "页面"
+        ],
+        "summary": "管理后台",
+        "description": "管理后台：触发数据更新、查看任务状态、清理缓存。",
+        "operationId": "page_admin_admin_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "健康检查",
+        "description": "最简健康检查。任何时候都可以用，无副作用。",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rankings": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "战队排行榜",
+        "description": "按当前 Elo 降序返回战队列表。包含战绩、胜率、最后比赛时间。",
+        "operationId": "api_rankings_api_rankings_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "最多返回多少支队伍",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "最多返回多少支队伍"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/teams": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "按名称模糊搜索战队",
+        "description": "用 name/tag/id 模糊匹配，返回最多 20 支匹配队伍，按 rating 降序。",
+        "operationId": "api_search_teams_api_teams_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "搜索关键字（匹配 name/tag/id）",
+              "title": "Q"
+            },
+            "description": "搜索关键字（匹配 name/tag/id）"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/teams/{team_id}": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "战队详情 + Elo 历史",
+        "description": "返回战队当前信息和完整 Elo 历史（每场比赛一条记录）。Elo 历史是绘制趋势图的数据源。",
+        "operationId": "api_team_detail_api_teams__team_id__get",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Team Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "战队不存在"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/predict": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "两队胜率预测",
+        "description": "基于 logistic 期望胜率 `P(A) = 1/(1+10^((R_B - R_A)/400))` 预测。返回双方 Elo 评分、双方胜率（0~1 之间，p_a_win + p_b_win = 1）。",
+        "operationId": "api_predict_api_predict_get",
+        "parameters": [
+          {
+            "name": "a",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "战队 A 的 ID",
+              "title": "A"
+            },
+            "description": "战队 A 的 ID"
+          },
+          {
+            "name": "b",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "战队 B 的 ID",
+              "title": "B"
+            },
+            "description": "战队 B 的 ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "预测成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "至少一方战队不存在"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/matches": {
+      "get": {
+        "tags": [
+          "查询"
+        ],
+        "summary": "最近的职业比赛",
+        "description": "按时间倒序返回最近的比赛，含双方队名、比分、K 因子。",
+        "operationId": "api_matches_api_matches_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "最多返回多少场",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "最多返回多少场"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/recompute": {
+      "post": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "全量重算 Elo（同步）",
+        "description": "清空所有 rating_history 并按时间顺序重放所有比赛，重算每个队的 Elo。**同步执行**，2000 场约 1-2 秒，10 万场约 1 分钟。",
+        "operationId": "api_recompute_api_admin_recompute_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ingest": {
+      "post": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "启动后台 ingest 任务",
+        "description": "异步启动一个数据更新任务（拉比赛 + 补全战队元数据 + 重算 Elo），立即返回 job_id，**不会阻塞**。用 `/api/admin/jobs/{id}` 查进度。",
+        "operationId": "api_ingest_api_admin_ingest_post",
+        "parameters": [
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "数据源：auto / opendota / stratz / multi",
+              "default": "auto",
+              "title": "Source"
+            },
+            "description": "数据源：auto / opendota / stratz / multi"
+          },
+          {
+            "name": "max_pages",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "拉取页数（每页 100 场）",
+              "default": 20,
+              "title": "Max Pages"
+            },
+            "description": "拉取页数（每页 100 场）"
+          },
+          {
+            "name": "enrich_top_n",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 0,
+              "description": "补全元数据的战队数",
+              "default": 50,
+              "title": "Enrich Top N"
+            },
+            "description": "补全元数据的战队数"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "任务已创建",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "参数非法或缺少 STRATZ_API_KEY"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/jobs": {
+      "get": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "最近任务列表",
+        "description": "最近任务列表。",
+        "operationId": "api_jobs_api_admin_jobs_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "最多返回多少个任务",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "最多返回多少个任务"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "单任务详情",
+        "description": "返回任务状态（pending/running/done/error）、开始/结束时间、结果、错误信息。",
+        "operationId": "api_job_detail_api_admin_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "任务不存在"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/cache/stats": {
+      "get": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "数据源缓存统计",
+        "description": "缓存条目数 + 已过期条目数。",
+        "operationId": "api_cache_stats_api_admin_cache_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/cache/clear": {
+      "post": {
+        "tags": [
+          "管理"
+        ],
+        "summary": "清空数据源缓存",
+        "description": "清空所有已缓存的 match/team 元数据。下次请求会重新拉远端。",
+        "operationId": "api_cache_clear_api_admin_cache_clear_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "页面",
+      "description": "服务端渲染的 HTML 页面（浏览器访问）"
+    },
+    {
+      "name": "查询",
+      "description": "公开查询接口（战队 / 比赛 / 预测）"
+    },
+    {
+      "name": "管理",
+      "description": "数据更新和维护接口（建议加鉴权）"
+    }
+  ]
+}

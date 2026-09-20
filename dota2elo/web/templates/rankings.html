@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Dota2 战队 Elo 排行榜{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>全球 Dota2 战队 Elo 排行</h1>
+  <p class="muted">基于 OpenDota 职业比赛数据 · K 因子按赛事级别分级</p>
+</section>
+
+<section class="card">
+  <div class="table-actions">
+    <label>显示
+      <select id="limitSelect">
+        <option>50</option>
+        <option selected>100</option>
+        <option>200</option>
+        <option>500</option>
+      </select>
+      支队伍
+    </label>
+    <span class="muted" id="totalCount"></span>
+  </div>
+
+  <table class="rankings" id="rankingsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>战队</th>
+        <th>评分</th>
+        <th>比赛数</th>
+        <th>胜</th>
+        <th>负</th>
+        <th>胜率</th>
+        <th>最近比赛</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>最近职业比赛</h2>
+  <table class="matches" id="recentMatches">
+    <thead>
+      <tr>
+        <th>时间</th>
+        <th>联赛</th>
+        <th>天辉</th>
+        <th>比分</th>
+        <th>夜魇</th>
+        <th>K</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(async function () {
+  const limit = document.getElementById('limitSelect');
+  const tbody = document.querySelector('#rankingsTable tbody');
+  const totalEl = document.getElementById('totalCount');
+
+  async function loadRankings() {
+    tbody.innerHTML = '<tr><td colspan="8" class="muted">加载中...</td></tr>';
+    const data = await fetch('/api/rankings?limit=' + limit.value).then(r => r.json());
+    totalEl.textContent = `共 ${data.length} 支队伍`;
+    tbody.innerHTML = data.map((t, i) => `
+      <tr>
+        <td class="rank">${i + 1}</td>
+        <td><a href="/team/${t.id}">${escapeHtml(t.name)}</a>${t.tag ? ` <span class="tag">${escapeHtml(t.tag)}</span>` : ''}</td>
+        <td class="rating">${t.rating}</td>
+        <td>${t.matches_played}</td>
+        <td>${t.wins}</td>
+        <td>${t.losses}</td>
+        <td>${(t.win_rate * 100).toFixed(1)}%</td>
+        <td class="muted">${t.last_match_at ? new Date(t.last_match_at).toLocaleString() : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadMatches() {
+    const data = await fetch('/api/matches?limit=30').then(r => r.json());
+    const tbody = document.querySelector('#recentMatches tbody');
+    tbody.innerHTML = data.map(m => `
+      <tr>
+        <td class="muted">${m.start_time ? new Date(m.start_time).toLocaleDateString() : '-'}</td>
+        <td>${escapeHtml(m.league_name || '-')}</td>
+        <td class="${m.radiant_win ? 'win' : 'lose'}">${escapeHtml(m.radiant_name)}</td>
+        <td class="score">${m.radiant_score} : ${m.dire_score}</td>
+        <td class="${m.radiant_win ? 'lose' : 'win'}">${escapeHtml(m.dire_name)}</td>
+        <td class="muted">${m.k_factor ? m.k_factor.toFixed(0) : '-'}</td>
+      </tr>
+    `).join('');
+  }
+
+  limit.addEventListener('change', loadRankings);
+  await Promise.all([loadRankings(), loadMatches()]);
+})();
+</script>
+{% endblock %}

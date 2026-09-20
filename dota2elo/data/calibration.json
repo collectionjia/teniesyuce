@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "bucket_size": 50.0,
+  "smoothing_window": 3,
+  "buckets": [
+    {
+      "elo_lo": 0.0,
+      "elo_hi": 50.0,
+      "sample_size": 2343,
+      "actual_win_rate": 0.5198463508322664,
+      "raw_p_win": 0.5359159269451023,
+      "calibrated_p_win": 0.5502458829479949
+    },
+    {
+      "elo_lo": 50.0,
+      "elo_hi": 100.0,
+      "sample_size": 638,
+      "actual_win_rate": 0.5971786833855799,
+      "raw_p_win": 0.6062878237854281,
+      "calibrated_p_win": 0.5848431812900068
+    },
+    {
+      "elo_lo": 100.0,
+      "elo_hi": 150.0,
+      "sample_size": 141,
+      "actual_win_rate": 0.7163120567375887,
+      "raw_p_win": 0.672509643334985,
+      "calibrated_p_win": 0.6174790430724446
+    },
+    {
+      "elo_lo": 150.0,
+      "elo_hi": 200.0,
+      "sample_size": 52,
+      "actual_win_rate": 0.6730769230769231,
+      "raw_p_win": 0.7325072897556676,
+      "calibrated_p_win": 0.6258377228934459
+    },
+    {
+      "elo_lo": 200.0,
+      "elo_hi": 250.0,
+      "sample_size": 11,
+      "actual_win_rate": 0.9090909090909091,
+      "raw_p_win": 0.785026736998172,
+      "calibrated_p_win": 0.7125023782853208
+    },
+    {
+      "elo_lo": 250.0,
+      "elo_hi": 300.0,
+      "sample_size": 2,
+      "actual_win_rate": 1.0,
+      "raw_p_win": 0.8296328234313434,
+      "calibrated_p_win": 0.7893697572055736
+    }
+  ]
+}

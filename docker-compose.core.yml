@@ -1,4 +1,4 @@
-# 核心服务：btc-board + server + web
+# 核心服务：btc-board + dota2elo + server + web
 # MySQL / Redis URL 用 server/.env（或测试的 server/.env.test）
 # 立即采集：server 容器内跑 collect.py（挂载 scripts/tennis-monitor）；9004 可选（live/定时）
 #
@@ -48,6 +48,7 @@ services:
       DOCKS_DIR: /docks
       DOCKS_BY_DAY_DIR: /tmp/docks_by_day_500
       BOARD_PRODUCT_URL: ${BOARD_PRODUCT_URL:-http://btc-board:8890/}
+      DOTA2ELO_PRODUCT_URL: ${DOTA2ELO_PRODUCT_URL:-http://dota2elo:3001/}
       SOFA_MONITOR_URL: ${SOFA_MONITOR_URL:-http://172.17.0.1:9004}
       # 五引擎（P6）；services 在 deploy/docker-compose.services.yml，默认经宿主机端口
       SCHEDULER_URL: ${SCHEDULER_URL:-http://host.docker.internal:9105}
@@ -62,6 +63,8 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on:
       btc-board:
+        condition: service_started
+      dota2elo:
         condition: service_started
       redis:
         condition: service_healthy
@@ -89,6 +92,23 @@ services:
     ports:
       - "${BOARD_PORT:-8890}:8890"
 
+  dota2elo:  # Dota2 战队 Elo + 预测 Web（iframe 产品）
+    build:
+      context: ./dota2elo
+    restart: unless-stopped
+    mem_limit: 384m
+    memswap_limit: 512m
+    environment:
+      PYTHONUTF8: "1"
+      STRATZ_API_KEY: ${STRATZ_API_KEY:-}
+      DOTA2ELO_SOURCE: ${DOTA2ELO_SOURCE:-auto}
+    volumes:
+      - dota2elo_data:/app/data
+    expose:
+      - "3001"
+    ports:
+      - "${DOTA2ELO_PORT:-8892}:3001"
+
   web:  # Vue 静态站 + 反代 /api → server
     build:
       context: ./client
@@ -102,4 +122,5 @@ services:
 
 volumes:
   board_data:
+  dota2elo_data:
   redis_data:

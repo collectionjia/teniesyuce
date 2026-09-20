@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}战队详情 - Dota2 Elo{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1 id="teamName">加载中...</h1>
+  <p class="muted" id="teamMeta"></p>
+</section>
+
+<section class="card stat-grid" id="teamStats">
+  <div><div class="big" id="statRating">-</div><div class="muted small">Elo 评分</div></div>
+  <div><div class="big" id="statMatches">-</div><div class="muted small">比赛数</div></div>
+  <div><div class="big" id="statWinRate">-</div><div class="muted small">胜率</div></div>
+  <div><div class="big" id="statRecord">-</div><div class="muted small">胜 / 负</div></div>
+</section>
+
+<section class="card">
+  <h2>Elo 趋势</h2>
+  <canvas id="historyChart" height="120"></canvas>
+</section>
+
+<section class="card">
+  <h2>最近比赛</h2>
+  <table class="history" id="historyTable">
+    <thead>
+      <tr>
+        <th>时间</th>
+        <th>对手</th>
+        <th>结果</th>
+        <th>赛前 Elo</th>
+        <th>赛后 Elo</th>
+        <th>变化</th>
+        <th>K</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script defer>
+(async function () {
+  const teamId = {{ team_id }};
+  const data = await fetch(`/api/teams/${teamId}`).then(r => r.json()).catch(() => null);
+  if (!data) {
+    document.getElementById('teamName').textContent = '战队未找到';
+    return;
+  }
+  const t = data.team;
+  document.getElementById('teamName').textContent = t.name;
+  document.getElementById('teamMeta').textContent = `OpenDota #${t.id}` + (t.tag ? ` · ${t.tag}` : '');
+  document.getElementById('statRating').textContent = t.rating;
+  document.getElementById('statMatches').textContent = t.matches_played;
+  document.getElementById('statWinRate').textContent = (t.win_rate * 100).toFixed(1) + '%';
+  document.getElementById('statRecord').textContent = `${t.wins} / ${t.losses}`;
+
+  // 趋势图
+  const history = data.history.slice().reverse();
+  const labels = history.map(h => h.recorded_at ? new Date(h.recorded_at).toLocaleDateString() : '');
+  const values = history.map(h => h.elo_after);
+
+  if (labels.length === 0) {
+    document.getElementById('historyChart').replaceWith(Object.assign(document.createElement('p'), {
+      textContent: '暂无比赛记录',
+      className: 'muted',
+    }));
+  } else {
+    new Chart(document.getElementById('historyChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Elo',
+          data: values,
+          borderColor: '#2196f3',
+          backgroundColor: 'rgba(33,150,243,0.1)',
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: false, grid: { color: 'rgba(255,255,255,0.05)' } },
+          x: { ticks: { maxTicksLimit: 10 }, grid: { display: false } },
+        }
+      }
+    });
+  }
+
+  // 最近比赛（最近 30 场倒序）
+  const recent = data.history.slice(-30).reverse();
+  const opponentNames = {};
+  await Promise.all(recent.map(async h => {
+    if (h.opponent_id && !opponentNames[h.opponent_id]) {
+      const opp = await fetch(`/api/teams/${h.opponent_id}`).then(r => r.json()).catch(() => null);
+      opponentNames[h.opponent_id] = opp ? opp.team.name : `#${h.opponent_id}`;
+    }
+  }));
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = recent.map(h => {
+    const delta = h.elo_after - h.elo_before;
+    const deltaCls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
+    const deltaStr = (delta > 0 ? '+' : '') + delta.toFixed(1);
+    return `
+      <tr>
+        <td class="muted">${h.recorded_at ? new Date(h.recorded_at).toLocaleString() : '-'}</td>
+        <td>${escapeHtml(opponentNames[h.opponent_id] || '-')}</td>
+        <td class="${h.result === 'W' ? 'win' : 'lose'}">${h.result === 'W' ? '胜' : '负'}</td>
+        <td>${h.elo_before}</td>
+        <td>${h.elo_after}</td>
+        <td class="${deltaCls}">${deltaStr}</td>
+        <td class="muted">${h.k_factor.toFixed(0)}</td>
+      </tr>
+    `;
+  }).join('');
+})();
+</script>
+{% endblock %}
