@@ -3318,6 +3318,7 @@ function productEmbedUrl(product) {
                     :is-member="tennisProductBoardMember(openedProduct)"
                     :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"
+                    :is-admin="role === 'admin'"
                     :product-id="openedProduct.id"
                     @open-admin-engine="onOpenTennisAdminEngine"
                     @auto-bet-change="onBoardAutoBetChange"

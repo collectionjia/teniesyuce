@@ -34,6 +34,8 @@ const props = defineProps({
   boardMode: { type: String, default: 'classic' },
   /** 仅管理员：在盘前列表直接编辑条件引擎规则 */
   canEditRules: { type: Boolean, default: false },
+  /** 管理员：盘中详情可见 Sofascore 链接 */
+  isAdmin: { type: Boolean, default: false },
   /** 产品 ID：盘中挂载条件/投注选择写入该产品 */
   productId: { type: [Number, String], default: null },
 })
@@ -3066,6 +3068,7 @@ defineExpose({
       :is-settled-mode="isSettledMode"
       :is-range-mode="isRangeMode"
       :is-new-mode="isNewMode"
+      :is-admin="isAdmin"
       :short-name="shortName"
       :match-home-name="matchHomeName"
       :match-away-name="matchAwayName"

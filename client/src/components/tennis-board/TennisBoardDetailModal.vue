@@ -1,4 +1,6 @@
 <script setup>
+import { sofaTennisMatchUrl } from '../../utils/sofaMatchUrl'
+
 defineProps({
   detailMatch: { type: Object, default: null },
   detailHelpOpen: { type: Boolean, default: false },
@@ -7,6 +9,8 @@ defineProps({
   isSettledMode: { type: Boolean, default: false },
   isRangeMode: { type: Boolean, default: false },
   isNewMode: { type: Boolean, default: false },
+  /** 管理员可见 Sofascore 链接 */
+  isAdmin: { type: Boolean, default: false },
   shortName: { type: Function, required: true },
   matchHomeName: { type: Function, required: true },
   matchAwayName: { type: Function, required: true },
@@ -263,6 +267,14 @@ defineProps({
 
           <div class="modal-foot">
             <button type="button" class="act-btn" @click="closeDetail">关闭</button>
+            <a
+              v-if="isAdmin && isInplayMode && sofaTennisMatchUrl(detailMatch) !== '#'"
+              class="act-btn sofa"
+              :href="sofaTennisMatchUrl(detailMatch)"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="打开 Sofascore"
+            >Sofascore</a>
             <button
               type="button"
               class="act-btn market"
@@ -433,6 +445,16 @@ defineProps({
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+}
+.act-btn.sofa {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 .act-btn:disabled {
   opacity: 0.4;
