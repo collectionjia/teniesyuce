@@ -127,7 +127,6 @@ const pickStats = computed(() => {
     loss,
     total,
     winRate: pct(win),
-    lossRate: pct(loss),
   }
 })
 </script>
@@ -142,13 +141,8 @@ const pickStats = computed(() => {
           <span> · 胜 </span>
           <span class="stat-win">{{ pickStats.total ? pickStats.win : '—' }}</span>
           <span> 场</span>
-          <span> · 输 </span>
-          <span class="stat-loss">{{ pickStats.total ? pickStats.loss : '—' }}</span>
-          <span> 场</span>
           <span> · 胜率 </span>
           <span class="stat-win">{{ pickStats.winRate }}</span>
-          <span> · 亏损 </span>
-          <span class="stat-loss">{{ pickStats.lossRate }}</span>
         </p>
       </div>
       <button type="button" class="btn" :disabled="loading" @click="load">

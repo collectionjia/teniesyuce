@@ -63,7 +63,6 @@ async function placeBatchOrders(userId, {
   limitPrice: batchLimitPrice = null,
   limitBuyPrice: batchLimitBuyPrice = null,
   shares: batchShares = null,
-  allowAnySide = false,
   wallet = null,
 } = {}) {
   if (!Array.isArray(orders) || !orders.length) {
@@ -150,11 +149,6 @@ async function placeBatchOrders(userId, {
 
     const homeName = match.homePlayer?.name || match.home || '';
     const awayName = match.awayPlayer?.name || match.away || '';
-    const suggested = pickSide(match, bundle.rankingsByPlayer);
-    if (!allowAnySide && suggested && side !== suggested) {
-      results.push({ eventId, ok: false, error: '仅支持按建议侧下单' });
-      continue;
-    }
 
     const labelBase = `${homeName || '?'} vs ${awayName || '?'}`;
     const label = isSim ? `[模拟] ${labelBase}` : labelBase;

@@ -32,9 +32,19 @@ _ENDED_TYPES = frozenset({"finished", "ended", "closed", "retired", "walkover"})
 
 
 def is_ended_match(match: dict[str, Any] | None) -> bool:
-    """盘中场次是否已完赛（用于 tick 迁入 settled）。"""
+    """盘中场次是否已完赛（用于 tick 迁入 settled）。含 Polymarket 一侧≈100¢。"""
     if not match:
         return False
+    if match.get("pmSettled") is True:
+        return True
+    for key in ("pmHomePrice", "pmAwayPrice", "home_price", "away_price"):
+        try:
+            v = float(match.get(key))  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            continue
+        unit = v / 100.0 if v > 1.5 else v
+        if unit >= 0.995:
+            return True
     st = str(match.get("statusType") or "").lower().strip()
     if st in _ENDED_TYPES:
         return True

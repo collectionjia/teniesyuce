@@ -51,6 +51,7 @@ const HIDDEN_JOB_TYPES = new Set(['collect.full', 'bet.scan'])
 const JOB_TYPE_LABELS = {
   'collect.top100': 'Top100 全量采集',
   'collect.inplay_tick': '盘中比分刷新',
+  'collect.top100_hf': 'Top100 高频采集',
   'condition.query': '条件引擎 · 查询筛选',
   'bet.stop_loss': '止损引擎 · 持仓止损扫描',
 }
@@ -70,11 +71,19 @@ const JOB_TYPE_META = {
     defaultIntervalSec: 60,
     defaultName: '盘中比分刷新',
   },
+  'collect.top100_hf': {
+    category: 'collect',
+    intervalUnit: 'second',
+    intervalPresets: [10, 30, 60, 120],
+    defaultIntervalSec: 30,
+    defaultName: 'Top100 高频采集',
+  },
 }
 
 const DEFAULT_JOB_TYPES = [
   { jobType: 'collect.top100', category: 'collect' },
   { jobType: 'collect.inplay_tick', category: 'collect' },
+  { jobType: 'collect.top100_hf', category: 'collect' },
   { jobType: 'condition.query', category: 'condition' },
   { jobType: 'bet.stop_loss', category: 'stop' },
 ]
@@ -124,7 +133,9 @@ const jobTypeOptions = computed(() => {
 })
 
 const isCollectJobType = computed(() => categoryOfJobType(form.value.jobType) === 'collect')
-const isInplayTickJobType = computed(() => form.value.jobType === 'collect.inplay_tick')
+const isInplayTickJobType = computed(() =>
+  form.value.jobType === 'collect.inplay_tick' || form.value.jobType === 'collect.top100_hf',
+)
 
 const collectIntervalPresets = computed(() => {
   const def = jobTypeOptions.value.find((t) => t.jobType === form.value.jobType)
@@ -950,7 +961,7 @@ onUnmounted(() => {
                     step="1"
                     placeholder="如 45、90"
                   />
-                  <span class="field-hint">可选 30 / 60 / 120，或自行填写（建议 ≥10 秒）</span>
+                  <span class="field-hint">预设可选，或自行填写（建议 ≥10 秒）</span>
                 </label>
               </template>
               <template v-else>

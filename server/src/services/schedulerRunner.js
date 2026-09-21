@@ -85,15 +85,19 @@ async function executeJobType(job, params = {}) {
       if (!started.ok) throw new Error(started.error || 'collect.top100 start failed');
       return { message: 'collect.top100 started', metrics: started.last || {} };
     }
-    case 'collect.inplay_tick': {
+    case 'collect.inplay_tick':
+    case 'collect.top100_hf': {
       if (isVirtual) {
         return {
           skipped: true,
-          message: '虚拟(txt)模式跳过盘中比分刷新',
+          message: '虚拟(txt)模式跳过盘中/Top100 高频采集',
         };
       }
       const r = await tennisInplayTick.runInplayTick();
-      return { message: '盘中比分刷新完成', metrics: r || {} };
+      return {
+        message: job.jobType === 'collect.top100_hf' ? 'Top100 高频采集完成' : '盘中比分刷新完成',
+        metrics: r || {},
+      };
     }
     case 'condition.query': {
       const tennisConditionApply = require('./tennisConditionApply');

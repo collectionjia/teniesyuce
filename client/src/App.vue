@@ -56,7 +56,6 @@ const shopTennisSettledSub = reactive({
   loss: 0,
   total: 0,
   winRate: '—',
-  lossRate: '—',
 })
 const adminProducts = ref([])
 const adminCategories = ref([])
@@ -487,7 +486,6 @@ async function loadShopTennisSettledSub() {
     shopTennisSettledSub.loss = loss
     shopTennisSettledSub.total = total
     shopTennisSettledSub.winRate = pct(win)
-    shopTennisSettledSub.lossRate = pct(loss)
     shopTennisSettledSub.loaded = true
   } catch {
     shopTennisSettledSub.matchCount = 0
@@ -495,7 +493,6 @@ async function loadShopTennisSettledSub() {
     shopTennisSettledSub.loss = 0
     shopTennisSettledSub.total = 0
     shopTennisSettledSub.winRate = '—'
-    shopTennisSettledSub.lossRate = '—'
     shopTennisSettledSub.loaded = true
   }
 }
@@ -3318,13 +3315,8 @@ function productEmbedUrl(product) {
                 <span> · 胜 </span>
                 <span class="stat-win">{{ shopTennisSettledSub.total ? shopTennisSettledSub.win : '—' }}</span>
                 <span> 场</span>
-                <span> · 输 </span>
-                <span class="stat-loss">{{ shopTennisSettledSub.total ? shopTennisSettledSub.loss : '—' }}</span>
-                <span> 场</span>
                 <span> · 胜率 </span>
                 <span class="stat-win">{{ shopTennisSettledSub.winRate }}</span>
-                <span> · 亏损 </span>
-                <span class="stat-loss">{{ shopTennisSettledSub.lossRate }}</span>
               </p>
               <div v-if="shopLoadError" class="shop-empty text-amber-700 bg-amber-50 rounded-2xl px-4 py-6">
                 {{ shopLoadError }}

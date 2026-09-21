@@ -1,10 +1,30 @@
 /**
- * 盘中 tick：读 Redis tennis:bundle:inplay 已有场次 → 只刷比分(Sofascore) + Polymarket 赔率
+ * 盘中 / Top100 高频 tick：
+ * - 未开赛只打标，不刷
+ * - 开赛后（盘中桶）刷实时比分 + Polymarket 赔率
+ * - 一方 ≥100¢ 或实际完赛 → 标记已结束并迁 settled
  */
 const tennisInplayCache = require('./tennisInplayCache');
 const tennisThreeBuckets = require('./tennisThreeBuckets');
 const tennisEngines = require('./tennisEngines');
 const tennisCollectRunner = require('./tennisCollectRunner');
+const { applyPmSettle } = require('./tennisInplayMatchQuery');
+
+function applyPmSettleOntoInplay(bundle) {
+  if (!bundle?.live?.matches?.length) return { settled: 0 };
+  const polyMap = bundle.polymarketByEvent || {};
+  let settled = 0;
+  for (const m of bundle.live.matches) {
+    if (!m || m.id == null) continue;
+    const poly = polyMap[String(m.id)] || polyMap[m.id];
+    if (!poly) continue;
+    const next = applyPmSettle(m, poly);
+    if (next.pmSettled && !m.pmSettled) settled += 1;
+    Object.assign(m, next);
+    if (m.pmSettled) tennisThreeBuckets.applyPhaseMark(m, 'ended');
+  }
+  return { settled };
+}
 
 async function stampInplayRefreshTimes(bundle, { score = false, odds = false } = {}) {
   if (!bundle) return bundle;
@@ -160,7 +180,14 @@ async function runInplayTick({ skipBetting = false } = {}) {
     }
   }
 
+  bundle = await tennisInplayCache.getBundle();
+  const pmSettle = applyPmSettleOntoInplay(bundle);
+  if (bundle && pmSettle.settled > 0) {
+    await tennisInplayCache.setCachedBundle(bundle);
+  }
+
   const migrateEnd = await tennisThreeBuckets.migrateInplayEnded();
+  const phaseMarks = await tennisThreeBuckets.stampPhaseMarks();
   bundle = await tennisInplayCache.getBundle();
   const tickAt = bundle?.tick_at || new Date().toISOString();
 
@@ -190,9 +217,10 @@ async function runInplayTick({ skipBetting = false } = {}) {
       refresh?.process_log
       || refresh?.log_tail
       || [
-          `[inplay-tick] matches=${matchCount}`,
+          `[top100-hf] inplay=${matchCount}`,
           wantScore ? `[score] updated=${scores.updated ?? 0} failed=${scores.failed ?? 0} error=${scores.error || '-'}` : '[score] skipped',
           wantOdds ? `[odds] updated=${prices.updated ?? 0} failed=${prices.failed ?? 0} error=${prices.error || '-'}` : '[odds] skipped',
+          `[phase] pre=${phaseMarks.preMarked || 0} live=${phaseMarks.liveMarked || 0} pmSettled=${pmSettle.settled || 0}`,
           refresh == null ? '[refresh_inplay] not run' : null,
         ]
           .filter(Boolean)
@@ -211,6 +239,8 @@ async function runInplayTick({ skipBetting = false } = {}) {
     admitted_live_from_full: admitLive?.admitted || 0,
     migrated_prematch_to_inplay: migratePre.moved || 0,
     migrated_inplay_to_settled: migrateEnd.moved || 0,
+    pm_settled_marked: pmSettle.settled || 0,
+    phase_marks: phaseMarks,
     inplay_matches: bundle?.live?.matches?.length || 0,
     betting,
   };

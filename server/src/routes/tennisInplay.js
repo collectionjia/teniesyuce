@@ -210,7 +210,7 @@ router.get('/today', async (req, res) => {
 
 router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
   try {
-    const { orders, amountUsd, orderType, limitPrice, limitBuyPrice, shares, allowAnySide } = req.body || {};
+    const { orders, amountUsd, orderType, limitPrice, limitBuyPrice, shares } = req.body || {};
     const result = await tennisTrade.placeBatchOrders(req.tennisUser.id, {
       orders,
       amountUsd,
@@ -220,7 +220,6 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       limitPrice: limitBuyPrice ?? limitPrice,
       limitBuyPrice: limitBuyPrice ?? limitPrice,
       shares,
-      allowAnySide: !!allowAnySide,
       wallet: req.walletOverride,
     });
     res.json({

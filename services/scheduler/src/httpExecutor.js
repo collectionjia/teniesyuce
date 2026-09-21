@@ -55,6 +55,7 @@ function buildBody(job, params) {
     case 'collect.top100':
       return { sport, top100: true, ...p };
     case 'collect.inplay_tick':
+    case 'collect.top100_hf':
       return { sport, ...p };
     case 'condition.query':
       return {
@@ -91,6 +92,7 @@ async function executeJobTypeHttp(job, params = {}) {
     case 'collect.top100':
       return postJson(serviceBase('collect'), '/internal/collect/full', body);
     case 'collect.inplay_tick':
+    case 'collect.top100_hf':
       return postJson(serviceBase('collect'), '/internal/collect/partial', body);
     case 'condition.query':
       return postJson(serviceBase('rules'), '/internal/rules/evaluate', body);

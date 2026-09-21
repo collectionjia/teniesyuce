@@ -1482,10 +1482,6 @@ async function placeBatchTradeRequest(orders, amount, { manual = false, limitSha
       }
     }
   }
-  // 手动选 Up/Down 时放行非建议侧
-  if (useManual && (manualSide.value === 'home' || manualSide.value === 'away')) {
-    payload.allowAnySide = true
-  }
   if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
   if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
   if (isLiveMode.value) return api.placeTennisLiveBatchTrade(payload)

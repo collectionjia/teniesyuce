@@ -33,6 +33,7 @@ from tm.bundle_store import (
 )
 from tm.clients.polymarket import (
     apply_live_prices,
+    apply_pm_settle_to_match,
     apply_sport_state_to_match,
     fetch_event_by_slug,
 )
@@ -151,6 +152,11 @@ def refresh_from_polymarket(
             if want_score and match is not None:
                 apply_sport_state_to_match(match, ev, poly=next_poly or poly_map.get(eid))
                 scores["updated"] = int(scores.get("updated") or 0) + 1
+            elif match is not None:
+                apply_pm_settle_to_match(match, next_poly or poly_map.get(eid))
+                if match.get("phaseMark") != "ended":
+                    match["phaseMark"] = "live"
+                    match["phaseLabel"] = "进行中"
 
     # 包内场次没有 polymarket slug 的算 miss（无法刷比分）
     if want_score:

@@ -580,6 +580,7 @@ def _apply_parsed_score(match: dict[str, Any], score: str) -> None:
 
 
 def _winner_from_poly_prices(poly: dict[str, Any] | None) -> str | None:
+    """一侧 ≥ 0.995（≈100¢）视为结算，价高侧获胜。"""
     if not isinstance(poly, dict):
         return None
     try:
@@ -593,11 +594,46 @@ def _winner_from_poly_prices(poly: dict[str, Any] | None) -> str | None:
             hp, ap = float(ml[0]), float(ml[1])
         except (TypeError, ValueError):
             return None
-    if hp >= 0.9 and ap <= 0.1:
+    # 兼容 0–1 与 ¢（0–100）
+    if hp > 1.5:
+        hp /= 100.0
+    if ap > 1.5:
+        ap /= 100.0
+    if hp >= 0.995 and (ap is None or hp >= ap):
         return "home"
-    if ap >= 0.9 and hp <= 0.1:
+    if ap >= 0.995:
         return "away"
     return None
+
+
+def apply_pm_settle_to_match(match: dict[str, Any], poly: dict[str, Any] | None) -> bool:
+    """一方达到 ≈100¢ 时标记已结束。返回是否新标记。"""
+    if match is None or match.get("pmSettled"):
+        return False
+    winner = _winner_from_poly_prices(poly)
+    if not winner:
+        return False
+    match["pmSettled"] = True
+    match["winner"] = winner
+    match["winnerCode"] = 1 if winner == "home" else 2
+    match["statusType"] = "finished"
+    match["status"] = "Ended"
+    match["phaseMark"] = "ended"
+    match["phaseLabel"] = "已结束"
+    try:
+        hp = float(poly.get("home_price")) if poly else None  # type: ignore[union-attr]
+        ap = float(poly.get("away_price")) if poly else None  # type: ignore[union-attr]
+        if hp is not None and hp > 1.5:
+            hp /= 100.0
+        if ap is not None and ap > 1.5:
+            ap /= 100.0
+        if hp is not None:
+            match["pmHomePrice"] = hp
+        if ap is not None:
+            match["pmAwayPrice"] = ap
+    except (TypeError, ValueError, AttributeError):
+        pass
+    return True
 
 
 def apply_sport_state_to_match(
@@ -633,11 +669,23 @@ def apply_sport_state_to_match(
         if winner:
             match["winner"] = winner
             match["winnerCode"] = 1 if winner == "home" else 2
+            match["pmSettled"] = True
+            match["phaseMark"] = "ended"
+            match["phaseLabel"] = "已结束"
+    else:
+        apply_pm_settle_to_match(match, poly)
+
+    if match.get("statusType") == "inprogress":
+        match["phaseMark"] = match.get("phaseMark") or "live"
+        match["phaseLabel"] = match.get("phaseLabel") or "进行中"
+    elif match.get("statusType") == "notstarted":
+        match["phaseMark"] = "not_started"
+        match["phaseLabel"] = "未开赛"
 
     return {
         "score": score,
         "statusType": match.get("statusType"),
-        "ended": state.get("ended"),
+        "ended": state.get("ended") or bool(match.get("pmSettled")),
         "live": state.get("live"),
         "closed": state.get("closed"),
     }

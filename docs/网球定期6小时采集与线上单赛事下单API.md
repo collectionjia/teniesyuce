@@ -2,9 +2,12 @@
 
 线上环境：[https://www.yuce.bid/](https://www.yuce.bid/)
 
+域名 SSL 不稳定时，改走生产机 IP 直连（HTTP）：[http://95.40.57.145:9001/](http://95.40.57.145:9001/)
+
 | 项 | 值 |
 |----|----|
 | Base URL | `https://www.yuce.bid` |
+| 直连 Base URL | `http://95.40.57.145:9001`（生产 `yuce-prod-web`，域名 SSL 不稳时用这个，路径与域名相同） |
 | 数据格式 | JSON |
 | 字符编码 | UTF-8 |
 | 全量采集 | 线上 cron **每 6 小时**跑一次 Top100/赛程采集（写入 Redis 三桶） |
@@ -438,7 +441,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/buy' \
   "amountUsd": 5,
   "simulated": true,
   "markedPlaced": false,
-  "error": "非建议侧，禁止下单"
+  "error": "暂无 Polymarket 市场"
 }
 ```
 
@@ -651,7 +654,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/batch' \
   "message": "完成 1/2",
   "results": [
     { "ok": true, "eventId": "12345678", "side": "home", "orderId": "sim_xxxx" },
-    { "ok": false, "eventId": "12345679", "error": "仅支持按建议侧下单" }
+    { "ok": false, "eventId": "12345679", "error": "暂无 Polymarket 市场" }
   ]
 }
 ```

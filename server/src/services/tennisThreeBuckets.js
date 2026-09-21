@@ -22,13 +22,75 @@ function isLive(m) {
   return LIVE_TYPES.has(statusTypeOf(m));
 }
 
+function pmUnit(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n > 1.5 ? n / 100 : n;
+}
+
+/** Polymarket 一侧 ≥ 0.995（≈100¢）或显式 pmSettled → 已结束 */
+function isPmSettled(m) {
+  if (m?.pmSettled) return true;
+  const home = pmUnit(m?.pmHomePrice ?? m?.home_price);
+  const away = pmUnit(m?.pmAwayPrice ?? m?.away_price);
+  if (home != null && home >= 0.995) return true;
+  if (away != null && away >= 0.995) return true;
+  return false;
+}
+
 function isEnded(m) {
   if (m?.virtualPhase === 'settled') return true;
+  if (isPmSettled(m)) return true;
   if (m?.virtualPhase === 'prematch' || m?.virtualPhase === 'inplay') return false;
   const t = statusTypeOf(m);
   if (ENDED_TYPES.has(t)) return true;
   if (m?.status?.code === 100 || m?.status?.code === 60) return true;
   return false;
+}
+
+const PHASE_LABEL = { not_started: '未开赛', live: '进行中', ended: '已结束' };
+
+function applyPhaseMark(m, phase) {
+  if (!m || !PHASE_LABEL[phase]) return m;
+  m.phaseMark = phase;
+  m.phaseLabel = PHASE_LABEL[phase];
+  return m;
+}
+
+/** 未开赛只打标不刷；盘中打「进行中」；已结束打标（迁桶前） */
+async function stampPhaseMarks() {
+  let preMarked = 0;
+  let liveMarked = 0;
+  const pre = await tennisPrematchCache.getBundle();
+  if (pre?.scheduled?.tournaments) {
+    for (const t of pre.scheduled.tournaments) {
+      for (const e of t.events || []) {
+        applyPhaseMark(e, 'not_started');
+        preMarked += 1;
+      }
+    }
+    pre.fetched_at = pre.fetched_at || new Date().toISOString();
+    await tennisPrematchCache.setCachedBundle(pre);
+  }
+  const inplay = await tennisInplayCache.getBundle();
+  if (inplay?.live?.matches) {
+    for (const m of inplay.live.matches) {
+      if (isEnded(m)) {
+        applyPhaseMark(m, 'ended');
+        m.statusType = 'finished';
+        m.status = m.status && /ended|finished/i.test(String(m.status)) ? m.status : 'Ended';
+      } else {
+        applyPhaseMark(m, 'live');
+        if (!isLive(m)) {
+          m.statusType = 'inprogress';
+          m.status = m.status || 'Live';
+        }
+      }
+      liveMarked += 1;
+    }
+    await tennisInplayCache.setCachedBundle(inplay);
+  }
+  return { preMarked, liveMarked };
 }
 
 function isNotStarted(m) {
@@ -246,9 +308,16 @@ async function migratePrematchByStartTime(nowMs = Date.now()) {
           tournament: e.tournament || t.name,
           status: 'Live',
           statusType: 'inprogress',
+          phaseMark: 'live',
+          phaseLabel: '进行中',
         });
       } else {
-        keep.push({ ...e, tournament: e.tournament || t.name });
+        keep.push({
+          ...e,
+          tournament: e.tournament || t.name,
+          phaseMark: 'not_started',
+          phaseLabel: '未开赛',
+        });
       }
     }
   }
@@ -358,7 +427,12 @@ async function migrateInplayEnded() {
     polymarketByEvent: inplay.polymarketByEvent || {},
   };
   const byId = new Map((settled.live?.matches || []).map((m) => [String(m.id), m]));
-  for (const m of ended) byId.set(String(m.id), m);
+  for (const m of ended) {
+    applyPhaseMark(m, 'ended');
+    m.statusType = m.statusType || 'finished';
+    m.status = m.status && /ended|finished/i.test(String(m.status)) ? m.status : 'Ended';
+    byId.set(String(m.id), m);
+  }
   const settledList = [...byId.values()];
   const g = groupScheduled(settledList);
   settled.live = {
@@ -471,8 +545,11 @@ module.exports = {
   migrateInplayEnded,
   admitLiveFromFull,
   seedVirtualPrematchInplay,
+  stampPhaseMarks,
+  applyPhaseMark,
   isLive,
   isEnded,
+  isPmSettled,
   isNotStarted,
   META_TODAY_KEY,
 };
