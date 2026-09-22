@@ -61,15 +61,24 @@ router.get('/players/:playerId', proxyJson);
 router.get('/calibration', proxyJson);
 router.get('/backtest', proxyJson);
 
+const boardRouter = express.Router();
+boardRouter.use((req, _res, next) => {
+  if (!req.boardSport) req.boardSport = 'dota2';
+  next();
+});
+
 /** Polymarket 过滤盘口（读 Redis bundle） */
-router.get('/markets', optionalAuth(), async (req, res) => {
+boardRouter.get('/markets', optionalAuth(), async (req, res) => {
+  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
   try {
-    let bundle = await dota2PmCollect.readBundle();
+    let bundle = sport === 'nfl'
+      ? await dota2PmCollect.readNflBundle()
+      : await dota2PmCollect.readBundle();
     if (!bundle) {
       bundle = {
         ok: true,
         empty: true,
-        sport: 'dota2',
+        sport,
         matches: [],
         matchCount: 0,
         thresholds: dota2PmCollect.thresholds(),
@@ -79,22 +88,25 @@ router.get('/markets', optionalAuth(), async (req, res) => {
     }
     let placed = [];
     if (req.user?.id) {
-      const set = await dota2PmCollect.getPlacedSet(req.user.id);
+      const set = await dota2PmCollect.getPlacedSet(req.user.id, sport);
       placed = [...set];
     }
     res.json({ ...bundle, placed, member: !!req.user });
   } catch (err) {
-    console.error('[dota2/markets]', err);
+    console.error(`[${sport}/markets]`, err);
     res.status(500).json({ ok: false, error: err.message || 'failed to load markets' });
   }
 });
 
-router.post('/markets/refresh', optionalAuth(), async (req, res) => {
+boardRouter.post('/markets/refresh', optionalAuth(), async (req, res) => {
+  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
   try {
-    const bundle = await dota2PmCollect.collectOnce();
+    const bundle = sport === 'nfl'
+      ? await dota2PmCollect.collectNfl()
+      : await dota2PmCollect.collectDirect();
     res.json(bundle || { ok: false, error: 'collect returned empty' });
   } catch (err) {
-    console.error('[dota2/markets/refresh]', err);
+    console.error(`[${sport}/markets/refresh]`, err);
     res.status(500).json({ ok: false, error: err.message || 'refresh failed' });
   }
 });
@@ -108,7 +120,8 @@ router.post('/markets/refresh', optionalAuth(), async (req, res) => {
  *   privateKey?, address?, signatureType?  // 私钥+地址下单；签名类型默认 3（新账户 POLY_1271）
  * }
  */
-router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+boardRouter.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
+  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
   try {
     const userId = req.tennisUser?.id;
     if (!userId) {
@@ -156,7 +169,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       }
     }
 
-    const placed = await dota2PmCollect.getPlacedSet(userId);
+    const placed = await dota2PmCollect.getPlacedSet(userId, sport);
     const secrets = simulate ? null : (wallet || await btcWallet.loadWalletSecrets(userId));
     const results = [];
 
@@ -186,7 +199,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
 
       try {
         if (simulate) {
-          await dota2PmCollect.markPlaced(userId, placeKey);
+          await dota2PmCollect.markPlaced(userId, placeKey, sport);
           placed.add(placeKey);
           results.push({
             slug,
@@ -225,7 +238,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
             amountUsd,
           });
         }
-        await dota2PmCollect.markPlaced(userId, placeKey);
+        await dota2PmCollect.markPlaced(userId, placeKey, sport);
         placed.add(placeKey);
         results.push({
           slug,
@@ -250,7 +263,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
       ok: true,
       email: req.tennisUser.account,
       userId,
-      product: 'dota2',
+      product: sport,
       simulate,
       orderType,
       results,
@@ -261,4 +274,7 @@ router.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTrad
   }
 });
 
+router.use(boardRouter);
+
 module.exports = router;
+module.exports.boardRouter = boardRouter;

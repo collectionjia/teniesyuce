@@ -52,6 +52,8 @@ dota2elo/data/*.db-journal
 dota2elo/data/external/
 dota2elo/data/ingest.*
 dota2elo/**/__pycache__/
+nflelo/**/__pycache__/
+nflelo/.venv/
 
 # temp / local scratch
 tmp_*
@@ -60,6 +62,7 @@ tmp-deploy/
 tmp-deploy-fast/
 scripts/tmp_*
 scripts/node_modules/
+.deploy-web-token
 
 # docs binaries (local only)
 *.docx

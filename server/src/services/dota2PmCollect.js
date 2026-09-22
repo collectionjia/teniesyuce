@@ -28,11 +28,29 @@ function thresholds() {
   };
 }
 
-function upstreamBase() {
-  const raw = process.env.DOTA2ELO_URL
-    || process.env.DOTA2ELO_PRODUCT_URL
-    || 'http://dota2elo:3001';
-  return String(raw).replace(/\/+$/, '');
+let resolvedEloBase = null;
+
+function eloCandidates() {
+  const raw = process.env.DOTA2ELO_URL || process.env.DOTA2ELO_PRODUCT_URL;
+  if (raw) return [String(raw).replace(/\/+$/, '')];
+  return ['http://dota2elo:3001', 'http://127.0.0.1:8893'];
+}
+
+async function upstreamBase() {
+  if (resolvedEloBase) return resolvedEloBase;
+  const list = eloCandidates();
+  for (const base of list) {
+    try {
+      const res = await fetch(`${base}/api/health`, { headers: { Accept: 'application/json' } });
+      if (res.ok) {
+        resolvedEloBase = base;
+        return base;
+      }
+    } catch {
+      /* next */
+    }
+  }
+  return list[0];
 }
 
 async function fetchJson(url) {
@@ -190,10 +208,7 @@ function isUpcomingOrLiveMatch(item, now = Date.now()) {
   return true;
 }
 
-async function fetchPolymarketDotaEvents() {
-  const tagSlug = (process.env.POLY_DOTA_TAG_SLUG || 'dota-2').trim() || 'dota-2';
-  const tagIdRaw = (process.env.POLY_DOTA_TAG_ID || '').trim();
-  const tagId = /^\d+$/.test(tagIdRaw) ? Number(tagIdRaw) : null;
+async function fetchPolymarketEventsByTag(tagSlug, tagId) {
   const bySlug = new Map();
   const pageSize = 100;
   const maxOffset = 500;
@@ -211,7 +226,7 @@ async function fetchPolymarketDotaEvents() {
     try {
       rows = await fetchJson(`${GAMMA}/events?${params}`);
     } catch (err) {
-      console.warn('[dota2-pm] gamma page skip', err.message || err);
+      console.warn('[pm] gamma page skip', tagSlug, err.message || err);
       break;
     }
     if (!Array.isArray(rows) || !rows.length) break;
@@ -224,6 +239,18 @@ async function fetchPolymarketDotaEvents() {
   return [...bySlug.values()]
     .map(slimGammaEvent)
     .filter((x) => !x.closed && isSportMatchEvent(x) && isOpenPricedMatch(x) && isUpcomingOrLiveMatch(x));
+}
+
+async function fetchPolymarketDotaEvents() {
+  const tagSlug = (process.env.POLY_DOTA_TAG_SLUG || 'dota-2').trim() || 'dota-2';
+  const tagIdRaw = (process.env.POLY_DOTA_TAG_ID || '').trim();
+  const tagId = /^\d+$/.test(tagIdRaw) ? Number(tagIdRaw) : null;
+  return fetchPolymarketEventsByTag(tagSlug, tagId);
+}
+
+/** 调度/刷新入口：Polymarket 采集后走 dota2elo 过滤。 */
+async function collectDirect() {
+  return collectOnce();
 }
 
 function normalizeTeamName(name) {
@@ -257,7 +284,7 @@ async function matchTeam(query) {
   if (!q) return null;
   let list;
   try {
-    list = await fetchJson(`${upstreamBase()}/api/teams?q=${encodeURIComponent(q)}`);
+    list = await fetchJson(`${await upstreamBase()}/api/teams?q=${encodeURIComponent(q)}`);
   } catch (err) {
     console.warn('[dota2-pm] teams search fail', q, err.message || err);
     return null;
@@ -286,7 +313,8 @@ async function matchTeam(query) {
 }
 
 async function predict(aId, bId) {
-  const url = `${upstreamBase()}/api/predict?a=${encodeURIComponent(aId)}&b=${encodeURIComponent(bId)}`;
+  const base = await upstreamBase();
+  const url = `${base}/api/predict?a=${encodeURIComponent(aId)}&b=${encodeURIComponent(bId)}`;
   return fetchJson(url);
 }
 
@@ -303,7 +331,38 @@ function strongProbFromPredict(pred) {
   return { pA, strongProb, pickSide };
 }
 
+function pmFavoriteSide(prices) {
+  const a = Number(prices?.[0]);
+  const b = Number(prices?.[1]);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a === b) return null;
+  return b > a ? 'b' : 'a';
+}
+
+function directionAlign(pickSide, prices) {
+  const pmSide = pmFavoriteSide(prices);
+  return {
+    pmSide,
+    align: pmSide && pickSide === pmSide ? '一致' : '不一致',
+  };
+}
+
+/** 把赔率和 token 对齐到 sideA / sideB（标题顺序和 outcomes 顺序可能相反）。 */
+function alignQuoteToSides(ev) {
+  const outcomes = Array.isArray(ev.outcomes) ? ev.outcomes : [];
+  const prices = Array.isArray(ev.prices) ? ev.prices : [];
+  const tokens = Array.isArray(ev.tokenIds) ? ev.tokenIds : [];
+  const ia = outcomes.findIndex((o) => normalizeTeamName(o) === normalizeTeamName(ev.sideA));
+  const ib = outcomes.findIndex((o) => normalizeTeamName(o) === normalizeTeamName(ev.sideB));
+  if (ia < 0 || ib < 0 || ia === ib) return ev;
+  return {
+    ...ev,
+    prices: [prices[ia], prices[ib]],
+    tokenIds: [tokens[ia] || null, tokens[ib] || null],
+  };
+}
+
 async function enrichEvent(ev, thr) {
+  ev = alignQuoteToSides(ev);
   const teamA = await matchTeam(ev.sideA);
   const teamB = await matchTeam(ev.sideB);
   if (!teamA?.id || !teamB?.id || teamA.id === teamB.id) return null;
@@ -361,6 +420,7 @@ async function enrichEvent(ev, thr) {
     passList,
     passAutoBet: isHighConfidence,
     risk_points: pred?.risk_points ?? null,
+    ...directionAlign(pickSide, ev.prices),
   };
 }
 
@@ -404,18 +464,7 @@ async function collectOnce() {
         console.warn('[dota2-pm] enrich skip', ev?.slug, err.message || err);
       }
     }
-    matches.sort((a, b) => {
-      if (!!b.is_high_confidence !== !!a.is_high_confidence) {
-        return b.is_high_confidence ? 1 : -1;
-      }
-      if (!!b.passList !== !!a.passList) {
-        return b.passList ? 1 : -1;
-      }
-      const sa = a.startMs || Number.MAX_SAFE_INTEGER;
-      const sb = b.startMs || Number.MAX_SAFE_INTEGER;
-      if (sa !== sb) return sa - sb;
-      return (b.eloDiff || 0) - (a.eloDiff || 0);
-    });
+    sortEloMatches(matches);
     const bundle = {
       ok: true,
       sport: 'dota2',
@@ -450,23 +499,255 @@ async function collectOnce() {
   }
 }
 
-function placedKey(userId) {
-  return `dota2:betting:placed:${userId}`;
+function placedKey(userId, sport = 'dota2') {
+  const name = sport === 'nfl' ? 'nfl' : 'dota2';
+  return `${name}:betting:placed:${userId}`;
 }
 
-async function getPlacedSet(userId) {
+async function getPlacedSet(userId, sport = 'dota2') {
   const client = await redis.getClient();
   if (!client) return new Set();
-  const members = await client.sMembers(placedKey(userId));
+  const members = await client.sMembers(placedKey(userId, sport));
   return new Set(members || []);
 }
 
-async function markPlaced(userId, slugSide) {
+async function markPlaced(userId, slugSide, sport = 'dota2') {
   const client = await redis.getClient();
   if (!client) return;
-  const key = placedKey(userId);
+  const key = placedKey(userId, sport);
   await client.sAdd(key, String(slugSide));
   await client.expire(key, 60 * 60 * 24 * 14);
+}
+
+const NFL_BUNDLE_KEY = 'nfl:bundle:pm';
+let nflBusy = false;
+let nflMemory = null;
+let resolvedNflBase = null;
+
+const NFL_NAME_TO_ABBR = {
+  cardinals: 'ARI', arizona: 'ARI', ari: 'ARI',
+  falcons: 'ATL', atlanta: 'ATL', atl: 'ATL',
+  ravens: 'BAL', baltimore: 'BAL', bal: 'BAL',
+  bills: 'BUF', buffalo: 'BUF', buf: 'BUF',
+  panthers: 'CAR', carolina: 'CAR', car: 'CAR',
+  bears: 'CHI', chicago: 'CHI', chi: 'CHI',
+  bengals: 'CIN', cincinnati: 'CIN', cin: 'CIN',
+  browns: 'CLE', cleveland: 'CLE', cle: 'CLE',
+  cowboys: 'DAL', dallas: 'DAL', dal: 'DAL',
+  broncos: 'DEN', denver: 'DEN', den: 'DEN',
+  lions: 'DET', detroit: 'DET', det: 'DET',
+  packers: 'GB', 'green bay': 'GB', gb: 'GB',
+  texans: 'HOU', houston: 'HOU', hou: 'HOU',
+  colts: 'IND', indianapolis: 'IND', ind: 'IND',
+  jaguars: 'JAX', jags: 'JAX', jacksonville: 'JAX', jax: 'JAX',
+  chiefs: 'KC', 'kansas city': 'KC', kc: 'KC',
+  raiders: 'LV', 'las vegas': 'LV', lv: 'LV',
+  chargers: 'LAC', lac: 'LAC',
+  rams: 'LA', la: 'LA',
+  dolphins: 'MIA', miami: 'MIA', mia: 'MIA',
+  vikings: 'MIN', minnesota: 'MIN', min: 'MIN',
+  patriots: 'NE', 'new england': 'NE', ne: 'NE',
+  saints: 'NO', 'new orleans': 'NO', no: 'NO',
+  giants: 'NYG', nyg: 'NYG',
+  jets: 'NYJ', nyj: 'NYJ',
+  eagles: 'PHI', philadelphia: 'PHI', phi: 'PHI',
+  steelers: 'PIT', pittsburgh: 'PIT', pit: 'PIT',
+  '49ers': 'SF', niners: 'SF', 'san francisco': 'SF', sf: 'SF',
+  seahawks: 'SEA', seattle: 'SEA', sea: 'SEA',
+  buccaneers: 'TB', bucs: 'TB', 'tampa bay': 'TB', tb: 'TB',
+  titans: 'TEN', tennessee: 'TEN', ten: 'TEN',
+  commanders: 'WAS', washington: 'WAS', was: 'WAS',
+};
+
+function nflAbbr(name) {
+  const n = normalizeTeamName(name);
+  if (!n) return null;
+  if (NFL_NAME_TO_ABBR[n]) return NFL_NAME_TO_ABBR[n];
+  const parts = n.split(' ').filter(Boolean);
+  if (parts.length >= 2) {
+    const tail2 = parts.slice(-2).join(' ');
+    if (NFL_NAME_TO_ABBR[tail2]) return NFL_NAME_TO_ABBR[tail2];
+  }
+  const last = parts[parts.length - 1];
+  return NFL_NAME_TO_ABBR[last] || null;
+}
+
+async function nfleloBase() {
+  if (resolvedNflBase) return resolvedNflBase;
+  const raw = process.env.NFLELO_URL;
+  const list = raw
+    ? [String(raw).replace(/\/+$/, '')]
+    : ['http://nflelo:8000', 'http://127.0.0.1:8894'];
+  for (const base of list) {
+    try {
+      const res = await fetch(`${base}/api/health`, { headers: { Accept: 'application/json' } });
+      if (res.ok) {
+        resolvedNflBase = base;
+        return base;
+      }
+    } catch {
+      /* next */
+    }
+  }
+  return list[0];
+}
+
+async function predictNfl(abbrA, abbrB) {
+  const base = await nfleloBase();
+  const res = await fetch(`${base}/api/predict`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      team_a: abbrA,
+      team_b: abbrB,
+      neutral: true,
+      use_xgb_ensemble: false,
+    }),
+  });
+  if (!res.ok) throw new Error(`nflelo HTTP ${res.status}`);
+  return res.json();
+}
+
+async function enrichNflEvent(ev, thr) {
+  ev = alignQuoteToSides(ev);
+  const abbrA = nflAbbr(ev.sideA);
+  const abbrB = nflAbbr(ev.sideB);
+  if (!abbrA || !abbrB || abbrA === abbrB) return null;
+  let pred;
+  try {
+    pred = await predictNfl(abbrA, abbrB);
+  } catch (err) {
+    console.warn('[nfl-pm] predict fail', ev.slug, err.message || err);
+    return null;
+  }
+  const pA = Number(pred?.win_prob_a);
+  if (!Number.isFinite(pA)) return null;
+  const ratingA = Number(pred.elo_a);
+  const ratingB = Number(pred.elo_b);
+  const eloDiff = (Number.isFinite(ratingA) && Number.isFinite(ratingB))
+    ? Math.abs(ratingA - ratingB)
+    : 0;
+  const strongProb = Math.max(pA, 1 - pA);
+  const pickSide = pA >= 0.5 ? 'a' : 'b';
+  const isHighConfidence = strongProb >= 0.75;
+  const passList = isHighConfidence
+    || eloDiff >= thr.eloDiffMin
+    || strongProb >= thr.winProbMin;
+  const tokens = ev.tokenIds || [];
+  const pickTokenId = pickSide === 'a' ? (tokens[0] || null) : (tokens[1] || null);
+  const pickName = pickSide === 'a' ? ev.sideA : ev.sideB;
+  const pickPrice = Array.isArray(ev.prices)
+    ? (pickSide === 'a' ? ev.prices[0] : ev.prices[1])
+    : null;
+  return {
+    slug: ev.slug,
+    title: ev.title,
+    url: ev.url,
+    sideA: ev.sideA,
+    sideB: ev.sideB,
+    prices: ev.prices,
+    tokenIds: tokens,
+    outcomes: ev.outcomes,
+    startMs: ev.startMs,
+    teamA: { id: abbrA, name: ev.sideA, rating: ratingA },
+    teamB: { id: abbrB, name: ev.sideB, rating: ratingB },
+    eloDiff: Math.round(eloDiff * 10) / 10,
+    pA: Math.round(pA * 10000) / 10000,
+    strongProb: Math.round(strongProb * 10000) / 10000,
+    pickSide,
+    pickName,
+    pickTokenId,
+    pickPrice,
+    is_high_confidence: isHighConfidence,
+    passList,
+    passAutoBet: isHighConfidence,
+    ...directionAlign(pickSide, ev.prices),
+  };
+}
+
+function sortEloMatches(matches) {
+  matches.sort((a, b) => {
+    if (!!b.is_high_confidence !== !!a.is_high_confidence) {
+      return b.is_high_confidence ? 1 : -1;
+    }
+    if (!!b.passList !== !!a.passList) {
+      return b.passList ? 1 : -1;
+    }
+    const sa = a.startMs || Number.MAX_SAFE_INTEGER;
+    const sb = b.startMs || Number.MAX_SAFE_INTEGER;
+    if (sa !== sb) return sa - sb;
+    return (b.eloDiff || 0) - (a.eloDiff || 0);
+  });
+  return matches;
+}
+
+/** NFL：Polymarket 采集后走 nflelo 过滤，并标记与盘口方向是否一致。 */
+async function collectNfl() {
+  if (nflBusy) return nflMemory;
+  nflBusy = true;
+  const thr = thresholds();
+  try {
+    const tag = (process.env.POLY_NFL_TAG_SLUG || 'nfl').trim() || 'nfl';
+    const events = await fetchPolymarketEventsByTag(tag, null);
+    const matches = [];
+    for (const ev of events) {
+      try {
+        const row = await enrichNflEvent(ev, thr);
+        if (row) matches.push(row);
+      } catch (err) {
+        console.warn('[nfl-pm] enrich skip', ev?.slug, err.message || err);
+      }
+    }
+    sortEloMatches(matches);
+    const bundle = {
+      ok: true,
+      sport: 'nfl',
+      source: 'polymarket-gamma',
+      fetched_at: new Date().toISOString(),
+      thresholds: thr,
+      matchCount: matches.length,
+      edgeCount: matches.filter((m) => m.passList).length,
+      hcCount: matches.filter((m) => m.is_high_confidence).length,
+      scanned: events.length,
+      matches,
+    };
+    nflMemory = bundle;
+    const client = await redis.getClient();
+    if (client) await client.set(NFL_BUNDLE_KEY, JSON.stringify(bundle));
+    console.log(`[nfl-pm] collected ${matches.length}/${events.length}`);
+    return bundle;
+  } catch (err) {
+    console.error('[nfl-pm] collect failed', err.message || err);
+    if (nflMemory) return { ...nflMemory, ok: false, error: err.message || String(err) };
+    return {
+      ok: false,
+      sport: 'nfl',
+      source: 'polymarket-gamma',
+      matches: [],
+      matchCount: 0,
+      scanned: 0,
+      fetched_at: new Date().toISOString(),
+      error: err.message || String(err),
+    };
+  } finally {
+    nflBusy = false;
+  }
+}
+
+async function readNflBundle() {
+  const client = await redis.getClient();
+  if (client) {
+    try {
+      const raw = await client.get(NFL_BUNDLE_KEY);
+      if (raw) {
+        nflMemory = JSON.parse(raw);
+        return nflMemory;
+      }
+    } catch {
+      /* memory */
+    }
+  }
+  return nflMemory;
 }
 
 function startCollectLoop() {
@@ -482,7 +763,10 @@ module.exports = {
   BUNDLE_KEY,
   thresholds,
   collectOnce,
+  collectDirect,
+  collectNfl,
   readBundle,
+  readNflBundle,
   getPlacedSet,
   markPlaced,
   startCollectLoop,

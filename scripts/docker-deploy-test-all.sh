@@ -18,8 +18,13 @@ fi
 echo "==> [1/3] Docker 测试栈 (web :9018)"
 bash scripts/docker-deploy.sh test up -d --build "${EXTRA[@]}"
 
-echo "==> [2/3] 宿主机五引擎 (9101-9105, 本机 MySQL/Redis)"
+echo "==> [2/3] 宿主机五引擎 (collect:${COLLECT_HOST_PORT:-9111} scheduler:${SCHEDULER_HOST_PORT:-9115}/9102-9104)"
 export SERVER_ENV_FILE="$ROOT/server/.env.test"
+# Redis(yucebid_redis) 占用 9101；tcm-qa 占用 9105
+export COLLECT_HOST_PORT="${COLLECT_HOST_PORT:-9111}"
+export SCHEDULER_HOST_PORT="${SCHEDULER_HOST_PORT:-9115}"
+export DOTA2ELO_HOST_PORT="${DOTA2ELO_HOST_PORT:-8893}"
+export NFLELO_HOST_PORT="${NFLELO_HOST_PORT:-8894}"
 bash scripts/deploy-host-services.sh restart
 
 echo "==> [3/3] 健康检查"

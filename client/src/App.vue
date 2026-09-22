@@ -766,7 +766,7 @@ const headerTitle = computed(() => {
     return '支付结果'
   }
   const map = {
-    user: { home: '数据产品', product: '产品详情', mine: '我的', help: '帮助手册' },
+    user: { home: '赛事推荐', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
     admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'tennis-settled-results': '完赛网球', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
@@ -1058,6 +1058,41 @@ const showProductDetail = computed(() => view.value === 'product' && !!openedPro
 const showMine = computed(() => view.value === 'mine')
 const showHelp = computed(() => view.value === 'help')
 const helpFrom = ref('mine')
+
+const PAGE_GUIDE = [
+  { title: '先选赛事', text: '首页是赛事推荐。点开网球、Dota2 或 NFL，进入对应比赛。' },
+  { title: '看赛前和赛中', text: '网球赛事推荐会在同一列表里显示未开赛和进行中的比赛。Dota2 和 NFL 展示算法算出的方向。' },
+  { title: '开通后看方向', text: '开通后可看「一致 / 不一致」。用兑换或订阅开通；要下单时再配置账户。' },
+]
+const showPageGuide = ref(false)
+const pageGuideStep = ref(0)
+const pageGuidePendingKey = 'yuce.pageGuide.pending'
+
+function armPageGuide(userId) {
+  if (userId == null) return
+  try { localStorage.setItem(pageGuidePendingKey, String(userId)) } catch { /* ignore */ }
+  pageGuideStep.value = 0
+  showPageGuide.value = true
+}
+
+function restorePageGuide(userId) {
+  try {
+    if (localStorage.getItem(pageGuidePendingKey) === String(userId)) {
+      pageGuideStep.value = 0
+      showPageGuide.value = true
+    }
+  } catch { /* ignore */ }
+}
+
+function dismissPageGuide() {
+  showPageGuide.value = false
+  try { localStorage.removeItem(pageGuidePendingKey) } catch { /* ignore */ }
+}
+
+function nextPageGuide() {
+  if (pageGuideStep.value >= PAGE_GUIDE.length - 1) dismissPageGuide()
+  else pageGuideStep.value += 1
+}
 
 function openHelp(from = 'mine') {
   helpFrom.value = from || 'mine'
@@ -2153,6 +2188,7 @@ async function initSession() {
     const user = await api.fetchMe()
     setUser(user)
     authed.value = true
+    restorePageGuide(user.id)
     view.value = defaultViewForRole(user.role)
     await refreshRoleData({ deferSecondary: true })
   } catch (e) {
@@ -2226,6 +2262,7 @@ async function doRegister() {
     setUser(data.user)
     authed.value = true
     view.value = f.regRole === 'agent' ? 'shop' : 'home'
+    armPageGuide(data.user?.id)
     await refreshRoleData()
     showToast(data.message, 'success')
   } catch (e) {
@@ -2811,7 +2848,7 @@ function isTennisPrematchProduct(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'tennis-prematch') return true
   const name = String(product?.name || '')
-  return /盘前网球|未开赛的网球|未开赛.*网球/.test(name)
+  return /盘前网球|未开赛的网球|未开赛.*网球|网球赛事推荐/.test(name)
 }
 
 function isTennisSettledProduct(product) {
@@ -2879,7 +2916,17 @@ function isBtcBoardProduct(product) {
 function isDota2Product(product) {
   const tag = String(product?.tag || '').toLowerCase()
   if (tag === 'dota2' || tag === 'dota') return true
-  return /dota2|刀塔|dota/i.test(String(product?.name || ''))
+  return /dota2|刀塔/i.test(String(product?.name || ''))
+}
+
+function isNflProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'nfl') return true
+  return /nfl/i.test(String(product?.name || '').trim())
+}
+
+function isPmListProduct(product) {
+  return isDota2Product(product) || isNflProduct(product)
 }
 
 function isNativeBoardProduct(product) {
@@ -2892,7 +2939,8 @@ function isNativeBoardProduct(product) {
     isTennisPrematchProduct(product) ||
     isTennisSettledProduct(product) ||
     isBtcBoardProduct(product) ||
-    isDota2Product(product)
+    isDota2Product(product) ||
+    isNflProduct(product)
   )
 }
 
@@ -3200,6 +3248,23 @@ function productEmbedUrl(product) {
 
         <!-- 已登录 -->
         <template v-else>
+          <Teleport to="body">
+            <div
+              v-if="showPageGuide"
+              class="fixed inset-0 z-[90] bg-slate-900/45 flex items-end justify-center p-3"
+              @click.self="dismissPageGuide"
+            >
+              <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4" role="dialog" aria-modal="true" aria-label="页面引导">
+                <div class="text-xs font-semibold text-indigo-600">{{ pageGuideStep + 1 }} / {{ PAGE_GUIDE.length }}</div>
+                <div class="mt-1 text-base font-bold text-slate-900">{{ PAGE_GUIDE[pageGuideStep].title }}</div>
+                <p class="mt-2 text-sm text-slate-600 leading-relaxed">{{ PAGE_GUIDE[pageGuideStep].text }}</p>
+                <div class="mt-4 flex gap-2">
+                  <button type="button" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600" @click="dismissPageGuide">跳过</button>
+                  <button type="button" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold" @click="nextPageGuide">{{ pageGuideStep >= PAGE_GUIDE.length - 1 ? '知道了' : '下一步' }}</button>
+                </div>
+              </div>
+            </div>
+          </Teleport>
           <header class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white px-3 pt-3 pb-2.5 shrink-0">
             <div class="flex items-center justify-between gap-2">
               <div class="min-w-0 flex-1">
@@ -3276,7 +3341,7 @@ function productEmbedUrl(product) {
             <section v-if="showShopList" class="shop-page fade-up">
               <div class="shop-toolbar">
                 <div class="shop-summary">
-                  <h2 class="shop-summary-title">数据产品</h2>
+                  <h2 class="shop-summary-title">赛事推荐</h2>
                   <p class="shop-summary-sub">{{ activeCount }} 有效 · {{ filteredShopProducts.length }} 个</p>
                 </div>
                 <div class="list-search-wrap shop-search">
@@ -3335,13 +3400,12 @@ function productEmbedUrl(product) {
                   <span :class="badgeClass(statusOf(p.id))" class="product-tile-badge">{{ badgeText(statusOf(p.id)) }}</span>
                   <ProductIcon :product="p" size="md" rounded="2xl" />
                   <div class="product-tile-name">{{ p.name }}</div>
-                  <div class="product-tile-price">¥{{ p.priceMonth }}/月起</div>
                 </button>
               </div>
             </section>
 
             <section v-else-if="showProductDetail" class="space-y-2 fade-up">
-              <template v-if="isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isDota2Product(openedProduct)">
+              <template v-if="isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isPmListProduct(openedProduct)">
                 <button
                   type="button"
                   @click="go(shopRoute())"
@@ -3412,7 +3476,7 @@ function productEmbedUrl(product) {
               <div v-else class="flex items-center gap-2 min-h-0">
                 <button @click="go(shopRoute())" class="text-xs text-primary-700 flex items-center gap-0.5 shrink-0 py-0.5"><span v-html="icon('back')"></span>返回</button>
               </div>
-              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isDota2Product(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
+              <div v-if="!(isBtcBoardProduct(openedProduct) || isTennisBoardHeaderProduct(openedProduct) || isPmListProduct(openedProduct))" class="bg-white rounded-2xl p-4 shadow-sm">
                 <div class="flex items-center gap-3">
                   <ProductIcon :product="openedProduct" size="md" />
                   <div>
@@ -3449,11 +3513,12 @@ function productEmbedUrl(product) {
                 <div v-if="isTennisPrematchProduct(openedProduct)" class="p-0">
                   <TennisBoard
                     ref="tennisBoardRef"
-                    board-mode="prematch"
+                    board-mode="mix"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisProductBoardMember(openedProduct)"
                     :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
                     :can-edit-rules="role === 'admin'"
+                    :is-admin="role === 'admin'"
                     :product-id="openedProduct.id"
                     @open-admin-engine="onOpenTennisAdminEngine"
                     @auto-bet-change="onBoardAutoBetChange"
@@ -3526,8 +3591,9 @@ function productEmbedUrl(product) {
                     @auto-bet-change="onBoardAutoBetChange"
                   />
                 </div>
-                <div v-else-if="isDota2Product(openedProduct)" class="p-0">
+                <div v-else-if="isPmListProduct(openedProduct)" class="p-0">
                   <Dota2Board
+                    :sport="isNflProduct(openedProduct) ? 'nfl' : 'dota2'"
                     :is-member="canAccessProduct(openedProduct.id)"
                     :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"

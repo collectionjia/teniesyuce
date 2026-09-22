@@ -57,6 +57,12 @@ function buildBody(job, params) {
     case 'collect.inplay_tick':
     case 'collect.top100_hf':
       return { sport, ...p };
+    case 'collect.dota2':
+    case 'collect.dota2_hf':
+      return { sport: 'dota2', ...p };
+    case 'collect.nfl':
+    case 'collect.nfl_hf':
+      return { sport: 'nfl', ...p };
     case 'condition.query':
       return {
         bucket: p.bucket || 'prematch',
@@ -94,6 +100,11 @@ async function executeJobTypeHttp(job, params = {}) {
     case 'collect.inplay_tick':
     case 'collect.top100_hf':
       return postJson(serviceBase('collect'), '/internal/collect/partial', body);
+    case 'collect.dota2':
+    case 'collect.dota2_hf':
+    case 'collect.nfl':
+    case 'collect.nfl_hf':
+      return postJson(serviceBase('collect'), '/internal/collect/full', body);
     case 'condition.query':
       return postJson(serviceBase('rules'), '/internal/rules/evaluate', body);
     case 'bet.scan':

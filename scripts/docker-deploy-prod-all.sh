@@ -11,8 +11,8 @@ if [[ "${1:-}" == "--no-cache" ]]; then
   EXTRA+=(--no-cache)
 fi
 
-if [[ ! -f server/.env ]]; then
-  echo "missing server/.env — 从 server/.env.example 复制并填写"
+if [[ ! -f server/.env.prod ]]; then
+  echo "missing server/.env.prod — 从 server/.env.example 复制为 server/.env.prod 并填写生产库"
   exit 1
 fi
 

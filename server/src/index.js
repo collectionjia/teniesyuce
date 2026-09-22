@@ -65,6 +65,7 @@ app.use('/api/tennis-range', tennisRangeRoutes);
 app.use('/api/tennis-live', tennisLiveRoutes);
 app.use('/api/tennis-new', tennisNewRoutes);
 app.use('/api/dota2', require('./routes/dota2'));
+app.use('/api/nfl', require('./routes/nfl'));
 
 app.use((err, _req, res, _next) => {
   console.error(err);

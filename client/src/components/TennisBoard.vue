@@ -30,7 +30,7 @@ const props = defineProps({
   isMember: { type: Boolean, default: false },
   /** 已配置钱包且开通 BTC 虚拟投注时可真实批量下单 */
   canBatchTrade: { type: Boolean, default: false },
-  /** classic | range | live | new | inplay | prematch | settled */
+  /** classic | range | live | new | inplay | prematch | settled | mix */
   boardMode: { type: String, default: 'classic' },
   /** 仅管理员：在盘前列表直接编辑条件引擎规则 */
   canEditRules: { type: Boolean, default: false },
@@ -47,6 +47,7 @@ const isLiveMode = computed(() => props.boardMode === 'live')
 const isNewMode = computed(() => props.boardMode === 'new')
 const isInplayMode = computed(() => props.boardMode === 'inplay')
 const isPrematchMode = computed(() => props.boardMode === 'prematch')
+const isMixMode = computed(() => props.boardMode === 'mix')
 const isSettledMode = computed(() => props.boardMode === 'settled')
 const isClassicMode = computed(() =>
   !isRangeMode.value
@@ -54,6 +55,7 @@ const isClassicMode = computed(() =>
   && !isNewMode.value
   && !isInplayMode.value
   && !isPrematchMode.value
+  && !isMixMode.value
   && !isSettledMode.value
 )
 /** 经典网球：现差/排差/强现 筛选（订阅、管理员、或已开通筛选权限） */
@@ -63,13 +65,13 @@ const hideEndedEvents = computed(() => {
   if (data.value?.upstream === 'docks500' || data.value?.source === 'docks500' || data.value?.dataSource === 'docks500') {
     return false
   }
-  return isClassicMode.value || isInplayMode.value || isPrematchMode.value
+  return isClassicMode.value || isInplayMode.value || isPrematchMode.value || isMixMode.value
 })
 const allowBatchTrade = computed(() => {
   if (isSettledMode.value) return false
   if (props.canBatchTrade) return true
   // 会员可看到开关；真正下单须自己打开「自动投注」
-  if (props.isMember && (isPrematchMode.value || isInplayMode.value)) return true
+  if (props.isMember && (isPrematchMode.value || isInplayMode.value || isMixMode.value)) return true
   return false
 })
 /** 自动投注行：各产品（非盘后）无赛事/加载中/报错时也显示 */
@@ -93,7 +95,7 @@ const isVirtualDataSource = computed(() => {
 const useSimulateOrders = computed(() => !!isVirtualDataSource.value)
 const apiPath = computed(() => {
   // 未订阅：与经典「网球」同源数据与展示，不走盘前/盘中专用桶与条件筛选
-  if ((isPrematchMode.value || isInplayMode.value) && !props.isMember) return '/api/tennis'
+  if ((isPrematchMode.value || isInplayMode.value || isMixMode.value) && !props.isMember) return '/api/tennis'
   if (isPrematchMode.value) return '/api/tennis-prematch'
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
@@ -127,7 +129,7 @@ const BATCH_AMOUNT_KEY_INPLAY = 'yuce.tennisInplay.batchAmountUsd.v1'
 
 function batchAmountStorageKey() {
   if (props.boardMode === 'inplay') return BATCH_AMOUNT_KEY_INPLAY
-  if (props.boardMode === 'prematch') return BATCH_AMOUNT_KEY_PREMATCH
+  if (props.boardMode === 'prematch' || props.boardMode === 'mix') return BATCH_AMOUNT_KEY_PREMATCH
   return ''
 }
 
@@ -149,7 +151,7 @@ const manualSide = ref('suggest')
 const manualShares = ref('10')
 const manualLimitBuyPrice = ref('0.55')
 const manualLimitSellPrice = ref('0.70')
-const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value)
+const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value || isMixMode.value)
 const showManualTradeOpts = computed(() => isManualTradeBoard.value && allowBatchTrade.value)
 
 watch(batchAmountUsd, (v) => {
@@ -271,7 +273,7 @@ const batchSubmitting = ref(false)
 const batchNotice = ref('')
 const batchError = ref('')
 const AUTO_SIM_BET_KEY = computed(() => {
-  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoSimBet.v1'
+  if (isPrematchMode.value || isMixMode.value) return 'yuce.tennisPrematch.autoSimBet.v1'
   if (isRangeMode.value) return 'yuce.tennisRange.autoSimBet.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoSimBet.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoSimBet.v1'
@@ -279,7 +281,7 @@ const AUTO_SIM_BET_KEY = computed(() => {
   return 'yuce.tennis.autoSimBet.v1'
 })
 const AUTO_PLACED_KEY = computed(() => {
-  if (isPrematchMode.value) return 'yuce.tennisPrematch.autoPlaced.v1'
+  if (isPrematchMode.value || isMixMode.value) return 'yuce.tennisPrematch.autoPlaced.v1'
   if (isRangeMode.value) return 'yuce.tennisRange.autoPlaced.v1'
   if (isLiveMode.value) return 'yuce.tennisLive.autoPlaced.v1'
   if (isNewMode.value) return 'yuce.tennisNew.autoPlaced.v1'
@@ -862,6 +864,20 @@ function matchPassesPm(m) {
 function matchPassesFilter(m, statusFilter) {
   const rankings = data.value?.rankingsByPlayer || {}
   const poly = data.value?.polymarketByEvent || {}
+  if (isMixMode.value) {
+    if (isMatchEnded(m)) return false
+    const mode = statusFilter != null ? statusFilter : filter.value
+    if (mode === 'Not started' && !isMatchNotStarted(m)) return false
+    if (mode === 'liveish' && !isMatchLive(m)) return false
+    if (mode === 'ended') return false
+    return applyPrematchFilters([m], {
+      tour: tour.value,
+      pm: pmFilter.value,
+      gapMin: 'all',
+      rankDiffMax: 'all',
+      strongRankMax: 'all',
+    }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
+  }
   // 盘前/盘中/盘后：排名类条件由产品挂载的条件组在服务端筛；列表仅保留巡回/PM（盘后另保留盈亏）
   if (isPrematchMode.value) {
     // 盘前缓存里开赛时间已过的场次：状态显示「进行中」，仍留在本列表直至迁到盘中
@@ -1222,11 +1238,11 @@ function hasConfiguredStopLoss() {
 
 /** 有未平仓持仓，且已配止损（或盘中可走默认止损）时，按调度刷 PM 并自动卖 */
 function shouldRunStopLossMonitor() {
-  if (!isPrematchMode.value && !isInplayMode.value) return false
+  if (!isPrematchMode.value && !isInplayMode.value && !isMixMode.value) return false
   if (!allowBatchTrade.value) return false
   if (!openPlacedIds().length) return false
   if (hasConfiguredStopLoss()) return true
-  return isInplayMode.value
+  return isInplayMode.value || isMixMode.value
 }
 
 /** 盘前/盘中止损：有配置止损组则按配置；盘中无配置时回退默认规则。sideOverride=持仓侧 */
@@ -1451,6 +1467,29 @@ function formatBatchResultLine(r, list) {
 
 const BATCH_TRADE_CHUNK = 20
 
+async function placeMixBatchTrade(payload, orders) {
+  const byId = new Map(rawMatches.value.map((m) => [String(m.id), m]))
+  const preOrders = []
+  const liveOrders = []
+  for (const order of orders) {
+    const m = byId.get(String(order.eventId))
+    if (m?.boardPhase === 'inplay' || (m && isMatchLive(m))) liveOrders.push(order)
+    else preOrders.push(order)
+  }
+  const parts = []
+  if (preOrders.length) {
+    parts.push(await api.placeTennisPrematchBatchTrade({ ...payload, orders: preOrders }))
+  }
+  if (liveOrders.length) {
+    parts.push(await api.placeTennisInplayBatchTrade({ ...payload, orders: liveOrders }))
+  }
+  return {
+    results: parts.flatMap((p) => (Array.isArray(p?.results) ? p.results : [])),
+    success: parts.reduce((n, p) => n + (Number(p?.success) || 0), 0),
+    failed: parts.reduce((n, p) => n + (Number(p?.failed) || 0), 0),
+  }
+}
+
 async function placeBatchTradeRequest(orders, amount, { manual = false, limitShares = null } = {}) {
   const useManual = manual && isManualTradeBoard.value
   const orderType = useManual
@@ -1483,6 +1522,7 @@ async function placeBatchTradeRequest(orders, amount, { manual = false, limitSha
     }
   }
   if (isPrematchMode.value) return api.placeTennisPrematchBatchTrade(payload)
+  if (isMixMode.value) return placeMixBatchTrade(payload, orders)
   if (isRangeMode.value) return api.placeTennisRangeBatchTrade(payload)
   if (isLiveMode.value) return api.placeTennisLiveBatchTrade(payload)
   if (isInplayMode.value) return api.placeTennisInplayBatchTrade(payload)
@@ -1728,6 +1768,11 @@ async function placeStopSell(m, side, { simulate, forceLimitSellPrice } = {}) {
     }
   }
   if (isPrematchMode.value) return api.placeTennisPrematchSell(payload)
+  if (isMixMode.value) {
+    return (m?.boardPhase === 'inplay' || isMatchLive(m))
+      ? api.placeTennisInplaySell(payload)
+      : api.placeTennisPrematchSell(payload)
+  }
   return api.placeTennisInplaySell(payload)
 }
 
@@ -1772,7 +1817,7 @@ async function sellPlacedOrder(eventId) {
   stopLossBusy.value = true
   try {
     let resp = { ok: true, simulated: simulate }
-    if (isPrematchMode.value || isInplayMode.value) {
+    if (isPrematchMode.value || isInplayMode.value || isMixMode.value) {
       try {
         resp = await placeStopSell(m || { id }, side, { simulate })
       } catch (e) {
@@ -1922,7 +1967,7 @@ function clearListPollTimers() {
 
 function syncInplayPoll() {
   clearListPollTimers()
-  if (!isInplayMode.value && !isPrematchMode.value) return
+  if (!isInplayMode.value && !isPrematchMode.value && !isMixMode.value) return
   const needBuy = !!autoBetEnabled.value
   const needStop = shouldRunStopLossMonitor()
   const pageSec = clampPageRefreshSec(listPageRefreshIntervalSec.value)
@@ -1964,7 +2009,7 @@ function syncInplayPoll() {
 watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter, settledPnlMark], () => {
   currentPage.value = 1
   clearSelection()
-  if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value)) {
+  if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value || isMixMode.value)) {
     void maybeAutoBatchTrade()
   }
 })
@@ -1972,7 +2017,7 @@ watch([filter, tour, gapMin, diffMax, strongRankMax, topPoolMax, pmFilter, settl
 watch(
   () => (autoBetEnabled.value ? matches.value.map((m) => String(m.id)).join('|') : ''),
   () => {
-    if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value)) {
+    if (autoBetEnabled.value && (isPrematchMode.value || isInplayMode.value || isMixMode.value)) {
       void maybeAutoBatchTrade()
     }
   },
@@ -1983,7 +2028,7 @@ watch(() => props.isMember, (ok) => {
     closeDetail()
     clearSelection()
   }
-  if (isPrematchMode.value || isInplayMode.value) {
+  if (isPrematchMode.value || isInplayMode.value || isMixMode.value) {
     void loadOnce({ quiet: true })
   }
 })
@@ -1998,7 +2043,7 @@ function goPage(page) {
 }
 
 function setStatusFilter(mode) {
-  if (isPrematchMode.value) return
+  if (isPrematchMode.value || isMixMode.value) return
   if (hideEndedEvents.value && mode === 'ended') return
   if (filter.value === mode) return
   filter.value = mode
@@ -2017,6 +2062,8 @@ const stats = computed(() => {
   }
   const collected = isPrematchMode.value
     ? countTab('Not started')
+    : isMixMode.value
+    ? countTab('all')
     : isInplayMode.value
     ? (data.value?.live?.eventCount ?? data.value?.events ?? pool.length)
     : classicRankFiltersOn.value
@@ -2031,8 +2078,12 @@ const stats = computed(() => {
     total: pool.length,
     all: countTab('all'),
     shown: matches.value.length,
-    open: countTab('Not started'),
-    live: countTab('liveish'),
+    open: isMixMode.value
+      ? pool.filter((m) => !isMatchEnded(m) && isMatchNotStarted(m)).length
+      : countTab('Not started'),
+    live: isMixMode.value
+      ? pool.filter((m) => !isMatchEnded(m) && isMatchLive(m)).length
+      : countTab('liveish'),
     ended: countTab('ended'),
   }
 })
@@ -2601,6 +2652,80 @@ function playerLiveScoreText(m, side) {
 }
 
 /** 打开页面时从 Redis 加载；quiet 时用于盘中自动轮询 */
+async function fetchTodayBundle(path) {
+  const token = localStorage.getItem('token') || ''
+  const qs = new URLSearchParams()
+  if (props.isMember && (isPrematchMode.value || isInplayMode.value || isMixMode.value || isSettledMode.value)) {
+    qs.set('applyCondition', '1')
+  }
+  if (props.productId != null && props.productId !== '') {
+    qs.set('productId', String(props.productId))
+  }
+  if (isSettledMode.value && settledDate.value && settledDate.value !== 'all') {
+    qs.set('date', settledDate.value)
+  }
+  const query = qs.toString()
+  const res = await fetch(`${path}/today${query ? `?${query}` : ''}`, {
+    cache: 'no-store',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`
+    try {
+      const errBody = await res.json()
+      if (errBody?.error) msg = errBody.error
+    } catch { /* ignore */ }
+    throw new Error(msg)
+  }
+  const payload = await res.json()
+  return payload?.live != null || payload?.scheduled != null || payload?.rankingsByPlayer != null
+    ? payload
+    : payload?.data || payload
+}
+
+function tagBoardPhase(list, phase) {
+  return (list || []).map((e) => ({ ...e, boardPhase: phase }))
+}
+
+function mergeMixBundles(pre, live) {
+  const base = pre || live || {}
+  const tournaments = (pre?.scheduled?.tournaments || []).map((t) => ({
+    ...t,
+    events: tagBoardPhase(t.events, 'prematch'),
+  }))
+  const seen = new Set()
+  const liveMatches = []
+  for (const m of [...(live?.live?.matches || []), ...(pre?.live?.matches || [])]) {
+    if (m?.id == null) continue
+    const id = String(m.id)
+    if (seen.has(id)) continue
+    seen.add(id)
+    liveMatches.push({ ...m, boardPhase: 'inplay' })
+  }
+  return {
+    ...base,
+    scheduled: { ...(pre?.scheduled || {}), tournaments },
+    live: { ...(live?.live || pre?.live || {}), matches: liveMatches },
+    rankingsByPlayer: { ...(pre?.rankingsByPlayer || {}), ...(live?.rankingsByPlayer || {}) },
+    polymarketByEvent: { ...(pre?.polymarketByEvent || {}), ...(live?.polymarketByEvent || {}) },
+    serverTime: live?.serverTime ?? pre?.serverTime ?? null,
+    condition_applied: !!(pre?.condition_applied || live?.condition_applied),
+  }
+}
+
+async function loadMixBundle() {
+  if (!props.isMember) return fetchTodayBundle('/api/tennis')
+  const [preR, liveR] = await Promise.allSettled([
+    fetchTodayBundle('/api/tennis-prematch'),
+    fetchTodayBundle('/api/tennis-inplay'),
+  ])
+  if (preR.status === 'rejected' && liveR.status === 'rejected') throw preR.reason
+  return mergeMixBundles(
+    preR.status === 'fulfilled' ? preR.value : null,
+    liveR.status === 'fulfilled' ? liveR.value : null,
+  )
+}
+
 async function loadOnce({
   quiet = false,
   skipAutoBatch = false,
@@ -2613,35 +2738,9 @@ async function loadOnce({
     loading.value = true
   }
   try {
-    const token = localStorage.getItem('token') || ''
-    const qs = new URLSearchParams()
-    if (props.isMember && (isPrematchMode.value || isInplayMode.value || isSettledMode.value)) {
-      qs.set('applyCondition', '1')
-    }
-    if (props.productId != null && props.productId !== '') {
-      qs.set('productId', String(props.productId))
-    }
-    if (isSettledMode.value && settledDate.value && settledDate.value !== 'all') {
-      qs.set('date', settledDate.value)
-    }
-    const query = qs.toString()
-    const res = await fetch(`${apiPath.value}/today${query ? `?${query}` : ''}`, {
-      cache: 'no-store',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-    if (!res.ok) {
-      let msg = `HTTP ${res.status}`
-      try {
-        const errBody = await res.json()
-        if (errBody?.error) msg = errBody.error
-      } catch { /* ignore */ }
-      throw new Error(msg)
-    }
-    const payload = await res.json()
-    const bundle =
-      payload?.live != null || payload?.scheduled != null || payload?.rankingsByPlayer != null
-        ? payload
-        : payload?.data || payload
+    const bundle = isMixMode.value
+      ? await loadMixBundle()
+      : await fetchTodayBundle(apiPath.value)
     data.value = bundle
     if (isSettledMode.value && Array.isArray(bundle?.availableDates)) {
       availableSettledDates.value = bundle.availableDates
@@ -2697,6 +2796,10 @@ onMounted(() => {
     tour.value = 'all'
     pmFilter.value = 'all'
     filter.value = 'Not started'
+  } else if (isMixMode.value) {
+    tour.value = 'all'
+    pmFilter.value = 'all'
+    filter.value = 'all'
   } else if (isInplayMode.value) {
     tour.value = 'all'
     pmFilter.value = 'all'
@@ -2904,6 +3007,7 @@ defineExpose({
     <TennisBoardTopbar
       :is-inplay-mode="isInplayMode"
       :is-prematch-mode="isPrematchMode"
+      :is-mix-mode="isMixMode"
       :is-settled-mode="isSettledMode"
       :allow-batch-trade="allowBatchTrade"
       :bundle-hint="bundleHint"
@@ -2987,6 +3091,7 @@ defineExpose({
       :is-new-mode="isNewMode"
       :show-filters="showFilters"
       :is-prematch-mode="isPrematchMode"
+      :is-mix-mode="isMixMode"
       :is-inplay-mode="isInplayMode"
       :is-settled-mode="isSettledMode"
       :is-range-mode="isRangeMode"

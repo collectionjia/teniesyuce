@@ -20,20 +20,34 @@ if (!process.env.ENV_FILE) {
 
 const pool = require('../src/db');
 
-const PRODUCT = {
-  name: 'Dota2',
-  tag: 'dota2',
-  gradient: 'linear-gradient(135deg,#b91c1c,#ea580c)',
-  url: (process.env.DOTA2ELO_PRODUCT_URL || 'http://dota2elo:3001/').replace(/\/*$/, '/') ,
-  description:
-    '全球职业战队 Elo 评分与对阵预测：4 维复合评分 + 冷门风险 + 高置信度信号（HC@75）。',
-  price_month: Number(process.env.DOTA2_PRICE_MONTH || 2),
-  price_week: Number(process.env.DOTA2_PRICE_WEEK || 1),
-  price_day: Number(process.env.DOTA2_PRICE_DAY || 0.5),
-  default_plan: 'month',
-  online: 1,
-  legacyNameLike: '%Dota2%',
-};
+const PRODUCTS = [
+  {
+    name: 'dota2赛事推荐',
+    tag: 'dota2',
+    gradient: 'linear-gradient(135deg,#b91c1c,#ea580c)',
+    url: '#',
+    description: 'Polymarket 未开赛对阵列表，订阅后可下单。',
+    price_month: Number(process.env.DOTA2_PRICE_MONTH || 2),
+    price_week: Number(process.env.DOTA2_PRICE_WEEK || 1),
+    price_day: Number(process.env.DOTA2_PRICE_DAY || 0.5),
+    default_plan: 'month',
+    online: 1,
+    legacyNameLike: '%Dota2%',
+  },
+  {
+    name: 'nfl赛事推荐',
+    tag: 'nfl',
+    gradient: 'linear-gradient(135deg,#1d4ed8,#0f766e)',
+    url: '#',
+    description: 'Polymarket 未开赛对阵列表，订阅后可下单。',
+    price_month: Number(process.env.NFL_PRICE_MONTH || 2),
+    price_week: Number(process.env.NFL_PRICE_WEEK || 1),
+    price_day: Number(process.env.NFL_PRICE_DAY || 0.5),
+    default_plan: 'month',
+    online: 1,
+    legacyNameLike: 'NFL',
+  },
+];
 
 async function upsertOne(p) {
   const [rows] = await pool.query(
@@ -95,7 +109,7 @@ async function main() {
   } catch {
     /* ignore */
   }
-  await upsertOne(PRODUCT);
+  for (const p of PRODUCTS) await upsertOne(p);
   await pool.end();
 }
 

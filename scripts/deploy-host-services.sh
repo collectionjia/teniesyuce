@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 五引擎跑在宿主机（9101–9105），server Docker 经 host.docker.internal 访问
-# 测试: SERVER_ENV_FILE=server/.env.test  生产: SERVER_ENV_FILE=server/.env
+# 测试: SERVER_ENV_FILE=server/.env.test  生产: SERVER_ENV_FILE=server/.env.prod
 #   bash scripts/deploy-host-services.sh restart
 #   bash scripts/deploy-host-services.sh stop
 #   bash scripts/deploy-host-services.sh status
@@ -21,12 +21,16 @@ fi
 
 mkdir -p "$LOG_DIR"
 
+# 测试环境 Redis 常占用宿主机 9101，可设 COLLECT_HOST_PORT=9111 避开
+# 测试环境若有容器占用 9105，可设 SCHEDULER_HOST_PORT=9115
+COLLECT_PORT="${COLLECT_HOST_PORT:-9101}"
+SCHEDULER_PORT="${SCHEDULER_HOST_PORT:-9105}"
 declare -A PORTS=(
-  [collect]=9101
+  [collect]="$COLLECT_PORT"
   [rules]=9102
   [betting]=9103
   [stop-loss]=9104
-  [scheduler]=9105
+  [scheduler]="$SCHEDULER_PORT"
 )
 
 pid_file() { echo "$LOG_DIR/$1.pid"; }
@@ -75,16 +79,24 @@ start_one() {
     export ENV_FILE="$ENV_FILE"
     export SERVER_ROOT="$ROOT/server"
     export PORT="$port"
+    # serverBridge 会 require server/src/services/*，需能解析到 server 的依赖
+    export NODE_PATH="$ROOT/server/node_modules${NODE_PATH:+:$NODE_PATH}"
     # 宿主机：仅显式设置时覆盖（145 外部 MySQL 等走 ENV_FILE；Redis 生产常设 REDIS_URL_HOST）
     if [[ -n "${DB_HOST_HOST:-}" ]]; then export DB_HOST="$DB_HOST_HOST"; fi
     if [[ -n "${DB_PORT_HOST:-}" ]]; then export DB_PORT="$DB_PORT_HOST"; fi
     if [[ -n "${REDIS_URL_HOST:-}" ]]; then export REDIS_URL="$REDIS_URL_HOST"; fi
     if [[ "$name" == scheduler ]]; then
       export EXECUTOR_MODE=http
-      export COLLECT_URL=http://127.0.0.1:9101
+      export COLLECT_URL="http://127.0.0.1:${COLLECT_PORT}"
       export RULES_URL=http://127.0.0.1:9102
       export BETTING_URL=http://127.0.0.1:9103
       export STOP_LOSS_URL=http://127.0.0.1:9104
+    fi
+    # 宿主机进程不能解析 compose 服务名，Elo 走本机映射端口
+    if [[ "$name" == collect || "$name" == scheduler ]]; then
+      export DOTA2ELO_URL="http://127.0.0.1:${DOTA2ELO_HOST_PORT:-8893}"
+      export DOTA2ELO_PRODUCT_URL="$DOTA2ELO_URL/"
+      export NFLELO_URL="http://127.0.0.1:${NFLELO_HOST_PORT:-8894}"
     fi
     nohup npm run dev >> "$LOG_DIR/$name.log" 2>&1 &
     echo $! > "$(pid_file "$name")"

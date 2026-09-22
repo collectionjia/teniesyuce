@@ -17,7 +17,7 @@ const autoRefresh = ref(true)
 let refreshTimer = null
 
 const SERVICE_META = [
-  { id: 'collect', label: '采集服务', port: 9101, color: 'from-emerald-500 to-lime-500', settingsView: 'tennis-collect', settingsLabel: '采集引擎' },
+  { id: 'collect', label: '采集服务', port: 9111, color: 'from-emerald-500 to-lime-500', settingsView: 'tennis-collect', settingsLabel: '采集引擎' },
   { id: 'rules', label: '规则服务', port: 9102, color: 'from-amber-500 to-yellow-500', settingsView: 'tennis-condition', settingsLabel: '条件引擎' },
   { id: 'betting', label: '投注服务', port: 9103, color: 'from-violet-500 to-fuchsia-500', settingsView: 'tennis-condition', settingsLabel: '条件引擎' },
   { id: 'stopLoss', label: '止损服务', port: 9104, color: 'from-rose-500 to-orange-500', settingsView: 'tennis-stop', settingsLabel: '止损引擎' },

@@ -4,6 +4,7 @@ defineProps({
   isNewMode: { type: Boolean, default: false },
   showFilters: { type: Boolean, default: false },
   isPrematchMode: { type: Boolean, default: false },
+  isMixMode: { type: Boolean, default: false },
   isInplayMode: { type: Boolean, default: false },
   isSettledMode: { type: Boolean, default: false },
   isRangeMode: { type: Boolean, default: false },
@@ -77,7 +78,7 @@ const emit = defineEmits([
       </div>
     </div>
 
-    <div v-if="showFilters && !isPrematchMode && !isInplayMode && !isSettledMode" class="filter-panel">
+    <div v-if="showFilters && !isPrematchMode && !isInplayMode && !isSettledMode && !isMixMode" class="filter-panel">
       <button type="button" class="filter-toggle" @click="emit('update:filtersOpen', !filtersOpen)">
         <span class="filter-toggle-main">
           <span class="filter-toggle-title">筛选</span>
@@ -87,7 +88,7 @@ const emit = defineEmits([
       </button>
 
       <div v-show="filtersOpen" class="filter-body">
-        <div v-if="!isInplayMode && !isPrematchMode && !isSettledMode" class="filters">
+        <div v-if="!isInplayMode && !isPrematchMode && !isSettledMode && !isMixMode" class="filters">
           <button type="button" :class="{ active: filter === 'all' }" @click="setStatusFilter('all')">全部</button>
           <button type="button" :class="{ active: filter === 'Not started' }" @click="setStatusFilter('Not started')">未开始</button>
           <button type="button" :class="{ active: filter === 'liveish' }" @click="setStatusFilter('liveish')">进行中</button>

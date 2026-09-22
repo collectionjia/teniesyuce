@@ -5,22 +5,20 @@
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import TennisBoardBatchBar from './tennis-board/TennisBoardBatchBar.vue'
-import {
-  fetchDota2Markets,
-  refreshDota2Markets,
-  placeDota2TradeBatch,
-} from '../api'
+import api from '../api'
 
 const props = defineProps({
+  sport: { type: String, default: 'dota2' },
   isMember: { type: Boolean, default: false },
   canBatchTrade: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['auto-bet-change', 'placed-orders-change'])
 
-const AUTO_BET_KEY = 'yuce.dota2.autoBet.v1'
-const BATCH_AMOUNT_KEY = 'yuce.dota2.batchAmountUsd.v1'
-const AUTO_PLACED_KEY = 'yuce.dota2.autoPlaced.v1'
+const sport = computed(() => (props.sport === 'nfl' ? 'nfl' : 'dota2'))
+const AUTO_BET_KEY = computed(() => `yuce.${sport.value}.autoBet.v1`)
+const BATCH_AMOUNT_KEY = computed(() => `yuce.${sport.value}.batchAmountUsd.v1`)
+const AUTO_PLACED_KEY = computed(() => `yuce.${sport.value}.autoPlaced.v1`)
 const POLL_MS = 45_000
 const PAGE_SIZE = 5
 
@@ -30,6 +28,16 @@ const error = ref('')
 const marketMeta = ref(null)
 const marketRows = ref([])
 const detailMatch = ref(null)
+const detailHelpOpen = ref(false)
+const DETAIL_TIPS = [
+  { k: '优', t: 'Elo 胜率更高的一侧。' },
+  { k: '一致', t: 'Elo 看好的一边和 Polymarket 价格更高的一边相同。' },
+  { k: '不一致', t: 'Elo 方向和 Polymarket 高价方向相反。' },
+  { k: 'Elo', t: '模型给出的胜率。卡片上方数字是该侧 Elo 分。' },
+  { k: 'Elo差', t: '双方 Elo 分差的绝对值。' },
+  { k: 'polymarket赔率', t: 'Polymarket 隐含占比，价格换算成百分数。' },
+  { k: '外', t: '已匹配到 Polymarket 赛事页。' },
+]
 const currentPage = ref(1)
 
 const autoSimBetEnabled = ref(false)
@@ -127,10 +135,10 @@ function normalizeRows(raw) {
 
 function loadPersisted() {
   try {
-    autoSimBetEnabled.value = localStorage.getItem(AUTO_BET_KEY) === '1'
-    const amt = Number(localStorage.getItem(BATCH_AMOUNT_KEY))
+    autoSimBetEnabled.value = localStorage.getItem(AUTO_BET_KEY.value) === '1'
+    const amt = Number(localStorage.getItem(BATCH_AMOUNT_KEY.value))
     if (Number.isFinite(amt) && amt >= 1) batchAmountUsd.value = String(amt)
-    const placed = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY) || '[]')
+    const placed = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')
     if (Array.isArray(placed)) {
       placedOrders.value = placed.slice(-200)
       autoPlacedIds.value = new Set(placed.map((r) => r.id || placeKey(r)).filter(Boolean))
@@ -143,9 +151,9 @@ function loadPersisted() {
 
 function savePersisted() {
   try {
-    localStorage.setItem(AUTO_BET_KEY, autoSimBetEnabled.value ? '1' : '0')
-    localStorage.setItem(BATCH_AMOUNT_KEY, String(Number(batchAmountUsd.value) || 1))
-    localStorage.setItem(AUTO_PLACED_KEY, JSON.stringify(placedOrders.value.slice(-200)))
+    localStorage.setItem(AUTO_BET_KEY.value, autoSimBetEnabled.value ? '1' : '0')
+    localStorage.setItem(BATCH_AMOUNT_KEY.value, String(Number(batchAmountUsd.value) || 1))
+    localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify(placedOrders.value.slice(-200)))
   } catch { /* ignore */ }
 }
 
@@ -192,10 +200,12 @@ const selectedCount = computed(() => selectedIds.value.size)
 
 const emptyListHint = computed(() => {
   const scanned = marketMeta.value?.scanned
+  const model = sport.value === 'nfl' ? 'nflelo' : 'dota2elo'
   if (scanned > 0 && !marketRows.value.length) {
-    return `Polymarket 扫描 ${scanned} 场，暂无同时匹配 dota2elo 的场次`
+    return `Polymarket 扫描 ${scanned} 场，暂无同时匹配 ${model} 的场次`
   }
-  return '暂无盘口（刷新采集 Polymarket Dota 对阵）'
+  const label = sport.value === 'nfl' ? 'NFL' : 'Dota'
+  return `暂无盘口（刷新采集 Polymarket ${label} 对阵）`
 })
 
 const bundleHint = computed(() => {
@@ -261,11 +271,23 @@ function goPage(p) {
 
 function openDetail(m) {
   if (!props.isMember) return
+  detailHelpOpen.value = false
   detailMatch.value = m
 }
 
 function closeDetail() {
   detailMatch.value = null
+  detailHelpOpen.value = false
+}
+
+function toggleDetailHelp(e) {
+  e?.stopPropagation?.()
+  detailHelpOpen.value = !detailHelpOpen.value
+}
+
+function pmCents(m, side) {
+  const v = Number(m?.prices?.[side === 'a' ? 0 : 1])
+  return Number.isFinite(v) ? String(Math.round(v * 100)) : '—'
 }
 
 function openMarket(m) {
@@ -280,7 +302,7 @@ async function loadMarkets({ quiet = false } = {}) {
     error.value = ''
   }
   try {
-    const data = await fetchDota2Markets()
+    const { data } = await api.get(`/${sport.value}/markets`)
     marketMeta.value = data
     marketRows.value = normalizeRows(data?.matches)
     const serverPlaced = Array.isArray(data?.placed) ? data.placed : []
@@ -305,7 +327,7 @@ async function refreshCollect() {
   error.value = ''
   batchError.value = ''
   try {
-    const data = await refreshDota2Markets()
+    const { data } = await api.post(`/${sport.value}/markets/refresh`)
     marketMeta.value = data
     marketRows.value = normalizeRows(data?.matches)
     await loadMarkets({ quiet: true })
@@ -400,7 +422,7 @@ async function placeOrders(orders, { auto = false } = {}) {
   batchError.value = ''
   if (!auto) batchNotice.value = ''
   try {
-    const resp = await placeDota2TradeBatch(payload)
+    const { data: resp } = await api.post(`/${sport.value}/trade/batch`, payload)
     const results = Array.isArray(resp?.results) ? resp.results : []
     let ok = 0
     let skip = 0
@@ -589,6 +611,7 @@ defineExpose({
                 <span v-else-if="m.passList" class="badge edge">过线</span>
                 <span v-if="m.url" class="badge poly">外</span>
                 <span v-if="m.pickSide" class="badge pick">优</span>
+                <span v-if="m.align" class="badge" :class="m.align === '一致' ? 'agree' : 'disagree'">{{ m.align }}</span>
               </div>
             </div>
             <div class="row-main">
@@ -642,50 +665,115 @@ defineExpose({
       <div v-if="detailMatch" class="modal-mask" @click.self="closeDetail">
         <div class="modal-sheet" role="dialog" aria-modal="true">
           <div class="modal-head">
-            <div class="modal-title">详情</div>
-            <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
-            <div class="modal-meta">
-              <span :class="{ today: isStartSameDay(detailMatch.startTimestamp) }">{{ fmtTime(detailMatch.startTimestamp) }}</span>
-              · 未开
-              <template v-if="detailMatch.is_high_confidence"> · 高置信度</template>
-            </div>
-            <div class="badges modal-badges">
-              <span v-if="detailMatch.is_high_confidence" class="badge hc">HC</span>
-              <span v-else-if="detailMatch.passList" class="badge edge">过线</span>
-              <span v-if="detailMatch.url" class="badge poly">外</span>
-              <span v-if="detailMatch.pickSide" class="badge pick">优</span>
-            </div>
-          </div>
-          <div class="duel">
-            <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'a' }">
-              <div class="duel-elo">Elo {{ num(detailMatch.teamA?.rating) }}</div>
-              <div class="duel-name">{{ detailMatch.home }}</div>
-              <div class="duel-prob">{{ sideProb(detailMatch, 'a') }}</div>
-              <div class="duel-pm">PM {{ pmPrice(detailMatch, 'a') }}</div>
-            </div>
-            <div class="duel-mid">
-              <div class="bar-wrap">
-                <div class="bar" :style="{ width: `${Math.round(Number(detailMatch.pA || 0.5) * 100)}%` }" />
+            <div class="modal-head-main">
+              <div class="modal-title">详情</div>
+              <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
+              <div class="modal-meta">
+                <span>{{ detailMatch.title || (sport === 'nfl' ? 'NFL' : 'Dota2') }}</span>
+                · <span :class="{ today: isStartSameDay(detailMatch.startTimestamp) }">{{ fmtTime(detailMatch.startTimestamp) }}</span>
+                · 未开
               </div>
-              <div class="muted">Elo差 {{ num(detailMatch.eloDiff) }}</div>
-              <div class="muted">风险分 {{ detailMatch.risk_points ?? '—' }}</div>
-              <div v-if="detailMatch.pickName" class="pick-line">荐 {{ detailMatch.pickName }}</div>
+              <div class="badges modal-badges">
+                <span v-if="detailMatch.is_high_confidence" class="badge hc">HC</span>
+                <span v-else-if="detailMatch.passList" class="badge edge">过线</span>
+                <span v-if="detailMatch.url" class="badge poly">外</span>
+                <span v-if="detailMatch.pickSide" class="badge pick">优{{ detailMatch.pickSide === 'a' ? detailMatch.home : detailMatch.away }}</span>
+                <span v-if="detailMatch.align" class="badge" :class="detailMatch.align === '一致' ? 'agree' : 'disagree'">{{ detailMatch.align }}</span>
+              </div>
             </div>
-            <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'b' }">
-              <div class="duel-elo">Elo {{ num(detailMatch.teamB?.rating) }}</div>
-              <div class="duel-name">{{ detailMatch.away }}</div>
-              <div class="duel-prob">{{ sideProb(detailMatch, 'b') }}</div>
-              <div class="duel-pm">PM {{ pmPrice(detailMatch, 'b') }}</div>
+            <div class="modal-head-actions">
+              <button
+                type="button"
+                class="help-bang modal-help-bang"
+                :class="{ on: detailHelpOpen }"
+                title="字段说明"
+                aria-label="字段说明"
+                @click="toggleDetailHelp"
+              >!</button>
+              <button type="button" class="modal-x" aria-label="关闭" @click="closeDetail">×</button>
             </div>
           </div>
-          <div class="modal-actions">
+
+          <div v-if="detailHelpOpen" class="modal-help-panel">
+            <div class="modal-help-title">字段说明</div>
+            <ul class="modal-help-list">
+              <li v-for="item in DETAIL_TIPS" :key="item.k">
+                <b>{{ item.k }}</b>：{{ item.t }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="modal-body">
+            <div class="duel">
+              <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'a' }">
+                <div class="duel-top">
+                  <span class="duel-rank">{{ num(detailMatch.teamA?.rating) }}</span>
+                </div>
+                <div class="duel-name">
+                  {{ detailMatch.home }}
+                  <span v-if="detailMatch.pickSide === 'a'" class="pick-tag">优</span>
+                </div>
+                <div class="duel-sub">胜率 {{ sideProb(detailMatch, 'a') }}</div>
+              </div>
+              <div class="duel-vs">VS</div>
+              <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'b' }">
+                <div class="duel-top">
+                  <span class="duel-rank">{{ num(detailMatch.teamB?.rating) }}</span>
+                </div>
+                <div class="duel-name">
+                  {{ detailMatch.away }}
+                  <span v-if="detailMatch.pickSide === 'b'" class="pick-tag">优</span>
+                </div>
+                <div class="duel-sub">胜率 {{ sideProb(detailMatch, 'b') }}</div>
+              </div>
+            </div>
+
+            <div class="kv-grid">
+              <div class="kv">
+                <span class="k">Elo差</span>
+                <span class="v rank-curr">{{ num(detailMatch.eloDiff) }}</span>
+                <span class="s">{{ num(detailMatch.teamA?.rating) }} − {{ num(detailMatch.teamB?.rating) }}</span>
+              </div>
+              <div class="kv">
+                <span class="k">方向</span>
+                <span class="v" :class="detailMatch.align === '一致' ? 'rank-curr' : 'rank-best'">{{ detailMatch.align || '—' }}</span>
+                <span class="s">Elo 与 Polymarket 高价侧</span>
+              </div>
+              <div class="kv wide">
+                <span class="k">Elo</span>
+                <span class="v">{{ detailMatch.pickName || '—' }} {{ sideProb(detailMatch, detailMatch.pickSide || 'a') }}</span>
+                <span class="s">
+                  {{ detailMatch.home }} {{ sideProb(detailMatch, 'a') }}
+                  · {{ detailMatch.away }} {{ sideProb(detailMatch, 'b') }}
+                  · {{ sport === 'nfl' ? 'nflelo' : 'dota2elo' }}
+                </span>
+              </div>
+              <div v-if="detailMatch.url" class="kv">
+                <span class="k">polymarket赔率</span>
+                <div class="kv-lines">
+                  <div class="kv-line">
+                    <span class="n">{{ detailMatch.home }}</span>
+                    <span class="num">{{ pmCents(detailMatch, 'a') }}</span>
+                  </div>
+                  <div class="kv-line">
+                    <span class="n">{{ detailMatch.away }}</span>
+                    <span class="num">{{ pmCents(detailMatch, 'b') }}</span>
+                  </div>
+                </div>
+                <span class="s">隐含占比</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <button type="button" class="act-btn" @click="closeDetail">关闭</button>
             <button
               type="button"
               class="act-btn market"
               :disabled="!detailMatch.url"
+              :title="detailMatch.url ? '打开 Polymarket' : '暂无对应外链'"
               @click="openMarket(detailMatch)"
-            >外链</button>
-            <button type="button" class="act-btn" @click="closeDetail">关闭</button>
+            >polymarket赔率</button>
           </div>
         </div>
       </div>
@@ -884,6 +972,8 @@ defineExpose({
 .badge.edge { background: #ecfdf5; color: #047857; }
 .badge.poly { background: #f5f3ff; color: #6d28d9; }
 .badge.pick { background: var(--primary); color: #fff; }
+.badge.agree { background: #ecfdf5; color: #047857; }
+.badge.disagree { background: #fef2f2; color: #b91c1c; }
 .row-main {
   display: flex;
   align-items: center;
@@ -1045,6 +1135,10 @@ defineExpose({
 .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .modal-mask {
+  --line: #e2e8f0;
+  --muted: #94a3b8;
+  --primary: #4f46e5;
+  --primary-soft: #eef2ff;
   position: fixed;
   inset: 0;
   z-index: 80;
@@ -1052,50 +1146,194 @@ defineExpose({
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 12px;
+  padding: 8px;
 }
 .modal-sheet {
-  width: min(520px, 100%);
-  max-height: min(86vh, 720px);
-  overflow: auto;
+  width: 100%;
+  max-width: 26rem;
+  max-height: min(88vh, 720px);
   background: #fff;
-  border-radius: 16px 16px 12px 12px;
-  padding: 14px 14px 18px;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  border-radius: 14px 14px 12px 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
-.modal-title { font-size: 1rem; font-weight: 800; }
-.modal-sub { margin-top: 2px; font-size: 0.9rem; font-weight: 700; color: #334155; }
-.modal-meta { margin-top: 4px; font-size: 0.72rem; color: #94a3b8; }
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modal-head-main { min-width: 0; flex: 1; }
+.modal-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.modal-title { font-size: 0.92rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
+.modal-sub { margin-top: 2px; font-size: 0.88rem; font-weight: 700; color: #334155; line-height: 1.3; }
+.modal-meta {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .modal-meta .today { color: #dc2626; font-weight: 700; }
-.modal-badges { margin-top: 8px; }
+.modal-badges { margin-top: 6px; justify-content: flex-start; }
+.modal-x {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.help-bang.modal-help-bang {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #c2410c;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.help-bang.modal-help-bang.on {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #fff;
+}
+.modal-help-panel {
+  padding: 10px 12px;
+  border-bottom: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.modal-help-title { font-size: 0.8rem; font-weight: 800; margin-bottom: 6px; }
+.modal-help-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  font-weight: 600;
+}
+.modal-help-list li { margin-bottom: 4px; }
+.modal-help-list b { color: #7c2d12; }
+.modal-body {
+  padding: 10px 12px 12px;
+  overflow-y: auto;
+}
+.modal-foot {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid #f1f5f9;
+}
+.modal-foot .act-btn { flex: 1; padding: 10px; font-size: 0.86rem; }
 .duel {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+.duel-vs {
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+.duel-side {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 9px;
+  min-width: 0;
+  text-align: left;
+}
+.duel-side.pick {
+  border-color: #c7d2fe;
+  background: var(--primary-soft);
+}
+.duel-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.duel-rank {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #2563eb;
+  font-variant-numeric: tabular-nums;
+}
+.duel-name {
+  margin-top: 3px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.25;
+  word-break: break-word;
+  display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
 }
-.duel-side { text-align: center; }
-.duel-side.pick .duel-name { color: var(--primary); }
-.duel-elo { font-size: 0.68rem; color: #64748b; font-weight: 700; }
-.duel-name { font-size: 0.95rem; font-weight: 800; margin: 4px 0; }
-.duel-prob { font-size: 1.25rem; font-weight: 800; color: #0f172a; }
-.duel-pm { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
-.duel-mid { text-align: center; min-width: 88px; }
-.bar-wrap {
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-.bar { height: 100%; background: var(--success); }
-.muted { font-size: 0.68rem; color: #94a3b8; }
-.pick-line { margin-top: 6px; font-size: 0.75rem; font-weight: 800; color: var(--primary); }
-.modal-actions {
+.duel-side.pick .duel-name { color: #3730a3; }
+.duel-sub { margin-top: 3px; font-size: 0.68rem; color: #64748b; line-height: 1.35; }
+.kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.kv {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 7px 8px;
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
+.kv.wide { grid-column: 1 / -1; }
+.kv .k { font-size: 0.68rem; font-weight: 700; color: #94a3b8; letter-spacing: 0.02em; }
+.kv .v {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.kv .v.rank-curr { color: #2563eb; }
+.kv .v.rank-best { color: #dc2626; }
+.kv .s { font-size: 0.68rem; line-height: 1.35; font-weight: 600; color: #64748b; }
+.kv-lines { display: grid; gap: 3px; margin-top: 1px; }
+.kv-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.kv-line .n {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kv-line .num { font-size: 0.88rem; font-weight: 800; color: #0f172a; flex-shrink: 0; }
 </style>

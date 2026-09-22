@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node src/index.js",
-    "dev:test": "node scripts/run-test.js",
+    "start": "node scripts/run-env.js local",
+    "dev": "node scripts/run-env.js local",
+    "dev:test": "node scripts/run-env.js test",
+    "dev:prod": "node scripts/run-env.js prod",
     "setup:test-db": "node -e \"process.env.ENV_FILE='.env.test';require('./scripts/setup-test-db.js')\"",
     "init-db": "node scripts/init-db.js",
     "init-admin": "node scripts/seed.js"

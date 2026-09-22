@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="zh-CN" data-page-node-id="2jApSp8pNRwzxTG7G8dFw5">
+<head data-page-node-id="5XGFh0pPbVGEKXD02CQfmD">
+<meta charset="UTF-8" data-page-node-id="fgiSR3rCU7VccaqgkZJQ9f" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" data-page-node-id="kcO8YPuccAwWHtG3LoeGI3" />
+<title>TENIES · 数据分析平台 — 移动端</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" data-page-node-id="PCL8RhX9GCiymfRGERqiQD" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-page-node-id="uBw2Q8p5HQVuwG4kVTHmro" />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" data-page-node-id="Tx4xEQj2Tf85AjkIi9EiOM" />
+<style>
+:root{
+  --bg:#080a0d; --stage:#0c0f14;
+  --panel:#10151c; --panel2:#161d26; --card:#121821;
+  --line:#222c38; --line2:#2c3848;
+  --ink:#e9eff4; --mut:#8b97a6; --dim:#5c6675;
+  --volt:#b6f93c; --volt-d:#8fc928;
+  --cyan:#34e0d0; --rose:#ff5470; --amber:#ffb020;
+  --up:#2fd27a; --down:#ff5470;
+  --f-d:'Chakra Petch',system-ui,sans-serif;
+  --f-b:'IBM Plex Sans',system-ui,'PingFang SC','Microsoft YaHei',sans-serif;
+  --f-m:'IBM Plex Mono',ui-monospace,monospace;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--f-b);color:var(--ink);background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;overflow:hidden;
+  background-image:radial-gradient(900px 600px at 20% -10%,rgba(52,224,208,.10),transparent 60%),
+    radial-gradient(800px 600px at 110% 120%,rgba(182,249,60,.08),transparent 55%);
+}
+.stage{display:flex;gap:36px;align-items:center;padding:24px;max-width:100%}
+
+/* ===== 手机壳 ===== */
+.phone{
+  position:relative;width:392px;height:844px;flex:0 0 auto;
+  background:var(--bg);border-radius:46px;overflow:hidden;
+  border:11px solid #05070a;
+  box-shadow:0 0 0 2px #1b2330, 0 30px 80px -20px rgba(0,0,0,.8), 0 0 60px -10px rgba(52,224,208,.25);
+}
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:150px;height:30px;background:#05070a;border-radius:0 0 18px 18px;z-index:40;
+}
+.statusbar{
+  position:absolute;top:0;left:0;right:0;height:calc(30px + var(--safe-t));
+  padding:var(--safe-t) 26px 0;display:flex;align-items:flex-end;justify-content:space-between;
+  font-family:var(--f-m);font-size:13px;font-weight:600;color:var(--ink);z-index:35;
+  padding-bottom:4px;
+}
+.statusbar .sigs{display:flex;align-items:center;gap:5px}
+.statusbar svg{display:block}
+
+/* ===== 应用区 ===== */
+.app{position:absolute;inset:0;display:flex;flex-direction:column;
+  padding-top:calc(30px + var(--safe-t));}
+.topbar{
+  flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:10px 16px 10px;background:linear-gradient(180deg,rgba(16,21,28,.96),rgba(16,21,28,.72));
+  border-bottom:1px solid var(--line);backdrop-filter:blur(8px);z-index:20;
+}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--f-d);font-weight:700;
+  letter-spacing:.5px;font-size:16px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--volt);
+  box-shadow:0 0 10px var(--volt);animation:pulse 2.2s infinite}
+.brand b{color:var(--volt)}
+.brand small{font-family:var(--f-m);font-size:9px;color:var(--mut);letter-spacing:1px;display:block;margin-top:-2px}
+.spacer{flex:1}
+.clock{font-family:var(--f-m);font-size:12px;color:var(--cyan);font-weight:500}
+.role{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:2px}
+.role button{font-family:var(--f-b);font-size:11px;font-weight:600;color:var(--mut);
+  border:0;background:transparent;padding:5px 9px;border-radius:8px;cursor:pointer;transition:.2s}
+.role button.on{background:var(--volt);color:#06210b;box-shadow:0 2px 8px -2px var(--volt)}
+
+/* ===== Tape 行情条 ===== */
+.tape{overflow:hidden;flex:0 0 auto;background:#0a0e13;border-bottom:1px solid var(--line);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);}
+.tape-track{display:flex;gap:26px;white-space:nowrap;padding:7px 0;animation:scrollx 26s linear infinite;
+  font-family:var(--f-m);font-size:11.5px}
+.tape-track span{display:inline-flex;align-items:center;gap:6px;color:var(--mut)}
+.tape-track b{color:var(--ink);font-weight:600}
+.tape-track .u{color:var(--up)} .tape-track .d{color:var(--down)}
+
+/* ===== 内容滚动 ===== */
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.screen::-webkit-scrollbar{display:none}
+.view{display:none;padding:14px 14px 24px;animation:fade .35s ease}
+.view.active{display:block}
+
+/* ===== 通用卡片 ===== */
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;
+  position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--volt);opacity:.85}
+.card.cyan::before{background:var(--cyan)}
+.card.rose::before{background:var(--rose)}
+.card.amber::before{background:var(--amber)}
+.card .h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.card .h .t{font-weight:600;font-size:14px}
+.card .h .sub{font-size:11px;color:var(--mut);font-family:var(--f-m)}
+
+/* ===== 首屏 banner ===== */
+.hero{margin:-14px -14px 14px;padding:18px 16px;
+  background:linear-gradient(135deg,rgba(182,249,60,.14),rgba(52,224,208,.06) 60%,transparent);
+  border-bottom:1px solid var(--line)}
+.hero h1{font-family:var(--f-d);font-size:22px;margin:0 0 4px;letter-spacing:.5px}
+.hero h1 b{color:var(--volt)}
+.hero p{margin:0;font-size:12.5px;color:var(--mut);line-height:1.5}
+.hero .chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.chip{font-family:var(--f-m);font-size:11px;padding:5px 10px;border-radius:20px;
+  border:1px solid var(--line2);color:var(--ink);background:rgba(255,255,255,.03)}
+.chip.on{background:var(--volt);color:#06210b;border-color:var(--volt);font-weight:600}
+
+/* ===== 分类 pill ===== */
+.seg{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--mut);
+  font-family:var(--f-b);font-weight:600;font-size:12.5px;padding:8px 14px;border-radius:12px;cursor:pointer;transition:.2s}
+.seg button.on{background:var(--cyan);color:#04201e;border-color:var(--cyan)}
+
+/* ===== 赛事卡 ===== */
+.match{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:11px;
+  position:relative;overflow:hidden}
+.match .tag{position:absolute;top:0;right:0;font-family:var(--f-m);font-size:9.5px;font-weight:600;
+  padding:4px 9px;border-bottom-left-radius:12px;letter-spacing:.5px}
+.tag.agree{background:rgba(47,210,122,.16);color:var(--up)}
+.tag.disagree{background:rgba(255,84,112,.16);color:var(--down)}
+.tag.live{background:rgba(182,249,60,.18);color:var(--volt)}
+.match .league{font-family:var(--f-m);font-size:10.5px;color:var(--cyan);letter-spacing:.5px;margin-bottom:9px}
+.match .teams{display:flex;align-items:center;gap:8px}
+.match .team{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.match .team .nm{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.match .team .seed{font-family:var(--f-m);font-size:10px;color:var(--dim)}
+.match .vs{font-family:var(--f-d);font-size:12px;color:var(--mut);padding:0 2px}
+.match .row2{display:flex;align-items:center;justify-content:space-between;margin-top:11px;
+  padding-top:10px;border-top:1px dashed var(--line)}
+.match .dir{font-family:var(--f-d);font-weight:600;font-size:13px}
+.match .dir .lbl{font-family:var(--f-m);font-size:9.5px;color:var(--dim);display:block;font-weight:400;letter-spacing:.5px}
+.match .odds{font-family:var(--f-m);font-size:13px;color:var(--volt);font-weight:600}
+.match .time{font-family:var(--f-m);font-size:11px;color:var(--mut)}
+.pm-chip{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-family:var(--f-m);font-size:10px;
+  color:var(--cyan);background:rgba(52,224,208,.12);border:1px solid rgba(52,224,208,.28);
+  padding:3px 8px;border-radius:8px;letter-spacing:.3px}
+.pm-chip .pmc-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.pm-chip.off{color:var(--mut);background:rgba(255,255,255,.04);border-color:var(--line)}
+.pm-chip.off .pmc-dot{background:var(--mut);box-shadow:none}
+
+/* ===== 按钮 ===== */
+.btn{font-family:var(--f-b);font-weight:600;border:0;border-radius:11px;cursor:pointer;transition:.2s;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-accent{background:var(--volt);color:#06210b;box-shadow:0 6px 18px -6px var(--volt)}
+.btn-accent:active{transform:scale(.97)}
+.btn-ghost{background:var(--panel2);color:var(--ink);border:1px solid var(--line2)}
+.btn-block{width:100%;padding:13px;font-size:14px}
+.btn-sm{padding:7px 12px;font-size:12px}
+
+/* ===== 控制台宫格 ===== */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 10px;
+  display:flex;flex-direction:column;gap:7px;align-items:flex-start;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.tile:active{transform:scale(.96)}
+.tile .ic{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:rgba(52,224,208,.12);color:var(--cyan);font-size:16px}
+.tile .lb{font-size:12px;font-weight:600;line-height:1.2}
+.tile .ds{font-size:9.5px;color:var(--dim);line-height:1.3}
+.grid-head{display:flex;align-items:center;gap:8px;margin:4px 2px 11px}
+.grid-head .gt{font-family:var(--f-d);font-size:14px;font-weight:700;letter-spacing:.5px}
+.grid-head .gt small{font-family:var(--f-m);color:var(--mut);font-size:10px;letter-spacing:1px;margin-left:6px}
+
+/* ===== 我的 ===== */
+.profile{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.avatar{width:54px;height:54px;border-radius:16px;flex:0 0 auto;
+  background:conic-gradient(from 200deg,var(--volt),var(--cyan),var(--volt));
+  display:flex;align-items:center;justify-content:center;font-family:var(--f-d);font-weight:700;font-size:22px;color:#06210b}
+.profile .nm{font-weight:700;font-size:16px}
+.profile .rl{font-family:var(--f-m);font-size:11px;color:var(--cyan);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-m);font-size:10px;font-weight:600;
+  padding:3px 8px;border-radius:20px;margin-top:5px}
+.badge.ok{background:rgba(47,210,122,.15);color:var(--up)}
+.badge.warn{background:rgba(255,176,32,.15);color:var(--amber)}
+.sub-card{background:linear-gradient(135deg,rgba(52,224,208,.12),rgba(16,21,28,.6));
+  border:1px solid var(--line2);border-radius:16px;padding:14px;margin-bottom:12px}
+.sub-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sub-card .nm{font-weight:600;font-size:13.5px}
+.sub-card .price{font-family:var(--f-m);font-size:13px;color:var(--volt);font-weight:600}
+.sub-card .meta{font-size:11px;color:var(--mut);font-family:var(--f-m);margin-bottom:11px}
+.list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.list .it{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line);
+  cursor:pointer;transition:.15s}
+.list .it:last-child{border-bottom:0}
+.list .it:active{background:rgba(255,255,255,.03)}
+.list .it .ic{width:30px;height:30px;border-radius:9px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;
+  background:var(--panel2);font-size:15px}
+.list .it .lb{flex:1;font-size:13.5px;font-weight:500}
+.list .it .ar{color:var(--dim);font-family:var(--f-m);font-size:12px}
+
+/* ===== 底部 Tab ===== */
+.tabbar{flex:0 0 auto;display:flex;background:linear-gradient(180deg,rgba(16,21,28,.9),rgba(8,10,13,.98));
+  border-top:1px solid var(--line);padding:8px 0 calc(8px + var(--safe-b));backdrop-filter:blur(10px);z-index:20}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mut);
+  font-family:var(--f-b);font-size:10.5px;font-weight:600;cursor:pointer;transition:.2s;position:relative}
+.tab svg{width:23px;height:23px}
+.tab.on{color:var(--volt)}
+.tab.on svg{filter:drop-shadow(0 0 6px rgba(182,249,60,.6))}
+.tab .dotn{position:absolute;top:0;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;
+  background:var(--rose);box-shadow:0 0 6px var(--rose)}
+
+/* ===== 登录页 ===== */
+.login{position:absolute;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;
+  padding:calc(60px + var(--safe-t)) 28px 28px;overflow-y:auto}
+.login .lk{font-family:var(--f-d);font-size:30px;font-weight:700;letter-spacing:1px}
+.login .lk b{color:var(--volt)}
+.login .ls{font-family:var(--f-m);font-size:10px;color:var(--mut);letter-spacing:3px;margin-top:-2px}
+.login .ld{color:var(--mut);font-size:13px;line-height:1.6;margin:22px 0 26px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11.5px;color:var(--mut);font-family:var(--f-m);margin-bottom:7px;letter-spacing:.5px}
+.field input{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:12px;
+  padding:13px 14px;color:var(--ink);font-family:var(--f-m);font-size:14px;outline:none;transition:.2s}
+.field input:focus{border-color:var(--volt);box-shadow:0 0 0 3px rgba(182,249,60,.12)}
+.demo-hint{font-family:var(--f-m);font-size:11px;color:var(--dim);margin-top:14px;text-align:center;line-height:1.7}
+.demo-hint b{color:var(--cyan)}
+.login .foot{margin-top:auto;padding-top:18px}
+
+/* ===== 动效 ===== */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes scrollx{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.reveal{opacity:0;transform:translateY(10px)}
+.reveal.in{opacity:1;transform:none;transition:.5s cubic-bezier(.2,.7,.2,1)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ===== 侧说明（桌面） ===== */
+.notes{flex:0 0 auto;width:248px;color:var(--mut);font-size:12px;line-height:1.7}
+.notes h3{font-family:var(--f-d);color:var(--ink);font-size:15px;margin:0 0 10px;letter-spacing:.5px}
+.notes .k{color:var(--volt);font-family:var(--f-m);font-weight:600}
+.notes ul{margin:8px 0 0;padding-left:16px}
+.notes li{margin-bottom:7px}
+@media (max-width:760px){.stage{flex-direction:column;gap:0;padding:0}.notes{display:none}
+  .phone{width:100vw;height:100vh;height:100dvh;border:0;border-radius:0;box-shadow:none}}
+
+/* ===== 详情下钻页 ===== */
+.detail{position:absolute;inset:0;z-index:55;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .34s cubic-bezier(.2,.7,.2,1);overflow:hidden}
+.detail.open{transform:none}
+.detail-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;
+  padding:calc(34px + var(--safe-t)) 14px 11px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(52,224,208,.07),transparent)}
+.detail-back{width:34px;height:34px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);
+  display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:20px;cursor:pointer;flex:0 0 auto;transition:.15s}
+.detail-back:active{transform:scale(.92);background:var(--line2)}
+.detail-title{font-family:var(--f-d);font-weight:700;font-size:15px;letter-spacing:.5px;flex:1}
+.detail-title small{display:block;font-family:var(--f-m);font-size:9px;color:var(--mut);letter-spacing:1.5px;margin-top:1px}
+.detail-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;display:flex;flex-direction:column;gap:13px}
+.d-hero{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+.d-hero::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(420px 160px at 90% -20%,rgba(52,224,208,.12),transparent 60%)}
+.d-hero .lg{font-family:var(--f-m);font-size:10.5px;color:var(--cyan);letter-spacing:.5px;margin-bottom:13px;position:relative}
+.d-hero .vs-big{display:flex;align-items:center;gap:10px;position:relative}
+.d-hero .side{flex:1;min-width:0}
+.d-hero .side .nm{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-hero .side .seed{font-family:var(--f-m);font-size:11px;color:var(--dim)}
+.d-hero .side.right{text-align:right}
+.d-hero .mid{font-family:var(--f-d);color:var(--mut);font-size:13px;flex:0 0 auto}
+.d-concl{margin-top:15px;padding:12px 13px;border-radius:12px;background:rgba(182,249,60,.08);
+  border:1px solid rgba(182,249,60,.28);display:flex;align-items:center;gap:12px;position:relative}
+.d-concl .k{font-family:var(--f-m);font-size:9.5px;color:var(--dim);letter-spacing:.5px;display:block}
+.d-concl .v{font-family:var(--f-d);font-weight:700;font-size:15px;color:var(--volt)}
+.d-concl .o{margin-left:auto;text-align:right}
+.d-concl .o .ok{font-family:var(--f-m);font-size:9.5px;color:var(--dim);display:block}
+.d-concl .o .ov{font-family:var(--f-m);font-size:14px;color:var(--cyan);font-weight:600}
+.d-sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px}
+.d-sec h4{margin:0 0 9px;font-family:var(--f-d);font-size:12px;letter-spacing:.5px;color:var(--ink);
+  display:flex;align-items:center;gap:7px}
+.d-sec h4::before{content:'';width:3px;height:13px;background:var(--volt);border-radius:2px;display:inline-block}
+.d-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.d-row:last-child{border-bottom:0}
+.d-row .k{color:var(--mut);flex:0 0 auto}
+.d-row .v{font-family:var(--f-m);color:var(--ink);text-align:right}
+.d-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-m);font-size:10px;font-weight:600;
+  padding:3px 9px;border-radius:20px}
+.d-badge.agree{background:rgba(182,249,60,.15);color:var(--volt)}
+.d-badge.disagree{background:rgba(255,84,112,.15);color:var(--rose)}
+.d-badge.live{background:rgba(255,176,32,.16);color:var(--amber)}
+.d-board{background:linear-gradient(135deg,rgba(52,224,208,.10),rgba(16,21,28,.45));
+  border:1px dashed var(--line2);border-radius:12px;padding:14px;font-family:var(--f-m);font-size:11px;
+  color:var(--mut);line-height:1.9}
+.d-board b{color:var(--cyan);font-weight:600}
+.d-cta{display:flex;gap:10px}
+.d-cta .btn{flex:1}
+.d-note{font-size:11px;color:var(--dim);line-height:1.7;font-family:var(--f-m)}
+.d-input{width:100%;background:var(--panel);border:1px solid var(--line2);border-radius:11px;
+  padding:12px 13px;color:var(--ink);font-family:var(--f-m);font-size:14px;outline:none}
+.d-input:focus{border-color:var(--volt);box-shadow:0 0 0 3px rgba(182,249,60,.12)}
+.d-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.d-toggle:last-child{border-bottom:0}
+.d-switch{width:42px;height:25px;border-radius:20px;background:var(--line2);position:relative;flex:0 0 auto;transition:.2s;cursor:pointer}
+.d-switch.on{background:var(--volt)}
+.d-switch::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:.2s}
+.d-switch.on::after{transform:translateX(17px)}
+.d-empty{text-align:center;color:var(--dim);font-family:var(--f-m);font-size:11px;padding:18px 0}
+/* ===== PM · Polymarket 外链价 ===== */
+.pm-card{margin-top:8px;padding:13px;border-radius:11px;background:rgba(52,224,208,.05);
+  border:1px solid rgba(52,224,208,.22)}
+.pm-card.off{background:rgba(255,255,255,.03);border-color:var(--line);border-style:dashed}
+.pm-status{display:flex;align-items:center;gap:7px;font-family:var(--f-m);font-size:11px;font-weight:600;margin-bottom:11px}
+.pm-status.has{color:var(--cyan)}
+.pm-status.none{color:var(--mut)}
+.pm-status .pmc-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 7px var(--cyan)}
+.pm-status.none .pmc-dot{background:var(--mut);box-shadow:none}
+.pm-row{display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.pm-side{display:flex;align-items:baseline;justify-content:space-between}
+.pm-side .nm{font-size:12.5px;font-weight:600}
+.pm-val{font-family:var(--f-m);font-size:13px;font-weight:600;color:var(--volt)}
+.pm-val i{font-style:normal;font-size:10px;color:var(--dim);margin-left:4px}
+.pm-bar{height:8px;border-radius:6px;background:rgba(255,255,255,.06);overflow:hidden}
+.pm-bar .fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--volt))}
+.pm-bar.b .fill{background:linear-gradient(90deg,var(--down),#ff8aa0)}
+.pm-foot{font-family:var(--f-m);font-size:10px;color:var(--dim);line-height:1.6;margin-top:4px}
+.pm-link{display:inline-block;margin-top:10px;font-family:var(--f-m);font-size:11px;font-weight:600;
+  color:var(--ink);background:var(--volt);padding:7px 12px;border-radius:9px;text-decoration:none}
+</style>
+</head>
+<body data-page-node-id="DJMxjDpGc37TOZ0Sw2ZbFf">
+<div class="stage" data-page-node-id="y2GqRHnE3jhxAxSGz0Z4lF">
+  <!-- ===================== 手机壳 ===================== -->
+  <div class="phone" data-page-node-id="SPMAwlXGU3ctAYM027jGv7">
+    <div class="notch" data-page-node-id="cX3x4HEed1YLJsAdXrPIgW"></div>
+    <div class="statusbar" data-page-node-id="MIZaGL6IvSK6ugYIFVnTcD">
+      <span id="sb-time" data-page-node-id="V8FGCnT7N6YKWzbTsHM4si">00:00</span>
+      <span class="sigs" data-page-node-id="oXk8LlEtnFA2z1sREQqWSM">
+        <svg width="17" height="11" viewBox="0 0 17 11" data-page-node-id="9AajgCe1RdtX32nCXFXqDm"><rect x="0" y="7" width="3" height="4" rx="1" fill="#e9eff4" data-page-node-id="mhPq0rZrloFNJGGeGwBEng"/><rect x="4.5" y="5" width="3" height="6" rx="1" fill="#e9eff4" data-page-node-id="CLWa1WGMT9Koo5qPAO5Km0"/><rect x="9" y="3" width="3" height="8" rx="1" fill="#e9eff4" data-page-node-id="XaCtQQrMjOcekAaw4jxzH6"/><rect x="13.5" y="0" width="3" height="11" rx="1" fill="#e9eff4" data-page-node-id="yIilGpYqHyZz2FueRZaLQu"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" data-page-node-id="BcqQ5owICCAUGh7gPMveUC"><path d="M7.5 2.2c2 0 3.9.8 5.3 2.1l1.2-1.3C12.3 1.2 10 0.4 7.5 0.4S2.7 1.2 0.9 3l1.2 1.3C3.6 3 5.5 2.2 7.5 2.2z" fill="#e9eff4" data-page-node-id="IbK6ZeOQ7m5roDtiF2CSBV"/><path d="M7.5 6c1.1 0 2.2.4 3 1.2l1.2-1.3C10.1 4.8 8.9 4.3 7.5 4.3S4.9 4.8 3.2 5.9l1.2 1.3C5.3 6.4 6.4 6 7.5 6z" fill="#e9eff4" data-page-node-id="GdYy7L1aDBGWZQvW44uxhG"/><circle cx="7.5" cy="9.4" r="1.6" fill="#e9eff4" data-page-node-id="qFjEg5qxZBg2ENPMrJyXnc"/></svg>
+        <svg width="24" height="11" viewBox="0 0 24 11" data-page-node-id="wBD2iULlO3krGBiD9L1Zdy"><rect x="0.5" y="0.5" width="20" height="10" rx="2.5" fill="none" stroke="#e9eff4" data-page-node-id="dKiayqAjNwQXgbWESvkKdi"/><rect x="2" y="2" width="15" height="7" rx="1" fill="#e9eff4" data-page-node-id="3ZDGRFEqWtS0LghntYuMMN"/><rect x="22" y="3.5" width="1.6" height="4" rx="0.8" fill="#e9eff4" data-page-node-id="LgIHP9VQt4DXCiFmSFm5Rl"/></svg>
+      </span>
+    </div>
+
+    <!-- 登录页 -->
+    <div class="login" id="login" data-page-node-id="xz0ADFoqQE0zvymNvP88CI">
+      <div class="lk" data-page-node-id="TvzQgT7oydlPQlFPQYn2hw">TE<b data-page-node-id="DfuJ4k7OA6709wcbNm6t3X">NI</b>ES</div>
+      <div class="ls" data-page-node-id="M9sCWERWbbvxs2pfw3jX0d">TENNIS · BTC · DOTA2 DATA</div>
+      <p class="ld" data-page-node-id="lAcSJByC9yltqEDN63ER0u">多市场数据采集与策略引擎控制台。<br data-page-node-id="8G7Q3jKjF5P1lhK2Kp4vNG"/>登录后进入移动端工作台。</p>
+      <div class="field" data-page-node-id="IOvESX4FN61UvBFSJKrjOs">
+        <label data-page-node-id="55aqk309NahgdZKPHvB0sQ">账号 ACCOUNT</label>
+        <input id="u" value="admin@demo.com" autocomplete="off" data-page-node-id="qPAeZCfxXme0EpH0nuJVvq" />
+      </div>
+      <div class="field" data-page-node-id="2vvHDBc64Dycx6wNcobKbW">
+        <label data-page-node-id="gfj5fvQet3H6rXIGbUBdtP">密码 PASSWORD</label>
+        <input id="p" type="password" value="123456x@" data-page-node-id="Ajvwm4wqhTPxRwGpnKIHiA" />
+      </div>
+      <div class="foot" data-page-node-id="17db30LOHVKZ1qFibRhmZ8">
+        <button class="btn btn-accent btn-block" id="loginBtn" data-page-node-id="uRlSRwgqnojQUCStcnciBW">登 录</button>
+        <p class="demo-hint" data-page-node-id="JCrRbBhhOsMuACTzdDWnlv">演示账号<br data-page-node-id="5HFyFB8THyqKBwZTkL4tVm"/><b data-page-node-id="lHQbK2ZRtOe5zmiRgqGw5f">admin@demo.com</b> · <b data-page-node-id="ZlbSsDqOaNEWUK6wV8wGeu">123456x@</b></p>
+      </div>
+    </div>
+
+    <!-- 应用主体 -->
+    <div class="app" id="app" style="display:none" data-page-node-id="DOgMJDbM8WCYf7rhQlJgXP">
+      <header class="topbar" data-page-node-id="D0GwJWqFqQEA3hoxbsn2Wi">
+        <div class="brand" data-page-node-id="T5HlHfotfp9I10MXQuVnbc"><span class="dot" data-page-node-id="O3kH4IYcihZ5awB5BrUCBl"></span><div data-page-node-id="FRtq8o1FwGs1XjrWfonL4V">TEN<b data-page-node-id="GCuFv403vO32W3CMG7C0FK">IES</b><small data-page-node-id="T39mFLJ3eEiFHF6BeHn85v">DATA TERMINAL</small></div></div>
+        <div class="spacer" data-page-node-id="GKdxQEz09kkQLBpo4xob7r"></div>
+        <span class="clock" id="clock" data-page-node-id="AahD2stuJo6fOFOUtpi5Ct">--:--:--</span>
+        <div class="role" id="role" data-page-node-id="HBLarc2wyibVJH6Jqefkiv">
+          <button data-r="user" class="on" data-page-node-id="naUCzZ91gYtPKQOldApiCY">用户</button>
+          <button data-r="agent" data-page-node-id="Z0pUMv1KYB8ZSfmCV4ELAF">代理</button>
+          <button data-r="admin" data-page-node-id="Zwpqk5q7kTO0iicTZVA00H">管理</button>
+        </div>
+      </header>
+
+      <div class="tape" data-page-node-id="Emx8p0j9T4kLw0qrEEIlVG"><div class="tape-track" id="tape" data-page-node-id="4ahMNFXdUOu5VTyZ8ixVs5"></div></div>
+
+      <main class="screen" id="screen" data-page-node-id="MNrpEjqwLqW8pYQSz5glus">
+        <!-- 首页 -->
+        <section class="view active" id="v-home" data-page-node-id="DA6BI5vgacuhrFFBauvBfC">
+          <div class="hero reveal" data-page-node-id="gixh1KVlOwrwbiBDBLS9NH">
+            <h1 data-page-node-id="nUAxO3Q8NHOFPXbFfBHTCq">赛事<b data-page-node-id="EB8W8dYCrxWbsKE0rFMPD9">推荐</b>流</h1>
+            <p data-page-node-id="OYt61GrBX3NPcCP5mwCvYY">覆盖网球 / Dota2 / NFL 多市场方向信号，开通后查看「一致 / 不一致」结论。</p>
+            <div class="chips" data-page-node-id="w4guzuo59enwIcR0BWhuHZ">
+              <span class="chip on" data-page-node-id="pTd16r77TZAWi3qLBsHC15">实时</span><span class="chip" data-page-node-id="3hsdTZVTznjUuXkne5YqLr">盘前</span>
+              <span class="chip" data-page-node-id="36CpXjKm1TnoEX1LkKqrG9">盘中</span><span class="chip" data-page-node-id="O0XOZkS0nJRTVMH6kaQxaL">完赛</span>
+            </div>
+          </div>
+          <div class="seg reveal" id="catSeg" data-page-node-id="d1oo0tOLmL7ybR8IEySPfA">
+            <button class="on" data-c="all" data-page-node-id="7BWi3iVpEtK8ra0OjCrtUV">全部</button>
+            <button data-c="tennis" data-page-node-id="A8nA79DU4MsEADakzMfUwq">网球</button>
+            <button data-c="dota2" data-page-node-id="xtWTKlaTcnJqN3zSIYsEd1">Dota2</button>
+            <button data-c="nfl" data-page-node-id="HeUV5WBX4iSE2tI8XZnCgL">NFL</button>
+          </div>
+          <div id="matchList" data-page-node-id="wbODA01TSNoI4AUsnxGBFF"></div>
+        </section>
+
+        <!-- 控制台 -->
+        <section class="view" id="v-console" data-page-node-id="8iUDLA4Ly31LJP0vhy3RzE">
+          <div class="grid-head reveal" id="consoleHead" data-page-node-id="sl0hgzNEwwEBbO400L6Mga"><span class="gt" data-page-node-id="IC4j9TQMIlaCG9XEdZA3gh">控制台 <small data-page-node-id="gLlraBgGcBtxPRzf23reGI">CONSOLE</small></span></div>
+          <div id="consoleGrid" class="reveal" data-page-node-id="sCOtSloxVHimXbfF1LIpjH"></div>
+        </section>
+
+        <!-- 我的 -->
+        <section class="view" id="v-mine" data-page-node-id="fhwm9fEJY4MlTuxbq7MF3Y">
+          <div class="profile reveal" data-page-node-id="bT5tk6VceMkn8dV0xa77dd">
+            <div class="avatar" data-page-node-id="dYfykg7SjC1hgdHRLrOyGX">曹</div>
+            <div data-page-node-id="HW0g9ak5VZMgjlzhkCZd7q">
+              <div class="nm" data-page-node-id="uCzBZOhG2Dg5xERzZUDxua">曹先生</div>
+              <div class="rl" id="mineRole" data-page-node-id="aEYwRCJRrwa8EoaqDAV5qz">角色 · 用户</div>
+              <span class="badge ok" id="mineBadge" data-page-node-id="MGEQMdV7uREfM1QIr6Ahls">● 已认证</span>
+            </div>
+          </div>
+
+          <div class="sub-card reveal" data-page-node-id="70nrGO4SwB5wOnkLJY6oKb">
+            <div class="top" data-page-node-id="aYaIYPTsDSd66DRyrGsVA7"><span class="nm" id="subName" data-page-node-id="ol5CzvHnGeau5akFV9skuc">网球月卡</span><span class="price" data-page-node-id="AnJMV3ARZnHoOlEVbEAx6k">¥198/月</span></div>
+            <div class="meta" id="subMeta" data-page-node-id="mCqWbo7ebx2brZroFeVojx">状态：已订阅 · 到期 2026-10-15 · 剩 23 天</div>
+            <button class="btn btn-accent btn-block btn-sm" data-page-node-id="wMvLCNdf16xXc3F7Ml7eIt">续费 / 延长</button>
+          </div>
+
+          <div class="list reveal" data-page-node-id="oUAA7UkdEMDGzKN2sTVsra">
+            <div class="it" data-page-node-id="Edk8uIps4YwijiNcU7Pd6r"><span class="ic" data-page-node-id="8r7Y8MtzVrUpmins02gfsw">📡</span><span class="lb" data-page-node-id="Kba09aczPnVPtrzCnyZzoa">我的订阅</span><span class="ar" data-page-node-id="UFSR7uTglWBPp5U7SFMEQP">›</span></div>
+            <div class="it" data-page-node-id="l19EBC3rxTWEpr021zmoSm"><span class="ic" data-page-node-id="hA3s1kYwLL7XhT2r6ZG4H0">🎟️</span><span class="lb" data-page-node-id="8y5HBGMNruCb840G6TfFNX">兑换码</span><span class="ar" data-page-node-id="XOQDwFAFdbxiLt7zwbtGsS">›</span></div>
+            <div class="it" data-page-node-id="A0abO6GZtHh6fYcOfnst7R"><span class="ic" data-page-node-id="Pwvd8Q5tEEK6bwftXAW8KC">🧾</span><span class="lb" data-page-node-id="BqFtkcjl4vfmbRfe3z3YIE">订单中心</span><span class="ar" data-page-node-id="smkhRi81veeMgJRYCdF9iN">›</span></div>
+            <div class="it" data-page-node-id="VFstmEUNMLPUpxzHiMadu8"><span class="ic" data-page-node-id="T6tz0fdQkTeuBRySRsUO2U">👥</span><span class="lb" data-page-node-id="A27WnmjTDfVLuCCD5ZVWSC">分销概览</span><span class="ar" data-page-node-id="blt33ZatSWNmRP1DQ4K4kl">›</span></div>
+            <div class="it" data-page-node-id="CQl3YR56D618R5sQpOrStY"><span class="ic" data-page-node-id="gM5fV6BoydNfyj4hEcBfFg">⚙️</span><span class="lb" data-page-node-id="8YNxUqCM32zZPUgXXH4Fra">设置</span><span class="ar" data-page-node-id="fGrUiCfByVJ5OGHUsDfiRK">›</span></div>
+            <div class="it" data-page-node-id="Zez9wv9lnzeUp4kZxDOZ6q"><span class="ic" data-page-node-id="qOpizRixVmBBM6JFAmA67D">📖</span><span class="lb" data-page-node-id="qerKMAEv5lG7oGayojmyQc">帮助手册</span><span class="ar" data-page-node-id="meqJxFcDchE8dPAGu2nGF3">›</span></div>
+          </div>
+        </section>
+      </main>
+
+      <!-- 详情下钻页 -->
+      <div class="detail" id="detail">
+        <header class="detail-head">
+          <div class="detail-back" id="detailBack">‹</div>
+          <div class="detail-title" id="detailTitle">详情</div>
+        </header>
+        <div class="detail-body" id="detailBody"></div>
+      </div>
+
+      <nav class="tabbar" id="tabbar" data-page-node-id="5AxvvqXeouFXFvoONwWblB">
+        <div class="tab on" data-v="home" data-page-node-id="qC74Vs6nkYk7F1AY3RRScr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-page-node-id="1HecfUXYjkhX1yXbuyH9XS"><path d="M3 11l9-8 9 8" data-page-node-id="bvPkoyBj3rcFjsrwHfRiFI"/><path d="M5 10v10h14V10" data-page-node-id="t0dbQAHgJhRmUB8dGQow5g"/></svg>
+          <span data-page-node-id="tDT901zM1xAPXRtHfz3HaE">首页</span>
+        </div>
+        <div class="tab" data-v="console" data-page-node-id="GEZr0776jU994L5Nevsr0W">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-page-node-id="kGgQYLro9eBJeebTG4JEHZ"><rect x="3" y="3" width="7" height="7" rx="1.5" data-page-node-id="vzQdXAtcpud9hsBMWAHcK4"/><rect x="14" y="3" width="7" height="7" rx="1.5" data-page-node-id="FEKeHhQCEHQZr25gzn2TcI"/><rect x="3" y="14" width="7" height="7" rx="1.5" data-page-node-id="93G04RPM5GXOPg9UCuY9DG"/><rect x="14" y="14" width="7" height="7" rx="1.5" data-page-node-id="u8R3Uv7EXaaoui7Fy1K8t2"/></svg>
+          <span data-page-node-id="1o2rQeRbqVvRQdbU9Ixuiu">控制台</span>
+        </div>
+        <div class="tab" data-v="mine" data-page-node-id="VWk1Q91DkiX1Onxqs2OlJH">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" data-page-node-id="vQGVLlw5KYFk0Hn7SVIBnS"><circle cx="12" cy="8" r="4" data-page-node-id="Ywb9CotzMxB5dlQAJ2QPzj"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6" data-page-node-id="fnlGtJ8JnL3G5uzLV2xFMb"/></svg>
+          <span data-page-node-id="HGU6yWqXke7U2Em9TDkmLl">我的</span>
+          <span class="dotn" data-page-node-id="1gwvRwqOOv0Pe364cj5TBw"></span>
+        </div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ===================== 侧说明 ===================== -->
+  <aside class="notes" data-page-node-id="CuLHbG78AIOvRDUW2UQx5J">
+    <h3 data-page-node-id="Dgr2iPp5HiU6hAD38IsENT">移动端重设计</h3>
+    <p data-page-node-id="ToF26H3GqQcVCHVsYOaYDI">原站为 <span class="k" data-page-node-id="toWPjLrBeHN3nBnqC5yqft">viewport-fit=cover</span> 的 H5 多角色 App（用户/代理/管理），底部 Tab 为 <span class="k" data-page-node-id="UPyDcdNBhd1sKvVRtjv5R0">首页 · 我的</span>。本版本按手机形态重构：</p>
+    <ul data-page-node-id="1lL2qjKAcTpW4SnTTUlwbY">
+      <li data-page-node-id="qJGUlSwBYmcEETGsABn0h1">手机壳 + 刘海 + 状态栏，窄屏自动全屏</li>
+      <li data-page-node-id="xfNyQYkp7JGWNwG3lnvhFJ"><span class="k" data-page-node-id="RvWJShZNdi8Z0V71KCQbP9">量化终端</span>语言：电压绿 + 青，等宽数字</li>
+      <li data-page-node-id="bGr8ePtGjUWUpSaeRtXqnG">首页=赛事推荐流（网球/Dota2/NFL 分类切换）</li>
+      <li data-page-node-id="nQ8qNM4oR2oWRxt3tykBXh">控制台=管理宫格（采集/条件/止损/调度…）</li>
+      <li data-page-node-id="DWYxt2kI5X45h6NFukJzkn">角色切换实时改变首页与标识</li>
+    </ul>
+    <p style="margin-top:14px" data-page-node-id="OUvlDtBYTPB5sNMPmNbYqY">演示账号已预填，点登录即可进入。</p>
+  </aside>
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* ---------- 状态栏 / 时钟 ---------- */
+function tick(){
+  const n=new Date();
+  const p=x=>String(x).padStart(2,'0');
+  $('#clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+  $('#sb-time').textContent=`${p(n.getHours())}:${p(n.getMinutes())}`;
+}
+setInterval(tick,1000);tick();
+
+/* ---------- 行情 tape ---------- */
+const tapeData=[
+  ['BTC/USDT','64,210',1],['ETH','3,418',-1],['ATP 阿尔卡拉斯','1.85',1],
+  ['WTA 斯瓦泰克','1.62',1],['DOTA 天辉','2.05',-1],['NFL KC','-3.5',1],
+  ['POLY BTC-5m','0.71',1],['采集引擎','OK',0],['止损组','运行中',0]
+];
+function buildTape(){
+  const html=tapeData.map(([k,v,s])=>{
+    const cls=s>0?'u':s<0?'d':'';
+    const arr=s>0?'▲':s<0?'▼':'·';
+    return `<span>${k} <b>${v}</b> <span class="${cls}">${arr}</span></span>`;
+  }).join('');
+  $('#tape').innerHTML=html+html;
+}
+buildTape();
+
+/* ---------- 赛事数据 ---------- */
+const MATCHES=[
+  {id:'m1',cat:'tennis',lg:'ATP 总决赛',a:'阿尔卡拉斯',as:'[1]',b:'辛纳',bs:'[2]',dir:'大 2.5 盘',o:'1.85',t:'今天 21:00',tag:'agree',tagt:'一致',
+    reason:'双方发球局保发率高、底线多拍相持，近 3 次交手全部打满 3 盘；4 路信号（盘口 / 模型 / 交手 / 体能）一致看大。',
+    h2h:[['2026 年终','阿尔卡拉斯 2-1 辛纳'],['2026 法网','辛纳 2-1 阿尔卡拉斯'],['2025 年终','阿尔卡拉斯 2-0 辛纳']],
+    market:[['初盘','2.5 大 @1.80'],['即时','2.5 大 @1.85'],['模型','2.5 大 @1.83']],
+    pm:{a:68,b:32,url:'https://polymarket.com/event/atp-finals-alcaraz-sinner'}},
+  {id:'m2',cat:'tennis',lg:'WTA 巡回赛',a:'斯瓦泰克',as:'[1]',b:'高芙',bs:'[4]',dir:'小 21.5 局',o:'1.92',t:'今天 23:30',tag:'agree',tagt:'一致',
+    reason:'斯瓦泰克近期一发得分率下滑，高芙接发压制明显；近 5 场平均局数 19.2，低于盘口 21.5，信号一致看小。',
+    h2h:[['2026 多哈','斯瓦泰克 2-0 高芙'],['2025 年终','高芙 2-1 斯瓦泰克'],['2025 北京','斯瓦泰克 2-0 高芙']],
+    market:[['初盘','21.5 大 @1.90'],['即时','21.5 小 @1.92'],['模型','21.5 小 @1.88']],
+    pm:{a:54,b:46,url:'https://polymarket.com/event/wta-swiątek-gauff'}},
+  {id:'m3',cat:'dota2',lg:'Dota2 天辉',a:'Team Spirit',as:'',b:'LGD',bs:'',dir:'天辉胜',o:'2.05',t:'进行中',tag:'live',tagt:'LIVE',
+    reason:'天辉核心经济领先 2.1k，推进节奏占优；近 10 场 Team Spirit 天辉胜率 64%，模型实时胜率 58%。',
+    h2h:[['2026 ESL','Team Spirit 2-1 LGD'],['2026 利雅得','LGD 2-0 Team Spirit'],['2025 秋决','Team Spirit 2-1 LGD']],
+    market:[['胜平负','天辉 @2.05'],['一塔','天辉 @1.78'],['模型','天辉胜率 58%']],
+    pm:{a:61,b:39,url:'https://polymarket.com/event/dota2-spirit-lgd'}},
+  {id:'m4',cat:'nfl',lg:'NFL 常规赛',a:'Chiefs',as:'',b:'49ers',bs:'',dir:'酋长 -3.5',o:'1.90',t:'明天 09:00',tag:'disagree',tagt:'不一致',
+    reason:'让分模型给酋长 -2.8，但市场开 -3.5，存在 0.7 分分歧；总得分信号偏下，方向分歧，建议小注或观望。',
+    h2h:[['2025 分区','49ers 24-21 Chiefs'],['2024 超级碗','Chiefs 25-22 49ers'],['2024 常规','Chiefs 31-27 49ers']],
+    market:[['初盘','酋长 -3.0'],['即时','酋长 -3.5'],['模型','酋长 -2.8']],
+    pm:{a:58,b:42,url:'https://polymarket.com/event/nfl-chiefs-49ers'}},
+  {id:'m5',cat:'tennis',lg:'ATP 半决赛',a:'梅德韦杰夫',as:'[5]',b:'鲁德',bs:'[8]',dir:'鲁德 +1.5',o:'1.78',t:'周六 20:00',tag:'agree',tagt:'一致',
+    reason:'鲁德红土相持稳定，梅德韦杰夫移动受限；受让 1.5 盘在 5 路信号中 4 路支持，一致性高。',
+    h2h:[['2026 蒙特卡','鲁德 2-0 梅德韦杰夫'],['2025 罗马','梅德韦杰夫 2-1 鲁德'],['2025 迈阿密','梅德韦杰夫 2-0 鲁德']],
+    market:[['初盘','鲁德 +1.0'],['即时','鲁德 +1.5'],['模型','鲁德 +1.5 @1.78']],
+    pm:{a:44,b:56,url:'https://polymarket.com/event/atp-medvedev-rune'}},
+  {id:'m6',cat:'dota2',lg:'Dota2 夜魇',a:'Secret',as:'',b:'Aster',bs:'',dir:'夜魇胜',o:'1.95',t:'22:15',tag:'disagree',tagt:'不一致',
+    reason:'Secret 前期入侵节奏强但后期团战波动大；模型给夜魇 51%，与盘口 1.95 略有背离，分歧态。',
+    h2h:[['2026 西欧','Aster 2-1 Secret'],['2025 冬','Secret 2-0 Aster'],['2025 夏','Aster 2-1 Secret']],
+    market:[['胜平负','夜魇 @1.95'],['首杀','夜魇 @1.82'],['模型','夜魇胜率 51%']],
+    pm:null},
+  {id:'m7',cat:'nfl',lg:'NFL 常规赛',a:'Cowboys',as:'',b:'Eagles',bs:'',dir:'老鹰 +1.0',o:'1.83',t:'明天 12:30',tag:'agree',tagt:'一致',
+    reason:'老鹰防守二线评分占优，Cowboys 客场进攻效率下滑；受让 1.0 在 4 路信号一致支持。',
+    h2h:[['2025 周','Eagles 28-23 Cowboys'],['2025 周','Cowboys 34-30 Eagles'],['2024 季后','Eagles 32-21 Cowboys']],
+    market:[['初盘','老鹰 +1.5'],['即时','老鹰 +1.0'],['模型','老鹰 +1.2']],
+    pm:{a:47,b:53,url:'https://polymarket.com/event/nfl-cowboys-eagles'}}
+];
+const matches={
+  all:MATCHES,
+  tennis:MATCHES.filter(m=>m.cat==='tennis'),
+  dota2:MATCHES.filter(m=>m.cat==='dota2'),
+  nfl:MATCHES.filter(m=>m.cat==='nfl')
+};
+function renderMatches(cat='all'){
+  const list=matches[cat]||matches.all;
+  $('#matchList').innerHTML=list.map(m=>`
+    <div class="match reveal" data-id="${m.id}">
+      <span class="tag ${m.tag}">${m.tagt}</span>
+      <div class="league">${m.lg}</div>
+      <div class="teams">
+        <div class="team"><span class="nm">${m.a}</span><span class="seed">${m.as||'&nbsp;'}</span></div>
+        <span class="vs">VS</span>
+        <div class="team" style="text-align:right"><span class="nm">${m.b}</span><span class="seed">${m.bs||'&nbsp;'}</span></div>
+      </div>
+      <div class="row2">
+        <div class="dir"><span class="lbl">方向</span>${m.dir}</div>
+        <div style="text-align:right"><div class="odds">@ ${m.o}</div><div class="time">${m.t}</div></div>
+      </div>
+      ${m.pm?`<div class="pm-chip"><span class="pmc-dot"></span>PM ${m.pm.a}¢ / ${m.pm.b}¢</div>`:`<div class="pm-chip off">无 PM 外链</div>`}
+    </div>`).join('');
+  requestAnimationFrame(()=>$$('.reveal:not(.in)',$('#matchList')).forEach((e,i)=>setTimeout(()=>e.classList.add('in'),i*45)));
+}
+renderMatches();
+
+/* 分类切换 */
+$('#catSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  $$('#catSeg button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');renderMatches(b.dataset.c);
+});
+
+/* ---------- 控制台宫格 ---------- */
+const gridItems={
+  user:[
+    {ic:'🎾',lb:'网球看板',ds:'赛事推荐'},{ic:'⚡',lb:'自动投注',ds:'策略执行'},{ic:'📊',lb:'我的订阅',ds:'权益管理'}
+  ],
+  agent:[
+    {ic:'📈',lb:'分销概览',ds:'业绩看板'},{ic:'🛒',lb:'首页',ds:'产品橱窗'},{ic:'👥',lb:'我的客户',ds:'分成明细'}
+  ],
+  admin:[
+    {ic:'📦',lb:'产品管理',ds:'上架·定价'},{ic:'🗂️',lb:'产品分类',ds:'顶层分类'},{ic:'👤',lb:'代理管理',ds:'分成比例'},
+    {ic:'🧾',lb:'订单中心',ds:'交易记录'},{ic:'🧑',lb:'用户管理',ds:'账号余额'},{ic:'🎟️',lb:'兑换码',ds:'批量生成'},
+    {ic:'🛰️',lb:'采集引擎',ds:'Top100源'},{ic:'🎯',lb:'条件引擎',ds:'分桶投注'},{ic:'🛑',lb:'止损引擎',ds:'止损组'},
+    {ic:'⏱️',lb:'调度中心',ds:'定时任务'},{ic:'🔗',lb:'站点设置',ds:'前台配置'},{ic:'🔑',lb:'BTC 密钥',ds:'Alchemy'}
+  ]
+};
+function renderGrid(role='user'){
+  const items=gridItems[role]||gridItems.user;
+  $('#consoleGrid').innerHTML=`<div class="grid">`+items.map(i=>`
+    <div class="tile" data-lb="${i.lb}"><span class="ic">${i.ic}</span><span class="lb">${i.lb}</span><span class="ds">${i.ds}</span></div>
+  `).join('')+`</div>`;
+}
+renderGrid();
+
+/* ---------- 导航 / 角色 ---------- */
+let curRole='user';
+function go(v){
+  $$('.view').forEach(s=>s.classList.remove('active'));
+  $('#v-'+v).classList.add('active');
+  $$('#tabbar .tab').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  if(v==='console'){
+    $('#consoleHead').innerHTML = curRole==='admin'
+      ? '<span class="gt">控制台 <small>CONSOLE</small></span>'
+      : '<span class="gt">控制台 <small>需管理员</small></span>';
+  }
+  $('#screen').scrollTop=0;
+  requestAnimationFrame(()=>$$('.view.active .reveal:not(.in)').forEach((e,i)=>setTimeout(()=>e.classList.add('in'),i*50)));
+}
+$('#tabbar').addEventListener('click',e=>{const t=e.target.closest('.tab');if(t)go(t.dataset.v);});
+
+$('#role').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  curRole=b.dataset.r;
+  $$('#role button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  const roleTxt={user:'用户',agent:'代理',admin:'管理'}[curRole];
+  $('#mineRole').textContent='角色 · '+roleTxt;
+  renderGrid(curRole);
+  if(curRole==='admin'){go('console');}
+});
+
+/* ---------- 详情下钻数据 ---------- */
+const PRODUCT_DETAIL={
+ '网球看板':{icon:'🎾',name:'网球看板',sub:'TENNIS BOARD',desc:'实时赛事盘口·方向信号·自动投注一体化',
+   status:{t:'已订阅',b:'有效至 2026-10-15',cls:'agree'},
+   plans:[{name:'月卡',price:'198'},{name:'季卡',price:'498'},{name:'年卡',price:'1680'}],
+   board:'<b>ATP 总决赛</b> 阿尔卡拉斯 VS 辛纳 · 大 2.5 盘 @1.85 · 一致<br><b>WTA</b> 斯瓦泰克 VS 高芙 · 小 21.5 局 @1.92 · 一致<br>实时刷新 · 4 路信号聚合',
+   cta:[{l:'兑换码兑换',cls:'btn-ghost'},{l:'进入看板',cls:'btn-accent'}]},
+ '自动投注':{icon:'⚡',name:'自动投注',sub:'AUTO BET',desc:'按条件引擎自动执行下单，分批与止损联动',
+   status:{t:'运行中',b:'今日触发 12',cls:'agree'},
+   rows:[['今日触发','12 次'],['成功 / 失败','11 / 1'],['当前持仓','3 场'],['关联引擎','条件·止损']],
+   cta:[{l:'策略设置',cls:'btn-accent'}]},
+ '我的订阅':{icon:'📊',name:'我的订阅',sub:'SUBSCRIPTION',desc:'查看与管理已开通的产品权益',
+   rows:[['网球月卡','已订阅 · 剩 23 天'],['BTC 5m 周卡','未订阅'],['Dota2 Elo','未订阅']],
+   cta:[{l:'去续费',cls:'btn-accent'}]},
+ '分销概览':{icon:'📈',name:'分销概览',sub:'AGENT',desc:'下级业绩与分成看板',
+   rows:[['下级客户','18 人'],['本月业绩','¥4,820'],['应付分成','¥965'],['转化率','41%']],
+   cta:[{l:'查看明细',cls:'btn-accent'}]},
+ '首页':{icon:'🛒',name:'产品橱窗',sub:'SHOP',desc:'面向客户的产品展示与购买入口',
+   status:{t:'已上架',b:'6 个产品',cls:'agree'},
+   board:'<b>网球看板</b> ¥198/月 · 已订阅<br><b>BTC 5m</b> ¥99/周 · 未订阅<br><b>Dota2 Elo</b> ¥128/月 · 未订阅',
+   cta:[{l:'进入橱窗',cls:'btn-accent'}]},
+ '我的客户':{icon:'👥',name:'我的客户',sub:'CLIENTS',desc:'下级客户列表与分成明细',
+   rows:[['活跃客户','12'],['本月新增','3'],['ARPPU','¥268']],
+   cta:[{l:'客户管理',cls:'btn-accent'}]},
+ '产品管理':{icon:'📦',name:'产品管理',sub:'ADMIN',desc:'产品的上架、定价与上下线',
+   rows:[['在售产品','9'],['待审','2'],['本月新增','1']],
+   cta:[{l:'新建产品',cls:'btn-accent'}]},
+ '产品分类':{icon:'🗂️',name:'产品分类',sub:'CATEGORY',desc:'顶层分类与排序管理',
+   rows:[['分类数','5'],['已绑定','9/9']],
+   cta:[{l:'编辑分类',cls:'btn-accent'}]},
+ '代理管理':{icon:'👤',name:'代理管理',sub:'AGENT ADMIN',desc:'代理账号与分成比例配置',
+   rows:[['代理总数','34'],['活跃','21'],['最高分成','40%']],
+   cta:[{l:'新增代理',cls:'btn-accent'}]},
+ '订单中心':{icon:'🧾',name:'订单中心',sub:'ORDERS',desc:'全平台交易与充值记录',
+   rows:[['今日订单','47'],['成交金额','¥9,310'],['退款','2']],
+   cta:[{l:'导出报表',cls:'btn-accent'}]},
+ '用户管理':{icon:'🧑',name:'用户管理',sub:'USERS',desc:'注册用户、余额与风控',
+   rows:[['注册用户','2,184'],['活跃(7日)','612'],['冻结','3']],
+   cta:[{l:'用户列表',cls:'btn-accent'}]},
+ '兑换码':{icon:'🎟️',name:'兑换码',sub:'REDEEM',desc:'批量生成与核销兑换码',
+   rows:[['可用码','320'],['已核销','1,180'],['本月生成','500']],
+   cta:[{l:'生成兑换码',cls:'btn-accent'}]},
+ '采集引擎':{icon:'🛰️',name:'采集引擎',sub:'COLLECTOR',desc:'SofaScore 等 Top100 数据源采集',
+   status:{t:'运行中',b:'延迟 1.2s',cls:'agree'},
+   rows:[['数据源','Top100'],['采集频率','5s'],['成功率','99.4%'],['今日场次','86']],
+   cta:[{l:'源配置',cls:'btn-accent'}]},
+ '条件引擎':{icon:'🎯',name:'条件引擎',sub:'CONDITION',desc:'分桶投注与触发条件管理',
+   rows:[['启用策略','14'],['今日命中','9'],['待执行','3']],
+   cta:[{l:'策略编辑',cls:'btn-accent'}]},
+ '止损引擎':{icon:'🛑',name:'止损引擎',sub:'STOP-LOSS',desc:'止损组与自动平仓',
+   rows:[['止损组','6'],['今日平仓','4'],['止损率','2.1%']],
+   cta:[{l:'组配置',cls:'btn-accent'}]},
+ '调度中心':{icon:'⏱️',name:'调度中心',sub:'SCHEDULER',desc:'定时任务与重试策略',
+   rows:[['任务数','22'],['成功','21'],['失败重试','1']],
+   cta:[{l:'任务编排',cls:'btn-accent'}]},
+ '站点设置':{icon:'🔗',name:'站点设置',sub:'SETTINGS',desc:'前台文案、域名与支付配置',
+   rows:[['前台域名','app.tenies.com'],['支付通道','2'],['语言','中/英']],
+   cta:[{l:'设置',cls:'btn-accent'}]},
+ 'BTC 密钥':{icon:'🔑',name:'BTC 密钥',sub:'BTC 5m',desc:'Alchemy / 交易所 API 密钥管理',
+   status:{t:'已配置',b:'主网',cls:'agree'},
+   rows:[['行情源','Alchemy'],['5m 策略','运行中'],['今日交易','38']],
+   cta:[{l:'密钥管理',cls:'btn-accent'}]}
+};
+const MINE_DETAIL={
+ '我的订阅':{title:'我的订阅',sub:'SUBSCRIPTION',body:`
+   <div class="d-sec"><h4>已开通</h4>
+     <div class="d-row"><span class="k">网球月卡</span><span class="v">已订阅 · 剩 23 天</span></div>
+     <div class="d-row"><span class="k">BTC 5m 周卡</span><span class="v">未订阅</span></div>
+     <div class="d-row"><span class="k">Dota2 Elo 月卡</span><span class="v">未订阅</span></div>
+   </div>
+   <div class="d-cta"><button class="btn btn-accent btn-sm">续费 / 延长</button><button class="btn btn-ghost btn-sm">兑换码开通</button></div>`},
+ '兑换码':{title:'兑换码',sub:'REDEEM',body:`
+   <div class="d-sec"><h4>输入兑换码</h4>
+     <input class="d-input" placeholder="例如 TENIES-XXXX-XXXX" />
+     <div class="d-cta" style="margin-top:10px"><button class="btn btn-accent btn-sm">立即兑换</button></div>
+   </div>
+   <div class="d-sec"><h4>使用记录</h4>
+     <div class="d-row"><span class="k">TENIES-VIP-8821</span><span class="v">网球月卡 · 09-15</span></div>
+     <div class="d-row"><span class="k">BTC-WEEK-3A9F</span><span class="v">已过期</span></div>
+   </div>`},
+ '订单中心':{title:'订单中心',sub:'ORDERS',body:`
+   <div class="d-sec"><h4>近期订单</h4>
+     <div class="d-row"><span class="k">网球月卡</span><span class="v">¥198 · 已支付</span></div>
+     <div class="d-row"><span class="k">兑换码充值</span><span class="v">¥50 · 已支付</span></div>
+     <div class="d-row"><span class="k">BTC 周卡</span><span class="v">¥99 · 待支付</span></div>
+   </div>`},
+ '分销概览':{title:'分销概览',sub:'AGENT',body:`
+   <div class="d-hero"><div class="lg">AGENT OVERVIEW</div>
+     <div class="vs-big"><div class="side"><div class="nm">本月业绩</div><div class="seed">¥4,820</div></div><div class="mid">→</div><div class="side right"><div class="nm">应付分成</div><div class="seed">¥965</div></div></div>
+   </div>
+   <div class="d-sec"><h4>关键指标</h4>
+     <div class="d-row"><span class="k">下级客户</span><span class="v">18 人</span></div>
+     <div class="d-row"><span class="k">转化率</span><span class="v">41%</span></div>
+     <div class="d-row"><span class="k">历史累计分成</span><span class="v">¥12,430</span></div>
+   </div>`},
+ '设置':{title:'设置',sub:'SETTINGS',body:`
+   <div class="d-sec"><h4>偏好</h4>
+     <div class="d-toggle"><span>行情推送通知</span><div class="d-switch on"></div></div>
+     <div class="d-toggle"><span>自动续费</span><div class="d-switch on"></div></div>
+     <div class="d-toggle"><span>深色模式</span><div class="d-switch"></div></div>
+     <div class="d-toggle"><span>实名认证</span><div class="d-switch on"></div></div>
+   </div>`},
+ '帮助手册':{title:'帮助手册',sub:'HELP',body:`
+   <div class="d-sec"><h4>常见问题</h4>
+     <div class="d-note">· 如何开通产品？在「控制台 → 产品」或「我的订阅」中使用兑换码或购买。<br>· 自动投注如何关联止损？在条件引擎中绑定止损组即可联动。<br>· 数据来源？SofaScore 等 Top100 公开赛事数据，实时采集。</div>
+   </div>
+   <div class="d-note">客服微信：chemland-ai · 工作日 10:00–19:00</div>`}
+};
+
+/* ---------- 详情下钻逻辑 ---------- */
+function matchDetailHTML(m){
+  const tagCls={agree:'agree',disagree:'disagree',live:'live'}[m.tag];
+  const h2h=m.h2h.map(r=>`<div class="d-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('');
+  const mk=m.market.map(r=>`<div class="d-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('');
+  // PM · Polymarket 外链价
+  let pmSec;
+  if(m.pm){
+    const pa=m.pm.a, pb=m.pm.b;
+    pmSec=`<div class="d-sec"><h4>PM · Polymarket 外链价</h4>
+      <div class="pm-card">
+        <div class="pm-status has"><span class="pmc-dot"></span> 已匹配 Polymarket 市场（有PM）</div>
+        <div class="pm-row">
+          <div class="pm-side"><span class="nm">${m.a}</span><span class="pm-val">${pa}¢ <i>${(pa/100*100).toFixed(1)}%</i></span></div>
+          <div class="pm-bar"><div class="fill" style="width:${pa}%"></div></div>
+        </div>
+        <div class="pm-row">
+          <div class="pm-side"><span class="nm">${m.b}</span><span class="pm-val">${pb}¢ <i>${(pb/100*100).toFixed(1)}%</i></span></div>
+          <div class="pm-bar b"><div class="fill" style="width:${pb}%"></div></div>
+        </div>
+        <div class="pm-foot">价 = 美分 / 隐含概率，两侧合计含手续费（≈100¢）。</div>
+        <a class="pm-link" href="${m.pm.url}" target="_blank" rel="noopener">打开 Polymarket 市场 ↗</a>
+      </div></div>`;
+  }else{
+    pmSec=`<div class="d-sec"><h4>PM · Polymarket 外链价</h4>
+      <div class="pm-card off">
+        <div class="pm-status none"><span class="pmc-dot"></span> 暂无对应 Polymarket 市场（无PM）</div>
+        <div class="pm-foot">该场次未匹配到 Polymarket 外链，条件规则与止损服务将按「无PM」处理。</div>
+      </div></div>`;
+  }
+  return `
+  <div class="d-hero">
+    <div class="lg">${m.lg}</div>
+    <div class="vs-big">
+      <div class="side"><div class="nm">${m.a}</div><div class="seed">${m.as||''}</div></div>
+      <div class="mid">VS</div>
+      <div class="side right"><div class="nm">${m.b}</div><div class="seed">${m.bs||''}</div></div>
+    </div>
+    <div class="d-concl">
+      <div><span class="k">方向结论</span><span class="v">${m.dir}</span></div>
+      <span class="d-badge ${tagCls}">${m.tagt}</span>
+      <div class="o"><span class="ok">赔率</span><span class="ov">@ ${m.o}</span></div>
+    </div>
+  </div>
+  <div class="d-sec"><h4>推荐理由</h4><div class="d-note">${m.reason}</div></div>
+  <div class="d-sec"><h4>近期交手</h4>${h2h}</div>
+  ${pmSec}
+  <div class="d-sec"><h4>盘口 / 信号</h4>${mk}</div>
+  <div class="d-note">开赛时间：${m.t} · 数据为演示合成，不构成投注建议。</div>`;
+}
+function productDetailHTML(d){
+  let head=`<div class="d-hero"><div class="lg">${d.icon} ${d.sub||'PRODUCT'}</div>
+    <div class="vs-big"><div class="side"><div class="nm">${d.name}</div><div class="seed">${d.desc}</div></div></div>
+    ${d.status?`<div class="d-concl"><div><span class="k">状态</span><span class="v">${d.status.t}</span></div><span class="d-badge ${d.status.cls}">${d.status.b}</span></div>`:''}
+  </div>`;
+  let plans='';
+  if(d.plans)plans=`<div class="d-sec"><h4>价格套餐</h4>`+d.plans.map(p=>`<div class="d-row"><span class="k">${p.name}</span><span class="v">¥${p.price}</span></div>`).join('')+`</div>`;
+  let board='';
+  if(d.board)board=`<div class="d-sec"><h4>看板预览</h4><div class="d-board">${d.board}</div></div>`;
+  let rows='';
+  if(d.rows)rows=`<div class="d-sec"><h4>运行指标</h4>`+d.rows.map(r=>`<div class="d-row"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')+`</div>`;
+  let cta='';
+  if(d.cta)cta=`<div class="d-cta">`+d.cta.map(c=>`<button class="btn ${c.cls} btn-sm">${c.l}</button>`).join('')+`</div>`;
+  return head+plans+board+rows+cta;
+}
+function openDetail(type,payload){
+  const body=$('#detailBody');let title='详情',sub='';
+  if(type==='match'){const m=payload;title='赛事详情';sub=m.lg;body.innerHTML=matchDetailHTML(m);}
+  else if(type==='product'){const d=PRODUCT_DETAIL[payload]||{name:payload,sub:'',desc:'',rows:[['状态','演示数据']]};title=d.name;sub=d.sub||'';body.innerHTML=productDetailHTML(d);}
+  else if(type==='mine'){const d=MINE_DETAIL[payload]||{title:payload,body:'<div class="d-empty">暂未开放</div>'};title=d.title;sub=d.sub||'';body.innerHTML=d.body;}
+  $('#detailTitle').innerHTML=title+(sub?`<small>${sub}</small>`:'');
+  $('#detail').classList.add('open');body.scrollTop=0;
+}
+function closeDetail(){$('#detail').classList.remove('open');}
+$('#detailBack').addEventListener('click',closeDetail);
+
+/* 列表下钻绑定 */
+$('#matchList').addEventListener('click',e=>{const c=e.target.closest('.match');if(!c)return;const m=MATCHES.find(x=>x.id===c.dataset.id);if(m)openDetail('match',m);});
+$('#consoleGrid').addEventListener('click',e=>{const c=e.target.closest('.tile');if(!c)return;openDetail('product',c.dataset.lb);});
+$('.list').addEventListener('click',e=>{const c=e.target.closest('.it');if(!c)return;openDetail('mine',c.querySelector('.lb').textContent.trim());});
+
+/* ---------- 登录 ---------- */
+function doLogin(){$('#login').style.display='none';$('#app').style.display='flex';
+  requestAnimationFrame(()=>$$('.view.active .reveal:not(.in)').forEach((e,i)=>setTimeout(()=>e.classList.add('in'),i*50)));}
+$('#loginBtn').addEventListener('click',doLogin);
+$('#p').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+/* 初始揭示 */
+requestAnimationFrame(()=>$$('.reveal:not(.in)').forEach((e,i)=>setTimeout(()=>e.classList.add('in'),i*60)));
+</script>
+</body>
+</html>

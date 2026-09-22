@@ -364,7 +364,7 @@ curl -s 'https://www.yuce.bid/api/tennis-settled/today'
 | `tennis-prematch` | 盘前 |
 | `tennis-inplay` | 盘中 |
 
-`side`：`home`（主/左）或 `away`（客/右）。
+`side`：`home`（主/左）或 `away`（客/右）。**两侧都可以下单**。服务端不按排名建议侧拦截，请求里写哪一侧就买哪一侧。单场买入、单场卖出、批量、限价都按此规则。
 
 ---
 
@@ -378,7 +378,7 @@ curl -s 'https://www.yuce.bid/api/tennis-settled/today'
 | `account` | string | 是* | — | 与 `email` 二选一 |
 | `product` | string | 是 | — | `tennis-prematch` / `tennis-inplay` |
 | `eventId` | string/number | 是 | — | 比赛 id；也可用 `id` |
-| `side` | string | 是 | — | `home` / `away` |
+| `side` | string | 是 | — | `home` / `away`，两侧均可，不限制建议侧 |
 | `amountUsd` | number | 是 | — | 金额 USD，**≥ 1** |
 | `simulate` | boolean | 否 | `false` | 模拟下单 |
 | `privateKey` | string | 否 | — | 下单私钥（64 位十六进制，可带 `0x`）；也可用 `private_key`。须与地址同时填写 |
@@ -472,7 +472,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/buy' \
 | `email` | string | 是* | — | 用户邮箱；也可用 `account` |
 | `product` | string | 是 | — | `tennis-prematch` / `tennis-inplay` |
 | `eventId` | string/number | 是 | — | 比赛 id |
-| `side` | string | 是 | — | `home` / `away` |
+| `side` | string | 是 | — | `home` / `away`，两侧均可，不限制建议侧 |
 | `shares` | string/number | 否 | `"all"` | 份额；`"all"` 全部 |
 | `simulate` | boolean | 否 | `false` | 模拟 |
 | `strategyKey` | string | 否 | — | 策略键 |
@@ -536,6 +536,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/sell' \
 - 实盘需已配置钱包；`simulate: true` 走模拟
 - 虚拟采集（docks500）时强制模拟
 - 默认 `orderType` 为市价（`market` / FOK）；限价见 [§6](#6-限价单邮箱)
+- `orders[].side` 为 `home` 或 `away`，两侧都可以下，不按建议侧拒绝
 
 > 注意：统一入口 `/api/tennis/orders/buy` · `/sell` · `/batch` **当前不传限价参数**，限价请用盘前/盘中 `/trade/batch` 与 `/trade/sell`。
 
@@ -551,7 +552,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/sell' \
 | `product` | string | 是 | `tennis-prematch` / `tennis-inplay` |
 | `orders` | array | 是 | 场次数组，**1～20** 条 |
 | `orders[].eventId` | string/number | 是 | 比赛 id；也可用 `id` |
-| `orders[].side` | string | 是 | `home` / `away` |
+| `orders[].side` | string | 是 | `home` / `away`，两侧均可，不限制建议侧 |
 | `amountUsd` | number | 是 | **每场**金额 USD，≥ 1 |
 | `simulate` | boolean | 否 | 默认 false |
 
@@ -585,7 +586,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis/orders/batch' \
 | `email` | string | 是* | 用户邮箱 |
 | `orders` | array | 是 | **1～20** 条 |
 | `orders[].eventId` | string/number | 是 | 比赛 id |
-| `orders[].side` | string | 是 | `home` / `away` |
+| `orders[].side` | string | 是 | `home` / `away`，两侧均可，不限制建议侧 |
 | `amountUsd` | number | 是 | 每场 USD，≥ 1 |
 | `simulate` | boolean | 否 | 默认 false |
 
@@ -673,7 +674,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/batch' \
 |------|------|------|------|------|
 | `email` | string | 是* | — | 用户邮箱 |
 | `eventId` | string/number | 是 | — | 比赛 id |
-| `side` | string | 是 | — | `home` / `away` |
+| `side` | string | 是 | — | `home` / `away`，两侧均可，不限制建议侧 |
 | `shares` | string/number | 否 | 视实现 | 份额；常用 `"all"` |
 | `simulate` | boolean | 否 | `false` | 模拟 |
 
@@ -711,6 +712,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 - 目标价范围：**0.01～0.99**（小数概率价，tick `0.01`）
 - 成功表示**挂单已被接受**（可能尚未成交）；响应里常有 `orderId`、`status`（如 `live` / `open` / `matched`）
 - `simulate: true` 时仅记账，不打 Polymarket
+- `side` 为 `home` 或 `away`，两侧都可以挂单，不按建议侧拒绝
 
 ---
 
@@ -731,7 +733,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 | `shares` | number | 是 | 买入份额，**> 0**（向下取到 0.01） |
 | `orders` | array | 是 | 场次数组，**1～20** 条 |
 | `orders[].eventId` | string/number | 是 | 比赛 id；也可用 `id` |
-| `orders[].side` | string | 是 | `home` / `away` |
+| `orders[].side` | string | 是 | `home` / `away`，两侧均可，不限制建议侧 |
 | `simulate` | boolean | 否 | 默认 false |
 | `amountUsd` | number | 否 | 限价时**忽略**；由份额×目标价推算 |
 
@@ -811,7 +813,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/batch' \
 |------|------|------|------|------|
 | `email` | string | 是* | — | 用户邮箱 |
 | `eventId` | string/number | 是 | — | 比赛 id |
-| `side` | string | 是 | — | `home` / `away` |
+| `side` | string | 是 | — | `home` / `away`，两侧均可，不限制建议侧 |
 | `orderType` | string | 是 | — | 固定填 **`limit`** |
 | `limitSellPrice` | number | 是* | — | 卖出目标价 0.01–0.99；也可用 `limitPrice` |
 | `limitPrice` | number | 是* | — | 与 `limitSellPrice` 二选一（优先 `limitSellPrice`） |

@@ -70,6 +70,34 @@ async function executeJobType(job, params = {}) {
         metrics: { split, migratePrematch: migP, migrateInplay: migI },
       };
     }
+    case 'collect.dota2':
+    case 'collect.dota2_hf': {
+      const dota2PmCollect = require('./dota2PmCollect');
+      const bundle = await dota2PmCollect.collectDirect();
+      if (bundle?.ok === false) throw new Error(bundle.error || 'dota2 polymarket collect failed');
+      return {
+        message: `dota2 polymarket ${bundle.matchCount ?? 0} matches`,
+        metrics: {
+          matchCount: bundle.matchCount ?? 0,
+          scanned: bundle.scanned ?? 0,
+          source: bundle.source || 'polymarket-gamma',
+        },
+      };
+    }
+    case 'collect.nfl':
+    case 'collect.nfl_hf': {
+      const dota2PmCollect = require('./dota2PmCollect');
+      const bundle = await dota2PmCollect.collectNfl();
+      if (bundle?.ok === false) throw new Error(bundle.error || 'nfl polymarket collect failed');
+      return {
+        message: `nfl polymarket ${bundle.matchCount ?? 0} matches`,
+        metrics: {
+          matchCount: bundle.matchCount ?? 0,
+          scanned: bundle.scanned ?? 0,
+          source: bundle.source || 'polymarket-gamma',
+        },
+      };
+    }
     case 'collect.top100': {
       if (isVirtual) {
         return { skipped: true, message: '虚拟(txt)模式跳过官网 Top100 采集' };

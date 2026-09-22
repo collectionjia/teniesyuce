@@ -2,6 +2,7 @@
 defineProps({
   isInplayMode: { type: Boolean, default: false },
   isPrematchMode: { type: Boolean, default: false },
+  isMixMode: { type: Boolean, default: false },
   isSettledMode: { type: Boolean, default: false },
   allowBatchTrade: { type: Boolean, default: false },
   bundleHint: { type: String, default: '' },
@@ -50,7 +51,7 @@ defineProps({
         <div class="stat"><b>{{ stats.tournaments }}</b><span>赛</span></div>
         <div class="stat"><b>{{ stats.collected }}</b><span>总</span></div>
         <button
-          v-if="!isPrematchMode"
+          v-if="!isPrematchMode && !isMixMode"
           type="button"
           class="stat stat-btn"
           :class="{ active: filter === 'all' }"
@@ -61,6 +62,14 @@ defineProps({
         <div v-if="isPrematchMode" class="stat stat-static active">
           <b>{{ stats.open }}</b><span>未开</span>
         </div>
+        <template v-else-if="isMixMode">
+          <div class="stat stat-static active">
+            <b>{{ stats.open }}</b><span>未开</span>
+          </div>
+          <div class="stat stat-static">
+            <b>{{ stats.live }}</b><span>进行</span>
+          </div>
+        </template>
         <button
           v-else-if="!isInplayMode"
           type="button"
@@ -71,7 +80,7 @@ defineProps({
           <b>{{ stats.open }}</b><span>未开</span>
         </button>
         <button
-          v-if="!isInplayMode && !isPrematchMode"
+          v-if="!isInplayMode && !isPrematchMode && !isMixMode"
           type="button"
           class="stat stat-btn"
           :class="{ active: filter === 'liveish' }"
@@ -80,7 +89,7 @@ defineProps({
           <b>{{ stats.live }}</b><span>进行</span>
         </button>
         <button
-          v-if="!hideEndedEvents"
+          v-if="!hideEndedEvents && !isMixMode"
           type="button"
           class="stat stat-btn"
           :class="{ active: filter === 'ended' }"

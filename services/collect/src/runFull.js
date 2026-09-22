@@ -7,6 +7,34 @@ const { assertCollectEnabled } = require('./lib/engineGate');
 
 async function runFull(body = {}) {
   const sport = String(body.sport || 'tennis').toLowerCase();
+  if (sport === 'dota2') {
+    const gate = await assertCollectEnabled();
+    if (!gate.ok) return { skipped: true, message: gate.reason };
+    const bundle = await svc('dota2PmCollect').collectDirect();
+    if (bundle?.ok === false) throw new Error(bundle.error || 'dota2 polymarket collect failed');
+    return {
+      message: `dota2 polymarket ${bundle.matchCount ?? 0} matches`,
+      metrics: {
+        matchCount: bundle.matchCount ?? 0,
+        scanned: bundle.scanned ?? 0,
+        source: bundle.source || 'polymarket-gamma',
+      },
+    };
+  }
+  if (sport === 'nfl') {
+    const gate = await assertCollectEnabled();
+    if (!gate.ok) return { skipped: true, message: gate.reason };
+    const bundle = await svc('dota2PmCollect').collectNfl();
+    if (bundle?.ok === false) throw new Error(bundle.error || 'nfl polymarket collect failed');
+    return {
+      message: `nfl polymarket ${bundle.matchCount ?? 0} matches`,
+      metrics: {
+        matchCount: bundle.matchCount ?? 0,
+        scanned: bundle.scanned ?? 0,
+        source: bundle.source || 'polymarket-gamma',
+      },
+    };
+  }
   if (sport !== 'tennis') {
     return { skipped: true, message: `sport ${sport} not implemented (P2 tennis only)` };
   }

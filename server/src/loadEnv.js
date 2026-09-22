@@ -1,13 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 
-/** server 根目录（含 .env） */
+/** server 根目录（含 .env.local / .env.test / .env.prod） */
 const SERVER_ROOT = path.resolve(__dirname, '..');
 const DEFAULT_ENV = path.join(SERVER_ROOT, '.env');
 
+const APP_ENV_FILES = {
+  local: '.env.local',
+  test: '.env.test',
+  prod: '.env.prod',
+  production: '.env.prod',
+};
+
+function defaultEnvFile() {
+  const fromApp = APP_ENV_FILES[String(process.env.APP_ENV || '').trim().toLowerCase()];
+  if (fromApp) return fromApp;
+  if (fs.existsSync(path.join(SERVER_ROOT, '.env.local'))) return '.env.local';
+  return '.env';
+}
+
 /** 解析 ENV_FILE，避免 ../../server/.env 在 server 目录下指到错误路径 */
 function resolveEnvPath() {
-  const raw = (process.env.ENV_FILE || '').trim();
+  const raw = (process.env.ENV_FILE || '').trim() || defaultEnvFile();
   if (!raw) return DEFAULT_ENV;
 
   const candidates = [
