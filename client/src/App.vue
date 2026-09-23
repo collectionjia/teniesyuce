@@ -3655,7 +3655,7 @@ function productEmbedUrl(product) {
                 {{ shopLoadError }}
               </div>
               <div v-else-if="filteredShopProducts.length === 0" class="shop-empty">
-                尽请期待
+                敬请期待
               </div>
               <div v-else class="product-tile-grid">
                 <button
