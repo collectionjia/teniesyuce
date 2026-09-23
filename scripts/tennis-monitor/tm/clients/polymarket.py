@@ -165,6 +165,32 @@ def book_mid_price(token_id: str) -> float | None:
     return None
 
 
+def clob_book_alive(token_id: str) -> bool:
+    """订单簿是否还在（HTTP 可读到 book）；404/异常视为没有。"""
+    if not token_id:
+        return False
+    try:
+        book = _clob_get("book", params={"token_id": token_id})
+        return isinstance(book, dict)
+    except Exception:
+        return False
+
+
+def moneyline_has_order_book(ev: dict[str, Any] | None) -> tuple[bool, str]:
+    """Gamma event 的 moneyline 两侧 token 是否都还有 CLOB 订单簿。"""
+    if not isinstance(ev, dict):
+        return False, "no event"
+    mkt = pick_moneyline_market(ev.get("markets") or [])
+    tokens = parse_token_ids(mkt)
+    if len(tokens) < 2:
+        return False, "no clob tokens"
+    if not clob_book_alive(tokens[0]):
+        return False, f"book missing token0={tokens[0][:12]}…"
+    if not clob_book_alive(tokens[1]):
+        return False, f"book missing token1={tokens[1][:12]}…"
+    return True, "ok"
+
+
 def parse_prices_from_clob(mkt: dict[str, Any] | None) -> list[float] | None:
     tokens = parse_token_ids(mkt)
     if len(tokens) < 2:
@@ -465,11 +491,19 @@ def fetch_event_by_slug(slug: str) -> dict[str, Any] | None:
     return body if isinstance(body, dict) else None
 
 
-def apply_live_prices(poly: dict[str, Any], ev: dict[str, Any]) -> dict[str, Any]:
+def apply_live_prices(
+    poly: dict[str, Any],
+    ev: dict[str, Any],
+    *,
+    clob_only: bool = False,
+) -> dict[str, Any]:
     mkt = pick_moneyline_market(ev.get("markets") or [])
     source = "clob"
     prices = parse_prices_from_clob(mkt)
     if not prices:
+        if clob_only:
+            # 高频：无订单簿价则不回退 Gamma（避免结算价 1.0/0.0）
+            return poly
         source = "gamma"
         prices = parse_prices(mkt)
     if not prices:

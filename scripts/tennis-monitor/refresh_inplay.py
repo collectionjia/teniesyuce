@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """轻量盘中刷新：只更新 Redis tennis:bundle:inplay 里已有场次。
 
-- 比分/状态：Sofascore（经 IPWO）；**仅有 Polymarket 外链的场次**
-- 赔率：Polymarket Gamma + CLOB mid（直连，不走 IPWO）
+- 先探测 Polymarket CLOB 订单簿：没簿 → 跳过该场比分与赔率
+- 有订单簿 → 高频：比分 Sofascore(IPWO) + 赔率 CLOB mid（直连）
 - 仅刷包内已有场次；完赛迁入 settled
 
 用法:
@@ -37,6 +37,7 @@ from tm.clients.polymarket import (
     apply_live_prices,
     apply_pm_settle_to_match,
     fetch_event_by_slug,
+    moneyline_has_order_book,
 )
 from tm.clients.sofascore import SofascoreClient
 
@@ -142,7 +143,7 @@ def _poly_of(poly_map: dict[str, Any] | None, eid: int | str) -> dict[str, Any] 
 
 
 def _has_external_link(match: dict[str, Any], poly_map: dict[str, Any] | None) -> bool:
-    """有 Polymarket 外链（slug/url）才刷分。"""
+    """有 Polymarket 外链（slug/url）。"""
     poly = _poly_of(poly_map, match.get("id"))
     if poly and _slug_of(poly):
         return True
@@ -150,11 +151,100 @@ def _has_external_link(match: dict[str, Any], poly_map: dict[str, Any] | None) -
     return "polymarket.com/event/" in url
 
 
+@contextmanager
+def _polymarket_direct():
+    """赔率/订单簿探测直连：临时关掉盘中代理开关。"""
+    key = "COLLECT_INPLAY_USE_PROXY"
+    prev = os.environ.get(key)
+    os.environ[key] = "0"
+    try:
+        yield
+    finally:
+        if prev is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = prev
+
+
+def select_matches_with_order_book(
+    matches: list[dict[str, Any]],
+    poly_map: dict[str, Any] | None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """先判断 CLOB 订单簿：有簿才进入高频比分/赔率。"""
+    meta: dict[str, Any] = {
+        "bundle": len(matches),
+        "no_link": 0,
+        "no_book": 0,
+        "tradable": 0,
+        "skipped": [],
+    }
+    tradable: list[dict[str, Any]] = []
+    if not matches:
+        return tradable, meta
+
+    with _polymarket_direct():
+        for m in matches:
+            home, away = _match_label(m)
+            eid = m.get("id")
+            if not _has_external_link(m, poly_map):
+                meta["no_link"] += 1
+                meta["skipped"].append({"id": eid, "reason": "no external link"})
+                print(
+                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | 无外链",
+                    flush=True,
+                )
+                continue
+            poly = _poly_of(poly_map, eid) or {}
+            slug = _slug_of(poly)
+            if not slug:
+                meta["no_link"] += 1
+                meta["skipped"].append({"id": eid, "reason": "no slug"})
+                print(
+                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | 无 slug",
+                    flush=True,
+                )
+                continue
+            try:
+                ev = fetch_event_by_slug(slug)
+            except Exception as exc:
+                meta["no_book"] += 1
+                meta["skipped"].append({"id": eid, "reason": f"gamma: {exc}"})
+                print(
+                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | Gamma 失败: {exc}",
+                    flush=True,
+                )
+                continue
+            ok, reason = moneyline_has_order_book(ev)
+            if not ok:
+                meta["no_book"] += 1
+                meta["skipped"].append({"id": eid, "reason": reason})
+                print(
+                    f"[refresh_inplay] 订单簿不存在，跳过比分与赔率 "
+                    f"id={eid} {home} vs {away} | {reason}",
+                    flush=True,
+                )
+                continue
+            tradable.append(m)
+            meta["tradable"] += 1
+            print(
+                f"[refresh_inplay] 订单簿存在，纳入高频 id={eid} {home} vs {away}",
+                flush=True,
+            )
+
+    meta["skipped"] = meta["skipped"][:50]
+    print(
+        f"[refresh_inplay] 订单簿筛选 tradable={meta['tradable']} "
+        f"no_book={meta['no_book']} no_link={meta['no_link']} bundle={meta['bundle']}",
+        flush=True,
+    )
+    return tradable, meta
+
+
 def refresh_scores_sofascore(
     matches: list[dict[str, Any]],
     poly_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """IPWO → Sofascore：只刷「有外链」的包内场次比分/状态。"""
+    """IPWO → Sofascore：只刷已通过订单簿筛选的场次。"""
     scores: dict[str, Any] = {
         "updated": 0,
         "failed": 0,
@@ -163,33 +253,15 @@ def refresh_scores_sofascore(
         "upstream": "ipwo",
     }
     if not matches:
-        scores.update({"skipped": True, "reason": "no matches", "ok": True})
+        scores.update({"skipped": True, "reason": "no tradable matches", "ok": True})
+        print("[refresh_inplay] 比分跳过：无订单簿可刷场次", flush=True)
         return scores
 
     by_id: dict[int, dict[str, Any]] = {
         int(m["id"]): m for m in matches if m.get("id") is not None
     }
-    linked: dict[int, dict[str, Any]] = {
-        iid: m for iid, m in by_id.items() if _has_external_link(m, poly_map)
-    }
-    no_link = len(by_id) - len(linked)
-    scores["no_link_skipped"] = no_link
-
-    if not linked:
-        scores.update(
-            {
-                "skipped": True,
-                "reason": "no external link (polymarket)",
-                "tracked": 0,
-                "bundle_matches": len(by_id),
-                "ok": True,
-            }
-        )
-        print(
-            f"[refresh_inplay] scores skipped: no external link "
-            f"(bundle={len(by_id)} no_link={no_link})",
-            flush=True,
-        )
+    if not by_id:
+        scores.update({"skipped": True, "reason": "no match ids", "ok": True})
         return scores
 
     # 确保盘中任务走代理开关（Sofascore 侧 require_proxy）
@@ -215,7 +287,7 @@ def refresh_scores_sofascore(
             except Exception as exc:
                 print(f"[refresh_inplay] sofa live list failed: {exc}", flush=True)
 
-            for iid, match in linked.items():
+            for iid, match in by_id.items():
                 home, away = _match_label(match)
                 try:
                     raw = live_by_id.get(iid)
@@ -241,53 +313,36 @@ def refresh_scores_sofascore(
             {
                 "ok": False,
                 "error": str(exc),
-                "tracked": len(linked),
+                "tracked": len(by_id),
                 "missed": missed[:50],
             }
         )
         print(f"[refresh_inplay] 本次采集失败：比分失败（Sofascore 客户端）| {exc}", flush=True)
         return scores
 
-    scores["tracked"] = len(linked)
-    scores["bundle_matches"] = len(by_id)
+    scores["tracked"] = len(by_id)
     scores["live_feed"] = live_hit
     scores["detail_fetch"] = detail_hit
     scores["missed"] = missed[:50]
-    scores["ok"] = int(scores.get("updated") or 0) > 0 or len(linked) == 0
+    scores["ok"] = int(scores.get("updated") or 0) > 0 or len(by_id) == 0
     if int(scores.get("failed") or 0) > 0 and int(scores.get("updated") or 0) == 0:
         print(
             f"[refresh_inplay] 本次采集失败：比分失败 "
-            f"failed={scores.get('failed')}/{len(linked)}（全部未更新）",
+            f"failed={scores.get('failed')}/{len(by_id)}（全部未更新）",
             flush=True,
         )
     elif int(scores.get("failed") or 0) > 0:
         print(
-            f"[refresh_inplay] 比分部分失败 failed={scores.get('failed')}/{len(linked)} "
+            f"[refresh_inplay] 比分部分失败 failed={scores.get('failed')}/{len(by_id)} "
             f"updated={scores.get('updated')}",
             flush=True,
         )
     else:
         print(
-            f"[refresh_inplay] 比分采集完成 updated={scores.get('updated')} "
-            f"linked={len(linked)} no_link={no_link}",
+            f"[refresh_inplay] 比分采集完成 updated={scores.get('updated')}/{len(by_id)}",
             flush=True,
         )
     return scores
-
-
-@contextmanager
-def _polymarket_direct():
-    """赔率直连：临时关掉盘中代理开关，避免 proxies_for('Polymarket') 套 IPWO。"""
-    key = "COLLECT_INPLAY_USE_PROXY"
-    prev = os.environ.get(key)
-    os.environ[key] = "0"
-    try:
-        yield
-    finally:
-        if prev is None:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = prev
 
 
 def refresh_odds_polymarket(
@@ -339,7 +394,12 @@ def refresh_odds_polymarket(
             ev = fetch_event_by_slug(slug)
             if not ev:
                 return eid, iid, None, "empty"
-            return eid, iid, apply_live_prices(poly, ev), None
+            next_poly = apply_live_prices(poly, ev, clob_only=True)
+            if next_poly.get("priceSource") != "clob":
+                return eid, iid, None, "no clob book price"
+            if not (next_poly.get("moneyline") or {}).get("prices"):
+                return eid, iid, None, "no clob prices"
+            return eid, iid, next_poly, None
         except Exception as exc:
             return eid, iid, None, str(exc)
 
@@ -439,11 +499,15 @@ def main() -> int:
 
     scores: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
     prices: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
+    book_meta: dict[str, Any] = {"tradable": 0, "no_book": 0, "no_link": 0}
+
+    # 先判断订单簿：没簿不刷比分也不刷赔率
+    tradable, book_meta = select_matches_with_order_book(matches, poly_map)
 
     if want_score:
-        scores = refresh_scores_sofascore(matches, poly_map)
+        scores = refresh_scores_sofascore(tradable, poly_map)
     if want_odds:
-        prices = refresh_odds_polymarket(matches, poly_map)
+        prices = refresh_odds_polymarket(tradable, poly_map)
 
     moved: dict[str, Any] = {"moved": 0, "skipped": True}
 
@@ -536,6 +600,7 @@ def main() -> int:
         "ok": overall_ok,
         "elapsed_sec": round(time.time() - started, 2),
         "inplay_matches": len(matches),
+        "order_book": book_meta,
         "scores": scores,
         "prices": prices,
         "moved_to_settled": moved,
