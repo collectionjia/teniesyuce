@@ -3762,11 +3762,8 @@ function productEmbedUrl(product) {
                         </span>
                       </div>
                       <div class="sub-preview-actions">
-                        <button
-                          type="button"
-                          class="sub-preview-act unlock"
-                          @click="onBoardNeedSubscribe"
-                        >开通查看</button>
+                        <button type="button" class="sub-preview-act">参数详情</button>
+                        <button type="button" class="sub-preview-act market">跳转下单</button>
                       </div>
                     </div>
                   </div>
