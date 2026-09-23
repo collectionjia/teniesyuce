@@ -6,6 +6,12 @@ const REDEEM_PURCHASE_URL_KEY = 'redeem_purchase_url';
 const DEFAULT_REDEEM_PURCHASE_URL = 'https://pay.ldxp.cn/shop/8GD17A0H';
 const BTC_CRAWL_ENABLED_KEY = 'btc_crawl_enabled';
 const BTC_CRAWL_FORCE_OFF_KEY = 'btc_crawl_force_off';
+const SHOP_PROFIT_TICKER_KEY = 'shop_profit_ticker';
+const DEFAULT_SHOP_PROFIT_TICKER = [
+  { name: '张三', amount: 30 },
+  { name: '李四', amount: 86 },
+  { name: '王五', amount: 120 },
+];
 
 let tableReady = false;
 
@@ -31,10 +37,10 @@ async function ensureTable() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
-  // allow longer URLs if table already existed with VARCHAR(255)
+  // allow longer URLs / JSON if table already existed with VARCHAR(255/512)
   try {
     await pool.query(
-      'ALTER TABLE app_settings MODIFY setting_value VARCHAR(512) NOT NULL'
+      'ALTER TABLE app_settings MODIFY setting_value TEXT NOT NULL'
     );
   } catch (_) { /* ignore */ }
 
@@ -43,6 +49,7 @@ async function ensureTable() {
     [REDEEM_PURCHASE_URL_KEY, DEFAULT_REDEEM_PURCHASE_URL],
     [BTC_CRAWL_ENABLED_KEY, envCrawlEnabled() ? '1' : '0'],
     [BTC_CRAWL_FORCE_OFF_KEY, '0'],
+    [SHOP_PROFIT_TICKER_KEY, JSON.stringify(DEFAULT_SHOP_PROFIT_TICKER)],
   ];
   for (const [key, value] of defaults) {
     const [[row]] = await pool.query(
@@ -149,14 +156,54 @@ async function setBtcCrawlEnabled(enabled) {
   return !!enabled;
 }
 
+function normalizeShopProfitTicker(raw) {
+  let list = raw;
+  if (typeof raw === 'string') {
+    try {
+      list = JSON.parse(raw);
+    } catch {
+      list = [];
+    }
+  }
+  if (!Array.isArray(list)) list = [];
+  const out = [];
+  for (const row of list.slice(0, 30)) {
+    const name = String(row?.name ?? row?.user ?? row?.account ?? '').trim().slice(0, 32);
+    const amount = Number(row?.amount ?? row?.profit ?? row?.usd);
+    if (!name || !Number.isFinite(amount)) continue;
+    out.push({ name, amount: Math.round(amount * 100) / 100 });
+  }
+  return out;
+}
+
+async function getShopProfitTicker() {
+  await ensureTable();
+  const [[row]] = await pool.query(
+    'SELECT setting_value FROM app_settings WHERE setting_key=?',
+    [SHOP_PROFIT_TICKER_KEY]
+  );
+  if (!row?.setting_value) return DEFAULT_SHOP_PROFIT_TICKER.map((x) => ({ ...x }));
+  const items = normalizeShopProfitTicker(row.setting_value);
+  return items.length ? items : DEFAULT_SHOP_PROFIT_TICKER.map((x) => ({ ...x }));
+}
+
+async function setShopProfitTicker(raw) {
+  await ensureTable();
+  const items = normalizeShopProfitTicker(raw);
+  await upsertSetting(SHOP_PROFIT_TICKER_KEY, JSON.stringify(items));
+  return items;
+}
+
 async function getPaymentSettings() {
-  const [defaultPlan, redeemPurchaseUrl] = await Promise.all([
+  const [defaultPlan, redeemPurchaseUrl, shopProfitTicker] = await Promise.all([
     getDefaultPaymentPlan(),
     getRedeemPurchaseUrl(),
+    getShopProfitTicker(),
   ]);
   return {
     defaultPlan,
     redeemPurchaseUrl,
+    shopProfitTicker,
     plans: PAYMENT_PLANS.map((id) => ({
       id,
       label: { month: '按月订阅', week: '按周订阅', day: '按天订阅' }[id],
@@ -167,11 +214,14 @@ async function getPaymentSettings() {
 module.exports = {
   PAYMENT_PLANS,
   DEFAULT_REDEEM_PURCHASE_URL,
+  DEFAULT_SHOP_PROFIT_TICKER,
   getDefaultPaymentPlan,
   setDefaultPaymentPlan,
   getRedeemPurchaseUrl,
   setRedeemPurchaseUrl,
   getBtcCrawlEnabled,
   setBtcCrawlEnabled,
+  getShopProfitTicker,
+  setShopProfitTicker,
   getPaymentSettings,
 };

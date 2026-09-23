@@ -40,7 +40,7 @@ const props = defineProps({
   productId: { type: [Number, String], default: null },
 })
 
-const emit = defineEmits(['open-admin-engine', 'auto-bet-change', 'placed-orders-change'])
+const emit = defineEmits(['open-admin-engine', 'auto-bet-change', 'placed-orders-change', 'need-subscribe'])
 
 const isRangeMode = computed(() => props.boardMode === 'range')
 const isLiveMode = computed(() => props.boardMode === 'live')
@@ -109,6 +109,7 @@ const data = ref(null)
 const loading = ref(true)
 const error = ref('')
 const filter = ref('Not started') // all | Not started | liveish | ended
+const listSort = ref('prob') // time | prob
 const tour = ref('all') // all | ATP | WTA
 const gapMin = ref('50') // all | 50 | 70 | 90 · 现排名差下限（弱−强，如 121−2=119）
 const diffMax = ref('0') // all | 0 | -30 | -50 | -70 · 历史最高排名差上限
@@ -150,7 +151,6 @@ const manualOrderType = ref('market')
 const manualSide = ref('suggest')
 const manualShares = ref('10')
 const manualLimitBuyPrice = ref('0.55')
-const manualLimitSellPrice = ref('0.70')
 const isManualTradeBoard = computed(() => isPrematchMode.value || isInplayMode.value || isMixMode.value)
 const showManualTradeOpts = computed(() => isManualTradeBoard.value && allowBatchTrade.value)
 
@@ -192,6 +192,7 @@ const {
   props,
   isPrematchMode,
   isInplayMode,
+  isMixMode,
   getLoadOnce: () => loadOnce,
   getShowAdminEngineButtons: () => showAdminEngineButtons.value,
 })
@@ -228,6 +229,7 @@ const {
   props,
   isPrematchMode,
   isInplayMode,
+  isMixMode,
   batchAmountUsd,
   getSyncListAutoBetFromBucket: () => syncListAutoBetFromBucket,
   getLibraryGroups: () => libraryGroups.value,
@@ -556,7 +558,7 @@ function rememberPlacedOrders(orders, results, amount) {
 }
 
 async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
-  if (!isPrematchMode.value && !isInplayMode.value) return
+  if (!isPrematchMode.value && !isInplayMode.value && !isMixMode.value) return
   // 管理员「桶打开」只影响规则与引擎；用户是否自动投注由本人开关决定
   if (fromSave) {
     betRulesNotice.value = autoSimBetEnabled.value
@@ -565,7 +567,7 @@ async function syncListAutoBetFromBucket({ fromSave = false } = {}) {
   }
   await loadListPollIntervals()
   syncInplayPoll()
-  if (isInplayMode.value || isPrematchMode.value) await maybeAutoStopLoss()
+  if (isInplayMode.value || isPrematchMode.value || isMixMode.value) await maybeAutoStopLoss()
   if (!autoSimBetEnabled.value) return
   if (!allowBatchTrade.value) {
     const msg = '已开自动投注，但当前账号无法批量（需会员）'
@@ -961,11 +963,25 @@ function allMatches(bundle) {
   return [...byId.values()]
 }
 
+function matchWinPct(m) {
+  const elo = eloOf(m?.id)
+  if (!elo?.ok) return 0
+  const best = Number(elo.best?.win_pct)
+  if (Number.isFinite(best)) return best
+  const h = Number(elo.home?.win_pct)
+  const a = Number(elo.away?.win_pct)
+  return Math.max(Number.isFinite(h) ? h : 0, Number.isFinite(a) ? a : 0)
+}
+
 function sortMatches(list) {
   return [...list].sort((a, b) => {
-    const ta = a.startTimestamp || 0
-    const tb = b.startTimestamp || 0
-    if (ta !== tb) return ta - tb
+    if (listSort.value === 'time') {
+      const d = (a.startTimestamp || 0) - (b.startTimestamp || 0)
+      if (d) return d
+      return (a.id || 0) - (b.id || 0)
+    }
+    const d = matchWinPct(b) - matchWinPct(a)
+    if (d) return d
     return (a.id || 0) - (b.id || 0)
   })
 }
@@ -1623,30 +1639,6 @@ async function submitBatchTrade({ auto = false } = {}) {
       }
       selectedIds.value = next
       rememberPlacedOrders(orders, allResults, amount)
-      // 限价：买入成交后才挂卖出目标价
-      const wantFollowSell = orderType === 'limit' && (
-        (manual && Number(manualLimitSellPrice.value) >= 0.01 && Number(manualLimitSellPrice.value) <= 0.99)
-        || (!manual && engineLimitSellPrice.value != null
-          && Number(engineLimitSellPrice.value) >= 0.01
-          && Number(engineLimitSellPrice.value) <= 0.99)
-      )
-      if (wantFollowSell) {
-        const sellRes = await placeLimitSellsAfterFilledBuys(orders, allResults, { manual })
-        if (sellRes.lines.length) {
-          batchNotice.value = [
-            batchNotice.value,
-            '—— 卖出挂单 ——',
-            ...sellRes.lines.slice(0, 6),
-            sellRes.lines.length > 6 ? `…另有 ${sellRes.lines.length - 6} 条` : null,
-          ].filter(Boolean).join('\n')
-        }
-        if (sellRes.failed > 0) {
-          batchError.value = [
-            batchError.value,
-            sellRes.lines.filter((l) => l.includes('挂卖失败') || l.includes('无法确定方向')).join('\n'),
-          ].filter(Boolean).join('\n')
-        }
-      }
     } else if (!auto) {
       batchNotice.value = ''
     }
@@ -1676,75 +1668,15 @@ async function maybeAutoBatchTrade() {
   await submitBatchTrade({ auto: true })
 }
 
-function isBuyFilledForFollowSell(r) {
-  if (!r?.ok || r.eventId == null) return false
-  if (r.simulated) return true
-  const st = String(r.status || '').toLowerCase()
-  if (['matched', 'filled'].includes(st)) return true
-  const taking = Number(r.takingAmount)
-  const making = Number(r.makingAmount)
-  if ((Number.isFinite(taking) && taking > 0) || (Number.isFinite(making) && making > 0)) return true
-  // 限价仅挂单未成交：不算买入成功持仓
-  if (['live', 'open', 'unmatched', 'delayed'].includes(st)) return false
-  if (String(r.orderType || '').toLowerCase() === 'limit') return false
-  return true
-}
-
-/** 限价买入成交后，再挂卖出目标价 */
-async function placeLimitSellsAfterFilledBuys(orders, results, { manual = false } = {}) {
-  const sellPx = manual
-    ? Number(manualLimitSellPrice.value)
-    : Number(engineLimitSellPrice.value)
-  if (!(sellPx >= 0.01 && sellPx <= 0.99)) return { hung: 0, skipped: 0, failed: 0, lines: [] }
-
-  const byOrder = new Map((orders || []).map((o) => [String(o.eventId), o]))
-  let hung = 0
-  let skipped = 0
-  let failed = 0
-  const lines = []
-  for (const r of results || []) {
-    if (!r?.ok || r.eventId == null) continue
-    if (!isBuyFilledForFollowSell(r)) {
-      skipped += 1
-      lines.push(`${r.homeName || r.eventId}：买入未成交，暂不挂卖单`)
-      continue
-    }
-    const fromOrder = byOrder.get(String(r.eventId))
-    const side = r.side || fromOrder?.side
-    if (!side) {
-      failed += 1
-      lines.push(`${r.eventId}：无法确定方向，未挂卖单`)
-      continue
-    }
-    const m = matches.value.find((x) => String(x.id) === String(r.eventId))
-      || { id: r.eventId }
-    try {
-      const resp = await placeStopSell(m, side, {
-        simulate: !!(r.simulated || useSimulateOrders.value),
-        forceLimitSellPrice: sellPx,
-      })
-      const st = String(resp?.status || '').toLowerCase()
-      hung += 1
-      lines.push(
-        `${r.homeName || fromOrder?.homeName || r.eventId}：已挂卖单 @ ${sellPx}${st ? ` (${st})` : ''}`,
-      )
-    } catch (e) {
-      failed += 1
-      lines.push(`${r.eventId}：挂卖失败 ${e?.response?.data?.error || e?.message || ''}`)
-    }
-  }
-  return { hung, skipped, failed, lines }
-}
-
 async function placeStopSell(m, side, { simulate, forceLimitSellPrice } = {}) {
   const forcePx = Number(forceLimitSellPrice)
   const useForcedLimit = forcePx >= 0.01 && forcePx <= 0.99
-  const useManualLimit = !useForcedLimit
-    && isManualTradeBoard.value
-    && manualOrderType.value === 'limit'
-  const orderType = (useForcedLimit || useManualLimit)
-    ? 'limit'
-    : engineOrderType.value
+  const useEngineLimit = !useForcedLimit
+    && engineOrderType.value === 'limit'
+    && engineLimitSellPrice.value != null
+    && Number(engineLimitSellPrice.value) >= 0.01
+    && Number(engineLimitSellPrice.value) <= 0.99
+  const orderType = (useForcedLimit || useEngineLimit) ? 'limit' : 'market'
   const payload = {
     eventId: String(m.id),
     side,
@@ -1756,13 +1688,7 @@ async function placeStopSell(m, side, { simulate, forceLimitSellPrice } = {}) {
     if (useForcedLimit) {
       payload.limitSellPrice = Math.round(forcePx * 100) / 100
       payload.limitPrice = payload.limitSellPrice
-    } else if (useManualLimit) {
-      const sp = Number(manualLimitSellPrice.value)
-      if (sp >= 0.01 && sp <= 0.99) {
-        payload.limitSellPrice = Math.round(sp * 100) / 100
-        payload.limitPrice = payload.limitSellPrice
-      }
-    } else if (engineLimitSellPrice.value != null) {
+    } else if (useEngineLimit) {
       payload.limitSellPrice = engineLimitSellPrice.value
       payload.limitPrice = engineLimitSellPrice.value
     }
@@ -2047,6 +1973,12 @@ function setStatusFilter(mode) {
   if (hideEndedEvents.value && mode === 'ended') return
   if (filter.value === mode) return
   filter.value = mode
+  currentPage.value = 1
+}
+
+function setListSort(mode) {
+  if (listSort.value === mode) return
+  listSort.value = mode
   currentPage.value = 1
 }
 
@@ -2388,7 +2320,10 @@ function polyUrlOf(m) {
   return /polymarket\.com\/event\//i.test(url) ? url : ''
 }
 function openDetail(m) {
-  if (!props.isMember) return
+  if (!props.isMember) {
+    emit('need-subscribe')
+    return
+  }
   detailHelpOpen.value = false
   detailMatch.value = m
 }
@@ -2401,7 +2336,10 @@ function toggleDetailHelp(ev) {
   detailHelpOpen.value = !detailHelpOpen.value
 }
 function openMarket(m) {
-  if (!props.isMember) return
+  if (!props.isMember) {
+    emit('need-subscribe')
+    return
+  }
   const url = polyUrlOf(m)
   if (!url) return
   window.open(url, '_blank', 'noopener,noreferrer')
@@ -3021,10 +2959,12 @@ defineExpose({
       :stats="stats"
       :loading="loading"
       :filter="filter"
+      :list-sort="listSort"
       :hide-ended-events="hideEndedEvents"
       :pct="pct"
       :num="num"
       :set-status-filter="setStatusFilter"
+      :set-list-sort="setListSort"
     />
 
     <TennisConditionModal
@@ -3039,7 +2979,7 @@ defineExpose({
       :rules-saving="rulesSaving"
       :condition-groups="conditionGroups"
       :is-inplay-mode="isInplayMode"
-      :is-prematch-mode="isPrematchMode"
+      :is-prematch-mode="isPrematchMode || isMixMode"
       :set-condition-group-field="setConditionGroupField"
       :remove-condition-group="removeConditionGroup"
       :add-condition-group="addConditionGroup"
@@ -3127,7 +3067,6 @@ defineExpose({
       v-model:manual-side="manualSide"
       v-model:manual-shares="manualShares"
       v-model:manual-limit-buy-price="manualLimitBuyPrice"
-      v-model:manual-limit-sell-price="manualLimitSellPrice"
       :batch-submitting="batchSubmitting"
       :batch-notice="batchNotice"
       :batch-error="batchError"
@@ -3178,6 +3117,7 @@ defineExpose({
       :open-detail="openDetail"
       :open-market="openMarket"
       :on-polymarket-action="onPolymarketAction"
+      :on-need-subscribe="() => emit('need-subscribe')"
       :poly-url-of="polyUrlOf"
       :collect-updated-text="collectUpdatedText"
       :collect-refreshing="collectRefreshing"
@@ -3246,5 +3186,7 @@ defineExpose({
   background: var(--bg);
   padding: 6px;
   border-radius: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 </style>

@@ -15,7 +15,6 @@ defineProps({
   manualSide: { type: String, default: 'suggest' },
   manualShares: { type: [String, Number], default: '10' },
   manualLimitBuyPrice: { type: [String, Number], default: '0.55' },
-  manualLimitSellPrice: { type: [String, Number], default: '0.70' },
   toggleAutoBet: { type: Function, required: true },
   toggleSelectPage: { type: Function, required: true },
   submitBatchTrade: { type: Function, required: true },
@@ -28,7 +27,6 @@ const emit = defineEmits([
   'update:manualSide',
   'update:manualShares',
   'update:manualLimitBuyPrice',
-  'update:manualLimitSellPrice',
 ])
 </script>
 
@@ -92,7 +90,7 @@ const emit = defineEmits([
             >Down</button>
           </div>
           <template v-if="manualOrderType === 'limit'">
-            <label class="batch-amount" title="限价买入份额（手动）；自动投注优先用「元」反推份额">
+            <label class="batch-amount" title="限价买入份额">
               <span>份</span>
               <input
                 :value="manualShares"
@@ -115,20 +113,12 @@ const emit = defineEmits([
                 inputmode="decimal"
               />
             </label>
-            <label class="batch-amount" title="卖出目标价 0.01–0.99（买入成交后再挂）">
-              <span>卖</span>
-              <input
-                :value="manualLimitSellPrice"
-                @input="emit('update:manualLimitSellPrice', $event.target.value)"
-                type="number"
-                min="0.01"
-                max="0.99"
-                step="0.01"
-                inputmode="decimal"
-              />
-            </label>
           </template>
-          <label class="batch-amount" title="每场金额（自动投注以此为准，不会被默认 1 元覆盖）">
+          <label
+            v-else
+            class="batch-amount"
+            title="每场金额（自动投注以此为准，不会被默认 1 元覆盖）"
+          >
             <span>元</span>
             <input :value="batchAmountUsd" @input="emit('update:batchAmountUsd', $event.target.value)" type="number" min="1" step="1" inputmode="decimal" />
           </label>

@@ -3,6 +3,7 @@ const pool = require('../db');
 const { auth } = require('../middleware/auth');
 const productService = require('../services/product');
 const pricing = require('../services/pricing');
+const settings = require('../services/settings');
 
 const router = express.Router();
 
@@ -19,6 +20,16 @@ function mapProductForUser(row, user) {
   const prices = pricing.mapProductPrices(row, user);
   return { ...base, ...prices };
 }
+
+/** 首页盈利滚动字幕（公开） */
+router.get('/profit-ticker', async (_req, res) => {
+  try {
+    res.json({ items: await settings.getShopProfitTicker() });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: '获取盈利字幕失败' });
+  }
+});
 
 router.get('/', auth(), async (req, res) => {
   try {

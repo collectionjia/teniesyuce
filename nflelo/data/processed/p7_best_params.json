@@ -1,0 +1,11 @@
+{
+  "K": 16.0,
+  "HA": 50.0,
+  "Rev": 0.4,
+  "spread_to_elo": 12.0,
+  "spread_threshold": 100.0,
+  "composite": "OFF",
+  "mov": "log",
+  "qb_weight": 0.0,
+  "qb_k": 16.0
+}

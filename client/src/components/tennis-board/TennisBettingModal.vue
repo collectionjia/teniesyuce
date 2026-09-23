@@ -31,6 +31,7 @@ const emit = defineEmits(['update:open', 'update:bettingBucketOn', 'update:betti
 
 <template>
 <!-- 投注设置弹框：盘中先体现买入条件，再配止损；盘前仅止损 -->
+  <Teleport to="body">
     <div v-if="open" class="modal-mask modal-mask--top" @click.self="emit('update:open', false)">
       <div class="modal-sheet rules-modal-sheet" role="dialog" aria-modal="true">
         <div class="modal-head">
@@ -179,6 +180,7 @@ const emit = defineEmits(['update:open', 'update:bettingBucketOn', 'update:betti
         </div>
       </div>
     </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -203,12 +205,13 @@ const emit = defineEmits(['update:open', 'update:bettingBucketOn', 'update:betti
 .modal-mask {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 100;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 .modal-mask--top {
   align-items: flex-start;
@@ -219,14 +222,14 @@ const emit = defineEmits(['update:open', 'update:bettingBucketOn', 'update:betti
   max-width: 26rem;
   max-height: min(88vh, 720px);
   background: #fff;
-  border-radius: 14px 14px 12px 12px;
+  border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .modal-mask--top .modal-sheet {
-  border-radius: 12px 12px 14px 14px;
+  border-radius: 12px;
 }
 .rules-modal-sheet {
   max-width: min(36rem, 100%);

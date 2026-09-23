@@ -57,6 +57,19 @@ const shopTennisSettledSub = reactive({
   total: 0,
   winRate: '—',
 })
+/** 主页产品磁贴：各看板推荐场次 + 网球胜率 */
+const shopProductStats = reactive({
+  loaded: false,
+  tennisWinRate: '—',
+  tennisWinRateOk: false,
+  counts: {
+    tennis_prematch: null,
+    tennis_inplay: null,
+    tennis_settled: null,
+    dota2: null,
+    nfl: null,
+  },
+})
 const adminProducts = ref([])
 const adminCategories = ref([])
 const categoryForm = reactive({ name: '', sortOrder: '', saving: false, editingId: null })
@@ -465,6 +478,107 @@ const shopTennisCategorySelected = computed(() => {
   return /网球/.test(String(cat?.name || ''))
 })
 
+/** 与 TennisBoard.allMatches 一致：盘前/混合以 scheduled + live 去重计数 */
+function countTennisBundleMatches(bundle) {
+  if (!bundle) return 0
+  const fromSched = (bundle.scheduled?.tournaments || []).flatMap((t) => t.events || [])
+  const live = bundle.live?.matches || []
+  const byId = new Set()
+  for (const m of fromSched) {
+    if (m?.id != null) byId.add(String(m.id))
+  }
+  for (const m of live) {
+    if (m?.id != null) byId.add(String(m.id))
+  }
+  if (byId.size) return byId.size
+  if (fromSched.length || live.length) return fromSched.length + live.length
+  if (Number.isFinite(Number(bundle.matchCount))) return Number(bundle.matchCount)
+  if (Array.isArray(bundle.matches)) return bundle.matches.length
+  return 0
+}
+
+/** 网球赛事推荐 = mix：盘前 + 盘中去重（同 loadMixBundle） */
+function countTennisMixMatches(pre, inplay) {
+  const byId = new Set()
+  const add = (bundle) => {
+    for (const t of bundle?.scheduled?.tournaments || []) {
+      for (const e of t.events || []) {
+        if (e?.id != null) byId.add(String(e.id))
+      }
+    }
+    for (const m of bundle?.live?.matches || []) {
+      if (m?.id != null) byId.add(String(m.id))
+    }
+  }
+  add(pre)
+  add(inplay)
+  if (byId.size) return byId.size
+  return countTennisBundleMatches(pre) + countTennisBundleMatches(inplay)
+}
+
+function countPmMarkets(data) {
+  if (!data) return 0
+  if (Number.isFinite(Number(data.matchCount))) return Number(data.matchCount)
+  if (Array.isArray(data.matches)) return data.matches.length
+  return 0
+}
+
+function shopProductStatKey(product) {
+  if (isNflProduct(product)) return 'nfl'
+  if (isDota2Product(product)) return 'dota2'
+  if (isTennisSettledProduct(product)) return 'tennis_settled'
+  if (isTennisInplayProduct(product)) return 'tennis_inplay'
+  if (isTennisPrematchProduct(product)) return 'tennis_prematch'
+  if (isTennisBoardHeaderProduct(product)) return 'tennis_prematch'
+  return null
+}
+
+function shopProductRecCount(product) {
+  const key = shopProductStatKey(product)
+  if (!key) return null
+  const n = shopProductStats.counts[key]
+  return Number.isFinite(n) ? n : null
+}
+
+function shopProductShowWinRate(product) {
+  return isTennisBoardHeaderProduct(product) && shopProductStats.tennisWinRateOk
+}
+
+async function loadShopProductStats() {
+  try {
+    const [pre, inplay, settled, dota2, nfl] = await Promise.all([
+      api.fetchTennisPrematchToday().catch(() => null),
+      api.fetchTennisInplayToday().catch(() => null),
+      api.fetchTennisSettledToday({}).catch(() => null),
+      api.fetchDota2Markets().catch(() => null),
+      api.fetchNflMarkets().catch(() => null),
+    ])
+    shopProductStats.counts.tennis_prematch = countTennisMixMatches(pre, inplay)
+    shopProductStats.counts.tennis_inplay = countTennisBundleMatches(inplay)
+    const settledMatches = settled?.live?.matches || []
+    shopProductStats.counts.tennis_settled = settledMatches.length
+    shopProductStats.counts.dota2 = countPmMarkets(dota2)
+    shopProductStats.counts.nfl = countPmMarkets(nfl)
+    let win = 0
+    let loss = 0
+    for (const m of settledMatches) {
+      if (m?.pickHit === 1) win += 1
+      else if (m?.pickHit === 0) loss += 1
+    }
+    const total = win + loss
+    if (total) {
+      shopProductStats.tennisWinRate = `${Math.round((win / total) * 1000) / 10}%`
+      shopProductStats.tennisWinRateOk = true
+    } else {
+      shopProductStats.tennisWinRate = '—'
+      shopProductStats.tennisWinRateOk = false
+    }
+    shopProductStats.loaded = true
+  } catch {
+    shopProductStats.loaded = true
+  }
+}
+
 async function loadShopTennisSettledSub() {
   if (!shopTennisCategorySelected.value) {
     shopTennisSettledSub.loaded = false
@@ -583,7 +697,16 @@ const paymentSettings = reactive({
 })
 const siteSettingsForm = reactive({
   redeemPurchaseUrl: EXTERNAL_SUBSCRIBE_URL_DEFAULT,
+  tickerRows: [{ name: '', amount: '' }],
   saving: false,
+})
+/** 首页赛事推荐上方滚动盈利字幕 */
+const shopProfitTickerItems = ref([])
+const shopProfitTickerText = computed(() => {
+  const parts = shopProfitTickerItems.value
+    .filter((x) => x?.name && Number.isFinite(Number(x.amount)))
+    .map((x) => `${x.name} 盈利${Number(x.amount)}美金`)
+  return parts
 })
 const redeemPurchaseUrl = computed(() => {
   const u = String(paymentSettings.redeemPurchaseUrl || '').trim()
@@ -1054,6 +1177,16 @@ const showShopList = computed(() =>
   (role.value === 'user' && view.value === 'home') ||
   ((role.value === 'agent' || role.value === 'admin') && view.value === 'shop')
 )
+watch(
+  () => authed.value && showShopList.value,
+  (on) => {
+    if (on) {
+      void loadShopProductStats()
+      void loadShopProfitTicker()
+    }
+  },
+  { immediate: true },
+)
 const showProductDetail = computed(() => view.value === 'product' && !!openedProduct.value)
 const showMine = computed(() => view.value === 'mine')
 const showHelp = computed(() => view.value === 'help')
@@ -1319,18 +1452,54 @@ async function loadPaymentSettings() {
     paymentSettings.defaultPlan = data.defaultPlan || 'month'
     paymentSettings.redeemPurchaseUrl = data.redeemPurchaseUrl || EXTERNAL_SUBSCRIBE_URL_DEFAULT
     siteSettingsForm.redeemPurchaseUrl = paymentSettings.redeemPurchaseUrl
+    const ticker = Array.isArray(data.shopProfitTicker) ? data.shopProfitTicker : []
+    siteSettingsForm.tickerRows = ticker.length
+      ? ticker.map((x) => ({ name: String(x.name || ''), amount: String(x.amount ?? '') }))
+      : [{ name: '', amount: '' }]
     if (data.plans?.length) paymentSettings.plans = data.plans
   } catch { /* keep defaults */ }
+}
+
+async function loadShopProfitTicker() {
+  try {
+    const data = await api.fetchShopProfitTicker()
+    shopProfitTickerItems.value = Array.isArray(data?.items) ? data.items : []
+  } catch {
+    shopProfitTickerItems.value = []
+  }
+}
+
+function addSiteTickerRow() {
+  siteSettingsForm.tickerRows.push({ name: '', amount: '' })
+}
+
+function removeSiteTickerRow(idx) {
+  siteSettingsForm.tickerRows.splice(idx, 1)
+  if (!siteSettingsForm.tickerRows.length) {
+    siteSettingsForm.tickerRows.push({ name: '', amount: '' })
+  }
 }
 
 async function saveSiteSettings() {
   siteSettingsForm.saving = true
   try {
+    const shopProfitTicker = siteSettingsForm.tickerRows
+      .map((r) => ({
+        name: String(r.name || '').trim(),
+        amount: Number(r.amount),
+      }))
+      .filter((r) => r.name && Number.isFinite(r.amount))
     const data = await api.updateAdminPaymentSettings({
       redeemPurchaseUrl: siteSettingsForm.redeemPurchaseUrl,
+      shopProfitTicker,
     })
     paymentSettings.redeemPurchaseUrl = data.redeemPurchaseUrl || siteSettingsForm.redeemPurchaseUrl
     siteSettingsForm.redeemPurchaseUrl = paymentSettings.redeemPurchaseUrl
+    const ticker = Array.isArray(data.shopProfitTicker) ? data.shopProfitTicker : shopProfitTicker
+    siteSettingsForm.tickerRows = ticker.length
+      ? ticker.map((x) => ({ name: String(x.name || ''), amount: String(x.amount ?? '') }))
+      : [{ name: '', amount: '' }]
+    shopProfitTickerItems.value = ticker
     showToast(data.message || '设置已保存', 'success')
   } catch (e) {
     showToast(e.response?.data?.error || '保存失败', 'error')
@@ -2085,6 +2254,19 @@ function openRedeem(p) {
   redeemInput.code = ''
   redeemInput.productId = redeemModalProduct.value?.id || ''
   showRedeemModal.value = true
+}
+
+function onBoardNeedSubscribe() {
+  const p = openedProduct.value
+  if (!p) return
+  const expired = statusOf(p.id) === 'expired'
+  showToast(
+    expired
+      ? '订阅已过期：兑换后可继续查看胜率、「优」方向与参数详情'
+      : '开通后可查看胜率、「优」方向与参数详情',
+    'info',
+  )
+  openRedeem(p)
 }
 
 function closeRedeemModal() {
@@ -2925,6 +3107,15 @@ function isNflProduct(product) {
   return /nfl/i.test(String(product?.name || '').trim())
 }
 
+/** 前台展示：dota2 / nfl 统一大写 */
+function productDisplayName(product) {
+  let name = String(product?.name || '')
+  if (isDota2Product(product) || isNflProduct(product)) {
+    name = name.replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL')
+  }
+  return name
+}
+
 function isPmListProduct(product) {
   return isDota2Product(product) || isNflProduct(product)
 }
@@ -2948,6 +3139,56 @@ function showSubscriptionInHeader(product) {
   // 手机上兑换入口放顶部，避免滚到看板/内容最底才看到
   return !!product
 }
+
+/** 未订阅提示卡：开通后列表效果示例（示意数据） */
+function subscribePreviewSample(product) {
+  if (isNflProduct(product)) {
+    return {
+      time: '周日 09:25',
+      meta: 'NFL · 差 186',
+      aRank: '1582',
+      aName: 'Chiefs',
+      aProb: '68.7%',
+      aPm: '0.61',
+      bRank: '1396',
+      bName: 'Raiders',
+      bProb: '31.3%',
+      bPm: '0.39',
+      pick: 'a',
+    }
+  }
+  if (isDota2Product(product)) {
+    return {
+      time: '今天 21:00',
+      meta: 'Dota2 · 差 210',
+      aRank: '1840',
+      aName: 'Team Liquid',
+      aProb: '71.2%',
+      aPm: '0.64',
+      bRank: '1630',
+      bName: 'OG',
+      bProb: '28.8%',
+      bPm: '0.36',
+      pick: 'a',
+    }
+  }
+  return {
+    time: '今天 20:30',
+    meta: 'ATP 500 · 男子',
+    aRank: '#3',
+    aName: 'Alcaraz',
+    aProb: '68%',
+    aPm: '',
+    bRank: '#7',
+    bName: 'Sinner',
+    bProb: '32%',
+    bPm: '',
+    pick: 'a',
+  }
+}
+
+const openedSubscribePreview = computed(() => subscribePreviewSample(openedProduct.value))
+const subscribePreviewOpen = ref(true)
 
 function directProductUrl(product) {
   const u = (product?.url || '').trim()
@@ -3180,10 +3421,10 @@ function productEmbedUrl(product) {
                 </div>
                 <div class="auth-brand-text">
                   <div class="auth-brand-name">YUCE<span class="auth-brand-dot">.</span>BID</div>
-                  <div class="auth-brand-sub">数据分析平台</div>
+                  <div class="auth-brand-sub">赛事推荐</div>
                 </div>
               </div>
-              <p class="auth-lead">整合多源数据与结构化指标，辅助你更快完成研判与决策。</p>
+              <p class="auth-lead">网球、DOTA2、NFL 的今日可跟场次与方向参考。登录后直接进入推荐列表，少翻盘口、少猜方向。</p>
             </div>
 
             <div class="auth-card rounded-3xl p-5 sm:p-6 shrink-0 fade-up">
@@ -3192,57 +3433,62 @@ function productEmbedUrl(product) {
                   <button type="button" @click="authView='login'" :class="authView==='login' ? 'flex-1 py-2.5 rounded-lg bg-white shadow-sm text-indigo-700 font-semibold' : 'flex-1 py-2.5 text-slate-500'">登录</button>
                   <button type="button" @click="authView='register'" :class="authView==='register' ? 'flex-1 py-2.5 rounded-lg bg-white shadow-sm text-indigo-700 font-semibold' : 'flex-1 py-2.5 text-slate-500'">注册</button>
                 </div>
+                <p class="auth-card-tip">
+                  {{ authView === 'login'
+                    ? '欢迎回来。用邮箱登录，继续查看今日推荐。'
+                    : '还没有账号？一分钟注册，马上就能看赛事推荐。' }}
+                </p>
               </div>
 
               <div class="auth-card-body">
                 <div v-show="authView==='login'" class="auth-form-panel space-y-3">
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('user')"></span>
-                    <input v-model.trim="f.account" type="email" autocomplete="username" placeholder="邮箱" class="auth-input"/>
+                    <input v-model.trim="f.account" type="email" autocomplete="username" placeholder="邮箱地址" class="auth-input"/>
                   </div>
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('lock')"></span>
-                    <input :type="showPwd?'text':'password'" v-model="f.password" autocomplete="current-password" placeholder="登录密码" class="auth-input"/>
+                    <input :type="showPwd?'text':'password'" v-model="f.password" autocomplete="current-password" placeholder="密码" class="auth-input"/>
                     <button type="button" @click="showPwd=!showPwd" v-html="icon(showPwd?'eyeOff':'eye')" class="auth-field-action"></button>
                   </div>
                   <p v-if="sessionError" class="text-amber-700 text-sm text-center -mt-1 bg-amber-50 rounded-xl px-3 py-2">{{ sessionError }}</p>
                   <p v-if="loginError" class="text-danger text-sm text-center -mt-1">{{ loginError }}</p>
-                  <button type="button" @click="doLogin" class="auth-submit">登录</button>
+                  <button type="button" @click="doLogin" class="auth-submit">进入推荐</button>
                 </div>
 
                 <div v-show="authView==='register'" class="auth-form-panel space-y-3">
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('user')"></span>
-                    <input v-model.trim="f.account" type="email" autocomplete="email" placeholder="邮箱" class="auth-input"/>
+                    <input v-model.trim="f.account" type="email" autocomplete="email" placeholder="常用邮箱" class="auth-input"/>
                   </div>
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('lock')"></span>
-                    <input :type="showPwd?'text':'password'" v-model="f.password" placeholder="设置密码（6 位以上）" class="auth-input"/>
+                    <input :type="showPwd?'text':'password'" v-model="f.password" placeholder="设置密码（至少 6 位）" class="auth-input"/>
                     <button type="button" @click="showPwd=!showPwd" v-html="icon(showPwd?'eyeOff':'eye')" class="auth-field-action"></button>
                   </div>
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('lock')"></span>
-                    <input :type="showPwd?'text':'password'" v-model="f.confirm" placeholder="确认密码" class="auth-input"/>
+                    <input :type="showPwd?'text':'password'" v-model="f.confirm" placeholder="再输入一次密码" class="auth-input"/>
                   </div>
                   <div class="auth-field">
                     <span class="auth-field-icon" v-html="icon('link')"></span>
-                    <input v-model.trim="f.inviteCode" type="text" placeholder="邀请码（选填）" class="auth-input"/>
+                    <input v-model.trim="f.inviteCode" type="text" placeholder="邀请码（有的话填一下）" class="auth-input"/>
                   </div>
                   <div class="flex bg-slate-100/80 rounded-xl p-1 text-sm">
-                    <button type="button" @click="f.regRole='user'" :class="f.regRole==='user' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-700 font-medium' : 'flex-1 py-2 text-slate-500'">普通用户</button>
-                    <button type="button" @click="f.regRole='agent'" :class="f.regRole==='agent' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-700 font-medium' : 'flex-1 py-2 text-slate-500'">代理申请</button>
+                    <button type="button" @click="f.regRole='user'" :class="f.regRole==='user' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-700 font-medium' : 'flex-1 py-2 text-slate-500'">我是用户</button>
+                    <button type="button" @click="f.regRole='agent'" :class="f.regRole==='agent' ? 'flex-1 py-2 rounded-lg bg-white shadow-sm text-indigo-700 font-medium' : 'flex-1 py-2 text-slate-500'">我要做代理</button>
                   </div>
                   <label class="flex items-start gap-2 text-xs text-slate-500 px-1">
                     <input type="checkbox" v-model="f.agree" class="mt-0.5 accent-indigo-600"/>
-                    <span>我已阅读并同意用户协议与隐私政策</span>
+                    <span>我已阅读并同意服务条款与隐私说明</span>
                   </label>
                   <p v-if="registerError" class="text-danger text-sm text-center -mt-1">{{ registerError }}</p>
-                  <button type="button" @click="doRegister" class="auth-submit">注册并登录</button>
+                  <button type="button" @click="doRegister" class="auth-submit">创建账号</button>
                 </div>
               </div>
             </div>
 
-            <p class="auth-foot">用数据洞察 · 用分析决策</p>
+            <p class="auth-foot">先看清推荐，再决定是否跟盘</p>
           </div>
         </div>
 
@@ -3251,7 +3497,7 @@ function productEmbedUrl(product) {
           <Teleport to="body">
             <div
               v-if="showPageGuide"
-              class="fixed inset-0 z-[90] bg-slate-900/45 flex items-end justify-center p-3"
+              class="fixed inset-0 z-[90] bg-slate-900/45 flex items-start justify-center p-3 pt-4"
               @click.self="dismissPageGuide"
             >
               <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl p-4" role="dialog" aria-modal="true" aria-label="页面引导">
@@ -3339,6 +3585,28 @@ function productEmbedUrl(product) {
           >
 
             <section v-if="showShopList" class="shop-page fade-up">
+              <div
+                v-if="shopProfitTickerText.length"
+                class="shop-profit-board"
+                aria-label="龙虎榜"
+              >
+                <div class="shop-profit-board-title">龙虎榜</div>
+                <div class="shop-profit-ticker">
+                  <div class="shop-profit-ticker-track">
+                    <span
+                      v-for="(t, i) in shopProfitTickerText"
+                      :key="'a-' + i"
+                      class="shop-profit-ticker-item"
+                    >{{ t }}</span>
+                    <span
+                      v-for="(t, i) in shopProfitTickerText"
+                      :key="'b-' + i"
+                      class="shop-profit-ticker-item"
+                      aria-hidden="true"
+                    >{{ t }}</span>
+                  </div>
+                </div>
+              </div>
               <div class="shop-toolbar">
                 <div class="shop-summary">
                   <h2 class="shop-summary-title">赛事推荐</h2>
@@ -3363,7 +3631,7 @@ function productEmbedUrl(product) {
                   class="shop-cat-chip"
                   :class="{ on: String(shopCategoryFilter) === String(c.id) }"
                   @click="shopCategoryFilter = String(c.id)"
-                >{{ c.name }}</button>
+                >{{ String(c.name || '').replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL') }}</button>
                 <button
                   v-if="shopHasUncategorized"
                   type="button"
@@ -3397,9 +3665,17 @@ function productEmbedUrl(product) {
                   class="product-tile"
                   @click="openProduct(p)"
                 >
+                  <span
+                    v-if="shopProductShowWinRate(p)"
+                    class="product-tile-win"
+                  >{{ shopProductStats.tennisWinRate }}</span>
                   <span :class="badgeClass(statusOf(p.id))" class="product-tile-badge">{{ badgeText(statusOf(p.id)) }}</span>
                   <ProductIcon :product="p" size="md" rounded="2xl" />
-                  <div class="product-tile-name">{{ p.name }}</div>
+                  <div class="product-tile-name">{{ productDisplayName(p) }}</div>
+                  <div
+                    v-if="shopProductRecCount(p) != null"
+                    class="product-tile-count"
+                  >推荐 {{ shopProductRecCount(p) }} 场</div>
                 </button>
               </div>
             </section>
@@ -3412,7 +3688,7 @@ function productEmbedUrl(product) {
                   class="product-board-back text-lg text-primary-700 flex items-center gap-1.5 py-1 font-semibold"
                 ><span v-html="icon('back')"></span>返回</button>
                 <div class="flex items-center gap-2 min-w-0 flex-wrap">
-                  <div class="font-semibold text-sm truncate">{{ openedProduct.name }}</div>
+                   <div class="font-semibold text-sm truncate">{{ productDisplayName(openedProduct) }}</div>
                   <template v-if="showSubscriptionInHeader(openedProduct)">
                     <span :class="badgeClass(statusOf(openedProduct.id))" class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium">{{ badgeText(statusOf(openedProduct.id)) }}</span>
                     <span
@@ -3422,14 +3698,13 @@ function productEmbedUrl(product) {
                   </template>
                 </div>
                 <div
-                  v-if="showSubscriptionInHeader(openedProduct)"
+                  v-if="showSubscriptionInHeader(openedProduct) && !isActive(openedProduct.id) && !(isNativeBoardProduct(openedProduct) && role !== 'admin')"
                   class="flex flex-wrap items-center gap-2 w-full"
                 >
                   <button
                     type="button"
                     @click="openRedeem(openedProduct)"
-                    class="shrink-0 px-2.5 py-1.5 rounded-lg border border-primary-200 text-primary-700 text-xs font-semibold hover:bg-primary-50"
-                    :class="!isActive(openedProduct.id) ? 'bg-primary-600 text-white border-primary-600' : ''"
+                    class="shrink-0 px-2.5 py-1.5 rounded-lg border border-primary-200 text-primary-700 text-xs font-semibold hover:bg-primary-50 bg-primary-600 text-white border-primary-600"
                   >兑换码兑换</button>
                   <a
                     :href="redeemPurchaseUrl"
@@ -3437,6 +3712,77 @@ function productEmbedUrl(product) {
                     rel="noopener noreferrer"
                     class="shrink-0 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
                   >兑换码购买</a>
+                </div>
+                  <div
+                  v-if="isNativeBoardProduct(openedProduct) && !isActive(openedProduct.id) && role !== 'admin'"
+                  class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5"
+                >
+                  <div class="text-sm font-semibold text-amber-950">
+                    {{ statusOf(openedProduct.id) === 'expired' ? '订阅已过期' : '尚未订阅本产品' }}
+                  </div>
+                  <p class="mt-1 text-xs text-amber-900/85 leading-relaxed">
+                    下方可预览对阵与开赛时间。开通后解锁胜率、「优」方向、参数详情与条件筛选，便于跟盘决策。
+                  </p>
+                  <div class="sub-preview">
+                    <button
+                      type="button"
+                      class="sub-preview-toggle"
+                      :aria-expanded="subscribePreviewOpen"
+                      @click="subscribePreviewOpen = !subscribePreviewOpen"
+                    >
+                      <span>开通后效果示例</span>
+                      <span class="sub-preview-arrow" :class="{ open: subscribePreviewOpen }">▸</span>
+                    </button>
+                    <div v-show="subscribePreviewOpen" class="sub-preview-card">
+                      <div class="sub-preview-time">
+                        <span class="sub-preview-time-val">{{ openedSubscribePreview.time }}</span>
+                        <span class="sub-preview-meta">{{ openedSubscribePreview.meta }}</span>
+                        <span class="sub-preview-badge">优</span>
+                      </div>
+                      <div class="sub-preview-line">
+                        <span class="sub-preview-name pick">
+                          <em>{{ openedSubscribePreview.aRank }}</em>
+                          {{ openedSubscribePreview.aName }}
+                          <i v-if="openedSubscribePreview.pick === 'a'">优</i>
+                        </span>
+                        <span class="sub-preview-nums">
+                          <b>{{ openedSubscribePreview.aProb }}</b>
+                          <span v-if="openedSubscribePreview.aPm">{{ openedSubscribePreview.aPm }}</span>
+                        </span>
+                      </div>
+                      <div class="sub-preview-vs">VS</div>
+                      <div class="sub-preview-line">
+                        <span class="sub-preview-name">
+                          <em>{{ openedSubscribePreview.bRank }}</em>
+                          {{ openedSubscribePreview.bName }}
+                        </span>
+                        <span class="sub-preview-nums muted">
+                          <b>{{ openedSubscribePreview.bProb }}</b>
+                          <span v-if="openedSubscribePreview.bPm">{{ openedSubscribePreview.bPm }}</span>
+                        </span>
+                      </div>
+                      <div class="sub-preview-actions">
+                        <button
+                          type="button"
+                          class="sub-preview-act unlock"
+                          @click="onBoardNeedSubscribe"
+                        >开通查看</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      class="shrink-0 px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-semibold hover:bg-primary-700"
+                      @click="openRedeem(openedProduct)"
+                    >立即兑换开通</button>
+                    <a
+                      :href="redeemPurchaseUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="shrink-0 px-3 py-1.5 rounded-lg border border-emerald-300 bg-white text-emerald-800 text-xs font-semibold hover:bg-emerald-50"
+                    >购买兑换码</a>
+                  </div>
                 </div>
                 <div
                   v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || boardAutoBetOn || showBoardEngineButtons)"
@@ -3480,7 +3826,7 @@ function productEmbedUrl(product) {
                 <div class="flex items-center gap-3">
                   <ProductIcon :product="openedProduct" size="md" />
                   <div>
-                    <div class="font-semibold text-lg">{{ openedProduct.name }}</div>
+                    <div class="font-semibold text-lg">{{ productDisplayName(openedProduct) }}</div>
                     <div class="text-xs flex flex-wrap items-center gap-x-2 gap-y-1.5 mt-1">
                       <span v-for="pl in plans" :key="pl.key" class="text-primary-700 font-medium">
                         ¥{{ planPriceInfo(openedProduct, pl.key).current }}/{{ planText(pl.key) }}
@@ -3523,6 +3869,7 @@ function productEmbedUrl(product) {
                     @open-admin-engine="onOpenTennisAdminEngine"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div v-else-if="isTennisInplayProduct(openedProduct)" class="p-0">
@@ -3538,6 +3885,7 @@ function productEmbedUrl(product) {
                     @open-admin-engine="onOpenTennisAdminEngine"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div v-else-if="isTennisSettledProduct(openedProduct)" class="p-0">
@@ -3551,6 +3899,7 @@ function productEmbedUrl(product) {
                     :can-batch-trade="canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div v-else-if="isTennisNewProduct(openedProduct)" class="p-0">
@@ -3561,6 +3910,7 @@ function productEmbedUrl(product) {
                     :can-batch-trade="canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div v-else-if="isTennisRangeProduct(openedProduct)" class="p-0">
@@ -3571,6 +3921,7 @@ function productEmbedUrl(product) {
                     :can-batch-trade="canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div v-else-if="isTennisProduct(openedProduct)" class="p-0">
@@ -3580,6 +3931,7 @@ function productEmbedUrl(product) {
                     :can-batch-trade="canShowWallet && walletConfigured"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <!-- BTC 持仓看板：与网球相同浅色 Vue 直出 -->
@@ -3596,8 +3948,10 @@ function productEmbedUrl(product) {
                     :sport="isNflProduct(openedProduct) ? 'nfl' : 'dota2'"
                     :is-member="canAccessProduct(openedProduct.id)"
                     :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
+                    :is-admin="role === 'admin'"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
+                    @need-subscribe="onBoardNeedSubscribe"
                   />
                 </div>
                 <div
@@ -3783,7 +4137,7 @@ function productEmbedUrl(product) {
                   >
                     <span :class="badgeClass(statusOf(s.id))" class="product-tile-badge">{{ badgeText(statusOf(s.id)) }}</span>
                     <ProductIcon :product="s" size="lg" rounded="2xl" />
-                    <div class="product-tile-name">{{ s.name }}</div>
+                    <div class="product-tile-name">{{ productDisplayName(s) }}</div>
                     <div class="product-tile-price">{{ isActive(s.id) ? '至 ' + fmt(userSubs[s.id]) : '已过期' }}</div>
                   </button>
                 </div>
@@ -3835,11 +4189,11 @@ function productEmbedUrl(product) {
                 <div class="font-semibold text-sm">二、网球看板</div>
                 <ul class="text-sm text-slate-600 space-y-1.5 list-disc pl-5 leading-relaxed">
                   <li>未开通：可看赛程、对阵与比分。</li>
-                  <li>已开通：可看排名、推荐标记、详情与外链。</li>
+                  <li>已开通：可看排名、推荐标记、参数详情与跳转下单。</li>
                   <li>过期后高级信息会隐藏，重新兑换即可恢复。</li>
                 </ul>
                 <img class="help-shot" :src="helpTennisImg" alt="网球看板开通后示意" loading="lazy" />
-                <p class="help-shot-cap">实机截图：开通后可见排名、「优」推荐，以及「详情」「外链」按钮。</p>
+                <p class="help-shot-cap">实机截图：开通后可见排名、「优」推荐，以及「参数详情」「跳转下单」按钮。</p>
               </div>
 
               <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
@@ -4135,7 +4489,7 @@ function productEmbedUrl(product) {
               <div class="bg-white rounded-2xl p-4 shadow-sm space-y-3">
                 <div>
                   <div class="font-semibold">站点设置</div>
-                  <div class="text-xs text-slate-400 mt-0.5">配置前台「兑换码购买」跳转链接</div>
+                  <div class="text-xs text-slate-400 mt-0.5">配置前台「兑换码购买」跳转链接与首页盈利字幕</div>
                 </div>
                 <div>
                   <div class="text-xs text-slate-400 mb-1">兑换码购买链接</div>
@@ -4148,6 +4502,44 @@ function productEmbedUrl(product) {
                   <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
                     用户点击产品页「兑换码购买」时将打开此地址。请填写完整 http(s) 链接。
                   </p>
+                </div>
+                <div>
+                  <div class="text-xs text-slate-400 mb-1">首页盈利滚动字幕</div>
+                  <p class="text-[11px] text-slate-400 mb-2 leading-relaxed">
+                    展示在「赛事推荐」上方，格式：姓名 盈利N美金。姓名与金额均可在此编辑。
+                  </p>
+                  <div class="space-y-2">
+                    <div
+                      v-for="(row, idx) in siteSettingsForm.tickerRows"
+                      :key="idx"
+                      class="flex items-center gap-2"
+                    >
+                      <input
+                        v-model.trim="row.name"
+                        type="text"
+                        placeholder="用户名"
+                        class="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
+                      />
+                      <input
+                        v-model.trim="row.amount"
+                        type="number"
+                        step="0.01"
+                        placeholder="金额"
+                        class="w-24 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:border-primary-400"
+                      />
+                      <span class="text-xs text-slate-400 shrink-0">美金</span>
+                      <button
+                        type="button"
+                        class="text-xs text-slate-400 px-1 shrink-0"
+                        @click="removeSiteTickerRow(idx)"
+                      >删</button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="mt-2 text-xs text-primary-700 font-medium"
+                    @click="addSiteTickerRow"
+                  >+ 添加一条</button>
                 </div>
                 <button
                   type="button"
@@ -4727,7 +5119,7 @@ function productEmbedUrl(product) {
             </button>
           </nav>
 
-          <div v-if="pwdModal.open" class="absolute inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div v-if="pwdModal.open" class="absolute inset-0 z-50 flex items-start justify-center pt-3 px-2">
             <div class="absolute inset-0 bg-black/40" @click="closePwdModal"></div>
             <div class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 fade-up">
               <div class="flex items-center justify-between mb-4">
@@ -4770,7 +5162,7 @@ function productEmbedUrl(product) {
             </div>
           </div>
 
-          <div v-if="resetPwdModal.open" class="absolute inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div v-if="resetPwdModal.open" class="absolute inset-0 z-50 flex items-start justify-center pt-3 px-2">
             <div class="absolute inset-0 bg-black/40" @click="closeResetPwdModal"></div>
             <div class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 fade-up">
               <div class="flex items-center justify-between mb-4">
@@ -4825,7 +5217,7 @@ function productEmbedUrl(product) {
             </div>
           </div>
 
-          <div v-if="recharge.open" class="absolute inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div v-if="recharge.open" class="absolute inset-0 z-50 flex items-start justify-center pt-3 px-2">
             <div class="absolute inset-0 bg-black/40" @click="recharge.open=false"></div>
             <div class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 fade-up">
               <div class="flex items-center justify-between mb-4">
@@ -4906,7 +5298,7 @@ function productEmbedUrl(product) {
           </div>
 
           <!-- 管理员 CRUD 弹窗 -->
-          <div v-if="userSubModal.open" class="absolute inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div v-if="userSubModal.open" class="absolute inset-0 z-50 flex items-start justify-center pt-3 px-2">
             <div class="absolute inset-0 bg-black/40" @click="userSubModal.open=false"></div>
             <div class="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 fade-up max-h-[88vh] overflow-y-auto">
               <div class="flex items-center justify-between mb-4">
@@ -4992,7 +5384,7 @@ function productEmbedUrl(product) {
             </div>
           </div>
 
-          <div v-if="adminModal.open" class="absolute inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div v-if="adminModal.open" class="absolute inset-0 z-50 flex items-start justify-center pt-3 px-2">
             <div class="absolute inset-0 bg-black/40" @click="adminModal.open=false"></div>
             <div class="relative bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 fade-up max-h-[85vh] overflow-y-auto">
               <div class="flex items-center justify-between mb-4">
@@ -5269,7 +5661,7 @@ function productEmbedUrl(product) {
 
           <div
             v-if="showRedeemModal"
-            class="absolute inset-0 z-50 bg-black/40 flex items-start sm:items-center justify-center pt-3 sm:pt-0 px-0 sm:px-4"
+            class="absolute inset-0 z-50 bg-black/40 flex items-start justify-center pt-3 px-0 sm:px-4"
             @click.self="closeRedeemModal"
           >
             <div class="relative bg-white w-full sm:max-w-sm rounded-b-2xl sm:rounded-2xl p-5 fade-up shadow-lg">
@@ -5321,5 +5713,160 @@ function productEmbedUrl(product) {
 .product-board-back :deep(svg) {
   width: 1.35rem;
   height: 1.35rem;
+}
+.sub-preview {
+  margin-top: 10px;
+}
+.sub-preview-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #92400e;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+.sub-preview-arrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.sub-preview-arrow.open {
+  transform: rotate(90deg);
+}
+.sub-preview-card {
+  background: #fff;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.sub-preview-time {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.sub-preview-time-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.sub-preview-meta {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+}
+.sub-preview-badge {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #fff;
+  background: #4f46e5;
+}
+.sub-preview-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.sub-preview-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+.sub-preview-name.pick {
+  color: #4f46e5;
+}
+.sub-preview-name em {
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+}
+.sub-preview-name i {
+  font-style: normal;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #fff;
+  background: #4f46e5;
+}
+.sub-preview-nums {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.sub-preview-nums b {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4f46e5;
+}
+.sub-preview-nums span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #64748b;
+}
+.sub-preview-nums.muted b {
+  color: #334155;
+}
+.sub-preview-vs {
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 0;
+}
+.sub-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+.sub-preview-act {
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4f46e5;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.sub-preview-act.market {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+}
+.sub-preview-act.unlock {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+  cursor: pointer;
 }
 </style>

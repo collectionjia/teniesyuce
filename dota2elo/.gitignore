@@ -14,15 +14,13 @@ ENV/
 build/
 dist/
 
-# Project runtime data（种子库 calibration.json / dota2elo.db 纳入版本库）
+# Project runtime data
+data/
+data/*.db
 data/*.db-journal
-data/*.log
 data/ingest.log
 data/ingest.err
 data/external/
-data/auto_update.log
-data/auto_update_status.json
-data/hc85_result.json
 
 # IDE
 .vscode/

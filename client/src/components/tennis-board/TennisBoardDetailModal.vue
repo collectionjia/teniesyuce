@@ -49,7 +49,7 @@ defineProps({
         <div class="modal-sheet" role="dialog" aria-modal="true">
           <div class="modal-head">
             <div class="modal-head-main">
-              <div class="modal-title">详情</div>
+              <div class="modal-title">参数详情</div>
               <div class="modal-sub">
                 {{ shortName(matchHomeName(detailMatch)) }} vs {{ shortName(matchAwayName(detailMatch)) }}
               </div>
@@ -300,9 +300,10 @@ defineProps({
   z-index: 80;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 .modal-mask--top {
   align-items: flex-start;
@@ -313,14 +314,14 @@ defineProps({
   max-width: 26rem;
   max-height: min(88vh, 720px);
   background: #fff;
-  border-radius: 14px 14px 12px 12px;
+  border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .modal-mask--top .modal-sheet {
-  border-radius: 12px 12px 14px 14px;
+  border-radius: 12px;
 }
 .rules-modal-sheet {
   max-width: min(36rem, 100%);

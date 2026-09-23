@@ -39,6 +39,16 @@ class Team(Base):
     last_match_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
     last_synced_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
+    # v1.6: per-tier Elo（按对手联赛层级分桶更新，避免跨层级 Elo 偏差）
+    elo_t1: Mapped[float] = mapped_column(Float, default=1500.0, nullable=False)
+    elo_t2: Mapped[float] = mapped_column(Float, default=1500.0, nullable=False)
+    elo_t3: Mapped[float] = mapped_column(Float, default=1500.0, nullable=False)
+    elo_t4: Mapped[float] = mapped_column(Float, default=1500.0, nullable=False)
+    games_t1: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    games_t2: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    games_t3: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    games_t4: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
 
 class Match(Base):
     """职业比赛记录。"""

@@ -180,6 +180,9 @@ function isSportMatchEvent(item) {
   if (lowSlug.includes('more-markets') || lowTitle.includes('more markets')) return false;
   if (lowTitle.startsWith('will ') || lowSlug.startsWith('will-')) return false;
   if (lowSlug.includes('champion') && !lowSlug.includes('vs')) return false;
+  // 正赛 only：挡 props / 节分等附属盘（"Team vs Team - Player Props"）
+  if (/\s-\s/.test(String(item.title || ''))) return false;
+  if (/-(?:player-props|highest-scoring|spread|total|ou|1h|props)\b/i.test(lowSlug)) return false;
   return true;
 }
 
@@ -361,18 +364,51 @@ function alignQuoteToSides(ev) {
   };
 }
 
+/** 采集到但未匹配 Elo 的场次仍进列表，供顶栏条件过滤。 */
+function unmatchedRow(ev, reason) {
+  return {
+    slug: ev.slug,
+    title: ev.title,
+    url: ev.url,
+    sideA: ev.sideA,
+    sideB: ev.sideB,
+    prices: ev.prices,
+    tokenIds: ev.tokenIds || [],
+    outcomes: ev.outcomes,
+    startMs: ev.startMs,
+    teamA: { id: null, name: ev.sideA, rating: null },
+    teamB: { id: null, name: ev.sideB, rating: null },
+    eloDiff: null,
+    pA: null,
+    strongProb: null,
+    pickSide: null,
+    pickName: null,
+    pickTokenId: null,
+    pickPrice: null,
+    matched: false,
+    matchFail: reason || 'unmatched',
+    is_high_confidence: false,
+    passList: false,
+    passAutoBet: false,
+    align: null,
+    pmSide: null,
+  };
+}
+
 async function enrichEvent(ev, thr) {
   ev = alignQuoteToSides(ev);
   const teamA = await matchTeam(ev.sideA);
   const teamB = await matchTeam(ev.sideB);
-  if (!teamA?.id || !teamB?.id || teamA.id === teamB.id) return null;
+  if (!teamA?.id || !teamB?.id || teamA.id === teamB.id) {
+    return unmatchedRow(ev, 'team');
+  }
 
   let pred;
   try {
     pred = await predict(teamA.id, teamB.id);
   } catch (err) {
     console.warn('[dota2-pm] predict fail', ev.slug, err.message || err);
-    return null;
+    return unmatchedRow(ev, 'predict');
   }
 
   const ratingA = Number(pred?.team_a_rating ?? teamA.rating);
@@ -385,8 +421,7 @@ async function enrichEvent(ev, thr) {
   const passList = isHighConfidence
     || eloDiff >= thr.eloDiffMin
     || strongProb >= thr.winProbMin;
-  // 列表：两侧队名都匹配到 dota2elo 即展示（与网球未开赛一致，先有场次再看强弱）
-  // passList / HC 仅作标记；自动投注仍只走 passAutoBet=HC
+  // passList / HC 仅作标记；列表默认全量，顶栏过滤；自动投注仍只走 HC
 
   const tokens = ev.tokenIds || [];
   const pickTokenId = pickSide === 'a' ? (tokens[0] || null) : (tokens[1] || null);
@@ -416,6 +451,7 @@ async function enrichEvent(ev, thr) {
     pickName,
     pickTokenId,
     pickPrice,
+    matched: true,
     is_high_confidence: isHighConfidence,
     passList,
     passAutoBet: isHighConfidence,
@@ -458,13 +494,14 @@ async function collectOnce() {
     const matches = [];
     for (const ev of events) {
       try {
-        const row = await enrichEvent(ev, thr);
-        if (row) matches.push(row);
+        matches.push(await enrichEvent(ev, thr));
       } catch (err) {
         console.warn('[dota2-pm] enrich skip', ev?.slug, err.message || err);
+        matches.push(unmatchedRow(ev, 'error'));
       }
     }
     sortEloMatches(matches);
+    const matchedN = matches.filter((m) => m.matched).length;
     const bundle = {
       ok: true,
       sport: 'dota2',
@@ -472,6 +509,7 @@ async function collectOnce() {
       fetched_at: new Date().toISOString(),
       thresholds: thr,
       matchCount: matches.length,
+      matchedCount: matchedN,
       edgeCount: matches.filter((m) => m.passList).length,
       hcCount: matches.filter((m) => m.is_high_confidence).length,
       scanned: events.length,
@@ -612,16 +650,16 @@ async function enrichNflEvent(ev, thr) {
   ev = alignQuoteToSides(ev);
   const abbrA = nflAbbr(ev.sideA);
   const abbrB = nflAbbr(ev.sideB);
-  if (!abbrA || !abbrB || abbrA === abbrB) return null;
+  if (!abbrA || !abbrB || abbrA === abbrB) return unmatchedRow(ev, 'team');
   let pred;
   try {
     pred = await predictNfl(abbrA, abbrB);
   } catch (err) {
     console.warn('[nfl-pm] predict fail', ev.slug, err.message || err);
-    return null;
+    return unmatchedRow(ev, 'predict');
   }
   const pA = Number(pred?.win_prob_a);
-  if (!Number.isFinite(pA)) return null;
+  if (!Number.isFinite(pA)) return unmatchedRow(ev, 'predict');
   const ratingA = Number(pred.elo_a);
   const ratingB = Number(pred.elo_b);
   const eloDiff = (Number.isFinite(ratingA) && Number.isFinite(ratingB))
@@ -658,6 +696,7 @@ async function enrichNflEvent(ev, thr) {
     pickName,
     pickTokenId,
     pickPrice,
+    matched: true,
     is_high_confidence: isHighConfidence,
     passList,
     passAutoBet: isHighConfidence,
@@ -666,17 +705,10 @@ async function enrichNflEvent(ev, thr) {
 }
 
 function sortEloMatches(matches) {
+  // 强队胜率从高到低；未匹配垫底
   matches.sort((a, b) => {
-    if (!!b.is_high_confidence !== !!a.is_high_confidence) {
-      return b.is_high_confidence ? 1 : -1;
-    }
-    if (!!b.passList !== !!a.passList) {
-      return b.passList ? 1 : -1;
-    }
-    const sa = a.startMs || Number.MAX_SAFE_INTEGER;
-    const sb = b.startMs || Number.MAX_SAFE_INTEGER;
-    if (sa !== sb) return sa - sb;
-    return (b.eloDiff || 0) - (a.eloDiff || 0);
+    if (!!b.matched !== !!a.matched) return b.matched ? 1 : -1;
+    return (Number(b.strongProb) || 0) - (Number(a.strongProb) || 0);
   });
   return matches;
 }
@@ -692,13 +724,14 @@ async function collectNfl() {
     const matches = [];
     for (const ev of events) {
       try {
-        const row = await enrichNflEvent(ev, thr);
-        if (row) matches.push(row);
+        matches.push(await enrichNflEvent(ev, thr));
       } catch (err) {
         console.warn('[nfl-pm] enrich skip', ev?.slug, err.message || err);
+        matches.push(unmatchedRow(ev, 'error'));
       }
     }
     sortEloMatches(matches);
+    const matchedN = matches.filter((m) => m.matched).length;
     const bundle = {
       ok: true,
       sport: 'nfl',
@@ -706,6 +739,7 @@ async function collectNfl() {
       fetched_at: new Date().toISOString(),
       thresholds: thr,
       matchCount: matches.length,
+      matchedCount: matchedN,
       edgeCount: matches.filter((m) => m.passList).length,
       hcCount: matches.filter((m) => m.is_high_confidence).length,
       scanned: events.length,

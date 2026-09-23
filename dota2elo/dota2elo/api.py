@@ -209,7 +209,7 @@ def api_predict(
         upset_risk_points as calc_risk, upset_adjusted_prob, k_factor,
     )
 
-    # 拉两个 team 的当前 rating
+    # 拉两个 team 的当前 rating + per-tier Elo
     with session_scope() as session:
         from .models import Team
         ta = session.get(Team, a)
@@ -218,13 +218,18 @@ def api_predict(
             raise HTTPException(404, "One or both teams not found")
         a_rating, a_name, a_games = ta.rating, ta.name, ta.matches_played
         b_rating, b_name, b_games = tb.rating, tb.name, tb.matches_played
+        # v1.6: 4 套 per-tier Elo
+        a_elo_t = {1: ta.elo_t1, 2: ta.elo_t2, 3: ta.elo_t3, 4: ta.elo_t4}
+        a_games_t = {1: ta.games_t1, 2: ta.games_t2, 3: ta.games_t3, 4: ta.games_t4}
+        b_elo_t = {1: tb.elo_t1, 2: tb.elo_t2, 3: tb.elo_t3, 4: tb.elo_t4}
+        b_games_t = {1: tb.games_t1, 2: tb.games_t2, 3: tb.games_t3, 4: tb.games_t4}
 
     # 基础 Elo 预测（向后兼容）
     basic = ingest.predict_match(a, b)
     p_basic_a = basic.get("p_a_win", 0.5)
     p_basic_b = basic.get("p_b_win", 0.5)
 
-    # v1.5: 取 tier（基于两队最近联赛），需要先于 predict()
+    # v1.5/v1.6: 取 tier（基于两队最近联赛），需要先于 predict()
     from .models import Match
     from .league_tiers import get_tier, tier_warning, TIER_NAMES
     with session_scope() as session:
@@ -247,6 +252,11 @@ def api_predict(
     tier_a = get_tier(league_id=last_league_id, league_name=last_league)
     tier_b = get_tier(league_id=last_league_b_id, league_name=last_league_b)
     gap_warning = tier_warning(tier_a, tier_b)
+    # v1.6: per-tier Elo 选择（A 用自己 tier 的 Elo，反映"A 在自己常玩联赛的真实水平"）
+    tier_elo_a = a_elo_t.get(tier_a, 1500.0)
+    tier_elo_b = b_elo_t.get(tier_b, 1500.0)
+    tier_games_a = a_games_t.get(tier_a, 0)
+    tier_games_b = b_games_t.get(tier_b, 0)
 
     # 4 维复合评分（v1.3 接 player_elo 真实数据，v1.5 Bayesian 收缩 + tier 偏移）
     from .roster import get_current_roster, get_team_recent_players_with_names
@@ -265,7 +275,12 @@ def api_predict(
         team_id=b, name=b_name, team_elo=b_rating, games=b_games,
         player_elo=roster_b, player_matches=matches_b,
     )
-    p_composite, diff_composite = predict(team_a, team_b, tier_a=tier_a, tier_b=tier_b)
+    p_composite, diff_composite = predict(
+        team_a, team_b,
+        tier_a=tier_a, tier_b=tier_b,
+        tier_elo_a=tier_elo_a, tier_elo_b=tier_elo_b,
+        tier_games_a=tier_games_a, tier_games_b=tier_games_b,
+    )
 
     # 取最近 5 场常用选手详情（v1.3 新增）
     players_a = get_team_recent_players_with_names(a)
@@ -307,11 +322,13 @@ def api_predict(
     # last_league 已在上面 v1.5 tier 查询中拿到
     k = k_factor(series_type=series_type, league_name=last_league)
 
-    # Elo 差驱动的概率校准（基于历史实战胜率）
+    # Elo 差驱动的概率校准（基于历史实战胜率，v1.7 tier-aware）
     from .calibration import get_calibration
     cal = get_calibration()
     elo_diff_abs = abs(a_rating - b_rating)
-    p_calibrated = cal.apply(elo_diff_abs)
+    # v1.7: 跨层比赛时把 calibrated 胜率向 50% 拉（保守）
+    cross_tier_gap = abs((tier_a or 3) - (tier_b or 3)) if (tier_a and tier_b) else 0
+    p_calibrated = cal.apply(elo_diff_abs, tier_gap=cross_tier_gap)
     # 强队是 a 还是 b？
     if a_rating >= b_rating:
         p_a_calibrated = p_calibrated
@@ -351,6 +368,11 @@ def api_predict(
         "team_a_tier": TIER_NAMES.get(tier_a, f"T{tier_a}"),
         "team_b_tier": TIER_NAMES.get(tier_b, f"T{tier_b}"),
         "tier_gap_warning": gap_warning,
+        # v1.6 per-tier Elo（按自己 tier 取，反映"在该 tier 联赛的真实水平"）
+        "team_a_tier_elo": round(tier_elo_a, 1),
+        "team_b_tier_elo": round(tier_elo_b, 1),
+        "team_a_tier_games": tier_games_a,
+        "team_b_tier_games": tier_games_b,
         # Elo 校准（基于历史实战数据，不用 logistic 公式）
         "calibrated_p_a_win": round(p_a_calibrated, 4),
         "calibrated_p_b_win": round(p_b_calibrated, 4),

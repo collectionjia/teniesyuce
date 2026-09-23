@@ -65,6 +65,7 @@ export function useTennisBettingRules({
   props,
   isPrematchMode,
   isInplayMode,
+  isMixMode,
   batchAmountUsd,
   getSyncListAutoBetFromBucket,
   getLibraryGroups,
@@ -96,11 +97,14 @@ export function useTennisBettingRules({
     return `买入：${first} · ${pm}｜卖出见投注设置`
   })
 
+  const isEngineBoard = computed(
+    () => isPrematchMode.value || isInplayMode.value || !!isMixMode?.value,
+  )
   const canEditBettingRules = computed(
-    () => props.canEditRules && (isPrematchMode.value || isInplayMode.value),
+    () => props.canEditRules && isEngineBoard.value,
   )
   const showAdminEngineButtons = computed(
-    () => props.canEditRules && (isPrematchMode.value || isInplayMode.value),
+    () => props.canEditRules && isEngineBoard.value,
   )
   const bettingBucketKey = computed(() => (isInplayMode.value ? 'inplay' : 'prematch'))
   const bettingBucketLabel = computed(() => (isInplayMode.value ? '比赛中' : '未开赛'))
@@ -300,7 +304,7 @@ export function useTennisBettingRules({
     betRulesError.value = ''
     // 先开弹窗，规则后台加载（弹窗内有 loading 文案）
     bettingModalOpen.value = true
-    if (isPrematchMode.value || isInplayMode.value) {
+    if (isEngineBoard.value) {
       void (async () => {
         await loadBettingRules()
         await getLoadProductSelect()?.()

@@ -16,10 +16,12 @@ defineProps({
   stats: { type: Object, required: true },
   loading: { type: Boolean, default: false },
   filter: { type: String, default: 'all' },
+  listSort: { type: String, default: 'prob' },
   hideEndedEvents: { type: Boolean, default: false },
   pct: { type: Function, required: true },
   num: { type: Function, required: true },
   setStatusFilter: { type: Function, required: true },
+  setListSort: { type: Function, required: true },
 })
 </script>
 
@@ -98,6 +100,24 @@ defineProps({
           <b>{{ stats.ended }}</b><span>结束</span>
         </button>
       </div>
+      <div class="stats sort-stats" role="tablist" aria-label="排序">
+        <button
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: listSort === 'time' }"
+          @click="setListSort('time')"
+        >
+          <span>时间排序</span>
+        </button>
+        <button
+          type="button"
+          class="stat stat-btn"
+          :class="{ active: listSort === 'prob' }"
+          @click="setListSort('prob')"
+        >
+          <span>胜率排序</span>
+        </button>
+      </div>
     </div>
 </template>
 
@@ -114,8 +134,12 @@ defineProps({
   line-height: 1.3;
 }
 .topbar {
-  display: flex; flex-wrap: nowrap; align-items: center; gap: 4px;
-  margin-bottom: 6px; overflow-x: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+  max-width: 100%;
 }
 .meta-chip, .btn, .chip-btn, .filters button {
   border: 1px solid var(--line);
@@ -139,7 +163,13 @@ defineProps({
 .btn:disabled { opacity: 0.5; cursor: wait; }
 .stats {
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px;
-  margin: 0 0 0 auto; min-width: 168px; flex: 1; max-width: 260px;
+  margin: 0; min-width: 0; flex: 1 1 168px; max-width: 100%;
+}
+.sort-stats {
+  grid-template-columns: repeat(2, 1fr);
+  flex: 1 1 120px;
+  min-width: 0;
+  max-width: 160px;
 }
 .stat {
   background: var(--card);

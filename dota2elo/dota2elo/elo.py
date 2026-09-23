@@ -268,19 +268,29 @@ def composite_rating(
     patch: Optional[str] = None,
     weights: Weights = DEFAULT_WEIGHTS,
     tier: Optional[int] = None,
+    tier_elo: Optional[float] = None,  # v1.6: 直接传入 per-tier Elo
+    tier_games: int = 0,  # v1.6: per-tier 的 games 数（用于 Bayesian 收缩）
+    opp_tier: Optional[int] = None,  # v1.6: 对手 tier（决定用 per-tier 还是 raw）
 ) -> float:
     """4 维加权综合分（乘以稳定性系数）。
 
-    v1.5:
-    - team_elo 自动 Bayesian 收缩（低样本队拉回 1500）
-    - tier offset：T1 队 +20（纠正被低估），T3 队 -10（纠正被高估）
+    v1.6 混合方案：
+    - 跨层（tier != opp_tier）：用 per-tier Elo + 收缩
+    - 同层（tier == opp_tier 或未知）：用 raw team_elo + tier_offset
     """
     sf = stability_factor(team)
     pr = roster_power(team)
     he = hero_elo(team)
     pe = patch_elo(team, patch)
-    effective_team_elo = apply_bayesian_shrinkage(team.team_elo, team.games)
-    effective_team_elo += tier_elo_offset(tier)  # v1.5 tier 偏移
+    cross_tier = tier is not None and opp_tier is not None and tier != opp_tier
+    use_per_tier = cross_tier and tier_elo is not None
+    if use_per_tier:
+        # 跨层：per-tier + 半强度 offset（per-tier 已隔离一部分上下文，offset 减半避免过补偿）
+        effective_team_elo = apply_bayesian_shrinkage(tier_elo, tier_games)
+        effective_team_elo += tier_elo_offset(tier) * 0.5
+    else:
+        effective_team_elo = apply_bayesian_shrinkage(team.team_elo, team.games)
+        effective_team_elo += tier_elo_offset(tier)
     base = (
         weights.team * effective_team_elo
         + weights.player * pr
@@ -303,10 +313,23 @@ def predict(
     weights: Weights = DEFAULT_WEIGHTS,
     tier_a: Optional[int] = None,
     tier_b: Optional[int] = None,
+    tier_elo_a: Optional[float] = None,
+    tier_elo_b: Optional[float] = None,
+    tier_games_a: int = 0,
+    tier_games_b: int = 0,
 ) -> Tuple[float, float]:
-    """A 胜概率 + Elo 差。v1.5 支持 tier 偏移。"""
-    ra = composite_rating(team_a, patch, weights, tier=tier_a) + draft_adv_a
-    rb = composite_rating(team_b, patch, weights, tier=tier_b) + draft_adv_b
+    """A 胜概率 + Elo 差。
+
+    v1.6 混合方案：
+    - 跨层比赛：用 per-tier Elo（解决方向错误）
+    - 同层比赛：用 raw Elo + tier_offset（保持 v1.5 数值）
+    """
+    ra = composite_rating(team_a, patch, weights,
+                           tier=tier_a, tier_elo=tier_elo_a,
+                           tier_games=tier_games_a, opp_tier=tier_b) + draft_adv_a
+    rb = composite_rating(team_b, patch, weights,
+                           tier=tier_b, tier_elo=tier_elo_b,
+                           tier_games=tier_games_b, opp_tier=tier_a) + draft_adv_b
     diff = ra - rb
     p = 1.0 / (1.0 + 10.0 ** (-diff / (400.0 * scale)))
     return p, diff
@@ -410,6 +433,12 @@ def meets_winrate_75_conditions(
     team_b: TeamRating,
     series_type: Optional[int] = None,
     top_n: int = 10,  # 用 Top 10 还是 Top 5
+    tier_a: Optional[int] = None,
+    tier_b: Optional[int] = None,
+    tier_elo_a: Optional[float] = None,
+    tier_elo_b: Optional[float] = None,
+    tier_games_a: int = 0,
+    tier_games_b: int = 0,
 ) -> Winrate75Result:
     """实战 75% 胜率条件。
 
@@ -441,7 +470,12 @@ def meets_winrate_75_conditions(
     - expected_winrate: 该信号的历史胜率
     """
     # v1.3 重构：所有条件构建逻辑下沉到 _build_conditions
-    conditions = _build_conditions(team_a, team_b, series_type)
+    conditions = _build_conditions(
+        team_a, team_b, series_type,
+        tier_a=tier_a, tier_b=tier_b,
+        tier_elo_a=tier_elo_a, tier_elo_b=tier_elo_b,
+        tier_games_a=tier_games_a, tier_games_b=tier_games_b,
+    )
 
     if not conditions:
         return Winrate75Result(
@@ -470,10 +504,32 @@ def _build_conditions(
     team_a: TeamRating,
     team_b: TeamRating,
     series_type: Optional[int],
+    tier_a: Optional[int] = None,
+    tier_b: Optional[int] = None,
+    tier_elo_a: Optional[float] = None,
+    tier_elo_b: Optional[float] = None,
+    tier_games_a: int = 0,
+    tier_games_b: int = 0,
 ) -> list:
-    """内部：构建所有条件 [(描述, 历史胜率)]。"""
-    elo_a = team_a.team_elo
-    elo_b = team_b.team_elo
+    """内部：构建所有条件 [(描述, 历史胜率)]。
+
+    v1.6 混合方案：
+    - 同层（tier_gap=0）：用 raw team_elo + tier_offset（保持 v1.5 数值）
+    - 跨层（tier_gap ≥ 1）：用 per-tier Elo + 收缩（解决 v1.5 的方向错误问题）
+    """
+    tier_gap = abs((tier_a or 3) - (tier_b or 3)) if (tier_a and tier_b) else 0
+    use_per_tier = tier_gap > 0 and tier_elo_a is not None and tier_elo_b is not None
+    if use_per_tier:
+        # 跨层：per-tier + 半强度 offset
+        elo_a = apply_bayesian_shrinkage(tier_elo_a, tier_games_a)
+        elo_a += tier_elo_offset(tier_a) * 0.5
+        elo_b = apply_bayesian_shrinkage(tier_elo_b, tier_games_b)
+        elo_b += tier_elo_offset(tier_b) * 0.5
+    else:
+        elo_a = apply_bayesian_shrinkage(team_a.team_elo, team_a.games)
+        elo_a += tier_elo_offset(tier_a)
+        elo_b = apply_bayesian_shrinkage(team_b.team_elo, team_b.games)
+        elo_b += tier_elo_offset(tier_b)
     gap = abs(elo_a - elo_b)
     if elo_a >= elo_b:
         strong, weak = team_a, team_b
@@ -548,6 +604,12 @@ def meets_winrate_80_conditions(
     team_a: TeamRating,
     team_b: TeamRating,
     series_type: Optional[int] = None,
+    tier_a: Optional[int] = None,
+    tier_b: Optional[int] = None,
+    tier_elo_a: Optional[float] = None,
+    tier_elo_b: Optional[float] = None,
+    tier_games_a: int = 0,
+    tier_games_b: int = 0,
 ) -> Winrate80Result:
     """80% 高置信度过滤（v1.3 新增）。
 
@@ -577,7 +639,12 @@ def meets_winrate_80_conditions(
     - rejected_75_conditions: 在 75% 触发但 80% 未触发的条件
     """
     # 先拿全部条件（按胜率降序）
-    all_conditions = _build_conditions(team_a, team_b, series_type)
+    all_conditions = _build_conditions(
+        team_a, team_b, series_type,
+        tier_a=tier_a, tier_b=tier_b,
+        tier_elo_a=tier_elo_a, tier_elo_b=tier_elo_b,
+        tier_games_a=tier_games_a, tier_games_b=tier_games_b,
+    )
     # 过滤到 ≥ 80%
     high_conditions = [(d, w) for d, w in all_conditions if w >= 0.80]
     low_conditions = [(d, w) for d, w in all_conditions if 0.75 <= w < 0.80]

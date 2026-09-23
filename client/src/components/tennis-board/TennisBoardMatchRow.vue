@@ -1,5 +1,5 @@
 <script setup>
-defineProps({
+const props = defineProps({
   m: { type: Object, required: true },
   allowBatchTrade: { type: Boolean, default: false },
   autoPlacedIds: { type: Object, default: () => new Set() },
@@ -33,16 +33,28 @@ defineProps({
   openDetail: { type: Function, required: true },
   openMarket: { type: Function, required: true },
   onPolymarketAction: { type: Function, default: null },
+  onNeedSubscribe: { type: Function, default: null },
   polyUrlOf: { type: Function, required: true },
   collectUpdatedText: { type: String, default: '' },
   collectRefreshing: { type: Boolean, default: false },
 })
+
+function handleUnlock(ev) {
+  ev?.stopPropagation?.()
+  ev?.preventDefault?.()
+  if (props.onNeedSubscribe) {
+    props.onNeedSubscribe()
+    return
+  }
+  props.openDetail(props.m)
+}
 </script>
 
 <template>
 <article
         class="row-card"
-        :class="{ selected: isSelected(m), selectable: canSelectMatch(m) }"
+        :class="{ selected: isSelected(m), selectable: canSelectMatch(m), teaser: !isMember }"
+        @click="!isMember && handleUnlock($event)"
       >
         <label v-if="allowBatchTrade" class="row-check" :class="{ disabled: !canSelectMatch(m) }">
           <input
@@ -177,7 +189,7 @@ defineProps({
             </div>
           </div>
           <div v-if="isMember" class="row-actions">
-            <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
+            <button type="button" class="act-btn" @click="openDetail(m)">参数详情</button>
             <div class="poly-action">
               <button
                 type="button"
@@ -189,9 +201,12 @@ defineProps({
                     : '打开关联页')
                   : '暂无对应外链'"
                 @click="(onPolymarketAction || openMarket)(m)"
-              >{{ collectRefreshing && isInplayMode ? '刷新中…' : '外链' }}</button>
+              >{{ collectRefreshing && isInplayMode ? '刷新中…' : '跳转下单' }}</button>
               
             </div>
+          </div>
+          <div v-else class="row-actions">
+            <button type="button" class="act-btn unlock" @click="handleUnlock">开通查看</button>
           </div>
         </div>
         </div>
@@ -313,6 +328,7 @@ defineProps({
 .row-main {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
 }
@@ -536,8 +552,31 @@ defineProps({
   color: #fff;
   border-color: var(--primary);
 }
+.act-btn.unlock {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
 .act-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.row-card.teaser { cursor: pointer; }
+
+@media (max-width: 420px) {
+  .row-main {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .matchup.is-stacked,
+  .matchup.is-live-board {
+    flex: 1 1 100%;
+  }
+  .row-actions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .act-btn { padding: 5px 9px; font-size: 0.74rem; }
 }
 </style>

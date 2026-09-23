@@ -88,6 +88,12 @@ export async function updateAdminPaymentSettings(payload) {
   return data
 }
 
+/** 首页「赛事推荐」上方盈利滚动字幕 */
+export async function fetchShopProfitTicker() {
+  const { data } = await api.get('/products/profit-ticker')
+  return data
+}
+
 // --- 代理 ---
 export async function fetchAgentOverview() {
   const { data } = await api.get('/agent/overview')
@@ -965,6 +971,11 @@ export async function fetchDota2Matches(limit = 30) {
 
 export async function fetchDota2Markets() {
   const { data } = await api.get('/dota2/markets')
+  return data
+}
+
+export async function fetchNflMarkets() {
+  const { data } = await api.get('/nfl/markets')
   return data
 }
 

@@ -1,0 +1,66 @@
+NFL Elo Predictor v1.3 — Bundle
+==============================
+
+Build date:  2026-09-20
+Source:      https://github.com/Web3rick/nfl (commit 5fadf73)
+License:     MIT
+
+Contents
+--------
+src/
+  elo.py               P1 EloSystem (pure Elo + MoV)
+  backtest.py          P1 evaluator
+  pipeline.py          P2-P9 unified pipeline (composite, MoV variants,
+                        conditional spread, QB Elo, backup-QB penalty)
+  predict.py           Public prediction interface (Python + CLI)
+  api.py               FastAPI HTTP service (OpenAPI /docs, /redoc)
+
+run_*.py                One runner per phase:
+  run_p1.py            Pure Elo baseline
+  run_p2.py            Grid search (K×HA×Rev), composite ablation, sqrt MoV
+  run_p3.py            Unconditional spread grid
+  run_p4.py            Conditional spread grid
+  run_p6.py            OOS backtest 2025-2026
+  run_p6_2026.py       2026 only OOS (game-by-game)
+  run_p7.py            QB Elo grid + retrain through 2025
+  run_p8.py            Backup QB penalty grid (recommended config)
+  run_p9.py            XGBoost ensemble (sklearn HistGradientBoosting)
+  run_weekly.py        Weekly auto-retrain (data download + retrain + git push)
+
+data/raw/games.csv      nflverse game-level data, 1999-2026 (7548 games, 2.2 MB)
+data/processed/         per-phase predictions, grid CSVs, snapshots, XGBoost model
+
+README.md               Project overview, methodology, negative results
+API_USAGE.md            Full API schema, curl/Python examples, error reference
+.gitignore              Files excluded from git
+
+Quick start
+-----------
+1.  Unzip:    unzip nfl-elo-v1.3.zip
+2.  Install:  pip install pandas numpy scikit-learn fastapi uvicorn
+3.  CLI:      python3 src/predict.py rankings --top 10
+              python3 src/predict.py predict KC BUF --spread -3
+4.  HTTP API: python3 -m uvicorn src.api:app --host 0.0.0.0 --port 8000
+              → http://localhost:8000/docs
+
+Performance
+-----------
+Walk-forward backtest (2018-2025, n=2127):
+  HC@75 = 84.2%   Brier = 0.2149   Acc = 66.2%
+OOS validation (2025-2026, 289 games): no statistical decay
+
+Negative results (recorded in README)
+-------------------------------------
+- Composite rating (PPG/PAPG/PD):  -3.6pp HC@75
+- sqrt MoV:                        -1.9pp HC@75
+- Unconditional spread:             Brier ↑ HC@75 ↓
+- QB Elo subsystem:                 -1.3pp HC@75
+- Backup QB penalty (P8):           **WIN** +0.3pp HC@75 + Brier -0.0008
+- XGBoost blend (P9):               **WIN** +2.6pp HC@75 + Brier -0.0023
+
+Note on data
+------------
+games.csv is downloaded from nflverse by run_weekly.py. If you re-run it
+locally, the script will overwrite data/raw/games.csv with the latest release.
+For offline reproducibility, the bundled file matches the snapshot as of
+2026-09-20 (commit 5fadf73).

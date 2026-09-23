@@ -890,8 +890,8 @@ router.get('/settings/payment', auth(['admin']), async (_req, res) => {
 });
 
 router.put('/settings/payment', auth(['admin']), async (req, res) => {
-  const { defaultPlan, redeemPurchaseUrl } = req.body || {};
-  if (defaultPlan == null && redeemPurchaseUrl == null) {
+  const { defaultPlan, redeemPurchaseUrl, shopProfitTicker } = req.body || {};
+  if (defaultPlan == null && redeemPurchaseUrl == null && shopProfitTicker == null) {
     return res.status(400).json({ error: '请提供要保存的设置项' });
   }
   try {
@@ -900,6 +900,9 @@ router.put('/settings/payment', auth(['admin']), async (req, res) => {
     }
     if (redeemPurchaseUrl != null) {
       await settings.setRedeemPurchaseUrl(redeemPurchaseUrl);
+    }
+    if (shopProfitTicker != null) {
+      await settings.setShopProfitTicker(shopProfitTicker);
     }
     res.json({ message: '设置已保存', ...(await settings.getPaymentSettings()) });
   } catch (e) {

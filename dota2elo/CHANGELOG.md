@@ -1,5 +1,102 @@
 # 变更日志
 
+## v1.7 (2026-09-21)
+
+### 🎯 跨层校准保守折扣
+
+历史所有比赛都在同一联赛（双方 tier 相同），所以没有真正的跨层训练数据。
+跨层比赛（XG vs Pibbles 这种）的校准胜率会高估，需要打折扣保守。
+
+**`calibration.apply(elo_diff, tier_gap)`**：
+
+| tier_gap | 折扣 | 公式 |
+|---|---|---|
+| 0（同层）| 无 | 直接用校准表 |
+| 1（跨 1 层）| 25% | `base * 0.75 + 0.5 * 0.25` |
+| ≥2（跨 ≥2 层）| 50% | `base * 0.50 + 0.5 * 0.50` |
+
+**实战效果**：
+| 比赛 | composite | calibrated (v1.7) |
+|---|---|---|
+| Spirit vs Falcons (T1 vs T1) | 56.1% | **56.2%**（同层，未变）|
+| XG vs Pibbles (T1 vs T3) | 50.3% | **46.9%**（跨 2 层，保守）|
+| 1w vs Nemesis (T1 vs T3) | 53.1% | **54.5%** |
+
+### 📦 实现细节
+
+- `CalibrationPoint` 加 `tier_gap` 字段
+- `EloCalibration` 双表架构：`buckets` + `cross_tier_buckets`（虽然 cross_tier 数据为空）
+- `_apply_table()` 拆出通用查表逻辑
+- `save()` version=2，`load()` 兼容 v1 数据
+
+---
+
+## v1.6 (2026-09-20)
+
+### 🎯 Per-Tier Elo 分离（方案 8 落地）
+
+**核心思路**：每队维护 4 套 Elo（t1/t2/t3/t4），分别由 vs T1/T2/T3/T4 队的比赛驱动。预测时按自己最常玩的 tier 选对应 Elo。
+
+**问题**：1w (T1) vs Nemesis (T3) 时，全局 Elo 被合并 → 高 tier 队被低估（T1 输给强敌），低 tier 队被高估（击败弱敌），跨层预测系统性偏差。
+
+### 📊 Schema 迁移
+
+`Team` 表加 8 列：
+
+```python
+elo_t1: float    # vs T1 队时的 Elo
+elo_t2: float    # vs T2 队时的 Elo
+elo_t3: float    # vs T3 队时的 Elo
+elo_t4: float    # vs T4 队时的 Elo
+games_t1: int    # vs T1 队的比赛数
+games_t2: int
+games_t3: int
+games_t4: int
+```
+
+ALTER TABLE 自动迁移，已有数据保留。
+
+### 🔧 Ingest 重写
+
+`recompute_all_ratings` 现在每场 match 同时更新双方 4 套 per-tier Elo：
+
+```python
+tier_field = f"elo_t{opp_tier}"
+# 双方各自的 tier-{opp} Elo 各自更新
+```
+
+### 🆕 API 新字段（`/api/predict`）
+
+| 字段 | 含义 |
+|---|---|
+| `team_a_tier_elo` | A 队对应 tier 的 Elo（如 1532.9，XG.t1 213 场） |
+| `team_b_tier_elo` | B 队对应 tier 的 Elo |
+| `team_a_tier_games` | 该 tier Elo 基于多少场比赛 |
+| `team_b_tier_games` | 同上 |
+
+### 📈 实战效果
+
+| 比赛 | v1.5 | v1.6 | 市场 |
+|---|---|---|---|
+| XG (T1) vs Pibbles (T3) | 49.7% XG | **51.5% XG** ✓ | 90% XG |
+| 1w (T1) vs Nemesis (T3) | 61.2% 1w | **54.3% 1w** | 86% 1w |
+| Spirit (T1) vs Falcons (T1) | 56.1% Spirit | 56.4% Spirit | — |
+
+- XG vs Pibbles：**终于翻盘**符合市场方向
+- 1w vs Nemesis：per-tier 更保守（因为 1w 主要打 T1，1w.t1 = 1601 < 1w 全局 1609）
+- 同层比赛不变（control 验证）
+
+### 📉 HC@75
+
+85.7% 不变（`scripts/year_summary.py` 用 `team.rating` 而非 `team.elo_t{N}`，还没接 per-tier）。
+
+### 🔮 后续
+
+- 更新 year_summary.py 用 per-tier Elo 跑 HC@75
+- v1.7：用 per-tier Elo 重做校准（按 tier 分桶）
+
+---
+
 ## v1.5 (2026-09-19)
 
 ### 🎯 联赛层级警告（解决跨层比赛 Elo 失真）

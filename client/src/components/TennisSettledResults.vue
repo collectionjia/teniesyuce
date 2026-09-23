@@ -208,7 +208,7 @@ const pickStats = computed(() => {
           <span>比分 {{ m.scoreText || '—' }}</span>
           <span v-if="gapOf(m) != null">差 {{ gapOf(m) }}</span>
           <span>胜方 {{ winnerLabel(m) }}</span>
-          <button type="button" class="detail-btn" @click.stop="openDetail(m)">详情</button>
+          <button type="button" class="detail-btn" @click.stop="openDetail(m)">参数详情</button>
         </div>
       </article>
     </div>
@@ -218,7 +218,7 @@ const pickStats = computed(() => {
         <div class="modal-sheet" role="dialog" aria-modal="true">
           <div class="modal-head">
             <div>
-              <div class="modal-title">详情</div>
+              <div class="modal-title">参数详情</div>
               <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
               <div class="modal-meta">
                 {{ fmtTime(detailMatch.settledAt || detailMatch.startTimestamp) }}
@@ -502,9 +502,10 @@ h1 {
   z-index: 80;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 12px;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 .modal-sheet {
   width: 100%;
@@ -512,7 +513,7 @@ h1 {
   max-height: min(88vh, 720px);
   overflow: auto;
   background: #fff;
-  border-radius: 16px 16px 12px 12px;
+  border-radius: 12px;
   padding: 14px 16px 18px;
   box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
 }

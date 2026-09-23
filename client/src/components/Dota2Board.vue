@@ -11,14 +11,17 @@ const props = defineProps({
   sport: { type: String, default: 'dota2' },
   isMember: { type: Boolean, default: false },
   canBatchTrade: { type: Boolean, default: false },
+  /** 仅管理员可见/设置列表条件 */
+  isAdmin: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['auto-bet-change', 'placed-orders-change'])
+const emit = defineEmits(['auto-bet-change', 'placed-orders-change', 'need-subscribe'])
 
 const sport = computed(() => (props.sport === 'nfl' ? 'nfl' : 'dota2'))
 const AUTO_BET_KEY = computed(() => `yuce.${sport.value}.autoBet.v1`)
 const BATCH_AMOUNT_KEY = computed(() => `yuce.${sport.value}.batchAmountUsd.v1`)
 const AUTO_PLACED_KEY = computed(() => `yuce.${sport.value}.autoPlaced.v1`)
+const COND_KEY = computed(() => `yuce.${sport.value}.condition.v1`)
 const POLL_MS = 45_000
 const PAGE_SIZE = 5
 
@@ -29,6 +32,11 @@ const marketMeta = ref(null)
 const marketRows = ref([])
 const detailMatch = ref(null)
 const detailHelpOpen = ref(false)
+const conditionModalOpen = ref(false)
+/** 启用后列表按下方参数筛「过线」 */
+const condOn = ref(false)
+const condEloDiff = ref('150')
+const condWinPct = ref('65')
 const DETAIL_TIPS = [
   { k: '优', t: 'Elo 胜率更高的一侧。' },
   { k: '一致', t: 'Elo 看好的一边和 Polymarket 价格更高的一边相同。' },
@@ -39,6 +47,10 @@ const DETAIL_TIPS = [
   { k: '外', t: '已匹配到 Polymarket 赛事页。' },
 ]
 const currentPage = ref(1)
+  /** all | matched | edge | hc — 顶栏条件过滤，默认全量采集 */
+  const listFilter = ref('all')
+  /** time | prob — 列表排序 */
+  const listSort = ref('prob')
 
 const autoSimBetEnabled = ref(false)
 const batchAmountUsd = ref('1')
@@ -52,7 +64,6 @@ const manualOrderType = ref('market')
 const manualSide = ref('suggest') // suggest | home(a) | away(b)
 const manualShares = ref('10')
 const manualLimitBuyPrice = ref('0.55')
-const manualLimitSellPrice = ref('0.70')
 
 let pollTimer = null
 let autoBetRunning = false
@@ -143,6 +154,15 @@ function loadPersisted() {
       placedOrders.value = placed.slice(-200)
       autoPlacedIds.value = new Set(placed.map((r) => r.id || placeKey(r)).filter(Boolean))
     }
+    const cond = JSON.parse(localStorage.getItem(COND_KEY.value) || 'null')
+    if (cond && typeof cond === 'object') {
+      condOn.value = !!cond.on
+      if (cond.eloDiffMin != null) condEloDiff.value = String(cond.eloDiffMin)
+      if (cond.winProbMin != null) {
+        const w = Number(cond.winProbMin)
+        condWinPct.value = String(w > 0 && w <= 1 ? Math.round(w * 100) : Math.round(w))
+      }
+    }
   } catch {
     autoSimBetEnabled.value = false
   }
@@ -154,6 +174,11 @@ function savePersisted() {
     localStorage.setItem(AUTO_BET_KEY.value, autoSimBetEnabled.value ? '1' : '0')
     localStorage.setItem(BATCH_AMOUNT_KEY.value, String(Number(batchAmountUsd.value) || 1))
     localStorage.setItem(AUTO_PLACED_KEY.value, JSON.stringify(placedOrders.value.slice(-200)))
+    localStorage.setItem(COND_KEY.value, JSON.stringify({
+      on: !!condOn.value,
+      eloDiffMin: Number(condEloDiff.value) || 150,
+      winProbMin: (Number(condWinPct.value) || 65) / 100,
+    }))
   } catch { /* ignore */ }
 }
 
@@ -163,30 +188,74 @@ function notifyPlaced() {
 
 const stats = computed(() => {
   const rows = marketRows.value
+  const matched = rows.filter((m) => isMatchedRow(m)).length
   const hc = rows.filter((m) => m.is_high_confidence || m.passAutoBet).length
-  const edge = rows.filter((m) => m.passList).length
+  const edge = rows.filter((m) => passesEdge(m)).length
   const date = marketMeta.value?.fetched_at
     ? fmtTime(marketMeta.value.fetched_at)
     : '—'
   return {
     date,
-    shown: rows.length,
+    shown: filteredRows.value.length,
     all: rows.length,
     tournaments: 1,
     collected: marketMeta.value?.scanned ?? rows.length,
-    open: rows.length,
-    edge: marketMeta.value?.edgeCount ?? edge,
+    matched: marketMeta.value?.matchedCount ?? matched,
+    edge,
     live: 0,
     ended: 0,
     hc: marketMeta.value?.hcCount ?? hc,
   }
 })
 
-const totalPages = computed(() => Math.max(1, Math.ceil(marketRows.value.length / PAGE_SIZE)))
+function isMatchedRow(m) {
+  return m?.matched !== false && m?.pA != null
+}
+
+function activeThresholds() {
+  const elo = Number(condEloDiff.value)
+  const winPct = Number(condWinPct.value)
+  const fromMeta = marketMeta.value?.thresholds
+  return {
+    eloDiffMin: Number.isFinite(elo) && elo > 0 ? elo : (fromMeta?.eloDiffMin ?? 150),
+    winProbMin: Number.isFinite(winPct) && winPct > 0
+      ? Math.min(0.99, winPct > 1 ? winPct / 100 : winPct)
+      : (fromMeta?.winProbMin ?? 0.65),
+  }
+}
+
+/** 过线：HC，或 Elo差/胜率达到条件设置 */
+function passesEdge(m) {
+  if (!isMatchedRow(m)) return false
+  if (m.is_high_confidence || m.passAutoBet) return true
+  const thr = activeThresholds()
+  const eloDiff = Number(m.eloDiff)
+  const strong = Number(m.strongProb)
+  return (Number.isFinite(eloDiff) && eloDiff >= thr.eloDiffMin)
+    || (Number.isFinite(strong) && strong >= thr.winProbMin)
+}
+
+const filteredRows = computed(() => {
+  let rows = marketRows.value
+  if (condOn.value) rows = rows.filter(passesEdge)
+  const mode = listFilter.value
+  if (mode === 'matched') rows = rows.filter(isMatchedRow)
+  else if (mode === 'edge') rows = rows.filter(passesEdge)
+  else if (mode === 'hc') rows = rows.filter((m) => m.is_high_confidence || m.passAutoBet)
+  const sorted = [...rows]
+  if (listSort.value === 'time') {
+    sorted.sort((a, b) => (a.startMs || a.startTimestamp || 0) - (b.startMs || b.startTimestamp || 0))
+  } else {
+    sorted.sort((a, b) => (Number(b.strongProb) || 0) - (Number(a.strongProb) || 0))
+  }
+  return sorted
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredRows.value.length / PAGE_SIZE)))
 
 const paginatedMatches = computed(() => {
   const start = (currentPage.value - 1) * PAGE_SIZE
-  return marketRows.value.slice(start, start + PAGE_SIZE)
+  return filteredRows.value.slice(start, start + PAGE_SIZE)
 })
 
 const pageSelectable = computed(() => paginatedMatches.value.filter((m) => canSelectMatch(m)))
@@ -199,20 +268,59 @@ const pageAllSelected = computed(() => {
 const selectedCount = computed(() => selectedIds.value.size)
 
 const emptyListHint = computed(() => {
-  const scanned = marketMeta.value?.scanned
-  const model = sport.value === 'nfl' ? 'nflelo' : 'dota2elo'
-  if (scanned > 0 && !marketRows.value.length) {
-    return `Polymarket 扫描 ${scanned} 场，暂无同时匹配 ${model} 的场次`
+  const label = sport.value === 'nfl' ? 'NFL' : 'DOTA2'
+  // 有采集结果但被条件/筛选滤空
+  if (marketRows.value.length && !filteredRows.value.length) {
+    return condOn.value
+      ? '按当前条件暂时没有可跟的场次。可以适当放宽门槛，或先关掉条件过滤，看看全部盘口。'
+      : '当前筛选下没有场次。试试切换筛选，或稍后再来看新开的盘。'
   }
-  const label = sport.value === 'nfl' ? 'NFL' : 'Dota'
-  return `暂无盘口（刷新采集 Polymarket ${label} 对阵）`
+  // 已扫描但列表为空
+  if ((marketMeta.value?.scanned || 0) > 0) {
+    return `刚巡检过 ${label} 相关盘口，眼下还没有足够清晰的推荐方向。新比赛会随开盘陆续出现，过一会儿刷新通常就能看到。`
+  }
+  // 完全无数据：产品向说明
+  return `暂时还没有可推荐的 ${label} 比赛。盘口一般会在开赛前陆续放出，建议稍后再刷新，或关注临近开赛的时段——有合适对阵时会第一时间出现在这里。`
 })
 
-const bundleHint = computed(() => {
-  const t = marketMeta.value?.thresholds
-  if (!t) return ''
-  return `自动投注仅 HC · 过线条件 Elo≥${t.eloDiffMin} 或 胜率≥${pct(t.winProbMin)}`
+const condSummary = computed(() => {
+  const thr = activeThresholds()
+  return `${condOn.value ? '已启用' : '未启用'} · Elo≥${thr.eloDiffMin} 或 胜率≥${pct(thr.winProbMin)}`
 })
+
+function setListFilter(mode) {
+  if (listFilter.value === mode) return
+  listFilter.value = mode
+  currentPage.value = 1
+  clearSelection()
+}
+
+function setListSort(mode) {
+  if (listSort.value === mode) return
+  listSort.value = mode
+  currentPage.value = 1
+}
+
+function openConditionModal() {
+  if (!props.isAdmin) return
+  const t = marketMeta.value?.thresholds
+  if (t && !localStorage.getItem(COND_KEY.value)) {
+    if (t.eloDiffMin != null) condEloDiff.value = String(t.eloDiffMin)
+    if (t.winProbMin != null) condWinPct.value = String(Math.round(Number(t.winProbMin) * 100))
+  }
+  conditionModalOpen.value = true
+}
+
+function closeConditionModal() {
+  conditionModalOpen.value = false
+}
+
+function applyConditionSettings() {
+  savePersisted()
+  currentPage.value = 1
+  clearSelection()
+  conditionModalOpen.value = false
+}
 
 function pmPrice(m, side) {
   const i = side === 'a' ? 0 : 1
@@ -270,7 +378,10 @@ function goPage(p) {
 }
 
 function openDetail(m) {
-  if (!props.isMember) return
+  if (!props.isMember) {
+    emit('need-subscribe')
+    return
+  }
   detailHelpOpen.value = false
   detailMatch.value = m
 }
@@ -291,7 +402,10 @@ function pmCents(m, side) {
 }
 
 function openMarket(m) {
-  if (!props.isMember) return
+  if (!props.isMember) {
+    emit('need-subscribe')
+    return
+  }
   const url = m?.url
   if (url) window.open(url, '_blank', 'noopener')
 }
@@ -510,6 +624,12 @@ watch(batchAmountUsd, () => savePersisted())
 watch(manualSide, () => {
   clearSelection()
 })
+watch(sport, async () => {
+  loadPersisted()
+  currentPage.value = 1
+  clearSelection()
+  await loadMarkets()
+})
 
 onMounted(async () => {
   loadPersisted()
@@ -538,11 +658,34 @@ defineExpose({
         :disabled="loading || refreshing"
         @click="refreshCollect"
       >{{ refreshing ? '采集中…' : '刷新' }}</button>
-      <div class="stats">
-        <div class="stat"><b>{{ stats.collected }}</b><span>扫</span></div>
-        <div class="stat stat-static active"><b>{{ stats.open }}</b><span>未开</span></div>
-        <div class="stat"><b>{{ stats.edge }}</b><span>过线</span></div>
-        <div class="stat"><b>{{ stats.hc }}</b><span>HC</span></div>
+      <button
+        v-if="isAdmin"
+        type="button"
+        class="btn ghost"
+        :class="{ on: condOn }"
+        @click="openConditionModal"
+      >条件设置</button>
+      <div class="stats" role="tablist" aria-label="条件过滤">
+        <button type="button" class="stat" :class="{ active: listFilter === 'all' }" @click="setListFilter('all')">
+          <b>{{ stats.collected }}</b><span>扫</span>
+        </button>
+        <button type="button" class="stat" :class="{ active: listFilter === 'matched' }" @click="setListFilter('matched')">
+          <b>{{ stats.matched }}</b><span>匹配</span>
+        </button>
+        <button type="button" class="stat" :class="{ active: listFilter === 'edge' }" @click="setListFilter('edge')">
+          <b>{{ stats.edge }}</b><span>过线</span>
+        </button>
+        <button type="button" class="stat" :class="{ active: listFilter === 'hc' }" @click="setListFilter('hc')">
+          <b>{{ stats.hc }}</b><span>HC</span>
+        </button>
+      </div>
+      <div class="stats sort-stats" role="tablist" aria-label="排序">
+        <button type="button" class="stat" :class="{ active: listSort === 'time' }" @click="setListSort('time')">
+          <span>时间排序</span>
+        </button>
+        <button type="button" class="stat" :class="{ active: listSort === 'prob' }" @click="setListSort('prob')">
+          <span>胜率排序</span>
+        </button>
       </div>
     </div>
 
@@ -559,7 +702,6 @@ defineExpose({
       v-model:manual-side="manualSide"
       v-model:manual-shares="manualShares"
       v-model:manual-limit-buy-price="manualLimitBuyPrice"
-      v-model:manual-limit-sell-price="manualLimitSellPrice"
       :batch-submitting="batchSubmitting"
       :batch-notice="batchNotice"
       :batch-error="batchError"
@@ -571,9 +713,8 @@ defineExpose({
 
     <div v-if="loading && !marketRows.length" class="empty">加载盘口中…</div>
     <div v-else-if="error && !marketRows.length" class="empty err">{{ error }}</div>
-    <div v-else-if="!marketRows.length" class="empty" role="status">
+    <div v-else-if="!filteredRows.length" class="empty empty-copy" role="status">
       {{ emptyListHint }}
-      <div v-if="bundleHint" class="hint">{{ bundleHint }}</div>
     </div>
     <template v-else>
       <div class="list">
@@ -581,7 +722,8 @@ defineExpose({
           v-for="m in paginatedMatches"
           :key="m.id"
           class="row-card"
-          :class="{ selected: isSelected(m), selectable: canSelectMatch(m) }"
+          :class="{ selected: isSelected(m), selectable: canSelectMatch(m), teaser: !isMember }"
+          @click="!isMember && emit('need-subscribe')"
         >
           <label
             v-if="allowBatchTrade"
@@ -607,8 +749,9 @@ defineExpose({
               <span class="start-status">未开</span>
               <span v-if="isMember" class="tour-title">差 {{ num(m.eloDiff) }}</span>
               <div v-if="isMember" class="badges">
+                <span v-if="!isMatchedRow(m)" class="badge raw">未匹配</span>
                 <span v-if="m.is_high_confidence" class="badge hc">HC</span>
-                <span v-else-if="m.passList" class="badge edge">过线</span>
+                <span v-else-if="passesEdge(m)" class="badge edge">过线</span>
                 <span v-if="m.url" class="badge poly">外</span>
                 <span v-if="m.pickSide" class="badge pick">优</span>
                 <span v-if="m.align" class="badge" :class="m.align === '一致' ? 'agree' : 'disagree'">{{ m.align }}</span>
@@ -623,7 +766,7 @@ defineExpose({
                     <span v-if="isMember && m.pickSide === 'a'" class="pick-tag">优</span>
                   </span>
                   <span v-if="isMember" class="side-nums">
-                    <em>{{ sideProb(m, 'a') }}</em>
+                    <em :class="{ pick: m.pickSide === 'a' }">{{ sideProb(m, 'a') }}</em>
                     <em class="pm">{{ pmPrice(m, 'a') }}</em>
                   </span>
                 </div>
@@ -635,20 +778,23 @@ defineExpose({
                     <span v-if="isMember && m.pickSide === 'b'" class="pick-tag">优</span>
                   </span>
                   <span v-if="isMember" class="side-nums">
-                    <em>{{ sideProb(m, 'b') }}</em>
+                    <em :class="{ pick: m.pickSide === 'b' }">{{ sideProb(m, 'b') }}</em>
                     <em class="pm">{{ pmPrice(m, 'b') }}</em>
                   </span>
                 </div>
               </div>
-              <div v-if="isMember" class="row-actions">
-                <button type="button" class="act-btn" @click="openDetail(m)">详情</button>
-                <button
-                  type="button"
-                  class="act-btn market"
-                  :disabled="!m.url"
-                  @click="openMarket(m)"
-                >外链</button>
-              </div>
+          <div v-if="isMember" class="row-actions">
+            <button type="button" class="act-btn" @click="openDetail(m)">参数详情</button>
+            <button
+              type="button"
+              class="act-btn market"
+              :disabled="!m.url"
+              @click="openMarket(m)"
+            >跳转下单</button>
+          </div>
+          <div v-else class="row-actions">
+            <button type="button" class="act-btn unlock" @click.stop="emit('need-subscribe')">开通查看</button>
+          </div>
             </div>
           </div>
         </article>
@@ -666,7 +812,7 @@ defineExpose({
         <div class="modal-sheet" role="dialog" aria-modal="true">
           <div class="modal-head">
             <div class="modal-head-main">
-              <div class="modal-title">详情</div>
+              <div class="modal-title">参数详情</div>
               <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
               <div class="modal-meta">
                 <span>{{ detailMatch.title || (sport === 'nfl' ? 'NFL' : 'Dota2') }}</span>
@@ -674,8 +820,9 @@ defineExpose({
                 · 未开
               </div>
               <div class="badges modal-badges">
+                <span v-if="!isMatchedRow(detailMatch)" class="badge raw">未匹配</span>
                 <span v-if="detailMatch.is_high_confidence" class="badge hc">HC</span>
-                <span v-else-if="detailMatch.passList" class="badge edge">过线</span>
+                <span v-else-if="passesEdge(detailMatch)" class="badge edge">过线</span>
                 <span v-if="detailMatch.url" class="badge poly">外</span>
                 <span v-if="detailMatch.pickSide" class="badge pick">优{{ detailMatch.pickSide === 'a' ? detailMatch.home : detailMatch.away }}</span>
                 <span v-if="detailMatch.align" class="badge" :class="detailMatch.align === '一致' ? 'agree' : 'disagree'">{{ detailMatch.align }}</span>
@@ -713,7 +860,7 @@ defineExpose({
                   {{ detailMatch.home }}
                   <span v-if="detailMatch.pickSide === 'a'" class="pick-tag">优</span>
                 </div>
-                <div class="duel-sub">胜率 {{ sideProb(detailMatch, 'a') }}</div>
+                <div class="duel-sub" :class="{ pick: detailMatch.pickSide === 'a' }">胜率 {{ sideProb(detailMatch, 'a') }}</div>
               </div>
               <div class="duel-vs">VS</div>
               <div class="duel-side" :class="{ pick: detailMatch.pickSide === 'b' }">
@@ -724,7 +871,7 @@ defineExpose({
                   {{ detailMatch.away }}
                   <span v-if="detailMatch.pickSide === 'b'" class="pick-tag">优</span>
                 </div>
-                <div class="duel-sub">胜率 {{ sideProb(detailMatch, 'b') }}</div>
+                <div class="duel-sub" :class="{ pick: detailMatch.pickSide === 'b' }">胜率 {{ sideProb(detailMatch, 'b') }}</div>
               </div>
             </div>
 
@@ -778,6 +925,46 @@ defineExpose({
         </div>
       </div>
     </Teleport>
+
+    <Teleport to="body">
+      <div v-if="conditionModalOpen && isAdmin" class="modal-mask" @click.self="closeConditionModal">
+        <div class="modal-sheet cond-sheet" role="dialog" aria-modal="true" aria-label="条件设置">
+          <div class="modal-head">
+            <div class="modal-head-main">
+              <div class="modal-title">条件设置</div>
+              <div class="modal-sub">{{ sport === 'nfl' ? 'NFL' : 'Dota2' }} · {{ condSummary }}</div>
+            </div>
+            <div class="modal-head-actions">
+              <button type="button" class="modal-x" aria-label="关闭" @click="closeConditionModal">×</button>
+            </div>
+          </div>
+          <div class="modal-body cond-body">
+            <p class="cond-hint">
+              列表展示 Polymarket 采集赛事；匹配到
+              {{ sport === 'nfl' ? 'nflelo' : 'dota2elo' }}
+              API 后显示两侧胜率。启用条件后仅保留过线场次。
+            </p>
+            <label class="cond-toggle">
+              <input v-model="condOn" type="checkbox">
+              <span>启用条件过滤</span>
+            </label>
+            <label class="cond-field">
+              <span>Elo 分差 ≥</span>
+              <input v-model="condEloDiff" type="number" min="1" step="1" inputmode="numeric">
+            </label>
+            <label class="cond-field">
+              <span>强队胜率 ≥ (%)</span>
+              <input v-model="condWinPct" type="number" min="50" max="99" step="1" inputmode="decimal">
+            </label>
+            <p class="cond-hint muted">满足「Elo 分差」或「胜率」任一即过线；HC 始终算过线。自动投注仍只买 HC。</p>
+          </div>
+          <div class="modal-foot">
+            <button type="button" class="act-btn" @click="closeConditionModal">取消</button>
+            <button type="button" class="act-btn market" @click="applyConditionSettings">应用</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -799,6 +986,8 @@ defineExpose({
   padding: 6px;
   border-radius: 0;
   min-height: 280px;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .topbar {
   display: flex;
@@ -806,6 +995,7 @@ defineExpose({
   align-items: center;
   gap: 4px;
   margin-bottom: 6px;
+  max-width: 100%;
 }
 .meta-chip,
 .btn {
@@ -827,15 +1017,26 @@ defineExpose({
   padding: 6px 12px;
   font-size: 0.82rem;
 }
+.btn.ghost.on {
+  border-color: var(--primary);
+  background: #e0e7ff;
+  color: #3730a3;
+  font-weight: 700;
+}
 .btn:disabled { opacity: 0.5; cursor: wait; }
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 3px;
-  margin-left: auto;
-  min-width: 148px;
+  margin-left: 0;
+  min-width: 0;
   flex: 1 1 148px;
-  max-width: 220px;
+  max-width: 100%;
+}
+.sort-stats {
+  grid-template-columns: repeat(2, 1fr);
+  flex: 1 1 120px;
+  max-width: 160px;
 }
 .stat {
   background: var(--card);
@@ -848,6 +1049,9 @@ defineExpose({
   justify-content: center;
   gap: 2px;
   white-space: nowrap;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 .stat b {
   color: var(--primary);
@@ -857,13 +1061,12 @@ defineExpose({
   font-variant-numeric: tabular-nums;
 }
 .stat span { color: var(--muted); font-size: 0.58rem; line-height: 1.2; }
-.stat-static { cursor: default; }
-.stat-static.active {
+.stat.active {
   border-color: var(--primary);
   background: var(--primary-soft);
   box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.25);
 }
-.stat-static.active span { color: #6366f1; font-weight: 600; }
+.stat.active span { color: #6366f1; font-weight: 600; }
 
 .empty {
   text-align: center;
@@ -873,6 +1076,13 @@ defineExpose({
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 10px;
+}
+.empty.empty-copy {
+  max-width: 22rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 22px 16px;
+  line-height: 1.6;
 }
 .empty.err { color: var(--danger); }
 .empty .hint { margin-top: 6px; font-size: 0.68rem; opacity: 0.85; }
@@ -970,6 +1180,7 @@ defineExpose({
 }
 .badge.hc { background: #fffbeb; color: #b45309; }
 .badge.edge { background: #ecfdf5; color: #047857; }
+.badge.raw { background: #f1f5f9; color: #64748b; }
 .badge.poly { background: #f5f3ff; color: #6d28d9; }
 .badge.pick { background: var(--primary); color: #fff; }
 .badge.agree { background: #ecfdf5; color: #047857; }
@@ -977,6 +1188,7 @@ defineExpose({
 .row-main {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
 }
@@ -1056,6 +1268,7 @@ defineExpose({
   min-width: 3em;
   text-align: right;
 }
+.side-nums em.pick { color: var(--primary); }
 .side-nums em.pm { color: #64748b; min-width: 2.2em; }
 .row-actions {
   display: flex;
@@ -1080,7 +1293,13 @@ defineExpose({
   color: #fff;
   border-color: var(--primary);
 }
+.act-btn.unlock {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fdba74;
+}
 .act-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.row-card.teaser { cursor: pointer; }
 
 @media (max-width: 420px) {
   .wrap { padding: 4px; }
@@ -1141,19 +1360,20 @@ defineExpose({
   --primary-soft: #eef2ff;
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 100;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 .modal-sheet {
   width: 100%;
   max-width: 26rem;
   max-height: min(88vh, 720px);
   background: #fff;
-  border-radius: 14px 14px 12px 12px;
+  border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
@@ -1294,6 +1514,7 @@ defineExpose({
 }
 .duel-side.pick .duel-name { color: #3730a3; }
 .duel-sub { margin-top: 3px; font-size: 0.68rem; color: #64748b; line-height: 1.35; }
+.duel-sub.pick { color: var(--primary); font-weight: 700; }
 .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .kv {
   background: #f8fafc;
@@ -1336,4 +1557,44 @@ defineExpose({
   white-space: nowrap;
 }
 .kv-line .num { font-size: 0.88rem; font-weight: 800; color: #0f172a; flex-shrink: 0; }
+
+.cond-sheet { max-width: 420px; }
+.cond-body {
+  padding: 12px 14px 8px;
+  display: grid;
+  gap: 10px;
+}
+.cond-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #475569;
+}
+.cond-hint.muted { color: #94a3b8; font-size: 0.72rem; }
+.cond-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.cond-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+.cond-field input {
+  width: 96px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 </style>

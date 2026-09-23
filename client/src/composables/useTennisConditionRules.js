@@ -36,6 +36,7 @@ export function useTennisConditionRules({
   props,
   isPrematchMode,
   isInplayMode,
+  isMixMode,
   getLoadOnce,
   getShowAdminEngineButtons,
 }) {
@@ -56,16 +57,20 @@ export function useTennisConditionRules({
   const productSelectCond = ref([])
   const productSelectBet = ref([])
 
+  const isConditionBoard = computed(
+    () => isPrematchMode.value || isInplayMode.value || !!isMixMode?.value,
+  )
   const canEditConditionRules = computed(
-    () => props.canEditRules && (isPrematchMode.value || isInplayMode.value),
+    () => props.canEditRules && isConditionBoard.value,
   )
   const conditionBucketKey = computed(() => (isInplayMode.value ? 'inplay' : 'prematch'))
   const conditionBucketLabel = computed(() => (isInplayMode.value ? '比赛中' : '未开赛'))
   const canEditProductSelect = computed(
-    () => props.canEditRules && props.productId != null && props.productId !== '' && (isPrematchMode.value || isInplayMode.value),
+    () => props.canEditRules && props.productId != null && props.productId !== '' && isConditionBoard.value,
   )
   const linkedLibraryGroups = computed(() => {
-    if (!isPrematchMode.value) return libraryGroups.value
+    // mix 与盘前一样：只把勾了「关联未开赛」的组用于列表筛选
+    if (!isPrematchMode.value && !isMixMode?.value) return libraryGroups.value
     return libraryGroups.value.filter((g) => g?.linkPrematch === true)
   })
   const needsConditionGroupSelect = computed(() => linkedLibraryGroups.value.length > 0)
@@ -329,8 +334,7 @@ export function useTennisConditionRules({
   }
 
   async function openConditionModal() {
-    const show = getShowAdminEngineButtons ? getShowAdminEngineButtons() : props.canEditRules
-    if (!show) return
+    if (!props.canEditRules || !isConditionBoard.value) return
     selectNotice.value = ''
     selectError.value = ''
     rulesNotice.value = ''

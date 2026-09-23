@@ -45,6 +45,7 @@ class CalibrationPoint:
     elo_diff: float       # |ΔElo|，> 0
     favorite_won: bool    # Elo 高的一方是否赢
     p_predicted: float    # 模型原本的预测胜率（logistic）
+    tier_gap: int = 0     # v1.7: 两队 tier 差（0=同层，>0=跨层）
 
     @property
     def bucket(self) -> int:
@@ -72,7 +73,7 @@ class CalibrationBucket:
 # 校准模型
 # =================================================================
 class EloCalibration:
-    """基于 Elo 差的概率校准。"""
+    """基于 Elo 差的概率校准。v1.7: 按 tier_gap 分双表（同层 / 跨层）。"""
 
     BUCKET_SIZE = 50.0  # 每 50 Elo 一桶
     MIN_SAMPLES = 5     # 桶内至少 N 样本才视为可信
@@ -80,20 +81,37 @@ class EloCalibration:
     DEFAULT_PRIOR = 0.5  # 缺数据时的默认校准
 
     def __init__(self):
-        self.buckets: List[CalibrationBucket] = []
-        self.elo_breaks: List[float] = []  # 桶边界
-        self.calibrated_probs: List[float] = []  # 对应校准胜率
+        self.buckets: List[CalibrationBucket] = []  # 同层
+        self.cross_tier_buckets: List[CalibrationBucket] = []  # v1.7 跨层
+        self.elo_breaks: List[float] = []  # 同层桶边界
+        self.calibrated_probs: List[float] = []
+        self.cross_elo_breaks: List[float] = []
+        self.cross_calibrated_probs: List[float] = []
         self._loaded = False
 
     # ---------- 构建校准表 ----------
     def fit(self, session: Session) -> int:
-        """从历史比赛数据构建校准表。返回处理的比赛数。"""
+        """从历史比赛数据构建校准表（v1.7 双表：同层 + 跨层）。"""
         points = self._extract_points(session)
         if not points:
             return 0
 
-        raw_buckets = self._aggregate_buckets(points)
-        self.buckets = self._smooth_buckets(raw_buckets)
+        # 同层（tier_gap=0）
+        same_points = [p for p in points if p.tier_gap == 0]
+        if same_points:
+            raw_same = self._aggregate_buckets(same_points)
+            self.buckets = self._smooth_buckets(raw_same)
+        else:
+            self.buckets = []
+
+        # 跨层（tier_gap>=1）
+        cross_points = [p for p in points if p.tier_gap > 0]
+        if cross_points:
+            raw_cross = self._aggregate_buckets(cross_points)
+            self.cross_tier_buckets = self._smooth_buckets(raw_cross)
+        else:
+            self.cross_tier_buckets = []
+
         self._build_lookup()
         self._loaded = True
         return len(points)
@@ -115,6 +133,9 @@ class EloCalibration:
         matches = session.scalars(
             select(Match).where(Match.radiant_win.isnot(None))
         ).all()
+
+        # v1.7: 加载 tier 映射
+        from .league_tiers import get_tier
 
         for m in matches:
             if not m.radiant_team_id or not m.dire_team_id:
@@ -139,10 +160,15 @@ class EloCalibration:
                 continue
 
             favorite_won = m.radiant_win if favorite_is_radiant else not m.radiant_win
+            # v1.7: tier_gap
+            tier_a = get_tier(league_id=m.league_id, league_name=m.league_name)
+            tier_b = tier_a  # 同一联赛
+            tier_gap = abs(tier_a - tier_b)
             points.append(CalibrationPoint(
                 elo_diff=diff,
                 favorite_won=favorite_won,
                 p_predicted=p_fav,
+                tier_gap=tier_gap,
             ))
         return points
 
@@ -215,36 +241,55 @@ class EloCalibration:
         return out
 
     def _build_lookup(self):
-        """建立 (elo_diff → calibrated_p) 的快速查表数组。"""
-        self.elo_breaks = [b.elo_lo for b in self.buckets] + [self.buckets[-1].elo_hi]
-        self.calibrated_probs = [b.calibrated_p_win for b in self.buckets]
+        """建立 (elo_diff → calibrated_p) 的快速查表数组（双表）。"""
+        if self.buckets:
+            self.elo_breaks = [b.elo_lo for b in self.buckets] + [self.buckets[-1].elo_hi]
+            self.calibrated_probs = [b.calibrated_p_win for b in self.buckets]
+        if self.cross_tier_buckets:
+            self.cross_elo_breaks = [b.elo_lo for b in self.cross_tier_buckets] + [self.cross_tier_buckets[-1].elo_hi]
+            self.cross_calibrated_probs = [b.calibrated_p_win for b in self.cross_tier_buckets]
 
     # ---------- 预测时使用 ----------
-    def apply(self, elo_diff: float) -> float:
-        """输入 Elo 差绝对值，返回校准后的胜率。
-        - 缺数据 → DEFAULT_PRIOR
-        - 差 < 最小桶 → 用最小桶值
-        - 差 > 最大桶 → 用最大桶值
+    def apply(self, elo_diff: float, tier_gap: int = 0) -> float:
+        """输入 Elo 差绝对值 + tier_gap，返回校准后的胜率。
+
+        v1.7 实战化：所有历史 match 都是同 tier（双方在同一联赛），
+        cross-tier 没有训练数据。所以跨层时把校准胜率向 50% 拉（保守）。
+
+        tier_gap=0: 同层，直接用校准表
+        tier_gap=1: 跨 1 层，向 50% 拉 25%
+        tier_gap>=2: 跨 ≥2 层，向 50% 拉 50%
         """
         if not self._loaded:
             self._load_or_default()
-        if not self.buckets:
-            return self.DEFAULT_PRIOR
         diff = abs(elo_diff)
-        # 找第一个 elo_lo > diff 的下标
-        idx = bisect_left(self.elo_breaks, diff)
+        base = self._apply_table(diff, self.buckets, self.elo_breaks, self.calibrated_probs)
+        if tier_gap <= 0:
+            return base
+        # 跨层保守折扣（向 50% 拉）
+        if tier_gap == 1:
+            return base * 0.75 + 0.5 * 0.25
+        else:  # tier_gap >= 2
+            return base * 0.50 + 0.5 * 0.50
+
+    def _apply_table(self, diff, buckets, breaks, probs):
+        """通用查表（带线性插值）。"""
+        if not buckets:
+            return self.DEFAULT_PRIOR
+        if not breaks:
+            return buckets[-1].calibrated_p_win
+        idx = bisect_left(breaks, diff)
         if idx == 0:
-            return self.buckets[0].calibrated_p_win
-        if idx >= len(self.buckets):
-            return self.buckets[-1].calibrated_p_win
-        # 在 [idx-1, idx] 之间线性插值
-        lo_break = self.buckets[idx - 1].elo_hi
-        hi_break = self.buckets[idx].elo_lo
+            return buckets[0].calibrated_p_win
+        if idx >= len(buckets):
+            return buckets[-1].calibrated_p_win
+        lo_break = buckets[idx - 1].elo_hi
+        hi_break = buckets[idx].elo_lo
         if hi_break <= lo_break:
-            return self.buckets[idx - 1].calibrated_p_win
+            return buckets[idx - 1].calibrated_p_win
         t = (diff - lo_break) / (hi_break - lo_break)
-        lo_p = self.buckets[idx - 1].calibrated_p_win
-        hi_p = self.buckets[idx].calibrated_p_win
+        lo_p = buckets[idx - 1].calibrated_p_win
+        hi_p = buckets[idx].calibrated_p_win
         return lo_p + t * (hi_p - lo_p)
 
     def _load_or_default(self):
@@ -253,7 +298,9 @@ class EloCalibration:
             try:
                 with open(CALIBRATION_FILE) as f:
                     data = json.load(f)
-                self.buckets = [CalibrationBucket(**b) for b in data["buckets"]]
+                self.buckets = [CalibrationBucket(**b) for b in data.get("buckets", [])]
+                # v1.7: 跨层 buckets（缺字段时给空表）
+                self.cross_tier_buckets = [CalibrationBucket(**b) for b in data.get("cross_tier_buckets", [])]
                 self._build_lookup()
                 self._loaded = True
             except Exception:
@@ -266,10 +313,11 @@ class EloCalibration:
         CALIBRATION_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(CALIBRATION_FILE, "w") as f:
             json.dump({
-                "version": 1,
+                "version": 2,  # v1.7 bump 到 2
                 "bucket_size": self.BUCKET_SIZE,
                 "smoothing_window": self.SMOOTHING_WINDOW,
                 "buckets": [asdict(b) for b in self.buckets],
+                "cross_tier_buckets": [asdict(b) for b in self.cross_tier_buckets],
             }, f, indent=2)
 
     def load(self) -> bool:

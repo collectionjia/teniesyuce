@@ -139,6 +139,8 @@ def upsert_pro_match_list(session: Session, pro_list: List[dict]) -> int:
 
 def recompute_all_ratings() -> Dict[str, int]:
     """全量重算 Elo：按时间顺序遍历所有比赛。
+    v1.6 新增 per-tier Elo：每队按对手联赛层级维护 4 套 Elo（elo_t1/t2/t3/t4）。
+
     返回处理统计。
     """
     init_db()
@@ -151,6 +153,15 @@ def recompute_all_ratings() -> Dict[str, int]:
             t.wins = 0
             t.losses = 0
             t.last_match_at = None
+            # v1.6: 重置 per-tier Elo
+            t.elo_t1 = INITIAL_ELO
+            t.elo_t2 = INITIAL_ELO
+            t.elo_t3 = INITIAL_ELO
+            t.elo_t4 = INITIAL_ELO
+            t.games_t1 = 0
+            t.games_t2 = 0
+            t.games_t3 = 0
+            t.games_t4 = 0
 
         # 2) 删旧 rating_history
         session.query(RatingHistory).delete()
@@ -165,6 +176,7 @@ def recompute_all_ratings() -> Dict[str, int]:
 
         processed = 0
         skipped = 0
+        from .league_tiers import get_tier, TIER_NAMES
         for m in matches:
             r_team = session.get(Team, m.radiant_team_id)
             d_team = session.get(Team, m.dire_team_id)
@@ -173,10 +185,13 @@ def recompute_all_ratings() -> Dict[str, int]:
                 continue
             k = k_factor(series_type=m.series_type, league_name=m.league_name)
             score_a = 1.0 if m.radiant_win else 0.0
-            # v1.5 tier-aware K 因子（按联赛层级调整 Elo 更新幅度）
-            from .league_tiers import get_tier
             tier_a = get_tier(league_id=m.league_id, league_name=m.league_name)
             tier_b = tier_a  # 同一联赛
+
+            # v1.6: per-tier Elo 更新（双方各自的 tier-{opp} Elo 各自更新）
+            tier_field = f"elo_t{tier_a}"  # elo_t1 / elo_t2 / elo_t3 / elo_t4
+            games_field = f"games_t{tier_a}"
+
             new_r, new_d, e_r, k_used = update_ratings(
                 r_team.rating,
                 d_team.rating,
@@ -187,6 +202,21 @@ def recompute_all_ratings() -> Dict[str, int]:
                 tier_a=tier_a,
                 tier_b=tier_b,
             )
+            # per-tier 更新
+            new_r_tier, new_d_tier, _, k_used_tier = update_ratings(
+                getattr(r_team, tier_field),
+                getattr(d_team, tier_field),
+                score_a,
+                base_k=k,
+                matches_played_a=getattr(r_team, games_field),
+                matches_played_b=getattr(d_team, games_field),
+                tier_a=tier_a,
+                tier_b=tier_b,
+            )
+            setattr(r_team, tier_field, new_r_tier)
+            setattr(d_team, tier_field, new_d_tier)
+            setattr(r_team, games_field, getattr(r_team, games_field) + 1)
+            setattr(d_team, games_field, getattr(d_team, games_field) + 1)
 
             old_r, old_d = r_team.rating, d_team.rating
             r_team.rating = new_r

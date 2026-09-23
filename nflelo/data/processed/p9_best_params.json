@@ -1,0 +1,22 @@
+{
+  "xgb_params": {
+    "n_estimators": 50,
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "min_samples_leaf": 20
+  },
+  "blend_alpha": 0.6,
+  "eval_window": [
+    2018,
+    2025
+  ],
+  "metrics_hc75_priority": {
+    "alpha": 0.6,
+    "brier": 0.21492182528748843,
+    "logloss": 0.6188073115251524,
+    "acc": 0.6624353549600376,
+    "hc75": 0.8423423423423423,
+    "hc65": 0.7421465968586387,
+    "n": 2127
+  }
+}

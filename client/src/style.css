@@ -163,6 +163,12 @@ html, body { margin: 0; background: #0f172a; }
   overflow: hidden;
 }
 .auth-card-head { margin-bottom: 14px; }
+.auth-card-tip {
+  margin: 10px 2px 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #64748b;
+}
 .auth-card-body { transition: height 0.25s ease; }
 .auth-form-panel { animation: fadeUp 0.25s ease both; }
 .auth-field {
@@ -268,6 +274,54 @@ html, body { margin: 0; background: #0f172a; }
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.shop-profit-board {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.shop-profit-board-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #dc2626;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  padding-left: 2px;
+}
+.shop-profit-ticker {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: linear-gradient(90deg, #fef2f2 0%, #fff7f7 50%, #fef2f2 100%);
+  padding: 7px 0;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.shop-profit-ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
+  white-space: nowrap;
+  width: max-content;
+  animation: shop-profit-ticker-scroll 28s linear infinite;
+}
+.shop-profit-ticker-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #dc2626;
+  letter-spacing: 0.01em;
+}
+.shop-profit-ticker-item::after {
+  content: '·';
+  margin-left: 28px;
+  color: #f87171;
+  font-weight: 400;
+}
+@keyframes shop-profit-ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 .shop-toolbar {
   display: flex;
@@ -410,6 +464,19 @@ html, body { margin: 0; background: #0f172a; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.product-tile-win {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
 .product-tile-name {
   width: 100%;
   font-size: 0.8rem;
@@ -421,6 +488,12 @@ html, body { margin: 0; background: #0f172a; }
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
+}
+.product-tile-count {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
 }
 .product-tile-price {
   font-size: 0.68rem;

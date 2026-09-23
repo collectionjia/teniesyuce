@@ -24,7 +24,8 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
 
 <template>
 <!-- 条件设置弹框：盘前/盘中均可编辑条件组；盘前勾选「关联未开赛」即用于列表筛选 -->
-    <div v-if="open" class="modal-mask modal-mask--top" @click.self="emit('update:open', false)">
+  <Teleport to="body">
+    <div v-if="open && canEditConditionRules" class="modal-mask modal-mask--top" @click.self="emit('update:open', false)">
       <div class="modal-sheet rules-modal-sheet" role="dialog" aria-modal="true">
         <div class="modal-head">
           <div class="modal-head-main">
@@ -154,6 +155,7 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
         </div>
       </div>
     </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -178,12 +180,13 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
 .modal-mask {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 100;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  padding: 8px;
+  padding: 12px 8px;
+  overflow-y: auto;
 }
 .modal-mask--top {
   align-items: flex-start;
@@ -194,14 +197,14 @@ const emit = defineEmits(['update:open', 'update:conditionBucketOn'])
   max-width: 26rem;
   max-height: min(88vh, 720px);
   background: #fff;
-  border-radius: 14px 14px 12px 12px;
+  border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.22);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .modal-mask--top .modal-sheet {
-  border-radius: 12px 12px 14px 14px;
+  border-radius: 12px;
 }
 .rules-modal-sheet {
   max-width: min(36rem, 100%);

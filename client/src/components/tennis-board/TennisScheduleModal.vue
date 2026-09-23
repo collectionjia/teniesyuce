@@ -20,6 +20,7 @@ const emit = defineEmits([
 </script>
 
 <template>
+  <Teleport to="body">
   <div v-if="open" class="modal-mask modal-mask--top" @click.self="emit('update:open', false)">
     <div class="modal-sheet rules-modal-sheet schedule-sheet" role="dialog" aria-modal="true">
       <div class="modal-head">
@@ -85,13 +86,14 @@ const emit = defineEmits([
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <style scoped>
 .modal-mask {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  z-index: 100;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
   align-items: flex-start;

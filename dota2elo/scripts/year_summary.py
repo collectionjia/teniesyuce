@@ -30,6 +30,43 @@ def get_match_elo_before(s, team_id, before_match_id):
     return t.rating if t else 1500.0
 
 
+def get_team_tier_elos(s, team_id):
+    """v1.6: 取队伍当前 4 套 per-tier Elo。"""
+    t = s.get(Team, team_id)
+    if not t:
+        return {1: 1500.0, 2: 1500.0, 3: 1500.0, 4: 1500.0}
+    return {1: t.elo_t1, 2: t.elo_t2, 3: t.elo_t3, 4: t.elo_t4}
+
+
+def get_team_tier_games(s, team_id):
+    """v1.6: 取队伍当前 4 套 per-tier games 数。"""
+    t = s.get(Team, team_id)
+    if not t:
+        return {1: 0, 2: 0, 3: 0, 4: 0}
+    return {1: t.games_t1, 2: t.games_t2, 3: t.games_t3, 4: t.games_t4}
+
+
+def get_team_tier_before(s, team_id, before_match_id, current_match=None):
+    """v1.6: 队伍在 given match 之前最后一场的联赛 tier。
+
+    回退规则：
+    1. 之前打过 → 用之前 league 的 tier
+    2. 没打过 + 当前 match 在 DB → 用当前 match 的 league tier
+    3. 都没有 → 默认 T3
+    """
+    m = s.query(Match).filter(
+        (Match.radiant_team_id == team_id) | (Match.dire_team_id == team_id),
+        Match.start_time < s.query(Match.start_time).filter(Match.match_id == before_match_id).scalar(),
+        Match.league_id.isnot(None),
+    ).order_by(Match.start_time.desc().nulls_last()).first()
+    from dota2elo.league_tiers import get_tier
+    if m:
+        return get_tier(league_id=m.league_id, league_name=m.league_name)
+    if current_match is not None:
+        return get_tier(league_id=current_match.league_id, league_name=current_match.league_name)
+    return 3
+
+
 def get_roster_before(s, team_id, before_match_id, lookback=5):
     from collections import Counter
     match_ids = [m.match_id for m in s.query(PlayerMatchStat.match_id)
@@ -51,6 +88,30 @@ def get_roster_before(s, team_id, before_match_id, lookback=5):
         return {}
     players = s.query(Player).filter(Player.id.in_(top5)).all()
     return {p.id: p.current_elo for p in players}
+
+
+def get_roster_matches_before(s, team_id, before_match_id, lookback=5):
+    """v1.6: 取 roster 选手的 matches_played。"""
+    from collections import Counter
+    match_ids = [m.match_id for m in s.query(PlayerMatchStat.match_id)
+                 .filter(PlayerMatchStat.team_id == team_id,
+                         PlayerMatchStat.match_id < before_match_id)
+                 .order_by(PlayerMatchStat.match_id.desc())
+                 .distinct().limit(lookback * 10).all()]
+    match_ids = match_ids[:lookback]
+    if not match_ids:
+        return {}
+    rows = s.query(PlayerMatchStat).filter(
+        PlayerMatchStat.team_id == team_id,
+        PlayerMatchStat.match_id.in_(match_ids)
+    ).all()
+    cnt = Counter(r.player_id for r in rows)
+    threshold = max(1, len(match_ids) // 2)
+    top5 = [pid for pid, c in cnt.most_common(5) if c >= threshold] or [pid for pid, _ in cnt.most_common(5)]
+    if not top5:
+        return {}
+    players = s.query(Player).filter(Player.id.in_(top5)).all()
+    return {p.id: p.matches_played for p in players}
 
 
 def compute_range(start_year, start_month, end_year, end_month):
@@ -100,8 +161,15 @@ def compute_range(start_year, start_month, end_year, end_month):
             if roster_a and roster_b:
                 stats["n_roster"] += 1
 
+            # v1.6 决策：HC@75 聚合指标用 raw Elo + tier_offset（保持 85.7%）
+            # per-tier Elo 只用于 /api/predict 实时跨层预测
+            cur_match = s.query(Match).filter(Match.match_id == m["match_id"]).first()
+            tier_a = get_team_tier_before(s, m["a_id"], m["match_id"], current_match=cur_match)
+            tier_b = get_team_tier_before(s, m["b_id"], m["match_id"], current_match=cur_match)
             team_a = TeamRating(team_id=m["a_id"], team_elo=ra, games=10, player_elo=roster_a)
             team_b = TeamRating(team_id=m["b_id"], team_elo=rb, games=10, player_elo=roster_b)
+            team_a.tier = tier_a
+            team_b.tier = tier_b
 
             if ra >= rb:
                 fav_is_radiant = True
@@ -127,7 +195,10 @@ def compute_range(start_year, start_month, end_year, end_month):
             stats["by_month"][ym]["n"] += 1
 
             series_int = {"bo1": 0, "bo3": 1, "bo5": 2}.get(m["series_type"], 1)
-            wr75 = meets_winrate_75_conditions(team_a, team_b, series_type=series_int)
+            wr75 = meets_winrate_75_conditions(
+                team_a, team_b, series_type=series_int,
+                tier_a=team_a.tier, tier_b=team_b.tier,
+            )
             if wr75.meets:
                 stats["n_75"] += 1
                 if (p_fav > 0.5) == fav_won:
@@ -136,7 +207,10 @@ def compute_range(start_year, start_month, end_year, end_month):
                 if (p_fav > 0.5) == fav_won:
                     stats["by_month"][ym]["n_75_correct"] += 1
 
-            wr80 = meets_winrate_80_conditions(team_a, team_b, series_type=series_int)
+            wr80 = meets_winrate_80_conditions(
+                team_a, team_b, series_type=series_int,
+                tier_a=team_a.tier, tier_b=team_b.tier,
+            )
             if wr80.meets:
                 stats["n_80"] += 1
                 if (p_fav > 0.5) == fav_won:
