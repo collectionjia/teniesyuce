@@ -59,6 +59,52 @@ def _match_label(match: dict[str, Any] | None) -> tuple[Any, Any]:
     return home or "?", away or "?"
 
 
+def _fmt_odds(poly: dict[str, Any] | None) -> str:
+    if not isinstance(poly, dict):
+        return "- / -"
+    ml = poly.get("moneyline") or {}
+    prices = ml.get("prices")
+    if isinstance(prices, (list, tuple)) and len(prices) >= 2:
+        return f"{prices[0]} / {prices[1]}"
+    hp, ap = poly.get("home_price"), poly.get("away_price")
+    if hp is None and ap is None:
+        return "- / -"
+    return f"{hp if hp is not None else '-'} / {ap if ap is not None else '-'}"
+
+
+def _print_score_ok(match: dict[str, Any]) -> None:
+    home, away = _match_label(match)
+    score = match.get("scoreText") or match.get("score") or "-"
+    status = match.get("status") or match.get("statusType") or "-"
+    print(
+        f"[refresh_inplay] 比分成功 id={match.get('id')} {home} vs {away} "
+        f"| {score} | {status}",
+        flush=True,
+    )
+
+
+def _print_odds_ok(match: dict[str, Any] | None, eid: Any, poly: dict[str, Any]) -> None:
+    home, away = _match_label(match)
+    print(
+        f"[refresh_inplay] 赔率成功 id={eid} {home} vs {away} | PM {_fmt_odds(poly)}",
+        flush=True,
+    )
+
+
+def _print_score_fail(eid: Any, home: Any, away: Any, reason: str) -> None:
+    print(
+        f"[refresh_inplay] 本次采集失败：比分失败 id={eid} {home} vs {away} | {reason}",
+        flush=True,
+    )
+
+
+def _print_odds_fail(eid: Any, home: Any, away: Any, reason: str) -> None:
+    print(
+        f"[refresh_inplay] 本次采集失败：赔率失败 id={eid} {home} vs {away} | {reason}",
+        flush=True,
+    )
+
+
 def _apply_sofa_slim_to_match(match: dict[str, Any], slim: dict[str, Any]) -> None:
     """把 Sofascore slim 字段写回包内 match（保留原有球员/元数据）。"""
     for key in (
@@ -185,10 +231,11 @@ def refresh_scores_sofascore(
                     slim = slim_event(raw)
                     _apply_sofa_slim_to_match(match, slim)
                     scores["updated"] = int(scores.get("updated") or 0) + 1
+                    _print_score_ok(match)
                 except Exception as exc:
                     scores["failed"] = int(scores.get("failed") or 0) + 1
                     missed.append({"id": iid, "home": home, "away": away, "reason": str(exc)})
-                    print(f"[refresh_inplay] sofa fail id={iid}: {exc}", flush=True)
+                    _print_score_fail(iid, home, away, str(exc))
     except Exception as exc:
         scores.update(
             {
@@ -198,7 +245,7 @@ def refresh_scores_sofascore(
                 "missed": missed[:50],
             }
         )
-        print(f"[refresh_inplay] sofa client failed: {exc}", flush=True)
+        print(f"[refresh_inplay] 本次采集失败：比分失败（Sofascore 客户端）| {exc}", flush=True)
         return scores
 
     scores["tracked"] = len(linked)
@@ -207,22 +254,22 @@ def refresh_scores_sofascore(
     scores["detail_fetch"] = detail_hit
     scores["missed"] = missed[:50]
     scores["ok"] = int(scores.get("updated") or 0) > 0 or len(linked) == 0
-    if missed:
-        preview = missed[:20]
+    if int(scores.get("failed") or 0) > 0 and int(scores.get("updated") or 0) == 0:
         print(
-            f"[refresh_inplay] score miss {len(missed)}/{len(linked)} "
-            f"(live={live_hit} detail={detail_hit} no_link={no_link}): "
-            + "; ".join(
-                f"{x['id']} {x.get('home') or '?'} vs {x.get('away') or '?'} ({x.get('reason')})"
-                for x in preview
-            )
-            + (" …" if len(missed) > len(preview) else ""),
+            f"[refresh_inplay] 本次采集失败：比分失败 "
+            f"failed={scores.get('failed')}/{len(linked)}（全部未更新）",
+            flush=True,
+        )
+    elif int(scores.get("failed") or 0) > 0:
+        print(
+            f"[refresh_inplay] 比分部分失败 failed={scores.get('failed')}/{len(linked)} "
+            f"updated={scores.get('updated')}",
             flush=True,
         )
     else:
         print(
-            f"[refresh_inplay] scores ok updated={scores.get('updated')} "
-            f"linked={len(linked)} no_link={no_link} live={live_hit} detail={detail_hit}",
+            f"[refresh_inplay] 比分采集完成 updated={scores.get('updated')} "
+            f"linked={len(linked)} no_link={no_link}",
             flush=True,
         )
     return scores
@@ -258,6 +305,7 @@ def refresh_odds_polymarket(
 
     if not isinstance(poly_map, dict) or not poly_map:
         prices.update({"skipped": True, "reason": "no polymarketByEvent", "ok": False})
+        print("[refresh_inplay] 本次采集失败：赔率失败 | 无 polymarketByEvent", flush=True)
         return prices
 
     by_id: dict[int, dict[str, Any]] = {
@@ -277,6 +325,7 @@ def refresh_odds_polymarket(
 
     if not entries:
         prices.update({"skipped": True, "reason": "no slugs", "ok": True, "candidates": 0})
+        print("[refresh_inplay] 赔率跳过：无可刷 slug", flush=True)
         return prices
 
     workers = max(1, min(4, int(os.environ.get("POLY_REFRESH_CONCURRENCY", "4"))))
@@ -300,19 +349,21 @@ def refresh_odds_polymarket(
             for fut in as_completed(futs):
                 eid, iid, next_poly, err = fut.result()
                 match = by_id.get(iid)
+                home, away = _match_label(match)
                 if err or not next_poly:
                     reason = err or "no event"
                     prices["failed"] = int(prices.get("failed") or 0) + 1
                     price_failures.append({"id": eid, "reason": reason})
-                    print(f"[refresh_inplay] poly fail id={eid}: {reason}", flush=True)
+                    _print_odds_fail(eid, home, away, reason)
                     continue
                 if (next_poly.get("moneyline") or {}).get("prices"):
                     poly_map[eid] = next_poly
                     prices["updated"] = int(prices.get("updated") or 0) + 1
+                    _print_odds_ok(match, eid, next_poly)
                 else:
                     prices["failed"] = int(prices.get("failed") or 0) + 1
                     price_failures.append({"id": eid, "reason": "no moneyline prices"})
-                    print(f"[refresh_inplay] poly fail id={eid}: no moneyline prices", flush=True)
+                    _print_odds_fail(eid, home, away, "no moneyline prices")
                     poly_map[eid] = next_poly
                 if match is not None:
                     apply_pm_settle_to_match(match, poly_map.get(eid))
@@ -326,11 +377,22 @@ def refresh_odds_polymarket(
 
     prices["candidates"] = len(entries)
     prices["failures"] = price_failures[:50]
-    prices["ok"] = True
-    if price_failures:
+    prices["ok"] = int(prices.get("updated") or 0) > 0 or not price_failures
+    if price_failures and int(prices.get("updated") or 0) == 0:
         print(
-            f"[refresh_inplay] poly failed {len(price_failures)}/{len(entries)} "
-            f"(updated={prices.get('updated')})",
+            f"[refresh_inplay] 本次采集失败：赔率失败 "
+            f"failed={len(price_failures)}/{len(entries)}（全部未更新）",
+            flush=True,
+        )
+    elif price_failures:
+        print(
+            f"[refresh_inplay] 赔率部分失败 failed={len(price_failures)}/{len(entries)} "
+            f"updated={prices.get('updated')}",
+            flush=True,
+        )
+    else:
+        print(
+            f"[refresh_inplay] 赔率采集完成 updated={prices.get('updated')}/{len(entries)}",
             flush=True,
         )
     return prices
@@ -448,12 +510,30 @@ def main() -> int:
             "prices": prices,
             "moved_to_settled": moved,
         }
+        print("[refresh_inplay] 本次采集失败：写入 Redis 失败", flush=True)
         print(json.dumps(summary, ensure_ascii=False), flush=True)
         print("SUMMARY " + json.dumps(summary, ensure_ascii=False), flush=True)
         return 1
 
+    score_fail = want_score and not scores.get("skipped") and (
+        scores.get("ok") is False or (
+            int(scores.get("failed") or 0) > 0 and int(scores.get("updated") or 0) == 0
+        )
+    )
+    odds_fail = want_odds and not prices.get("skipped") and (
+        prices.get("ok") is False or (
+            int(prices.get("failed") or 0) > 0 and int(prices.get("updated") or 0) == 0
+        )
+    )
+    tips: list[str] = []
+    if score_fail:
+        tips.append("比分失败")
+    if odds_fail:
+        tips.append("赔率失败")
+    overall_ok = not tips
+
     summary = {
-        "ok": True,
+        "ok": overall_ok,
         "elapsed_sec": round(time.time() - started, 2),
         "inplay_matches": len(matches),
         "scores": scores,
@@ -461,17 +541,22 @@ def main() -> int:
         "moved_to_settled": moved,
         "score_updated_at": bundle.get("score_updated_at"),
         "odds_updated_at": bundle.get("odds_updated_at"),
+        "fail_tips": tips,
     }
-    print(
-        f"[refresh_inplay] done scores={scores.get('updated')} "
-        f"poly={prices.get('updated')}/{prices.get('failed', 0)} fail "
-        f"moved={moved.get('moved', 0)} "
-        f"in {summary['elapsed_sec']}s",
-        flush=True,
-    )
+    if tips:
+        print(f"[refresh_inplay] 本次采集失败：{'、'.join(tips)}", flush=True)
+    else:
+        print(
+            f"[refresh_inplay] 本次采集成功 "
+            f"比分updated={scores.get('updated', 0)} "
+            f"赔率updated={prices.get('updated', 0)} "
+            f"moved={moved.get('moved', 0)} "
+            f"in {summary['elapsed_sec']}s",
+            flush=True,
+        )
     print(json.dumps(summary, ensure_ascii=False), flush=True)
     print("SUMMARY " + json.dumps(summary, ensure_ascii=False), flush=True)
-    return 0
+    return 0 if overall_ok else 1
 
 
 if __name__ == "__main__":
