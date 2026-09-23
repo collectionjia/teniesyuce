@@ -1,0 +1,46 @@
+Parks vs Fernandez — 生产数据表格
+generated_at: 2026-09-23T15:07:54.826686+00:00
+host: 95.40.57.145
+eventId: 17108679
+match: Alycia Parks vs Leylah Fernandez
+
+## 1. 单场 API 摘要
+| 项 | 值 |
+| --- | --- |
+| eventId | 17108679 |
+| found / bucket | True / settled |
+| inPlay / pastStart | False / True |
+| 对阵 | Alycia Parks vs Leylah Fernandez |
+| 赛事 | WTA WTA 500 · Singapore |
+| 状态 | Ended (finished) |
+| 比分 | 4-6, 3-6 |
+| startTimestamp | 1790163600 |
+| Parks 排名 | #70 前#72 最佳#40 |
+| Fernandez 排名 | #31 前#31 最佳#13 |
+| 欧赔 home/away | 3.4 / 1.33 |
+| PM home/away | 0 / 1 |
+| PM url | https://polymarket.com/event/wta-parks-fernand-2026-09-22 |
+| fetched_at | 2026-09-23T15:07:30.647463+00:00 |
+| source | tennis-settled |
+
+## 2. 三桶列表命中
+| 桶 | id | home | away | status | statusType | score | inPlay | pastStart | startTs |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| inplay | 17108679 | Alycia Parks | Leylah Fernandez | Ended | finished | 4-6, 3-6 | False | True | 1790163600 |
+| settled | 17108679 | Alycia Parks | Leylah Fernandez | Ended | finished | 4-6, 3-6 |  |  | 1790163600 |
+
+## 3. 采集日志命中
+| 文件 | 行号 | 赛事 | 状态 | 排名摘要 | PM | 赔率 |
+| --- | --- | --- | --- | --- | --- | --- |
+| collect_20260922.log | 1992 | Singapore, Singapore | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.29500000000000004 / 0.7050000000000001 |  |
+| collect_20260922.log | 3536 | Singapore, Singapore | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.245 / 0.755 | 赔 3.75 / 1.28 |
+| collect_20260922.log | 3575 | Singapore, Singapore | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.235 / 0.765 | 赔 3.75 / 1.28 |
+| collect_20260923.log | 26 | Singapore, Singapore | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.255 / 0.745 | 赔 3.75 / 1.28 |
+| collect_20260923.log | 399 | Singapore, Singapore | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.275 / 0.725 | 赔 3.4 / 1.33 |
+
+## 4. 采集日志原文（便于核对）
+collect_20260922.log:1992:       · WTA WTA 500 | Singapore, Singapore | Alycia Parks vs Leylah Fernandez | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.29500000000000004 / 0.7050000000000001
+collect_20260922.log:3536:       · WTA WTA 500 | Singapore, Singapore | Alycia Parks vs Leylah Fernandez | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.245 / 0.755 | 赔 3.75 / 1.28
+collect_20260922.log:3575:       · WTA WTA 500 | Singapore, Singapore | Alycia Parks vs Leylah Fernandez | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.235 / 0.765 | 赔 3.75 / 1.28
+collect_20260923.log:26:       · WTA WTA 500 | Singapore, Singapore | Alycia Parks vs Leylah Fernandez | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.255 / 0.745 | 赔 3.75 / 1.28
+collect_20260923.log:399:       · WTA WTA 500 | Singapore, Singapore | Alycia Parks vs Leylah Fernandez | Not started 19:40 | Alycia Parks #70 前#72 最佳#40 vs Leylah Fernandez #31 最佳#13 | PM 0.275 / 0.725 | 赔 3.4 / 1.33

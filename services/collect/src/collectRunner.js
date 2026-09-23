@@ -164,11 +164,13 @@ function pythonBin() {
   return process.platform === 'win32' ? 'python' : 'python3';
 }
 
-function appendLogFile(lines) {
+function appendLogFile(lines, kind = 'full') {
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
     const day = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const file = path.join(LOG_DIR, `collect_${day}.log`);
+    // 全量 collect_full_YYYYMMDD.log · 高频 collect_hf_YYYYMMDD.log（按天切割）
+    const prefix = kind === 'hf' ? 'collect_hf' : 'collect_full';
+    const file = path.join(LOG_DIR, `${prefix}_${day}.log`);
     fs.appendFileSync(file, `${lines.join('\n')}\n`, 'utf8');
   } catch (err) {
     console.error('[tennis/collect] log write failed:', err.message);
@@ -298,7 +300,7 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
       exit_code: -1,
       error: err.message || 'spawn failed',
     };
-    appendLogFile(logBuffer);
+    appendLogFile(logBuffer, 'full');
     console.error('[tennis/collect] spawn error:', err.message);
   });
 
@@ -355,7 +357,7 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
         elapsed_sec: elapsed,
       };
     }
-    appendLogFile(logBuffer);
+    appendLogFile(logBuffer, 'full');
     try {
       try {
         const { svc } = require('./lib/serverBridge');
@@ -412,7 +414,7 @@ function startLiveCollect() {
       finished_at: nowIso(),
       error: err.message || 'spawn failed',
     };
-    appendLogFile(logBuffer);
+    appendLogFile(logBuffer, 'hf');
     console.error('[tennis/collect-live] spawn error:', err.message);
   });
 
@@ -433,7 +435,7 @@ function startLiveCollect() {
       live_count: emptyRun ? 0 : null,
       fetched_at: finishedAt,
     };
-    appendLogFile(logBuffer);
+    appendLogFile(logBuffer, 'hf');
     try {
       try {
         const { svc } = require('./lib/serverBridge');
@@ -468,14 +470,19 @@ function statusPayload() {
   };
 }
 
-function recentLogs(maxLines = 120) {
+function recentLogs(maxLines = 120, kind = null) {
   const tail = logBuffer.slice(-maxLines);
-  if (tail.length) return tail.join('\n');
+  if (tail.length && !kind) return tail.join('\n');
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
+    const prefixes = kind === 'hf'
+      ? ['collect_hf_']
+      : kind === 'full'
+        ? ['collect_full_']
+        : ['collect_hf_', 'collect_full_', 'collect_'];
     const files = fs
       .readdirSync(LOG_DIR)
-      .filter((f) => f.startsWith('collect_') && f.endsWith('.log'))
+      .filter((f) => f.endsWith('.log') && prefixes.some((p) => f.startsWith(p)))
       .map((f) => ({ f, m: fs.statSync(path.join(LOG_DIR, f)).mtimeMs }))
       .sort((a, b) => b.m - a.m);
     if (!files.length) return '';
@@ -492,7 +499,8 @@ function clearLogs() {
   try {
     fs.mkdirSync(LOG_DIR, { recursive: true });
     for (const f of fs.readdirSync(LOG_DIR)) {
-      if (!f.startsWith('collect_') || !f.endsWith('.log')) continue;
+      if (!f.endsWith('.log')) continue;
+      if (!(f.startsWith('collect_hf_') || f.startsWith('collect_full_') || f.startsWith('collect_'))) continue;
       fs.writeFileSync(path.join(LOG_DIR, f), '', 'utf8');
       deleted += 1;
     }

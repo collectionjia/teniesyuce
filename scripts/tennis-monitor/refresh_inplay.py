@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """轻量盘中刷新：只更新 Redis tennis:bundle:inplay 里已有场次。
 
-- 比分/状态：Polymarket Gamma（event.score / live / ended）
-- 赔率：Polymarket CLOB book mid（无盘口时回退 Gamma outcomePrices）
-- 仅刷包内已有 polymarketByEvent（有 slug 的场次）；完赛迁入 settled
+- 比分/状态：Sofascore（经 IPWO）；**仅有 Polymarket 外链的场次**
+- 赔率：Polymarket Gamma + CLOB mid（直连，不走 IPWO）
+- 仅刷包内已有场次；完赛迁入 settled
 
 用法:
   python refresh_inplay.py
@@ -17,6 +17,7 @@ import json
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any
 
@@ -24,6 +25,7 @@ from tm.env import load_monitor_env
 
 load_monitor_env()
 
+from tm.bundle import slim_event
 from tm.bundle_store import (
     group_scheduled,
     is_ended_match,
@@ -34,9 +36,9 @@ from tm.bundle_store import (
 from tm.clients.polymarket import (
     apply_live_prices,
     apply_pm_settle_to_match,
-    apply_sport_state_to_match,
     fetch_event_by_slug,
 )
+from tm.clients.sofascore import SofascoreClient
 
 
 def _slug_of(poly: dict[str, Any]) -> str:
@@ -49,27 +51,214 @@ def _slug_of(poly: dict[str, Any]) -> str:
     return ""
 
 
-def refresh_from_polymarket(
+def _match_label(match: dict[str, Any] | None) -> tuple[Any, Any]:
+    if not match:
+        return "?", "?"
+    home = match.get("home") or ((match.get("homePlayer") or {}).get("name"))
+    away = match.get("away") or ((match.get("awayPlayer") or {}).get("name"))
+    return home or "?", away or "?"
+
+
+def _apply_sofa_slim_to_match(match: dict[str, Any], slim: dict[str, Any]) -> None:
+    """把 Sofascore slim 字段写回包内 match（保留原有球员/元数据）。"""
+    for key in (
+        "status",
+        "statusType",
+        "homeScore",
+        "awayScore",
+        "home_score",
+        "away_score",
+        "scoreText",
+        "slug",
+        "customId",
+        "url",
+    ):
+        if slim.get(key) is not None:
+            match[key] = slim[key]
+
+    st = str(match.get("statusType") or "").lower().strip()
+    if st in {"finished", "ended"}:
+        match["phaseMark"] = "ended"
+        match["phaseLabel"] = "已结束"
+    elif st in {"inprogress", "paused", "interrupted"}:
+        match["phaseMark"] = "live"
+        match["phaseLabel"] = "进行中"
+    elif st == "notstarted":
+        match["phaseMark"] = "not_started"
+        match["phaseLabel"] = "未开赛"
+
+
+def _poly_of(poly_map: dict[str, Any] | None, eid: int | str) -> dict[str, Any] | None:
+    if not isinstance(poly_map, dict):
+        return None
+    poly = poly_map.get(str(eid)) or poly_map.get(eid)
+    return poly if isinstance(poly, dict) else None
+
+
+def _has_external_link(match: dict[str, Any], poly_map: dict[str, Any] | None) -> bool:
+    """有 Polymarket 外链（slug/url）才刷分。"""
+    poly = _poly_of(poly_map, match.get("id"))
+    if poly and _slug_of(poly):
+        return True
+    url = str((poly or {}).get("url") or match.get("polymarketUrl") or "").strip()
+    return "polymarket.com/event/" in url
+
+
+def refresh_scores_sofascore(
+    matches: list[dict[str, Any]],
+    poly_map: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """IPWO → Sofascore：只刷「有外链」的包内场次比分/状态。"""
+    scores: dict[str, Any] = {
+        "updated": 0,
+        "failed": 0,
+        "skipped": False,
+        "source": "sofascore-ipwo",
+        "upstream": "ipwo",
+    }
+    if not matches:
+        scores.update({"skipped": True, "reason": "no matches", "ok": True})
+        return scores
+
+    by_id: dict[int, dict[str, Any]] = {
+        int(m["id"]): m for m in matches if m.get("id") is not None
+    }
+    linked: dict[int, dict[str, Any]] = {
+        iid: m for iid, m in by_id.items() if _has_external_link(m, poly_map)
+    }
+    no_link = len(by_id) - len(linked)
+    scores["no_link_skipped"] = no_link
+
+    if not linked:
+        scores.update(
+            {
+                "skipped": True,
+                "reason": "no external link (polymarket)",
+                "tracked": 0,
+                "bundle_matches": len(by_id),
+                "ok": True,
+            }
+        )
+        print(
+            f"[refresh_inplay] scores skipped: no external link "
+            f"(bundle={len(by_id)} no_link={no_link})",
+            flush=True,
+        )
+        return scores
+
+    # 确保盘中任务走代理开关（Sofascore 侧 require_proxy）
+    os.environ.setdefault("COLLECT_PROXY_JOB", "inplay")
+    if not (os.environ.get("COLLECT_INPLAY_USE_PROXY") or "").strip():
+        os.environ["COLLECT_INPLAY_USE_PROXY"] = "1"
+
+    missed: list[dict[str, Any]] = []
+    live_hit = 0
+    detail_hit = 0
+
+    try:
+        with SofascoreClient(skip_warm=os.environ.get("SOFA_SKIP_WARM_ON_LIVE", "1") == "1") as client:
+            live_by_id: dict[int, dict[str, Any]] = {}
+            try:
+                for ev in client.get_live_tennis_events().get("events") or []:
+                    if ev.get("id") is None:
+                        continue
+                    try:
+                        live_by_id[int(ev["id"])] = ev
+                    except (TypeError, ValueError):
+                        continue
+            except Exception as exc:
+                print(f"[refresh_inplay] sofa live list failed: {exc}", flush=True)
+
+            for iid, match in linked.items():
+                home, away = _match_label(match)
+                try:
+                    raw = live_by_id.get(iid)
+                    if raw is not None:
+                        live_hit += 1
+                    else:
+                        payload = client.get_event(iid)
+                        inner = payload.get("event") if isinstance(payload, dict) else None
+                        if not isinstance(inner, dict):
+                            raise RuntimeError("empty event payload")
+                        raw = inner
+                        detail_hit += 1
+                    slim = slim_event(raw)
+                    _apply_sofa_slim_to_match(match, slim)
+                    scores["updated"] = int(scores.get("updated") or 0) + 1
+                except Exception as exc:
+                    scores["failed"] = int(scores.get("failed") or 0) + 1
+                    missed.append({"id": iid, "home": home, "away": away, "reason": str(exc)})
+                    print(f"[refresh_inplay] sofa fail id={iid}: {exc}", flush=True)
+    except Exception as exc:
+        scores.update(
+            {
+                "ok": False,
+                "error": str(exc),
+                "tracked": len(linked),
+                "missed": missed[:50],
+            }
+        )
+        print(f"[refresh_inplay] sofa client failed: {exc}", flush=True)
+        return scores
+
+    scores["tracked"] = len(linked)
+    scores["bundle_matches"] = len(by_id)
+    scores["live_feed"] = live_hit
+    scores["detail_fetch"] = detail_hit
+    scores["missed"] = missed[:50]
+    scores["ok"] = int(scores.get("updated") or 0) > 0 or len(linked) == 0
+    if missed:
+        preview = missed[:20]
+        print(
+            f"[refresh_inplay] score miss {len(missed)}/{len(linked)} "
+            f"(live={live_hit} detail={detail_hit} no_link={no_link}): "
+            + "; ".join(
+                f"{x['id']} {x.get('home') or '?'} vs {x.get('away') or '?'} ({x.get('reason')})"
+                for x in preview
+            )
+            + (" …" if len(missed) > len(preview) else ""),
+            flush=True,
+        )
+    else:
+        print(
+            f"[refresh_inplay] scores ok updated={scores.get('updated')} "
+            f"linked={len(linked)} no_link={no_link} live={live_hit} detail={detail_hit}",
+            flush=True,
+        )
+    return scores
+
+
+@contextmanager
+def _polymarket_direct():
+    """赔率直连：临时关掉盘中代理开关，避免 proxies_for('Polymarket') 套 IPWO。"""
+    key = "COLLECT_INPLAY_USE_PROXY"
+    prev = os.environ.get(key)
+    os.environ[key] = "0"
+    try:
+        yield
+    finally:
+        if prev is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = prev
+
+
+def refresh_odds_polymarket(
     matches: list[dict[str, Any]],
     poly_map: dict[str, Any],
-    *,
-    want_score: bool,
-    want_odds: bool,
-) -> tuple[dict[str, Any], dict[str, Any]]:
-    """一次 Gamma 拉取同时刷新比分与赔率（CLOB mid）。"""
-    scores: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": not want_score}
-    prices: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": not want_odds}
-
-    if not want_score and not want_odds:
-        return scores, prices
+) -> dict[str, Any]:
+    """Polymarket 直连：只刷有 slug 的场次赔率（不写比分）。"""
+    prices: dict[str, Any] = {
+        "updated": 0,
+        "failed": 0,
+        "skipped": False,
+        "source": "polymarket-clob",
+        "upstream": "polymarket-direct",
+    }
 
     if not isinstance(poly_map, dict) or not poly_map:
-        reason = "no polymarketByEvent"
-        if want_score:
-            scores.update({"skipped": True, "reason": reason, "ok": False})
-        if want_odds:
-            prices.update({"skipped": True, "reason": reason, "ok": False})
-        return scores, prices
+        prices.update({"skipped": True, "reason": "no polymarketByEvent", "ok": False})
+        return prices
 
     by_id: dict[int, dict[str, Any]] = {
         int(m["id"]): m for m in matches if m.get("id") is not None
@@ -87,128 +276,71 @@ def refresh_from_polymarket(
             entries.append((str(eid), iid, poly, slug))
 
     if not entries:
-        reason = "no slugs"
-        if want_score:
-            scores.update({"skipped": True, "reason": reason, "tracked": len(by_id), "ok": False})
-        if want_odds:
-            prices.update({"skipped": True, "reason": reason, "ok": False})
-        return scores, prices
+        prices.update({"skipped": True, "reason": "no slugs", "ok": True, "candidates": 0})
+        return prices
 
     workers = max(1, min(4, int(os.environ.get("POLY_REFRESH_CONCURRENCY", "4"))))
-    score_missed: list[dict[str, Any]] = []
     price_failures: list[dict[str, str]] = []
 
     def _one(
         item: tuple[str, int, dict[str, Any], str],
-    ) -> tuple[str, int, dict[str, Any] | None, dict[str, Any] | None, str | None]:
+    ) -> tuple[str, int, dict[str, Any] | None, str | None]:
         eid, iid, poly, slug = item
         try:
             ev = fetch_event_by_slug(slug)
             if not ev:
-                return eid, iid, None, None, "empty"
-            next_poly = apply_live_prices(poly, ev)
-            return eid, iid, ev, next_poly, None
+                return eid, iid, None, "empty"
+            return eid, iid, apply_live_prices(poly, ev), None
         except Exception as exc:
-            return eid, iid, None, None, str(exc)
+            return eid, iid, None, str(exc)
 
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = [pool.submit(_one, e) for e in entries]
-        for fut in as_completed(futs):
-            eid, iid, ev, next_poly, err = fut.result()
-            match = by_id.get(iid)
-            if err or not ev:
-                reason = err or "no event"
-                print(f"[refresh_inplay] poly fail id={eid}: {reason}", flush=True)
-                if want_score:
-                    scores["failed"] = int(scores.get("failed") or 0) + 1
-                    score_missed.append(
-                        {
-                            "id": iid,
-                            "home": (match or {}).get("home")
-                            or ((match or {}).get("homePlayer") or {}).get("name"),
-                            "away": (match or {}).get("away")
-                            or ((match or {}).get("awayPlayer") or {}).get("name"),
-                            "reason": reason,
-                        }
-                    )
-                if want_odds:
+    with _polymarket_direct():
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futs = [pool.submit(_one, e) for e in entries]
+            for fut in as_completed(futs):
+                eid, iid, next_poly, err = fut.result()
+                match = by_id.get(iid)
+                if err or not next_poly:
+                    reason = err or "no event"
                     prices["failed"] = int(prices.get("failed") or 0) + 1
                     price_failures.append({"id": eid, "reason": reason})
-                continue
-
-            if want_odds:
-                if next_poly and (next_poly.get("moneyline") or {}).get("prices"):
+                    print(f"[refresh_inplay] poly fail id={eid}: {reason}", flush=True)
+                    continue
+                if (next_poly.get("moneyline") or {}).get("prices"):
                     poly_map[eid] = next_poly
                     prices["updated"] = int(prices.get("updated") or 0) + 1
                 else:
                     prices["failed"] = int(prices.get("failed") or 0) + 1
                     price_failures.append({"id": eid, "reason": "no moneyline prices"})
                     print(f"[refresh_inplay] poly fail id={eid}: no moneyline prices", flush=True)
-                    if next_poly:
-                        poly_map[eid] = next_poly
-            elif next_poly:
-                poly_map[eid] = next_poly
+                    poly_map[eid] = next_poly
+                if match is not None:
+                    apply_pm_settle_to_match(match, poly_map.get(eid))
+                    if match.get("phaseMark") != "ended" and str(match.get("statusType") or "").lower() in {
+                        "inprogress",
+                        "paused",
+                        "interrupted",
+                    }:
+                        match["phaseMark"] = "live"
+                        match["phaseLabel"] = "进行中"
 
-            if want_score and match is not None:
-                apply_sport_state_to_match(match, ev, poly=next_poly or poly_map.get(eid))
-                scores["updated"] = int(scores.get("updated") or 0) + 1
-            elif match is not None:
-                apply_pm_settle_to_match(match, next_poly or poly_map.get(eid))
-                if match.get("phaseMark") != "ended":
-                    match["phaseMark"] = "live"
-                    match["phaseLabel"] = "进行中"
-
-    # 包内场次没有 polymarket slug 的算 miss（无法刷比分）
-    if want_score:
-        linked = {iid for _, iid, _, _ in entries}
-        for iid, m in by_id.items():
-            if iid in linked:
-                continue
-            scores["failed"] = int(scores.get("failed") or 0) + 1
-            score_missed.append(
-                {
-                    "id": iid,
-                    "home": m.get("home") or (m.get("homePlayer") or {}).get("name"),
-                    "away": m.get("away") or (m.get("awayPlayer") or {}).get("name"),
-                    "reason": "no polymarket slug",
-                }
-            )
-        scores["tracked"] = len(by_id)
-        scores["linked"] = len(entries)
-        scores["missed"] = score_missed[:50]
-        scores["ok"] = int(scores.get("updated") or 0) > 0
-        scores["source"] = "polymarket-gamma"
-        if score_missed:
-            preview = score_missed[:20]
-            print(
-                f"[refresh_inplay] score miss {len(score_missed)}/{len(by_id)} "
-                f"(poly_linked={len(entries)}): "
-                + "; ".join(
-                    f"{x['id']} {x.get('home') or '?'} vs {x.get('away') or '?'} ({x.get('reason')})"
-                    for x in preview
-                )
-                + (" …" if len(score_missed) > len(preview) else ""),
-                flush=True,
-            )
-
-    if want_odds:
-        prices["candidates"] = len(entries)
-        prices["failures"] = price_failures[:50]
-        prices["ok"] = True
-        prices["source"] = "polymarket-clob"
-        if price_failures:
-            print(
-                f"[refresh_inplay] poly failed {len(price_failures)}/{len(entries)} "
-                f"(updated={prices.get('updated')})",
-                flush=True,
-            )
-
-    return scores, prices
+    prices["candidates"] = len(entries)
+    prices["failures"] = price_failures[:50]
+    prices["ok"] = True
+    if price_failures:
+        print(
+            f"[refresh_inplay] poly failed {len(price_failures)}/{len(entries)} "
+            f"(updated={prices.get('updated')})",
+            flush=True,
+        )
+    return prices
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="只刷 Redis 盘中包：Polymarket 比分 + CLOB 赔率")
-    parser.add_argument("--scores-only", action="store_true", help="只刷 Polymarket Gamma 比分/状态")
+    parser = argparse.ArgumentParser(
+        description="只刷 Redis 盘中包：Sofascore(IPWO) 比分 + Polymarket 直连赔率"
+    )
+    parser.add_argument("--scores-only", action="store_true", help="只刷 Sofascore 比分/状态")
     parser.add_argument("--odds-only", action="store_true", help="只刷 Polymarket CLOB 赔率")
     args = parser.parse_args()
     want_score = not args.odds_only
@@ -243,12 +375,14 @@ def main() -> int:
         poly_map = {}
         bundle["polymarketByEvent"] = poly_map
 
-    scores, prices = refresh_from_polymarket(
-        matches,
-        poly_map,
-        want_score=want_score,
-        want_odds=want_odds,
-    )
+    scores: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
+    prices: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
+
+    if want_score:
+        scores = refresh_scores_sofascore(matches, poly_map)
+    if want_odds:
+        prices = refresh_odds_polymarket(matches, poly_map)
+
     moved: dict[str, Any] = {"moved": 0, "skipped": True}
 
     if want_score:
@@ -298,7 +432,7 @@ def main() -> int:
     now = datetime.now(timezone.utc).isoformat()
     bundle["tick_at"] = now
     bundle["serverTime"] = int(time.time())
-    bundle["upstream"] = "polymarket"
+    bundle["upstream"] = "ipwo+polymarket"
     bundle["collectScript"] = "refresh_inplay"
     if want_score and not scores.get("skipped"):
         bundle["score_updated_at"] = now

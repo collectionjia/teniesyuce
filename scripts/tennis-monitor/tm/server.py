@@ -293,16 +293,27 @@ def _latest_bundle_meta() -> dict[str, Any]:
     }
 
 
-def _append_log(line: str) -> None:
+def _append_log(line: str, *, kind: str = "full") -> None:
+    """按天切割：全量 collect_full_YYYYMMDD.log · 高频 collect_hf_YYYYMMDD.log。"""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     day = datetime.now().strftime("%Y%m%d")
-    with (LOG_DIR / f"collect_{day}.log").open("a", encoding="utf-8") as f:
+    prefix = "collect_hf" if kind == "hf" else "collect_full"
+    with (LOG_DIR / f"{prefix}_{day}.log").open("a", encoding="utf-8") as f:
         f.write(line.rstrip() + "\n")
 
 
-def _read_logs(lines: int = 120) -> dict[str, Any]:
+def _read_logs(lines: int = 120, kind: str | None = None) -> dict[str, Any]:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    files = sorted(LOG_DIR.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if kind == "hf":
+        patterns = ["collect_hf_*.log"]
+    elif kind == "full":
+        patterns = ["collect_full_*.log"]
+    else:
+        patterns = ["collect_hf_*.log", "collect_full_*.log", "collect_*.log"]
+    files: list[Any] = []
+    for pat in patterns:
+        files.extend(LOG_DIR.glob(pat))
+    files = sorted(set(files), key=lambda p: p.stat().st_mtime, reverse=True)
     text = ""
     if files:
         raw = files[0].read_text(encoding="utf-8", errors="ignore").splitlines()
@@ -389,16 +400,19 @@ def _run_collect(trigger: str = "auto") -> None:
             return
         _running = True
         _last_run = {"status": "running", "trigger": trigger, "started_at": _now(), "error": None}
-    _append_log(f"=== collect {trigger} {_now()} ===")
+    _append_log(f"=== collect {trigger} {_now()} ===", kind="hf")
     from tm.collectors.tier_collect import log_collect_header
     from tm.db.writer import log_collect_mysql_policy
 
     log_collect_header()
-    _append_log(log_collect_mysql_policy(f"bundle/{trigger}"))
+    _append_log(log_collect_mysql_policy(f"bundle/{trigger}"), kind="hf")
     try:
         snapshot = run_live_sync(include_scheduled=True)
         path = _write_bundle(snapshot)
-        _append_log(f"bundle {path.name} events={snapshot.get('total_events')} live={snapshot.get('live_count')}")
+        _append_log(
+            f"bundle {path.name} events={snapshot.get('total_events')} live={snapshot.get('live_count')}",
+            kind="hf",
+        )
         if snapshot.get("error") and not (snapshot.get("total_events") or 0):
             raise RuntimeError(snapshot["error"])
         with _lock:
@@ -413,7 +427,7 @@ def _run_collect(trigger: str = "auto") -> None:
             }
         _refresh_server_redis()
     except Exception as exc:
-        _append_log(f"collect failed: {exc}")
+        _append_log(f"collect failed: {exc}", kind="hf")
         with _lock:
             _last_run = {
                 "status": "failed",
