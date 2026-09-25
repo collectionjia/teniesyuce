@@ -6,6 +6,7 @@ defineProps({
   detailHelpOpen: { type: Boolean, default: false },
   detailTips: { type: Array, default: () => [] },
   isInplayMode: { type: Boolean, default: false },
+  isMixMode: { type: Boolean, default: false },
   isSettledMode: { type: Boolean, default: false },
   isRangeMode: { type: Boolean, default: false },
   isNewMode: { type: Boolean, default: false },
@@ -41,6 +42,15 @@ defineProps({
   collectUpdatedText: { type: String, default: '' },
   collectRefreshing: { type: Boolean, default: false },
 })
+
+/** 隐含占比：&lt;50 红，&gt;50 绿，=50 默认色 */
+function polyCentsTone(v) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return ''
+  if (n < 50) return 'poly-low'
+  if (n > 50) return 'poly-high'
+  return ''
+}
 </script>
 
 <template>
@@ -250,16 +260,22 @@ defineProps({
                 <div class="kv-lines">
                   <div class="kv-line">
                     <span class="n">{{ shortName(matchHomeName(detailMatch)) }}</span>
-                    <span class="num">{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home }}</span>
+                    <span
+                      class="num"
+                      :class="polyCentsTone(polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home)"
+                    >{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).home }}</span>
                   </div>
                   <div class="kv-line">
                     <span class="n">{{ shortName(matchAwayName(detailMatch)) }}</span>
-                    <span class="num">{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away }}</span>
+                    <span
+                      class="num"
+                      :class="polyCentsTone(polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away)"
+                    >{{ polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away == null ? '—' : polySideCents(polyOf(detailMatch.id), matchHomeName(detailMatch), matchAwayName(detailMatch)).away }}</span>
                   </div>
                 </div>
                 <span class="s">
                   {{ polyOf(detailMatch.id)?.closed ? '已结算 · 隐含占比' : '隐含占比' }}
-                  <template v-if="isInplayMode && collectUpdatedText"> · 更新 {{ collectUpdatedText }}</template>
+                  <template v-if="(isInplayMode || isMixMode) && collectUpdatedText"> · 更新 {{ collectUpdatedText }}</template>
                 </span>
               </div>
             </div>

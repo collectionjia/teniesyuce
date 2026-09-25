@@ -713,6 +713,17 @@ function sortEloMatches(matches) {
   return matches;
 }
 
+/** NFL 只看开赛窗口内的盘：默认未来 48h（已开赛仍走 isUpcomingOrLiveMatch 的 grace）。 */
+function nflHorizonMs() {
+  const h = Number(process.env.NFL_HORIZON_HOURS);
+  return (Number.isFinite(h) && h > 0 ? h : 48) * 60 * 60 * 1000;
+}
+
+function isWithinNflHorizon(item, now = Date.now()) {
+  if (item.startMs == null || !Number.isFinite(item.startMs)) return false;
+  return item.startMs <= now + nflHorizonMs();
+}
+
 /** NFL：Polymarket 采集后走 nflelo 过滤，并标记与盘口方向是否一致。 */
 async function collectNfl() {
   if (nflBusy) return nflMemory;
@@ -720,7 +731,8 @@ async function collectNfl() {
   const thr = thresholds();
   try {
     const tag = (process.env.POLY_NFL_TAG_SLUG || 'nfl').trim() || 'nfl';
-    const events = await fetchPolymarketEventsByTag(tag, null);
+    const all = await fetchPolymarketEventsByTag(tag, null);
+    const events = all.filter((ev) => isWithinNflHorizon(ev));
     const matches = [];
     for (const ev of events) {
       try {
@@ -742,13 +754,14 @@ async function collectNfl() {
       matchedCount: matchedN,
       edgeCount: matches.filter((m) => m.passList).length,
       hcCount: matches.filter((m) => m.is_high_confidence).length,
-      scanned: events.length,
+      scanned: all.length,
+      horizonHours: nflHorizonMs() / 3600000,
       matches,
     };
     nflMemory = bundle;
     const client = await redis.getClient();
     if (client) await client.set(NFL_BUNDLE_KEY, JSON.stringify(bundle));
-    console.log(`[nfl-pm] collected ${matches.length}/${events.length}`);
+    console.log(`[nfl-pm] collected ${matches.length}/${all.length} (≤${bundle.horizonHours}h)`);
     return bundle;
   } catch (err) {
     console.error('[nfl-pm] collect failed', err.message || err);
@@ -768,6 +781,21 @@ async function collectNfl() {
   }
 }
 
+function filterNflBundleHorizon(bundle) {
+  if (!bundle?.matches?.length) return bundle;
+  const now = Date.now();
+  const matches = bundle.matches.filter((m) => isWithinNflHorizon(m, now));
+  if (matches.length === bundle.matches.length) return bundle;
+  return {
+    ...bundle,
+    matches,
+    matchCount: matches.length,
+    matchedCount: matches.filter((m) => m.matched).length,
+    edgeCount: matches.filter((m) => m.passList).length,
+    hcCount: matches.filter((m) => m.is_high_confidence).length,
+  };
+}
+
 async function readNflBundle() {
   const client = await redis.getClient();
   if (client) {
@@ -775,13 +803,13 @@ async function readNflBundle() {
       const raw = await client.get(NFL_BUNDLE_KEY);
       if (raw) {
         nflMemory = JSON.parse(raw);
-        return nflMemory;
+        return filterNflBundleHorizon(nflMemory);
       }
     } catch {
       /* memory */
     }
   }
-  return nflMemory;
+  return filterNflBundleHorizon(nflMemory);
 }
 
 function startCollectLoop() {

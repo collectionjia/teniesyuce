@@ -2105,6 +2105,79 @@ const collectRefreshing = ref(false)
 const collectNotice = ref('')
 const collectError = ref('')
 
+let detailOddsTimer = null
+let detailOddsInFlight = false
+
+function applyPolyOddsToData(eventId, poly, oddsAt) {
+  if (!poly || eventId == null) return
+  if (!data.value) return
+  const key = String(eventId)
+  const prev = data.value.polymarketByEvent || {}
+  data.value = {
+    ...data.value,
+    odds_updated_at: oddsAt || data.value.odds_updated_at || new Date().toISOString(),
+    polymarketByEvent: {
+      ...prev,
+      [key]: poly,
+      [eventId]: poly,
+    },
+  }
+}
+
+function stopDetailOddsRefresh() {
+  if (detailOddsTimer) {
+    clearInterval(detailOddsTimer)
+    detailOddsTimer = null
+  }
+  detailOddsInFlight = false
+}
+
+async function refreshDetailPolyOddsOnce() {
+  const m = detailMatch.value
+  if (!canDetailPolyOddsRefresh(m) || detailOddsInFlight) return
+  detailOddsInFlight = true
+  try {
+    const r = await api.refreshTennisInplayOdds(m.id, { clobOnly: true })
+    if (r?.poly && String(detailMatch.value?.id) === String(m.id)) {
+      applyPolyOddsToData(m.id, r.poly, r.odds_updated_at)
+    }
+  } catch {
+    /* 详情赔率异步失败不打断页面 */
+  } finally {
+    detailOddsInFlight = false
+  }
+}
+
+/** 盘中产品，或「网球赛事推荐」mix 列表里的进行中场次 */
+function canDetailPolyOddsRefresh(m = detailMatch.value) {
+  if (!m?.id) return false
+  if (!isInplayMode.value && !isMixMode.value) return false
+  if (isMixMode.value && !isInplayMode.value) {
+    const ph = String(m.phaseMark || '').toLowerCase()
+    const st = String(m.statusType || m.status || '').toLowerCase()
+    const live = ph === 'live'
+      || st === 'inprogress'
+      || st === 'live'
+      || isMatchLive(m)
+    if (!live) return false
+  }
+  return !!(polyOf(m.id)?.slug || polyOf(m.id)?.url || polyUrlOf(m))
+}
+
+function startDetailOddsRefresh() {
+  stopDetailOddsRefresh()
+  if (!canDetailPolyOddsRefresh()) return
+  void refreshDetailPolyOddsOnce()
+  detailOddsTimer = setInterval(() => {
+    void refreshDetailPolyOddsOnce()
+  }, 1000)
+}
+
+watch([detailMatch, isInplayMode, isMixMode], () => {
+  if (canDetailPolyOddsRefresh()) startDetailOddsRefresh()
+  else stopDetailOddsRefresh()
+})
+
 /** 盘中：触发比分+Polymarket 赔率采集并刷新列表（后台异步，不挡列表操作） */
 function refreshScoreOddsCollect() {
   if (collectRefreshing.value) return
@@ -2162,7 +2235,13 @@ function refreshScoreOddsCollect() {
 function onPolymarketAction(m) {
   // 必须先同步打开：await 采集后再 window.open 会丢掉用户手势，弹窗被浏览器拦截
   openMarket(m)
-  if (isInplayMode.value) refreshScoreOddsCollect()
+  if (m?.id && (isInplayMode.value || isMixMode.value)) {
+    void api.refreshTennisInplayOdds(m.id, { clobOnly: true })
+      .then((r) => {
+        if (r?.poly) applyPolyOddsToData(m.id, r.poly, r.odds_updated_at)
+      })
+      .catch(() => {})
+  }
 }
 
 function fmtRefreshClock(iso) {
@@ -2330,6 +2409,7 @@ function openDetail(m) {
 function closeDetail() {
   detailMatch.value = null
   detailHelpOpen.value = false
+  stopDetailOddsRefresh()
 }
 function toggleDetailHelp(ev) {
   ev?.stopPropagation?.()
@@ -2848,6 +2928,7 @@ watch(settledDate, () => {
 onUnmounted(() => {
   if (tickTimer) clearInterval(tickTimer)
   clearListPollTimers()
+  stopDetailOddsRefresh()
 })
 
 function gapInfo(m) {
@@ -3131,6 +3212,7 @@ defineExpose({
       :detail-help-open="detailHelpOpen"
       :detail-tips="DETAIL_TIPS"
       :is-inplay-mode="isInplayMode"
+      :is-mix-mode="isMixMode"
       :is-settled-mode="isSettledMode"
       :is-range-mode="isRangeMode"
       :is-new-mode="isNewMode"

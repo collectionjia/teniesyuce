@@ -598,6 +598,15 @@ export async function runTennisInplayTick() {
   return runCollectPartial({ sport: 'tennis' })
 }
 
+/** 盘中详情：异步刷新单场 Polymarket 赔率并写 Redis */
+export async function refreshTennisInplayOdds(eventId, { clobOnly = true } = {}) {
+  const { data } = await api.post('/tennis-inplay/odds/refresh', {
+    eventId,
+    clobOnly,
+  })
+  return data
+}
+
 // --- 五引擎服务（经 server 代理 /admin/engines/*）---
 export async function fetchEngineServicesOverview() {
   try {

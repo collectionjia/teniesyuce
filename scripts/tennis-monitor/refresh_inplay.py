@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """轻量盘中刷新：只更新 Redis tennis:bundle:inplay 里已有场次。
 
-- 先探测 Polymarket CLOB 订单簿：没簿 → 跳过该场比分与赔率
-- 有订单簿 → 高频：比分 Sofascore(IPWO) + 赔率 CLOB mid（直连）
+- 只刷有 Polymarket slug 的场次
+- 比分：Sofascore(IPWO)；赔率：Polymarket CLOB mid（直连，无簿则该场赔率 miss）
 - 仅刷包内已有场次；完赛迁入 settled
 
 用法:
@@ -10,7 +10,7 @@
   python refresh_inplay.py --scores-only
   python refresh_inplay.py --odds-only
 """
-from __future__ import annotations
+from __future__ import annotations·
 
 import argparse
 import json
@@ -37,7 +37,6 @@ from tm.clients.polymarket import (
     apply_live_prices,
     apply_pm_settle_to_match,
     fetch_event_by_slug,
-    moneyline_has_order_book,
 )
 from tm.clients.sofascore import SofascoreClient
 
@@ -135,25 +134,9 @@ def _apply_sofa_slim_to_match(match: dict[str, Any], slim: dict[str, Any]) -> No
         match["phaseLabel"] = "未开赛"
 
 
-def _poly_of(poly_map: dict[str, Any] | None, eid: int | str) -> dict[str, Any] | None:
-    if not isinstance(poly_map, dict):
-        return None
-    poly = poly_map.get(str(eid)) or poly_map.get(eid)
-    return poly if isinstance(poly, dict) else None
-
-
-def _has_external_link(match: dict[str, Any], poly_map: dict[str, Any] | None) -> bool:
-    """有 Polymarket 外链（slug/url）。"""
-    poly = _poly_of(poly_map, match.get("id"))
-    if poly and _slug_of(poly):
-        return True
-    url = str((poly or {}).get("url") or match.get("polymarketUrl") or "").strip()
-    return "polymarket.com/event/" in url
-
-
 @contextmanager
 def _polymarket_direct():
-    """赔率/订单簿探测直连：临时关掉盘中代理开关。"""
+    """赔率直连：临时关掉盘中代理开关。"""
     key = "COLLECT_INPLAY_USE_PROXY"
     prev = os.environ.get(key)
     os.environ[key] = "0"
@@ -166,85 +149,54 @@ def _polymarket_direct():
             os.environ[key] = prev
 
 
-def select_matches_with_order_book(
+def select_matches_with_slug(
     matches: list[dict[str, Any]],
     poly_map: dict[str, Any] | None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """先判断 CLOB 订单簿：有簿才进入高频比分/赔率。"""
+    """有 Polymarket slug 的场次才进入比分/赔率刷新。"""
     meta: dict[str, Any] = {
         "bundle": len(matches),
-        "no_link": 0,
-        "no_book": 0,
-        "tradable": 0,
+        "with_slug": 0,
+        "no_slug": 0,
         "skipped": [],
     }
-    tradable: list[dict[str, Any]] = []
-    if not matches:
-        return tradable, meta
-
-    with _polymarket_direct():
-        for m in matches:
-            home, away = _match_label(m)
-            eid = m.get("id")
-            if not _has_external_link(m, poly_map):
-                meta["no_link"] += 1
-                meta["skipped"].append({"id": eid, "reason": "no external link"})
-                print(
-                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | 无外链",
-                    flush=True,
-                )
-                continue
-            poly = _poly_of(poly_map, eid) or {}
-            slug = _slug_of(poly)
-            if not slug:
-                meta["no_link"] += 1
-                meta["skipped"].append({"id": eid, "reason": "no slug"})
-                print(
-                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | 无 slug",
-                    flush=True,
-                )
-                continue
-            try:
-                ev = fetch_event_by_slug(slug)
-            except Exception as exc:
-                meta["no_book"] += 1
-                meta["skipped"].append({"id": eid, "reason": f"gamma: {exc}"})
-                print(
-                    f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | Gamma 失败: {exc}",
-                    flush=True,
-                )
-                continue
-            ok, reason = moneyline_has_order_book(ev)
-            if not ok:
-                meta["no_book"] += 1
-                meta["skipped"].append({"id": eid, "reason": reason})
-                print(
-                    f"[refresh_inplay] 订单簿不存在，跳过比分与赔率 "
-                    f"id={eid} {home} vs {away} | {reason}",
-                    flush=True,
-                )
-                continue
-            tradable.append(m)
-            meta["tradable"] += 1
+    selected: list[dict[str, Any]] = []
+    if not isinstance(poly_map, dict):
+        poly_map = {}
+    for m in matches:
+        home, away = _match_label(m)
+        eid = m.get("id")
+        poly = poly_map.get(str(eid)) or poly_map.get(eid) if eid is not None else None
+        if not isinstance(poly, dict):
+            poly = {}
+        slug = _slug_of(poly)
+        if not slug:
+            url = str(poly.get("url") or m.get("polymarketUrl") or "").strip()
+            if "polymarket.com/event/" in url:
+                slug = url.split("polymarket.com/event/", 1)[1].split("?", 1)[0].split("#", 1)[0]
+        if not slug:
+            meta["no_slug"] += 1
+            meta["skipped"].append({"id": eid, "reason": "no slug"})
             print(
-                f"[refresh_inplay] 订单簿存在，纳入高频 id={eid} {home} vs {away}",
+                f"[refresh_inplay] 跳过比分与赔率 id={eid} {home} vs {away} | 无 slug",
                 flush=True,
             )
-
+            continue
+        selected.append(m)
+        meta["with_slug"] += 1
     meta["skipped"] = meta["skipped"][:50]
     print(
-        f"[refresh_inplay] 订单簿筛选 tradable={meta['tradable']} "
-        f"no_book={meta['no_book']} no_link={meta['no_link']} bundle={meta['bundle']}",
+        f"[refresh_inplay] slug 筛选 with_slug={meta['with_slug']} "
+        f"no_slug={meta['no_slug']} bundle={meta['bundle']}",
         flush=True,
     )
-    return tradable, meta
+    return selected, meta
 
 
 def refresh_scores_sofascore(
     matches: list[dict[str, Any]],
-    poly_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """IPWO → Sofascore：只刷已通过订单簿筛选的场次。"""
+    """IPWO → Sofascore：刷有 slug 的场次比分/状态。"""
     scores: dict[str, Any] = {
         "updated": 0,
         "failed": 0,
@@ -253,8 +205,8 @@ def refresh_scores_sofascore(
         "upstream": "ipwo",
     }
     if not matches:
-        scores.update({"skipped": True, "reason": "no tradable matches", "ok": True})
-        print("[refresh_inplay] 比分跳过：无订单簿可刷场次", flush=True)
+        scores.update({"skipped": True, "reason": "no matches with slug", "ok": True})
+        print("[refresh_inplay] 比分跳过：无 slug 可刷场次", flush=True)
         return scores
 
     by_id: dict[int, dict[str, Any]] = {
@@ -499,15 +451,13 @@ def main() -> int:
 
     scores: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
     prices: dict[str, Any] = {"updated": 0, "failed": 0, "skipped": True}
-    book_meta: dict[str, Any] = {"tradable": 0, "no_book": 0, "no_link": 0}
 
-    # 先判断订单簿：没簿不刷比分也不刷赔率
-    tradable, book_meta = select_matches_with_order_book(matches, poly_map)
-
+    # 比分 + 赔率：只要有 slug 就刷（不再要求 CLOB 订单簿）
+    linked, slug_meta = select_matches_with_slug(matches, poly_map)
     if want_score:
-        scores = refresh_scores_sofascore(tradable, poly_map)
+        scores = refresh_scores_sofascore(linked)
     if want_odds:
-        prices = refresh_odds_polymarket(tradable, poly_map)
+        prices = refresh_odds_polymarket(linked, poly_map)
 
     moved: dict[str, Any] = {"moved": 0, "skipped": True}
 
@@ -600,7 +550,7 @@ def main() -> int:
         "ok": overall_ok,
         "elapsed_sec": round(time.time() - started, 2),
         "inplay_matches": len(matches),
-        "order_book": book_meta,
+        "slug_filter": slug_meta,
         "scores": scores,
         "prices": prices,
         "moved_to_settled": moved,
