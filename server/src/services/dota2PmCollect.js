@@ -821,14 +821,130 @@ function startCollectLoop() {
   setTimeout(() => { void collectOnce(); }, 8_000);
 }
 
+async function writeNflBundle(bundle) {
+  nflMemory = bundle;
+  const client = await redis.getClient();
+  if (!client) return false;
+  await client.set(NFL_BUNDLE_KEY, JSON.stringify(bundle));
+  return true;
+}
+
+async function readNflBundleRaw() {
+  const client = await redis.getClient();
+  if (client) {
+    try {
+      const raw = await client.get(NFL_BUNDLE_KEY);
+      if (raw) {
+        nflMemory = JSON.parse(raw);
+        return nflMemory;
+      }
+    } catch {
+      /* memory */
+    }
+  }
+  return nflMemory;
+}
+
+function extractMatchSlug(m) {
+  const slug = String(m?.slug || '').trim();
+  if (slug) return slug;
+  const url = String(m?.url || '');
+  const hit = url.match(/polymarket\.com\/event\/([^/?#]+)/i);
+  return hit ? decodeURIComponent(hit[1]) : '';
+}
+
+/**
+ * 刷新 Dota2 / NFL bundle 内有 slug 的赛事 Polymarket 赔率并写回 Redis。
+ * @param {'dota2'|'nfl'} sport
+ * @param {{ clobOnly?: boolean, concurrency?: number }} [opts]
+ */
+async function refreshBundleOdds(sport = 'dota2', opts = {}) {
+  const clobOnly = opts.clobOnly !== false;
+  const concurrency = Math.max(1, Number(opts.concurrency) || 4);
+  const isNfl = sport === 'nfl';
+  const tennisPolymarket = require('./tennisPolymarket');
+
+  const bundle = isNfl ? await readNflBundleRaw() : await readBundle();
+  if (!bundle || !Array.isArray(bundle.matches) || !bundle.matches.length) {
+    return { ok: false, sport, updated: 0, failed: 0, scanned: 0, error: 'empty bundle' };
+  }
+
+  const targets = bundle.matches
+    .map((m, idx) => ({ m, idx, slug: extractMatchSlug(m) }))
+    .filter((x) => x.slug);
+
+  let updated = 0;
+  let failed = 0;
+  let i = 0;
+
+  async function worker() {
+    while (i < targets.length) {
+      const cur = targets[i++];
+      const { m, slug } = cur;
+      try {
+        const r = await tennisPolymarket.updatePolymarketOddsBySlug(slug, {
+          clobOnly,
+          poly: { slug, url: m.url, moneyline: { outcomes: m.outcomes, prices: m.prices } },
+        });
+        const prices = r.poly?.moneyline?.prices
+          || (r.home_price != null && r.away_price != null ? [r.home_price, r.away_price] : null);
+        if (!r.ok || !Array.isArray(prices) || prices.length < 2) {
+          failed += 1;
+          continue;
+        }
+        const outcomes = r.poly?.moneyline?.outcomes || m.outcomes || [];
+        const aligned = alignQuoteToSides({
+          ...m,
+          outcomes,
+          prices,
+          tokenIds: m.tokenIds,
+        });
+        m.prices = aligned.prices;
+        m.outcomes = outcomes.length >= 2 ? outcomes : m.outcomes;
+        if (Array.isArray(aligned.tokenIds) && aligned.tokenIds.length >= 2) {
+          m.tokenIds = aligned.tokenIds;
+        }
+        m.closed = r.poly?.closed ?? m.closed;
+        m.priceSource = r.source || r.poly?.priceSource;
+        m.pricesUpdatedAt = new Date().toISOString();
+        if (m.pickSide === 'a' || m.pickSide === 'b') {
+          m.pickPrice = m.pickSide === 'a' ? m.prices[0] : m.prices[1];
+          Object.assign(m, directionAlign(m.pickSide, m.prices));
+        }
+        updated += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+  }
+
+  const n = Math.max(1, Math.min(concurrency, targets.length || 1));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+
+  const now = new Date().toISOString();
+  bundle.odds_updated_at = now;
+  const written = isNfl ? await writeNflBundle(bundle) : await writeBundle(bundle);
+  return {
+    ok: written && failed === 0,
+    written,
+    sport: isNfl ? 'nfl' : 'dota2',
+    updated,
+    failed,
+    scanned: targets.length,
+    odds_updated_at: now,
+  };
+}
+
 module.exports = {
   BUNDLE_KEY,
+  NFL_BUNDLE_KEY,
   thresholds,
   collectOnce,
   collectDirect,
   collectNfl,
   readBundle,
   readNflBundle,
+  refreshBundleOdds,
   getPlacedSet,
   markPlaced,
   startCollectLoop,
