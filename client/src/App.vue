@@ -700,9 +700,11 @@ const siteSettingsForm = reactive({
   tickerRows: [{ name: '', amount: '' }],
   saving: false,
 })
-/** 首页赛事推荐上方滚动盈利字幕 */
+/** 首页赛事推荐上方滚动盈利字幕（龙虎榜）；false = 隐藏 */
+const SHOW_SHOP_PROFIT_BOARD = false
 const shopProfitTickerItems = ref([])
 const shopProfitTickerText = computed(() => {
+  if (!SHOW_SHOP_PROFIT_BOARD) return []
   const parts = shopProfitTickerItems.value
     .filter((x) => x?.name && Number.isFinite(Number(x.amount)))
     .map((x) => `${x.name} 盈利${Number(x.amount)}美金`)
