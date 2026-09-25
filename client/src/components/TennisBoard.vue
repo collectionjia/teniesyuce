@@ -2152,6 +2152,9 @@ async function refreshDetailPolyOddsOnce() {
 function canDetailPolyOddsRefresh(m = detailMatch.value) {
   if (!m?.id) return false
   if (!isInplayMode.value && !isMixMode.value) return false
+  if (isMatchEnded(m)) return false
+  const poly = polyOf(m.id)
+  if (poly?.closed) return false
   if (isMixMode.value && !isInplayMode.value) {
     const ph = String(m.phaseMark || '').toLowerCase()
     const st = String(m.statusType || m.status || '').toLowerCase()
@@ -2161,7 +2164,7 @@ function canDetailPolyOddsRefresh(m = detailMatch.value) {
       || isMatchLive(m)
     if (!live) return false
   }
-  return !!(polyOf(m.id)?.slug || polyOf(m.id)?.url || polyUrlOf(m))
+  return !!(poly?.slug || poly?.url || polyUrlOf(m))
 }
 
 function startDetailOddsRefresh() {

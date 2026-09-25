@@ -43,7 +43,7 @@ defineProps({
   collectRefreshing: { type: Boolean, default: false },
 })
 
-/** 隐含占比：&lt;50 红，&gt;50 绿，=50 默认色 */
+/** Polymarket 隐含占比：&lt;50 红，&gt;50 绿，=50 默认 */
 function polyCentsTone(v) {
   const n = Number(v)
   if (!Number.isFinite(n)) return ''
@@ -631,6 +631,8 @@ function polyCentsTone(v) {
 .kv-line .num {
   font-size: 0.88rem; font-weight: 800; color: #0f172a; flex-shrink: 0;
 }
+.kv-line .num.poly-low { color: #dc2626; }
+.kv-line .num.poly-high { color: #16a34a; }
 .pos { color: var(--success); }
 .neg { color: var(--danger); }
 

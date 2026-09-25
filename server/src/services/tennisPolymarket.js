@@ -99,16 +99,19 @@ async function applyLivePrices(poly, ev, { clobOnly = false } = {}) {
   let source = 'clob';
   let prices = await parsePricesFromClob(mkt);
   if (!prices) {
-    if (clobOnly) return poly;
+    const marketClosed = !!(ev.closed || ev.ended || mkt?.closed);
+    // 高频默认不回退 Gamma，避免空簿时误用结算价；盘口已关闭则用 Gamma 结算价
+    if (clobOnly && !marketClosed) return poly;
     source = 'gamma';
     prices = parsePrices(mkt);
   }
   if (!prices) return poly;
   const outcomes = parseJsonField(mkt?.outcomes, poly.moneyline?.outcomes || []);
+  const marketClosed = !!(ev.closed || ev.ended || mkt?.closed);
   return {
     ...poly,
     active: ev.active != null ? !!ev.active : poly.active,
-    closed: ev.closed != null ? !!ev.closed : poly.closed,
+    closed: marketClosed || (ev.closed != null ? !!ev.closed : poly.closed),
     home_price: prices[0],
     away_price: prices[1],
     priceSource: source,
