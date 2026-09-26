@@ -488,7 +488,8 @@ function buildBundlePayload(collect) {
 
 async function ensureProxyEnv(job = 'top100') {
   const cfg = await tennisEngines.getConfig();
-  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, job));
+  const proxyUrl = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
+  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, job, { proxyUrl }));
   const sofaCurl = require('./tennisSofascoreCurl');
   sofaCurl.closeWorker();
   sofaCurl.resetProbe();

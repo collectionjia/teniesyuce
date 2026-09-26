@@ -9,8 +9,8 @@ server/.env
 server/.env.*
 !server/.env.example
 !server/.env.test.example
-scripts/tennis-monitor/monitor.env
-scripts/tennis-monitor/monitor.env.*
+# Top100 静态代理写在 monitor.env / monitor.env.prod，需入库；仅忽略本地 test
+scripts/tennis-monitor/monitor.env.test
 !scripts/tennis-monitor/env.monitor.*.example
 !scripts/tennis-monitor/env.monitor.example
 scripts/tennis-monitor/.sofa_device_uuid

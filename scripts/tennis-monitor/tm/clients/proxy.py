@@ -23,9 +23,16 @@ def proxy_job() -> str:
     return "inplay" if job in {"inplay", "inplay_tick", "refresh"} else "top100"
 
 
+def _flag_on(name: str) -> bool:
+    return _env(name).lower() in {"1", "true", "yes", "on"}
+
+
 def use_proxy_for_job(job: str | None = None) -> bool:
-    """Always False — Sofascore mobile API + Polymarket are direct."""
-    return False
+    """Top100 / inplay 分别看 COLLECT_*_USE_PROXY；需同时有 SOFA_HTTP_PROXY。"""
+    j = (job or proxy_job()).strip().lower()
+    if j in {"inplay", "inplay_tick", "refresh"}:
+        return _flag_on("COLLECT_INPLAY_USE_PROXY")
+    return _flag_on("COLLECT_TOP100_USE_PROXY")
 
 
 def optional_proxy() -> dict[str, str]:
@@ -33,20 +40,20 @@ def optional_proxy() -> dict[str, str]:
 
 
 def proxies_for(scope: str = "Sofascore", *, job: str | None = None) -> dict[str, str] | None:
-    """Always direct unless generic SOFA_HTTP_PROXY/HTTP_PROXY is set and job flag on."""
+    """COLLECT_*_USE_PROXY=1 且设了 SOFA_HTTP_PROXY/HTTP_PROXY 时走代理。"""
     if not use_proxy_for_job(job):
         return None
     return sofa_proxy_map() or None
 
 
 def require_proxy(scope: str = "Sofascore") -> dict[str, str]:
-    """Compat: never required; return empty (direct)."""
-    return {}
+    """Compat: 有代理则返回，否则空（直连）。"""
+    return sofa_proxy_map() if use_proxy_for_job() else {}
 
 
 def proxy_status_public() -> dict[str, str | bool]:
     direct = (_env("SOFA_HTTP_PROXY") or _env("HTTP_PROXY")).strip()
-    if direct:
+    if use_proxy_for_job() and direct:
         host = direct.split("@")[-1] if "@" in direct else direct
         return {"enabled": True, "mode": "env", "host": host, "zone": ""}
     return {

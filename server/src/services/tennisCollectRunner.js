@@ -225,19 +225,33 @@ function loadMonitorEnvForChild() {
   return { file, env };
 }
 
-/** 从 engines 配置生成 Python/子进程代理环境（账号以库为准，覆盖 monitor.env） */
+/** Top100 代理 URL：process.env 优先，否则 monitor.env*（不写入 git） */
+function resolveCollectProxyUrl() {
+  const fromProc = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
+  if (fromProc) return fromProc;
+  const monitor = loadMonitorEnvForChild();
+  return String(monitor.env.SOFA_HTTP_PROXY || monitor.env.HTTP_PROXY || '').trim();
+}
+
+/** 子进程代理环境：有 SOFA_HTTP_PROXY 时 Top100 走代理，覆盖 monitor 里空的直连残留 */
 async function proxyEnvForJob(job = 'top100') {
+  const proxyUrl = resolveCollectProxyUrl();
   try {
     const tennisEngines = require('./tennisEngines');
     const cfg = await tennisEngines.getConfig();
-    return tennisEngines.buildProxyProcessEnv(cfg, job);
+    return tennisEngines.buildProxyProcessEnv(cfg, job, { proxyUrl });
   } catch (e) {
     console.warn('[tennis/collect] proxy config read failed:', e.message);
     const isInplay = String(job).toLowerCase().includes('inplay');
+    const use = !isInplay && !!proxyUrl;
     return {
       COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-      COLLECT_TOP100_USE_PROXY: '0',
+      COLLECT_TOP100_USE_PROXY: use ? '1' : '0',
       COLLECT_INPLAY_USE_PROXY: '0',
+      SOFA_HTTP_PROXY: use ? proxyUrl : '',
+      SOFA_HTTPS_PROXY: use ? proxyUrl : '',
+      HTTP_PROXY: use ? proxyUrl : '',
+      HTTPS_PROXY: use ? proxyUrl : '',
     };
   }
 }
@@ -390,16 +404,21 @@ async function startCollect({ matchDate = null, top100 = true, wait = false, tri
     };
     logBuffer = [`=== collect.py ${startedAt} trigger=${trigger} ===`];
     if (monitorEnv.file) {
-      pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}（代理账号以管理员库为准）`);
+      pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}`);
     }
-    pushLog(`[cfg] horizon=${cfg.collect_horizon_days}天 top100=${top100 !== false}`);
+    const proxyHost = String(proxyEnv.SOFA_HTTP_PROXY || '')
+      .split('@')
+      .pop() || 'direct';
+    pushLog(`[cfg] horizon=${cfg.collect_horizon_days}天 top100=${top100 !== false} proxy=${proxyEnv.COLLECT_TOP100_USE_PROXY === '1' ? proxyHost : 'direct'}`);
 
     const args = [COLLECT_SCRIPT];
     if (matchDate) args.push(String(matchDate));
     if (!top100) args.push('--all');
 
     const bin = pythonBin();
-    console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=direct`);
+    console.log(
+      `[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=${proxyEnv.COLLECT_TOP100_USE_PROXY === '1' ? proxyHost : 'direct'}`,
+    );
 
     try {
       return await new Promise((resolve) => {
@@ -572,7 +591,7 @@ async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = fals
 
   const bin = pythonBin();
   const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
-  const proxyEnv = await proxyEnvForJob('top100');
+  const proxyEnv = await proxyEnvForJob('inplay');
   console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')} proxy=direct`);
   liveChild = spawn(bin, liveArgs, {
     cwd: MONITOR_DIR,

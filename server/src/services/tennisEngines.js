@@ -702,18 +702,25 @@ function toPublicConfig(cfg) {
   return next;
 }
 
-/** 子进程 / 本进程：强制直连，清掉遗留 IPWO / HTTP_PROXY */
-function buildProxyProcessEnv(cfg, job = 'top100') {
+/**
+ * 子进程代理环境。Top100：有 proxyUrl 则走静态/HTTP 代理；盘中默认仍直连。
+ * opts.proxyUrl 来自 process.env 或 monitor.env（SOFA_HTTP_PROXY）。
+ */
+function buildProxyProcessEnv(cfg, job = 'top100', opts = {}) {
   void cfg;
   const isInplay = String(job).toLowerCase().includes('inplay');
+  const url = String(opts.proxyUrl || process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
+  // 仅 Top100 用静态住宅；inplay 保持直连（省流量、少踩代理）
+  const use = !isInplay && !!url;
+  const active = use ? url : '';
   return {
     COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-    COLLECT_TOP100_USE_PROXY: '0',
+    COLLECT_TOP100_USE_PROXY: use ? '1' : '0',
     COLLECT_INPLAY_USE_PROXY: '0',
-    SOFA_HTTP_PROXY: '',
-    SOFA_HTTPS_PROXY: '',
-    HTTP_PROXY: '',
-    HTTPS_PROXY: '',
+    SOFA_HTTP_PROXY: active,
+    SOFA_HTTPS_PROXY: active,
+    HTTP_PROXY: active,
+    HTTPS_PROXY: active,
     IPWO_PROXY_HOST: '',
     IPWO_PROXY_PORT: '',
     IPWO_PROXY_USER: '',

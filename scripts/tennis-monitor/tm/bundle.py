@@ -197,17 +197,13 @@ def fill_missing_historical_ranks(
     *,
     max_players: int | None = None,
 ) -> int:
-    """补拉/刷新 team/{id}/rankings；官方 bestRanking 覆盖本地 best（避免 utr 污染或旧值残留）。
-
-    优先补：本场赛事球员 → 榜单中仍缺 best 的球员。
-    """
+    """仅对有赛程的球员补拉 team/{id}/rankings 史高；不扫整榜缺 best。"""
     import os
 
     cap = max_players
     if cap is None:
-        # Top100 双边约 200 人；默认一次尽量补全，避免 ATP 榜无 best 时长期全空
-        cap = int(os.environ.get("SOFA_BEST_RANK_ENRICH_MAX", "220"))
-    event_ids: list[int] = []
+        cap = int(os.environ.get("SOFA_BEST_RANK_ENRICH_MAX", "80"))
+    need: list[int] = []
     seen: set[int] = set()
     for ev in events or []:
         for side in (ev.get("homePlayer") or {}, ev.get("awayPlayer") or {}):
@@ -218,27 +214,10 @@ def fill_missing_historical_ranks(
             if ipid in seen:
                 continue
             seen.add(ipid)
-            event_ids.append(ipid)
-    board_missing: list[int] = []
-    for key, row in (rankings or {}).items():
-        try:
-            ipid = int(key)
-        except (TypeError, ValueError):
-            continue
-        if ipid in seen:
-            continue
-        if (row or {}).get("best") is None:
-            board_missing.append(ipid)
-            seen.add(ipid)
-    # 缺 best 的赛事球员最优先，其次赛事已有 best（可刷新），再榜单缺 best
-    def _prio(pid: int) -> tuple[int, int]:
-        row = rankings.get(str(pid)) or {}
-        missing = 0 if row.get("best") is None else 1
-        in_event = 0 if pid in set(event_ids) else 1
-        return (missing, in_event)
+            row = rankings.get(str(ipid)) or {}
+            if row.get("best") is None:
+                need.append(ipid)
 
-    need = event_ids + board_missing
-    need.sort(key=_prio)
     filled = 0
     for pid in need[: max(0, cap)]:
         detail = fetch_player_rank_detail(client, pid)
@@ -249,7 +228,6 @@ def fill_missing_historical_ranks(
         for field in ("previous", "current", "live", "utr"):
             if row.get(field) is None and detail.get(field) is not None:
                 row[field] = detail[field]
-        # 官方 bestRanking 始终覆盖（勿保留 utr/旧错误值）
         if detail.get("best") is not None:
             if row.get("best") != detail["best"]:
                 filled += 1
