@@ -104,7 +104,7 @@ async function executeJobType(job, params = {}) {
       }
       const tennisCollectRunner = require('./tennisCollectRunner');
       if (tennisCollectRunner.isRunning()) {
-        return { skipped: true, message: 'tennisFullCollect already running' };
+        return { skipped: true, message: 'collect.py already running' };
       }
       const started = await tennisCollectRunner.startCollect({
         matchDate: params.matchDate || null,

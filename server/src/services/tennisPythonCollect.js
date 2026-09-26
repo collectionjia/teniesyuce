@@ -1,14 +1,15 @@
 /**
- * Python 采集开关：collect.py / collect_live.py / refresh_inplay.py
- * 默认关闭；恢复：TENNIS_PYTHON_COLLECT=1
+ * Python 盘中采集开关：collect_live.py / refresh_inplay.py
+ * 默认开启；关闭：TENNIS_PYTHON_COLLECT=0
+ * 全量 collect.py 始终走 Python，不受此开关影响。
  */
 function isEnabled() {
-  const v = String(process.env.TENNIS_PYTHON_COLLECT || '0').trim().toLowerCase();
-  return ['1', 'true', 'yes', 'on'].includes(v);
+  const v = String(process.env.TENNIS_PYTHON_COLLECT || '1').trim().toLowerCase();
+  return !['0', 'false', 'no', 'off'].includes(v);
 }
 
 function blockReason(script = 'python collect') {
-  return `Python 采集已暂停（${script}）；恢复请设 TENNIS_PYTHON_COLLECT=1`;
+  return `Python 盘中采集已关闭（${script}）；恢复请设 TENNIS_PYTHON_COLLECT=1 或删除该变量`;
 }
 
 function blockedResponse(script, extra = {}) {

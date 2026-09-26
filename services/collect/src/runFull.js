@@ -57,7 +57,7 @@ async function runFull(body = {}) {
     const { svc } = require('./lib/serverBridge');
     const tennisCollectRunner = svc('tennisCollectRunner');
     if (tennisCollectRunner.isRunning()) {
-      return { skipped: true, message: 'tennisFullCollect already running' };
+      return { skipped: true, message: 'collect.py already running' };
     }
     const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || null,

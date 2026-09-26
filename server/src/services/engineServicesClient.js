@@ -49,7 +49,7 @@ async function collectFullLocal(body = {}) {
     }
     const tennisCollectRunner = require('./tennisCollectRunner');
     if (tennisCollectRunner.isRunning()) {
-      return { skipped: true, message: 'tennisFullCollect already running' };
+      return { skipped: true, message: 'collect.py already running' };
     }
     const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || body.date || null,
