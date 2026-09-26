@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ATP / WTA Top100 看板</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a1210;
+      --panel: #111d18;
+      --line: #1e3428;
+      --text: #e8f3ec;
+      --muted: #8aa796;
+      --accent: #3ecf8e;
+      --atp: #4da3ff;
+      --wta: #ff7eb6;
+      --live: #f0b429;
+      --err: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(1000px 500px at 10% -5%, #163024 0%, var(--bg) 60%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 14px 48px; }
+    h1 { margin: 0 0 4px; font-size: 1.5rem; }
+    .sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; margin-bottom: 14px;
+    }
+    button {
+      background: var(--accent); color: #062012; border: 0; border-radius: 8px;
+      padding: 8px 14px; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    input[type="number"] {
+      width: 64px; background: #0d1712; border: 1px solid var(--line); color: var(--text);
+      border-radius: 8px; padding: 7px 8px;
+    }
+    .status { font-size: 0.85rem; color: var(--muted); margin-left: auto; }
+    .status.err { color: var(--err); }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .chip {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+      padding: 5px 12px; font-size: 0.82rem; color: var(--muted);
+    }
+    .chip strong { color: var(--text); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab {
+      background: var(--panel); border: 1px solid var(--line); color: var(--muted);
+      border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 600;
+    }
+    .tab.active.atp { border-color: var(--atp); color: var(--atp); }
+    .tab.active.wta { border-color: var(--wta); color: var(--wta); }
+    .layout {
+      display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 14px;
+    }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+      overflow: hidden;
+    }
+    .panel h2 {
+      margin: 0; padding: 12px 14px; font-size: 0.95rem; border-bottom: 1px solid var(--line);
+      background: #0d1712;
+    }
+    .rank-scroll { max-height: 72vh; overflow: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: #0d1712; }
+    tr:hover td { background: rgba(62, 207, 142, 0.06); }
+    .rank { color: var(--muted); width: 36px; }
+    .pts { color: var(--muted); text-align: right; white-space: nowrap; }
+    .mc { text-align: center; color: var(--accent); }
+    .events { display: grid; gap: 12px; }
+    .tour-card {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+    }
+    .tour-title { font-weight: 700; margin-bottom: 10px; font-size: 0.95rem; }
+    .match {
+      border-top: 1px solid var(--line); padding: 10px 0;
+    }
+    .match:first-of-type { border-top: 0; padding-top: 0; }
+    .match-row {
+      display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center;
+      font-weight: 600;
+    }
+    .match-row .p1 { text-align: right; }
+    .match-row .p2 { text-align: left; }
+    .match-row .vs { color: var(--muted); font-size: 0.75rem; }
+    .meta { color: var(--muted); font-size: 0.78rem; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .live-badge {
+      color: var(--live); font-weight: 700; font-size: 0.75rem;
+    }
+    .empty { text-align: center; color: var(--muted); padding: 36px 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>ATP / WTA Top100</h1>
+    <p class="sub">SofaScore · Top100 · 进行中比赛每 15 秒刷新比分</p>
+
+    <div class="toolbar">
+      <label class="status">全量(秒) <input id="interval" type="number" min="30" max="600" value="60" /></label>
+      <span class="chip" style="margin:0">LIVE 15s</span>
+      <button id="refresh">立即刷新</button>
+      <span id="status" class="status">加载中…</span>
+    </div>
+
+    <div class="chips" id="summary"></div>
+
+    <div class="tabs">
+      <button class="tab atp active" data-tour="atp">ATP</button>
+      <button class="tab wta" data-tour="wta">WTA</button>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2 id="rankTitle">ATP 排名</h2>
+        <div class="rank-scroll">
+          <table>
+            <thead>
+              <tr><th>#</th><th>球员</th><th>国</th><th>分</th><th>最高</th><th>场</th></tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <div class="panel" style="margin-bottom:12px">
+          <h2 id="eventTitle">ATP 赛事</h2>
+        </div>
+        <div id="events" class="events"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const API = '/api/board';
+    const LIVE_API = '/api/live';
+    const LIVE_SEC = 15;
+    let board = null;
+    let tour = 'atp';
+    let timer = null;
+    let liveTimer = null;
+    let lastLiveAt = '';
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[c]));
+    }
+
+    function fmtPts(n) {
+      if (n == null || n === '') return '—';
+      return Number(n).toLocaleString();
+    }
+
+    function isLive(ev) {
+      const st = String(ev.statusType || '').toLowerCase();
+      if (['inprogress', 'live', 'interrupted'].includes(st)) return true;
+      const d = String(ev.status || '').toLowerCase();
+      return d.includes('set') || d.includes('live');
+    }
+
+    function playerLabel(name, rank, best) {
+      const parts = [];
+      if (rank != null) parts.push(String(rank));
+      if (best != null) parts.push(`最高${best}`);
+      const r = parts.length
+        ? `<span style="color:var(--muted);font-weight:500">[${parts.join(' · ')}]</span> `
+        : '';
+      return `${r}${esc(name || '?')}`;
+    }
+
+    function renderSummary(data) {
+      const s = data.summary || {};
+      $('summary').innerHTML = [
+        `<span class="chip"><strong>${s.atp_players || 0}</strong> ATP</span>`,
+        `<span class="chip"><strong>${s.wta_players || 0}</strong> WTA</span>`,
+        `<span class="chip">赛事 <strong>${s.total_events || 0}</strong></span>`,
+        `<span class="chip">进行中 <strong>${s.live_events || 0}</strong></span>`,
+        `<span class="chip">${esc(data.date || '')}</span>`,
+      ].join('');
+    }
+
+    function renderRankings() {
+      const rows = (board?.[tour] || []);
+      $('rankTitle').textContent = `${tour.toUpperCase()} 排名 Top100`;
+      const body = $('rankBody');
+      body.replaceChildren();
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="6" class="empty">暂无排名</td></tr>';
+        return;
+      }
+      for (const p of rows) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="rank">${p.rank ?? '—'}</td>
+          <td>${esc(p.name)}</td>
+          <td>${esc((p.country || '').slice(0, 3))}</td>
+          <td class="pts">${fmtPts(p.points)}</td>
+          <td class="rank">${p.bestRank ?? '—'}</td>
+          <td class="mc">${p.matchCount ?? (p.matches?.length || 0)}</td>
+        `;
+        body.appendChild(tr);
+      }
+    }
+
+    function renderEvents() {
+      $('eventTitle').textContent = `${tour.toUpperCase()} 赛事`;
+      const root = $('events');
+      root.replaceChildren();
+      const groups = board?.tournaments?.[tour] || [];
+      if (!groups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty panel';
+        empty.textContent = '今日暂无 Top100 相关赛事';
+        root.appendChild(empty);
+        return;
+      }
+      for (const g of groups) {
+        const card = document.createElement('article');
+        card.className = 'tour-card';
+        card.innerHTML = `<div class="tour-title">${esc(g.name)} <span style="color:var(--muted);font-weight:500">(${g.eventCount})</span></div>`;
+        for (const ev of g.events || []) {
+          const live = isLive(ev);
+          const homeRank = ev.homeRank ?? ev.homePlayer?.rank;
+          const awayRank = ev.awayRank ?? ev.awayPlayer?.rank;
+          const homeBest = ev.homeBestRank ?? ev.homePlayer?.bestRank;
+          const awayBest = ev.awayBestRank ?? ev.awayPlayer?.bestRank;
+          const div = document.createElement('div');
+          div.className = 'match';
+          div.innerHTML = `
+            <div class="match-row">
+              <div class="p1">${playerLabel(ev.home, homeRank, homeBest)}</div>
+              <div class="vs">VS</div>
+              <div class="p2">${playerLabel(ev.away, awayRank, awayBest)}</div>
+            </div>
+            <div class="meta">
+              ${live ? '<span class="live-badge">LIVE</span>' : ''}
+              <span>${esc(ev.status || '—')}</span>
+              <span>${esc(ev.scoreText || '')}</span>
+              <span>${esc(ev.roundLabel || ev.roundInfo?.name || '')}</span>
+              <span>${esc(ev.startTime || '')}</span>
+              ${ev.url ? `<a href="${esc(ev.url)}" target="_blank" rel="noopener">SofaScore</a>` : ''}
+            </div>
+          `;
+          card.appendChild(div);
+        }
+        root.appendChild(card);
+      }
+    }
+
+    function render() {
+      if (!board) return;
+      renderSummary(board);
+      renderRankings();
+      renderEvents();
+    }
+
+    let loadTimer = null;
+
+    function startLoadTimer(label) {
+      const t0 = Date.now();
+      if (loadTimer) clearInterval(loadTimer);
+      loadTimer = setInterval(() => {
+        const sec = Math.floor((Date.now() - t0) / 1000);
+        $(`status`).textContent = `${label} ${sec}s`;
+      }, 1000);
+    }
+
+    function stopLoadTimer() {
+      if (loadTimer) clearInterval(loadTimer);
+      loadTimer = null;
+    }
+
+    async function fetchJson(url, ms = 120000) {
+      const ctrl = new AbortController();
+      const killer = setTimeout(() => ctrl.abort(), ms);
+      try {
+        const res = await fetch(url, { signal: ctrl.signal });
+        const data = await res.json();
+        if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+        return data;
+      } finally {
+        clearTimeout(killer);
+      }
+    }
+
+    async function load(force = false) {
+      if (location.protocol === 'file:') {
+        $('status').textContent = '请运行: cd tennis-live-board && python server.py ，然后打开 http://127.0.0.1:8765';
+        $('status').className = 'status err';
+        return;
+      }
+
+      $('status').className = 'status';
+      $('refresh').disabled = true;
+      startLoadTimer('加载数据…');
+
+      try {
+        const url = force ? `${API}?refresh=1` : API;
+        const data = await fetchJson(url, 180000);
+        board = data;
+        render();
+        const stale = data.stale ? ' · 缓存数据，后台更新中' : '';
+        const err = data.error ? ` · ${data.error}` : '';
+        $('status').textContent = `更新 ${new Date().toLocaleTimeString()} · ${data.elapsed_sec ?? '?'}s${stale}${err}${lastLiveAt}`;
+        if (data.stale && !force) {
+          setTimeout(() => load(false), 12000);
+        }
+        scheduleLive();
+      } catch (err) {
+        let msg = err.name === 'AbortError' ? '请求超时，请点「立即刷新」' : (err.message || String(err));
+        if (msg.includes('Failed to fetch')) {
+          msg = '无法连接服务，请先运行: python server.py';
+        }
+        $('status').textContent = msg;
+        $('status').className = 'status err';
+      } finally {
+        stopLoadTimer();
+        $('refresh').disabled = false;
+      }
+    }
+
+    function setTour(next) {
+      tour = next;
+      document.querySelectorAll('.tab').forEach((el) => {
+        el.classList.toggle('active', el.dataset.tour === tour);
+      });
+      render();
+    }
+
+    async function refreshLive() {
+      if (!board || location.protocol === 'file:') return;
+      try {
+        const data = await fetchJson(LIVE_API, 45000);
+        if (!data.ok || data.skipped) return;
+        board.events = data.events;
+        board.live = data.live;
+        board.tournaments = data.tournaments;
+        board.summary = { ...(board.summary || {}), ...(data.summary || {}) };
+        lastLiveAt = ` · LIVE ${new Date().toLocaleTimeString()}`;
+        renderSummary(board);
+        renderEvents();
+        const base = $('status').textContent.replace(/ · LIVE .+$/, '');
+        $('status').textContent = base + lastLiveAt;
+      } catch {
+        /* 下次再试 */
+      }
+    }
+
+    function scheduleLive() {
+      if (liveTimer) clearInterval(liveTimer);
+      if (!board) return;
+      liveTimer = setInterval(refreshLive, LIVE_SEC * 1000);
+      setTimeout(refreshLive, 1500);
+    }
+
+    function schedule() {
+      if (timer) clearInterval(timer);
+      const sec = Math.max(30, Number($('interval').value) || 60);
+      $('interval').value = sec;
+      timer = setInterval(() => load(false), sec * 1000);
+    }
+
+    document.querySelectorAll('.tab').forEach((el) => {
+      el.addEventListener('click', () => setTour(el.dataset.tour));
+    });
+    $('refresh').addEventListener('click', () => load(true));
+    $('interval').addEventListener('change', schedule);
+
+    schedule();
+    load(false);
+  </script>
+</body>
+</html>

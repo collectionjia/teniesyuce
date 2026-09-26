@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""JSON-lines worker: Node 发 {"cmd":"get","path":"..."} → curl_cffi Sofascore + IPWO。"""
+"""JSON-lines worker: Node 发 {"cmd":"get","path":"..."} → Sofascore mobile API（token/init + Bearer）。"""
 from __future__ import annotations
 
 import json
@@ -15,6 +15,7 @@ def main() -> None:
         nonlocal client
         if client is None:
             client = SofascoreClient()
+            print("[sofa_worker] using Sofascore mobile API", file=sys.stderr, flush=True)
         return client
 
     for raw in sys.stdin:
@@ -36,12 +37,18 @@ def main() -> None:
         if not path:
             print(json.dumps({"ok": False, "error": "empty path"}), flush=True)
             continue
-        referer = req.get("referer")
         try:
-            data = client_or_create()._api_get(path, referer=referer or None)
+            # referer 忽略：mobile API 不需要
+            data = client_or_create()._api_get(path)
             print(json.dumps({"ok": True, "data": data}, ensure_ascii=False), flush=True)
         except Exception as exc:
-            print(json.dumps({"ok": False, "error": str(exc) or repr(exc)}, ensure_ascii=False), flush=True)
+            print(json.dumps({"ok": False, "error": str(exc)}), flush=True)
+
+    if client is not None:
+        try:
+            client.session.close()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ scripts/tennis-monitor/monitor.env
 scripts/tennis-monitor/monitor.env.*
 !scripts/tennis-monitor/env.monitor.*.example
 !scripts/tennis-monitor/env.monitor.example
+scripts/tennis-monitor/.sofa_device_uuid
 
 # dependencies & build
 node_modules/

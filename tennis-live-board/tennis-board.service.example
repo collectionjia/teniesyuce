@@ -1,0 +1,21 @@
+# 复制到服务器: /etc/systemd/system/tennis-board.service
+# sudo systemctl daemon-reload && sudo systemctl enable --now tennis-board
+[Unit]
+Description=SofaScore ATP/WTA Top100 Live Board
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/yuce/tennis-live-board
+Environment=PYTHONUNBUFFERED=1
+Environment=SOFA_BOARD_HOST=127.0.0.1
+Environment=SOFA_BOARD_PORT=8765
+# 若服务器 IP 被 SofaScore 拦，取消下面注释并填 IPWO（与 tennis-monitor 相同）
+# EnvironmentFile=/opt/yuce/scripts/tennis-monitor/monitor.env
+ExecStart=/opt/yuce/scripts/tennis-monitor/venv/bin/python /opt/yuce/tennis-live-board/server.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

@@ -32,6 +32,7 @@ def fetch_rank_board(client: SofascoreClient, top_n: int) -> dict[str, Any]:
         "atp": [],
         "wta": [],
         "name_keys": set(),
+        "name_exact": set(),
         "player_ids": set(),
     }
     for tour, path in RANK_PATHS:
@@ -44,6 +45,9 @@ def fetch_rank_board(client: SofascoreClient, top_n: int) -> dict[str, Any]:
             name = team.get("name") or row.get("name")
             if pid is not None:
                 board["player_ids"].add(int(pid))
+            n = norm_name(name)
+            if n:
+                board["name_exact"].add(n)
             for key in name_keys(name):
                 board["name_keys"].add(key)
             players.append(
@@ -66,18 +70,36 @@ def fetch_rank_board(client: SofascoreClient, top_n: int) -> dict[str, Any]:
     return board
 
 
-def event_matches_board(ev: dict, board: dict[str, Any]) -> bool:
+def player_in_board(p: dict, board: dict[str, Any]) -> bool:
+    """是否在 Top 榜：只认 player id 或全名，不用姓氏模糊匹配（避免 Wang 等误中）。"""
     ids: set[int] = board.get("player_ids") or set()
-    keys: set[str] = board.get("name_keys") or set()
-    for side in ("home", "away"):
-        p = _player_side(ev, side)
-        pid = p.get("id")
-        if pid is not None and int(pid) in ids:
-            return True
-        for key in name_keys(p.get("name")):
-            if key in keys:
+    pid = p.get("id")
+    if pid is not None:
+        try:
+            if int(pid) in ids:
                 return True
-    return False
+        except (TypeError, ValueError):
+            pass
+    exact: set[str] = board.get("name_exact") or set()
+    if not exact:
+        # 旧 board 无 name_exact 时，退化为全名（不用姓氏短 key）
+        exact = {k for k in (board.get("name_keys") or set()) if " " in k}
+    n = norm_name(p.get("name"))
+    return bool(n and n in exact)
+
+
+def event_matches_board(ev: dict, board: dict[str, Any]) -> bool:
+    """双方至少一人在 Top 榜（采集器默认）。"""
+    return player_in_board(_player_side(ev, "home"), board) or player_in_board(
+        _player_side(ev, "away"), board
+    )
+
+
+def event_both_in_board(ev: dict, board: dict[str, Any]) -> bool:
+    """双方都在 Top 榜（看板：仅前 N 名对前 N 名）。"""
+    return player_in_board(_player_side(ev, "home"), board) and player_in_board(
+        _player_side(ev, "away"), board
+    )
 
 
 def board_player_maps(board: dict[str, Any]) -> tuple[dict[str, dict], dict[int, dict]]:
