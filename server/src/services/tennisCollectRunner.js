@@ -24,7 +24,6 @@ const MONITOR_DIR = resolveMonitorDir();
 const SCHEDULE_FILE = path.join(MONITOR_DIR, 'config', 'schedule.json');
 const COLLECT_SCRIPT = path.join(MONITOR_DIR, 'collect.py');
 const COLLECT_LIVE_SCRIPT = path.join(MONITOR_DIR, 'collect_live.py');
-const REFRESH_INPLAY_SCRIPT = path.join(MONITOR_DIR, 'refresh_inplay.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
 
@@ -457,178 +456,6 @@ async function startLiveCollect() {
   return { ok: true, message: 'collect_live.py started', last: { ...liveLast } };
 }
 
-/**
- * 轻量盘中刷新：只刷 Redis tennis:bundle:inplay 已有场次的比分(Sofascore) + Polymarket 赔率。
- * 不重跑 collect_live 全量发现。
- */
-async function runInplayRefreshAndWait({
-  timeoutMs = 120000,
-  scoresOnly = false,
-  oddsOnly = false,
-} = {}) {
-  if (!tennisPythonCollect.isEnabled()) {
-    return tennisPythonCollect.blockedResponse('refresh_inplay.py', { upstream: 'ipwo' });
-  }
-  const timeout = Math.max(15000, Number(timeoutMs) || 120000);
-  if (!fs.existsSync(REFRESH_INPLAY_SCRIPT)) {
-    return {
-      ok: false,
-      error: `refresh_inplay.py not found: ${REFRESH_INPLAY_SCRIPT}`,
-      upstream: 'ipwo',
-    };
-  }
-  const bin = pythonBin();
-  const args = ['-u', REFRESH_INPLAY_SCRIPT];
-  if (scoresOnly) args.push('--scores-only');
-  if (oddsOnly) args.push('--odds-only');
-  const envExtra = loadMonitorEnvForChild();
-  const proxyEnv = await proxyEnvForJob('inplay');
-  // 同步到当前 Node 进程，供 tennisPolymarket.js 直连判断
-  Object.assign(process.env, proxyEnv);
-  return new Promise((resolve) => {
-    const chunks = [];
-    let settled = false;
-    const childProc = spawn(bin, args, {
-      cwd: MONITOR_DIR,
-      env: {
-        ...stripLegacyProxyEnv({ ...process.env, ...envExtra.env }),
-        ...proxyEnv,
-        PYTHONUNBUFFERED: '1',
-        PYTHONIOENCODING: 'utf-8',
-      },
-      windowsHide: true,
-    });
-    const finish = (payload) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(payload);
-    };
-    const timer = setTimeout(() => {
-      try {
-        childProc.kill('SIGTERM');
-      } catch {
-        /* ignore */
-      }
-      finish({
-        ok: false,
-        timedOut: true,
-        error: `refresh_inplay timed out after ${timeout}ms`,
-        process_log: chunks.join('').split(/\r?\n/).filter(Boolean).slice(-200).join('\n'),
-        log_tail: chunks.slice(-40).join(''),
-        upstream: 'ipwo',
-      });
-    }, timeout);
-    childProc.stdout?.on('data', (buf) => {
-      const text = String(buf);
-      chunks.push(text);
-      pushLog(text);
-    });
-    childProc.stderr?.on('data', (buf) => {
-      const text = String(buf);
-      chunks.push(text);
-      pushLog(text);
-    });
-    childProc.on('error', (err) => {
-      const msg = err.message || String(err);
-      pushLog(`[refresh_inplay] spawn error: ${msg}`);
-      const text = chunks.join('');
-      finish({
-        ok: false,
-        error: msg,
-        process_log: text.split(/\r?\n/).filter(Boolean).slice(-200).join('\n') || `[refresh_inplay] spawn error: ${msg}`,
-        log_tail: chunks.slice(-40).join(''),
-        upstream: 'ipwo',
-      });
-    });
-    childProc.on('close', (code) => {
-      const text = chunks.join('');
-      let summary = null;
-      const m = text.match(/SUMMARY\s+(\{.*\})\s*$/m) || text.match(/SUMMARY\s+(\{[\s\S]*\})/);
-      if (m) {
-        try {
-          summary = JSON.parse(m[1]);
-        } catch {
-          summary = null;
-        }
-      }
-      const ok = code === 0 && (!summary || summary.ok !== false);
-      const lines = text.split(/\r?\n/);
-      const process_log = lines.filter((l) => l.length).slice(-200).join('\n');
-      const log_tail = lines.slice(-80).join('\n');
-      try {
-        appendLogFile([
-          `=== refresh_inplay.py ${new Date().toISOString()} ===`,
-          ...lines.filter(Boolean).slice(-120),
-        ], 'hf');
-      } catch {
-        /* ignore */
-      }
-      finish({
-        ok,
-        code,
-        summary,
-        error: ok ? null : summary?.error || (code != null ? `exit ${code}` : 'refresh_inplay failed'),
-        process_log,
-        log_tail,
-        upstream: 'ipwo',
-        script: 'refresh_inplay.py',
-      });
-    });
-  });
-}
-
-/**
- * 同步跑 collect_live.py（IPWO → Sofascore 比分/状态），写完 Redis 再返回（PM 赔率由 poly-odds 循环）。
- * 供调度「盘中比分刷新」使用。
- */
-async function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {
-  const timeout = Math.max(30000, Number(timeoutMs) || 180000);
-  if (liveRunning) {
-    const waited = await waitForLiveCollectIdle(timeout);
-    return {
-      ok: liveLast.status === 'success',
-      waited: true,
-      timedOut: !!waited?.timedOut,
-      last: { ...liveLast },
-      error: liveLast.error || null,
-      summary: {
-        total_events: liveLast.live_count ?? liveLast.total_events ?? null,
-        polymarket_matched: liveLast.polymarket_matched ?? null,
-        redis_failed: !!liveLast.redis_failed,
-        no_proxy: !!liveLast.no_proxy,
-      },
-      log_tail: liveLast.log_tail || recentLiveLogTail(40),
-      process_log: liveLast.log_tail || recentLiveLogTail(80),
-      upstream: 'ipwo',
-    };
-  }
-  const started = await beginLiveCollect({ trigger: 'scheduler-collect_live.py', wait: true });
-  if (!started.ok) {
-    return { ...started, upstream: 'ipwo' };
-  }
-  const result = await started.done;
-  return {
-    ...result,
-    upstream: 'ipwo',
-  };
-}
-
-function waitForLiveCollectIdle(timeoutMs) {
-  const started = Date.now();
-  return new Promise((resolve) => {
-    const t = setInterval(() => {
-      if (!liveRunning) {
-        clearInterval(t);
-        resolve({ timedOut: false });
-      } else if (Date.now() - started > timeoutMs) {
-        clearInterval(t);
-        resolve({ timedOut: true });
-      }
-    }, 400);
-  });
-}
-
 async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = {}) {
   if (liveRunning) {
     return { ok: false, status: 409, error: 'live collect already running', last: { ...liveLast } };
@@ -840,8 +667,6 @@ function clearLogs() {
 module.exports = {
   startCollect,
   startLiveCollect,
-  runLiveCollectAndWait,
-  runInplayRefreshAndWait,
   statusPayload,
   livePayload,
   schedulePayload,
@@ -855,6 +680,5 @@ module.exports = {
   isCollectEnabled,
   isCollectAvailable: () => true,
   isLiveCollectAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(COLLECT_LIVE_SCRIPT),
-  isInplayRefreshAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(REFRESH_INPLAY_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

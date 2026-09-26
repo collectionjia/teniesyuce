@@ -492,10 +492,20 @@ async function ensureProxyEnv(job = 'top100') {
   Object.assign(process.env, env);
 }
 
+async function runFullCollect(opts = {}) {
+  const pause = require('./tennisBackgroundPause');
+  pause.pauseTennisBackgroundRefresh('full-collect');
+  try {
+    return await runFullCollectInner(opts);
+  } finally {
+    pause.resumeTennisBackgroundRefresh();
+  }
+}
+
 /**
  * @param {{ matchDate?: string|null, top100?: boolean, horizonDays?: number, onLog?: (line: string) => void }} opts
  */
-async function runFullCollect(opts = {}) {
+async function runFullCollectInner(opts = {}) {
   const onLog = typeof opts.onLog === 'function' ? opts.onLog : (line) => console.log(line);
   const top100 = opts.top100 !== false;
   const horizonDays = opts.horizonDays ?? readHorizonDays();

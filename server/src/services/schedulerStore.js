@@ -133,7 +133,7 @@ const PRESET_JOBS = [
     name: '盘中迁桶',
     job_type: 'collect.inplay_tick',
     engine: 'collect',
-    enabled: 0,
+    enabled: 1,
     schedule_mode: 'interval',
     interval_sec: 60,
     mutex_key: 'job_collect_inplay_tick',
@@ -181,6 +181,7 @@ function normalizeDailyTime(v) {
 
 const PRESETS_SEEDED_KEY = 'scheduler_presets_seeded';
 const TOP100_DEFAULT_ON_KEY = 'scheduler_top100_default_on_v1';
+const INPLAY_TICK_DEFAULT_ON_KEY = 'scheduler_inplay_tick_default_on_v1';
 
 async function ensureAppSettingsTable() {
   await pool.query(`
@@ -247,6 +248,12 @@ async function migrateTop100DefaultOn() {
   await setAppSetting(TOP100_DEFAULT_ON_KEY, '1');
 }
 
+async function migrateInplayTickDefaultOn() {
+  if (await getAppSetting(INPLAY_TICK_DEFAULT_ON_KEY) === '1') return;
+  await pool.query(`UPDATE scheduler_jobs SET enabled=1 WHERE id='job_collect_inplay_tick'`);
+  await setAppSetting(INPLAY_TICK_DEFAULT_ON_KEY, '1');
+}
+
 async function ensureTables() {
   if (ready) return;
   await pool.query(`
@@ -290,6 +297,7 @@ async function ensureTables() {
   `);
   await seedPresetJobsIfNeeded();
   await migrateTop100DefaultOn();
+  await migrateInplayTickDefaultOn();
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_full'`);
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_top100_hf'`);
   await pool.query(

@@ -157,36 +157,50 @@ function ensureInplayProxyEnv() {
  * @param {{ matches?: object[] }} [opts]
  */
 async function refreshInplayScoresOnce(opts = {}) {
+  if (require('./tennisBackgroundPause').isTennisBackgroundRefreshPaused()) {
+    return {
+      ok: true,
+      skipped: true,
+      updated: 0,
+      failed: 0,
+      tracked: 0,
+      reason: 'full-collect pause',
+    };
+  }
   ensureInplayProxyEnv();
   const tennisThreeBuckets = require('./tennisThreeBuckets');
   const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
   const bundle = buckets.inplay;
 
   let byId;
+  let fetchIds;
   if (Array.isArray(opts.matches)) {
     byId = new Map();
     for (const m of opts.matches) {
       if (m?.id == null) continue;
       byId.set(String(m.id), { refs: [m], sample: m });
     }
+    fetchIds = byId;
   } else {
     byId = tennisThreeBuckets.indexMatchRefsById(buckets);
+    const inplayIds = tennisThreeBuckets.indexMatchRefsById({ inplay: buckets.inplay });
+    fetchIds = inplayIds.size ? inplayIds : byId;
   }
-  if (!byId.size) {
+  if (!fetchIds.size) {
     return {
       ok: true,
       updated: 0,
       failed: 0,
       tracked: 0,
       skipped: true,
-      reason: 'no match ids',
+      reason: 'no inplay match ids',
       source: 'sofascore-ipwo',
       upstream: 'ipwo-sofascore',
       process_log: '[sofa] no match ids',
     };
   }
 
-  const lines = [`[sofa] tracked=${byId.size}`];
+  const lines = [`[sofa] tracked=${fetchIds.size}`];
   let updated = 0;
   let failed = 0;
   let liveFeed = 0;
@@ -205,7 +219,9 @@ async function refreshInplayScoresOnce(opts = {}) {
     console.warn('[tennis/sofa] live list failed:', reason);
   }
 
-  for (const [idKey, { refs, sample: match }] of byId) {
+  for (const [idKey, inplayRow] of fetchIds) {
+    const allRow = byId.get(idKey) || inplayRow;
+    const { refs, sample: match } = allRow;
     const iid = Number(idKey);
     const label = matchLabel(match);
     try {
@@ -249,7 +265,7 @@ async function refreshInplayScoresOnce(opts = {}) {
     written,
     updated,
     failed,
-    tracked: byId.size,
+    tracked: fetchIds.size,
     liveFeed,
     detailFetch,
     synced: sync,

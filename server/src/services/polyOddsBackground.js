@@ -27,13 +27,18 @@ async function refreshAllOnce(opts = {}) {
   process.env.COLLECT_INPLAY_USE_PROXY = process.env.COLLECT_INPLAY_USE_PROXY || '0';
 
   const [tennis, dota, nfl] = await Promise.all([
-    tennisPolymarket.refreshInplayOddsOnce({ clobOnly }).catch((e) => ({
+    (async () => {
+      if (require('./tennisBackgroundPause').isTennisBackgroundRefreshPaused()) {
+        return { ok: true, skipped: true, updated: 0, failed: 0, scanned: 0, reason: 'full-collect pause' };
+      }
+      return tennisPolymarket.refreshInplayOddsOnce({ clobOnly }).catch((e) => ({
       ok: false,
       updated: 0,
       failed: 0,
       scanned: 0,
       error: e.message || String(e),
-    })),
+    }));
+    })(),
     dota2PmCollect.refreshBundleOdds('dota2', { clobOnly }).catch((e) => ({
       ok: false,
       sport: 'dota2',
@@ -66,20 +71,10 @@ async function tickOnce() {
   if (busy) return;
   busy = true;
   const t0 = Date.now();
+  const warn = console.warn;
+  console.warn = () => {};
   try {
     const r = await refreshAllOnce({ clobOnly: true });
-    if (r.tennis?.updated > 0) {
-      try {
-        const tennisInplayTick = require('./tennisInplayTick');
-        await tennisInplayTick.runBucketMigrate({
-          skipPrematch: true,
-          skipAdmit: true,
-          skipPhaseMarks: true,
-        });
-      } catch (e) {
-        console.warn('[poly-odds] migrate after odds failed', e.message || e);
-      }
-    }
     const ms = Date.now() - t0;
     console.log(
       `[poly-odds] ${fmtPart('tennis', r.tennis)} ${fmtPart('dota', r.dota)} ${fmtPart('nfl', r.nfl)} ${ms}ms`,
@@ -87,6 +82,7 @@ async function tickOnce() {
   } catch (e) {
     console.error('[poly-odds] tick failed', e.message || e);
   } finally {
+    console.warn = warn;
     busy = false;
   }
 }

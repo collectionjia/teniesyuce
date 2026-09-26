@@ -365,7 +365,7 @@ function defaultPrematchBettingGroups() {
 const DEFAULT_CONFIG = {
   collect: {
     enabled: true,
-    inplay_tick_enabled: false,
+    inplay_tick_enabled: true,
     inplay_tick_fields: {
       score: false,
       odds: false,

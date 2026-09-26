@@ -24,6 +24,7 @@ async function tickOnce() {
   try {
     const tennisDataSource = require('./tennisDataSource');
     if ((await tennisDataSource.get()) === 'docks500') return;
+    if (require('./tennisBackgroundPause').isTennisBackgroundRefreshPaused()) return;
 
     process.env.COLLECT_PROXY_JOB = 'inplay';
     const r = await tennisSofascore.refreshInplayScoresOnce();

@@ -6,6 +6,7 @@ const tennisPrematchCache = require('./tennisPrematchCache');
 const tennisInplayCache = require('./tennisInplayCache');
 const tennisSettledCache = require('./tennisSettledCache');
 const redis = require('./redis');
+const { withBucketWrite } = require('./tennisBucketWrite');
 
 const META_TODAY_KEY = 'tennis:bundle:meta:today';
 const TTL_SEC = Number(process.env.TENNIS_CACHE_TTL_SEC || 86400);
@@ -591,6 +592,21 @@ function mergePolymarketMaps(buckets) {
   return map;
 }
 
+/** 仅 inplay 桶内场次 + 四桶合并后的 PM 链接（供 C 赔率刷新） */
+function polymarketMapForInplay(buckets) {
+  const inplay = buckets?.inplay;
+  if (!inplay) return {};
+  const allPoly = mergePolymarketMaps(buckets);
+  const map = {};
+  forEachMatchInBundle(inplay, (m) => {
+    if (m?.id == null) return;
+    const sid = String(m.id);
+    const poly = allPoly[sid] || allPoly[m.id] || allPoly[Number(m.id)];
+    if (poly) map[sid] = poly;
+  });
+  return map;
+}
+
 function applyPolymarketMapToBuckets(buckets, map) {
   if (!map || typeof map !== 'object') return;
   for (const bundle of Object.values(buckets || {})) {
@@ -658,22 +674,18 @@ async function writeScorePatches(patchById, opts = {}) {
     ['inplay', tennisInplayCache],
     ['settled', tennisSettledCache],
   ]) {
-    const bundle = await cache.getBundle();
-    if (!bundle) {
-      results[name] = { skipped: true };
-      continue;
-    }
-    const applied = applyScorePatchesToBundle(bundle, map);
-    if (!applied) {
-      results[name] = { skipped: true, reason: 'no matches' };
-      continue;
-    }
-    if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
-    bundle.tick_at = now;
-    bundle.serverTime = Math.floor(Date.now() / 1000);
-    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
-    results[name] = { written, applied };
-    if (name === 'full') freshFull = bundle;
+    results[name] = await withBucketWrite(name, async () => {
+      const bundle = await cache.getBundle();
+      if (!bundle) return { skipped: true };
+      const applied = applyScorePatchesToBundle(bundle, map);
+      if (!applied) return { skipped: true, reason: 'no matches' };
+      if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
+      bundle.tick_at = now;
+      bundle.serverTime = Math.floor(Date.now() / 1000);
+      const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+      if (name === 'full' && written) freshFull = bundle;
+      return { written, applied };
+    });
   }
   if (freshFull && results.full?.written) await writeMeta(freshFull);
   return results;
@@ -684,35 +696,34 @@ async function writePolymarketPatches(polyPatch, opts = {}) {
   if (!polyPatch || typeof polyPatch !== 'object' || !Object.keys(polyPatch).length) return {};
   const now = opts.tick_at || new Date().toISOString();
   const results = {};
+  let freshFull = null;
   for (const [name, cache] of [
     ['full', tennisCache],
     ['prematch', tennisPrematchCache],
     ['inplay', tennisInplayCache],
     ['settled', tennisSettledCache],
   ]) {
-    const bundle = await cache.getBundle();
-    if (!bundle) {
-      results[name] = { skipped: true };
-      continue;
-    }
-    let touched = 0;
-    const polyMap = { ...(bundle.polymarketByEvent || {}) };
-    for (const [id, poly] of Object.entries(polyPatch)) {
-      if (!poly) continue;
-      polyMap[id] = poly;
-      touched += 1;
-    }
-    if (!touched) {
-      results[name] = { skipped: true, reason: 'no poly keys' };
-      continue;
-    }
-    bundle.polymarketByEvent = polyMap;
-    if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
-    bundle.tick_at = now;
-    bundle.serverTime = Math.floor(Date.now() / 1000);
-    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
-    results[name] = { written, applied: touched };
+    results[name] = await withBucketWrite(name, async () => {
+      const bundle = await cache.getBundle();
+      if (!bundle) return { skipped: true };
+      let touched = 0;
+      const polyMap = { ...(bundle.polymarketByEvent || {}) };
+      for (const [id, poly] of Object.entries(polyPatch)) {
+        if (!poly) continue;
+        polyMap[id] = poly;
+        touched += 1;
+      }
+      if (!touched) return { skipped: true, reason: 'no poly keys' };
+      bundle.polymarketByEvent = polyMap;
+      if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
+      bundle.tick_at = now;
+      bundle.serverTime = Math.floor(Date.now() / 1000);
+      const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+      if (name === 'full' && written) freshFull = bundle;
+      return { written, applied: touched };
+    });
   }
+  if (freshFull && results.full?.written) await writeMeta(freshFull);
   return results;
 }
 
@@ -730,12 +741,14 @@ async function writeAllTennisBuckets(buckets, opts = {}) {
       results[name] = { skipped: true };
       continue;
     }
-    if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
-    if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
-    bundle.tick_at = now;
-    bundle.serverTime = Math.floor(Date.now() / 1000);
-    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
-    results[name] = { written };
+    results[name] = await withBucketWrite(name, async () => {
+      if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
+      if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
+      bundle.tick_at = now;
+      bundle.serverTime = Math.floor(Date.now() / 1000);
+      const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+      return { written };
+    });
   }
   if (buckets?.full && results.full?.written) {
     await writeMeta(buckets.full);
@@ -759,6 +772,7 @@ module.exports = {
   indexMatchRefsById,
   loadAllTennisBuckets,
   mergePolymarketMaps,
+  polymarketMapForInplay,
   applyPolymarketMapToBuckets,
   pickScorePatch,
   writeScorePatches,

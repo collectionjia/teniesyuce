@@ -78,7 +78,7 @@ app.listen(PORT, () => {
   setTimeout(async () => {
     try {
       const tennisRedis = require('./services/tennisRedis');
-      await tennisRedis.warmOnStartup();
+      const warmed = await tennisRedis.warmOnStartup();
       const schedulerClient = require('./services/schedulerClient');
       if (schedulerClient.isRemote()) {
         console.log('[scheduler] external service:', schedulerClient.baseUrl());
@@ -108,6 +108,25 @@ app.listen(PORT, () => {
             console.error('[tennis/live-cache] warm failed:', err.message);
           }
           console.log('[tennis/cache] monitor→redis sync enabled (TENNIS_SYNC_FROM_MONITOR=1)');
+        } else if (!warmed) {
+          try {
+            const tennisDataSource = require('./services/tennisDataSource');
+            const tennisCollectRunner = require('./services/tennisCollectRunner');
+            if (
+              (await tennisDataSource.get()) !== 'docks500'
+              && tennisCollectRunner.isCollectEnabled()
+              && !tennisCollectRunner.isRunning()
+            ) {
+              const tennisEngines = require('./services/tennisEngines');
+              const cfg = await tennisEngines.getConfig();
+              if (cfg.collect?.enabled !== false) {
+                const r = await tennisCollectRunner.startCollect({ trigger: 'startup-empty-redis' });
+                if (r.ok) console.log('[tennis/collect] empty Redis → full collect started');
+              }
+            }
+          } catch (err) {
+            console.warn('[tennis/collect] startup empty-redis failed', err.message);
+          }
         } else {
           const r = await tennisThreeBuckets.splitFullToThreeBuckets();
           if (r?.ok) console.log('[tennis/three-buckets] split on startup', r);
