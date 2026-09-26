@@ -662,6 +662,11 @@ export async function clearCollectBackgroundLogs(kind = 'all') {
   return data
 }
 
+export async function fetchScoreTrackedMatches() {
+  const { data } = await api.get('/admin/engines/collect/background/score-matches')
+  return data
+}
+
 export async function runCollectFull(payload = {}) {
   const { data } = await api.post('/admin/engines/collect/full', { sport: 'tennis', ...payload })
   return data

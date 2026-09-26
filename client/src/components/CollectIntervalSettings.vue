@@ -7,6 +7,9 @@ const saving = ref(false)
 const error = ref('')
 const notice = ref('')
 const live = ref(null)
+const scoreListOpen = ref(false)
+const scoreListLoading = ref(false)
+const scoreList = ref(null)
 let pollTimer = null
 
 const form = reactive({
@@ -95,6 +98,22 @@ async function clearLogs(kind) {
   }
 }
 
+async function loadScoreMatches() {
+  scoreListLoading.value = true
+  try {
+    scoreList.value = await api.fetchScoreTrackedMatches()
+  } catch (e) {
+    scoreList.value = { ok: false, error: e?.response?.data?.error || e?.message || '加载失败', matches: [] }
+  } finally {
+    scoreListLoading.value = false
+  }
+}
+
+async function toggleScoreList() {
+  scoreListOpen.value = !scoreListOpen.value
+  if (scoreListOpen.value) await loadScoreMatches()
+}
+
 onMounted(() => {
   void load()
   pollTimer = setInterval(() => { void loadLive() }, 5000)
@@ -149,6 +168,45 @@ onUnmounted(() => {
               <span>运行：{{ live?.score?.running ? '是' : '否' }} · 忙：{{ live?.score?.busy ? '是' : '否' }}</span>
               <span>最近：{{ fmtLast(live?.score?.last) }}</span>
             </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              class="btn-secondary"
+              :disabled="scoreListLoading"
+              @click="toggleScoreList"
+            >
+              {{ scoreListLoading ? '加载中…' : (scoreListOpen ? '收起赛事列表' : '赛事列表') }}
+            </button>
+            <span v-if="scoreList?.count != null" class="text-xs text-slate-500">
+              {{ scoreList.inplayOnly ? '盘中' : '全桶' }} · {{ scoreList.count }} 场
+            </span>
+          </div>
+          <div v-if="scoreListOpen" class="match-list-wrap">
+            <p v-if="scoreListLoading" class="text-xs text-slate-400">加载赛事…</p>
+            <p v-else-if="scoreList?.error" class="text-xs text-rose-600">{{ scoreList.error }}</p>
+            <p v-else-if="scoreList?.message" class="text-xs text-slate-500">{{ scoreList.message }}</p>
+            <p v-else-if="!scoreList?.matches?.length" class="text-xs text-slate-400">暂无待刷比分场次（盘中桶为空）</p>
+            <table v-else class="match-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>对阵</th>
+                  <th>赛事</th>
+                  <th>状态</th>
+                  <th>比分</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in scoreList.matches" :key="m.id">
+                  <td class="mono">{{ m.id }}</td>
+                  <td>{{ m.label || `${m.home} vs ${m.away}` }}</td>
+                  <td class="muted">{{ m.tournament || '—' }}</td>
+                  <td>{{ m.phaseLabel || m.status || m.statusType || '—' }}</td>
+                  <td>{{ m.scoreText || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div>
             <div class="flex items-center justify-between mb-1">
@@ -284,5 +342,55 @@ onUnmounted(() => {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+.btn-secondary {
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 12px;
+  color: #475569;
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+.btn-secondary:disabled {
+  opacity: 0.6;
+}
+.match-list-wrap {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 8px;
+}
+.match-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.match-table th,
+.match-table td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+.match-table th {
+  color: #64748b;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+}
+.match-table .mono {
+  font-family: ui-monospace, monospace;
+  color: #64748b;
+}
+.match-table .muted {
+  color: #64748b;
+  max-width: 140px;
 }
 </style>

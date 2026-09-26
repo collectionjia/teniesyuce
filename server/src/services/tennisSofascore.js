@@ -331,6 +331,62 @@ async function refreshInplayScoresByEventId(eventId) {
   }
 }
 
+/** 当前比分循环会刷的场次（读 Redis，不请求 Sofascore） */
+async function listScoreTrackedMatches() {
+  const tennisDataSource = require('./tennisDataSource');
+  if ((await tennisDataSource.get()) === 'docks500') {
+    return {
+      ok: true,
+      virtual: true,
+      count: 0,
+      inplayOnly: false,
+      matches: [],
+      message: '虚拟(txt)模式不采 Sofascore 比分',
+    };
+  }
+  const tennisThreeBuckets = require('./tennisThreeBuckets');
+  const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
+  const byId = tennisThreeBuckets.indexMatchRefsById(buckets);
+  const inplayIds = tennisThreeBuckets.indexMatchRefsById({ inplay: buckets.inplay });
+  const fetchIds = inplayIds.size ? inplayIds : byId;
+  const inplayOnly = inplayIds.size > 0;
+
+  const matches = [];
+  for (const [idKey, row] of fetchIds) {
+    const m = row?.sample || {};
+    const home = m.home || m.homePlayer?.name || m.homeTeam?.name || '?';
+    const away = m.away || m.awayPlayer?.name || m.awayTeam?.name || '?';
+    matches.push({
+      id: idKey,
+      home,
+      away,
+      label: matchLabel(m),
+      tournament: m.tournament || m.tournamentShort || m.uniqueTournament?.name || '',
+      status: m.status,
+      statusType: m.statusType,
+      phaseLabel: m.phaseLabel,
+      scoreText: m.scoreText || eventScore(m),
+      startTime: m.startTime || m.startTimestamp || null,
+      bucket: inplayOnly ? 'inplay' : 'all',
+      url: m.url || null,
+    });
+  }
+  matches.sort((a, b) => {
+    const ta = String(a.tournament || '');
+    const tb = String(b.tournament || '');
+    if (ta !== tb) return ta.localeCompare(tb);
+    return String(a.label || '').localeCompare(String(b.label || ''));
+  });
+
+  return {
+    ok: true,
+    count: matches.length,
+    inplayOnly,
+    score_updated_at: buckets.inplay?.score_updated_at || buckets.full?.score_updated_at || null,
+    matches,
+  };
+}
+
 module.exports = {
   sofaApiGet,
   eventScore,
@@ -340,6 +396,7 @@ module.exports = {
   fetchEvent,
   refreshInplayScoresOnce,
   refreshInplayScoresByEventId,
+  listScoreTrackedMatches,
 };
 
 function loadEnv() {

@@ -43,6 +43,16 @@ router.get('/collect/background', async (_req, res) => {
   }
 });
 
+router.get('/collect/background/score-matches', async (_req, res) => {
+  try {
+    const tennisSofascore = require('../services/tennisSofascore');
+    const data = await tennisSofascore.listScoreTrackedMatches();
+    res.json({ ok: true, ...data });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.message });
+  }
+});
+
 router.post('/collect/background/clear-logs', async (req, res) => {
   try {
     const kind = String(req.body?.kind || 'all').toLowerCase();
