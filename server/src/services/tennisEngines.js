@@ -703,29 +703,48 @@ function toPublicConfig(cfg) {
 }
 
 /**
- * 子进程代理环境。Top100：有 proxyUrl 则走静态/HTTP 代理；盘中默认仍直连。
- * opts.proxyUrl 来自 process.env 或 monitor.env（SOFA_HTTP_PROXY）。
+ * 子进程代理环境。Top100：有 URL 则注入；无 URL 时不把 SOFA_*=空写下（避免盖掉子进程再读 monitor.env）。
+ * 盘中强制直连（清掉代理键）。
  */
 function buildProxyProcessEnv(cfg, job = 'top100', opts = {}) {
   void cfg;
   const isInplay = String(job).toLowerCase().includes('inplay');
   const url = String(opts.proxyUrl || process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
-  // 仅 Top100 用静态住宅；inplay 保持直连（省流量、少踩代理）
-  const use = !isInplay && !!url;
-  const active = use ? url : '';
-  return {
-    COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-    COLLECT_TOP100_USE_PROXY: use ? '1' : '0',
-    COLLECT_INPLAY_USE_PROXY: '0',
-    SOFA_HTTP_PROXY: active,
-    SOFA_HTTPS_PROXY: active,
-    HTTP_PROXY: active,
-    HTTPS_PROXY: active,
+  const clearIpwo = {
     IPWO_PROXY_HOST: '',
     IPWO_PROXY_PORT: '',
     IPWO_PROXY_USER: '',
     IPWO_PROXY_PASS: '',
     IPWO_PROXY_ZONE: '',
+  };
+  if (isInplay) {
+    return {
+      COLLECT_PROXY_JOB: 'inplay',
+      COLLECT_TOP100_USE_PROXY: '0',
+      COLLECT_INPLAY_USE_PROXY: '0',
+      SOFA_HTTP_PROXY: '',
+      SOFA_HTTPS_PROXY: '',
+      HTTP_PROXY: '',
+      HTTPS_PROXY: '',
+      ...clearIpwo,
+    };
+  }
+  if (url) {
+    return {
+      COLLECT_PROXY_JOB: 'top100',
+      COLLECT_TOP100_USE_PROXY: '1',
+      COLLECT_INPLAY_USE_PROXY: '0',
+      SOFA_HTTP_PROXY: url,
+      SOFA_HTTPS_PROXY: url,
+      HTTP_PROXY: url,
+      HTTPS_PROXY: url,
+      ...clearIpwo,
+    };
+  }
+  return {
+    COLLECT_PROXY_JOB: 'top100',
+    COLLECT_INPLAY_USE_PROXY: '0',
+    ...clearIpwo,
   };
 }
 

@@ -225,15 +225,48 @@ function loadMonitorEnvForChild() {
   return { file, env };
 }
 
-/** Top100 代理 URL：process.env 优先，否则 monitor.env*（不写入 git） */
+/** Top100 代理 URL：process.env → 各 monitor.env* 里第一个非空 SOFA_HTTP_PROXY */
+function readSofaProxyFromEnvFile(filePath) {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) return '';
+    for (const raw of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#') || !line.includes('=')) continue;
+      const i = line.indexOf('=');
+      const key = line.slice(0, i).trim();
+      const val = line.slice(i + 1).trim().replace(/\r$/, '');
+      if (key === 'SOFA_HTTP_PROXY' || key === 'HTTP_PROXY') {
+        if (val) return val;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
+}
+
 function resolveCollectProxyUrl() {
   const fromProc = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
   if (fromProc) return fromProc;
-  const monitor = loadMonitorEnvForChild();
-  return String(monitor.env.SOFA_HTTP_PROXY || monitor.env.HTTP_PROXY || '').trim();
+  const appEnv = String(process.env.APP_ENV || '').trim().toLowerCase();
+  const explicit = String(process.env.SOFA_MONITOR_ENV_FILE || '').trim();
+  const candidates = [];
+  if (explicit) {
+    candidates.push(path.isAbsolute(explicit) ? explicit : path.join(MONITOR_DIR, explicit));
+  }
+  if (appEnv === 'test') candidates.push(path.join(MONITOR_DIR, 'monitor.env.test'));
+  if (appEnv === 'production' || appEnv === 'prod') {
+    candidates.push(path.join(MONITOR_DIR, 'monitor.env.prod'));
+  }
+  candidates.push(path.join(MONITOR_DIR, 'monitor.env'));
+  for (const p of candidates) {
+    const v = readSofaProxyFromEnvFile(p);
+    if (v) return v;
+  }
+  return '';
 }
 
-/** 子进程代理环境：有 SOFA_HTTP_PROXY 时 Top100 走代理，覆盖 monitor 里空的直连残留 */
+/** 子进程代理环境：有 SOFA_HTTP_PROXY 时 Top100 走代理 */
 async function proxyEnvForJob(job = 'top100') {
   const proxyUrl = resolveCollectProxyUrl();
   try {
@@ -243,15 +276,31 @@ async function proxyEnvForJob(job = 'top100') {
   } catch (e) {
     console.warn('[tennis/collect] proxy config read failed:', e.message);
     const isInplay = String(job).toLowerCase().includes('inplay');
-    const use = !isInplay && !!proxyUrl;
+    if (isInplay) {
+      return {
+        COLLECT_PROXY_JOB: 'inplay',
+        COLLECT_TOP100_USE_PROXY: '0',
+        COLLECT_INPLAY_USE_PROXY: '0',
+        SOFA_HTTP_PROXY: '',
+        SOFA_HTTPS_PROXY: '',
+        HTTP_PROXY: '',
+        HTTPS_PROXY: '',
+      };
+    }
+    if (proxyUrl) {
+      return {
+        COLLECT_PROXY_JOB: 'top100',
+        COLLECT_TOP100_USE_PROXY: '1',
+        COLLECT_INPLAY_USE_PROXY: '0',
+        SOFA_HTTP_PROXY: proxyUrl,
+        SOFA_HTTPS_PROXY: proxyUrl,
+        HTTP_PROXY: proxyUrl,
+        HTTPS_PROXY: proxyUrl,
+      };
+    }
     return {
-      COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-      COLLECT_TOP100_USE_PROXY: use ? '1' : '0',
+      COLLECT_PROXY_JOB: 'top100',
       COLLECT_INPLAY_USE_PROXY: '0',
-      SOFA_HTTP_PROXY: use ? proxyUrl : '',
-      SOFA_HTTPS_PROXY: use ? proxyUrl : '',
-      HTTP_PROXY: use ? proxyUrl : '',
-      HTTPS_PROXY: use ? proxyUrl : '',
     };
   }
 }

@@ -28,15 +28,14 @@ def _flag_on(name: str) -> bool:
 
 
 def use_proxy_for_job(job: str | None = None) -> bool:
-    """Top100：有 SOFA_HTTP_PROXY 即走代理（除非 COLLECT_TOP100_USE_PROXY=0）；盘中须显式开。"""
+    """Top100：有 SOFA_HTTP_PROXY 就走代理；盘中仅当 COLLECT_INPLAY_USE_PROXY=1。
+
+    注意：勿用 COLLECT_TOP100_USE_PROXY=0 盖掉后加载的 monitor.env URL
+    （server spawn 时若一时解析不到 URL 会先写 0）。
+    """
     j = (job or proxy_job()).strip().lower()
     if j in {"inplay", "inplay_tick", "refresh"}:
         return _flag_on("COLLECT_INPLAY_USE_PROXY")
-    flag = _env("COLLECT_TOP100_USE_PROXY").lower()
-    if flag in {"0", "false", "no", "off"}:
-        return False
-    if flag in {"1", "true", "yes", "on"}:
-        return True
     return bool(sofa_proxy_map())
 
 

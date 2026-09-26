@@ -19,6 +19,14 @@ from tm.env import load_monitor_env
 
 load_monitor_env()
 
+from tm.clients.proxy import proxy_status_public
+
+_st = proxy_status_public()
+if _st.get("enabled"):
+    print(f"[env] Top100 Sofascore via proxy {_st.get('host')}", flush=True)
+else:
+    print("[env] Top100 Sofascore direct（未配置 SOFA_HTTP_PROXY）", flush=True)
+
 from tm.collectors.tier_collect import format_duration, run_tier_collect
 
 
