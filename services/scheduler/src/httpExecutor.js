@@ -56,7 +56,7 @@ function buildBody(job, params) {
       return { sport, top100: true, ...p };
     case 'collect.inplay_tick':
     case 'collect.top100_hf':
-      return { sport, ...p };
+      return { sport, jobType: job.jobType, ...p };
     case 'collect.dota2':
     case 'collect.dota2_hf':
       return { sport: 'dota2', ...p };

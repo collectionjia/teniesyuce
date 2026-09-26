@@ -54,10 +54,12 @@ async function runFull(body = {}) {
     if (isVirtual) {
       return { skipped: true, message: '虚拟(txt)模式跳过官网 Top100 采集' };
     }
-    if (collectRunner.isRunning()) {
-      return { skipped: true, message: 'collect.py already running' };
+    const { svc } = require('./lib/serverBridge');
+    const tennisCollectRunner = svc('tennisCollectRunner');
+    if (tennisCollectRunner.isRunning()) {
+      return { skipped: true, message: 'tennisFullCollect already running' };
     }
-    const started = await collectRunner.startCollect({
+    const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || null,
       top100: body.top100 !== false,
     });

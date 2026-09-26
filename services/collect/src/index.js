@@ -92,7 +92,7 @@ app.post('/internal/collect/partial', internalAuth, async (req, res) => {
   }
   lk.partial = true;
   try {
-    const result = await runInplayPartial();
+    const result = await runInplayPartial(req.body || {});
     lk.lastPartial = { at: new Date().toISOString(), ...result };
     if (result.skipped) {
       return res.json({ ok: true, skipped: true, message: result.message, metrics: result });

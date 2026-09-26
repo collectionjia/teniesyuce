@@ -1,5 +1,5 @@
 /**
- * 网球列表：只读 Redis（collect.py / 运维脚本写入 tennis:bundle:full）。
+ * 网球列表：只读 Redis（tennisFullCollect 写入 tennis:bundle:full）。
  * 默认不拉 9004 monitor；需旧链路时设 TENNIS_SYNC_FROM_MONITOR=1。
  */
 const tennisCache = require('./tennisCache');

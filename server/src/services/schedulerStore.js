@@ -31,23 +31,20 @@ const JOB_TYPE_DEFS = {
     engine: 'collect',
     requireEngineOn: 'collect',
     defaultTimeout: 120,
-    label: '盘中比分刷新',
+    label: '盘中迁桶',
     category: 'collect',
     intervalUnit: 'second',
     intervalPresets: [30, 60, 120],
     defaultIntervalSec: 60,
-    defaultName: '盘中比分刷新',
+    defaultName: '盘中迁桶',
   },
   'collect.top100_hf': {
     engine: 'collect',
     requireEngineOn: 'collect',
     defaultTimeout: 120,
-    label: 'Top100 高频采集',
+    label: 'Top100 高频赔率',
     category: 'collect',
-    intervalUnit: 'second',
-    intervalPresets: [10, 30, 60, 120],
-    defaultIntervalSec: 30,
-    defaultName: 'Top100 高频采集',
+    hidden: true,
   },
   'collect.dota2': {
     engine: 'collect',
@@ -133,26 +130,13 @@ const PRESET_JOBS = [
   },
   {
     id: 'job_collect_inplay_tick',
-    name: '盘中比分刷新',
+    name: '盘中迁桶',
     job_type: 'collect.inplay_tick',
     engine: 'collect',
     enabled: 0,
     schedule_mode: 'interval',
     interval_sec: 60,
     mutex_key: 'job_collect_inplay_tick',
-    skip_if_running: 1,
-    require_engine_on: 'collect',
-    timeout_sec: 120,
-  },
-  {
-    id: 'job_collect_top100_hf',
-    name: 'Top100 高频采集',
-    job_type: 'collect.top100_hf',
-    engine: 'collect',
-    enabled: 0,
-    schedule_mode: 'interval',
-    interval_sec: 30,
-    mutex_key: 'job_collect_top100_hf',
     skip_if_running: 1,
     require_engine_on: 'collect',
     timeout_sec: 120,
@@ -298,8 +282,9 @@ async function ensureTables() {
   `);
   await seedPresetJobsIfNeeded();
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_full'`);
+  await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_top100_hf'`);
   await pool.query(
-    `UPDATE scheduler_jobs SET name='盘中比分刷新' WHERE id='job_collect_inplay_tick' AND job_type='collect.inplay_tick'`,
+    `UPDATE scheduler_jobs SET name='盘中迁桶' WHERE id='job_collect_inplay_tick' AND job_type='collect.inplay_tick'`,
   );
   ready = true;
 }
@@ -678,17 +663,10 @@ async function listNameOptions() {
     },
     {
       key: 'collect:inplay',
-      value: '盘中比分刷新',
-      label: '盘中比分刷新',
+      value: '盘中迁桶',
+      label: '盘中迁桶',
       category: 'collect',
       jobType: 'collect.inplay_tick',
-    },
-    {
-      key: 'collect:top100_hf',
-      value: 'Top100 高频采集',
-      label: 'Top100 高频采集',
-      category: 'collect',
-      jobType: 'collect.top100_hf',
     },
     {
       key: 'collect:dota2',

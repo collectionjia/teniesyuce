@@ -49,7 +49,7 @@ async function collectFullLocal(body = {}) {
     }
     const tennisCollectRunner = require('./tennisCollectRunner');
     if (tennisCollectRunner.isRunning()) {
-      return { skipped: true, message: 'collect.py already running' };
+      return { skipped: true, message: 'tennisFullCollect already running' };
     }
     const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || body.date || null,
@@ -92,9 +92,12 @@ async function collectPartialLocal(body = {}) {
     return { skipped: true, message: '虚拟(txt)模式跳过 tick / Polymarket 采集' };
   }
   const tennisInplayTick = require('./tennisInplayTick');
-  const r = await tennisInplayTick.runInplayTick({
-    skipBetting: body.skipBetting !== false,
-  });
+  const jobType = String(body.jobType || '').trim();
+  const r = jobType === 'collect.top100_hf'
+    ? await tennisInplayTick.refreshInplayOddsTick()
+    : await tennisInplayTick.runInplayTick({
+        skipBetting: body.skipBetting !== false,
+      });
   if (r && typeof r === 'object') {
     return {
       ...r,

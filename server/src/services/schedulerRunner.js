@@ -104,7 +104,7 @@ async function executeJobType(job, params = {}) {
       }
       const tennisCollectRunner = require('./tennisCollectRunner');
       if (tennisCollectRunner.isRunning()) {
-        return { skipped: true, message: 'collect.py already running' };
+        return { skipped: true, message: 'tennisFullCollect already running' };
       }
       const started = await tennisCollectRunner.startCollect({
         matchDate: params.matchDate || null,
@@ -113,19 +113,19 @@ async function executeJobType(job, params = {}) {
       if (!started.ok) throw new Error(started.error || 'collect.top100 start failed');
       return { message: 'collect.top100 started', metrics: started.last || {} };
     }
-    case 'collect.inplay_tick':
-    case 'collect.top100_hf': {
+    case 'collect.inplay_tick': {
       if (isVirtual) {
-        return {
-          skipped: true,
-          message: '虚拟(txt)模式跳过盘中/Top100 高频采集',
-        };
+        return { skipped: true, message: '虚拟(txt)模式跳过盘中迁桶' };
       }
       const r = await tennisInplayTick.runInplayTick();
-      return {
-        message: job.jobType === 'collect.top100_hf' ? 'Top100 高频采集完成' : '盘中比分刷新完成',
-        metrics: r || {},
-      };
+      return { message: '盘中迁桶完成', metrics: r || {} };
+    }
+    case 'collect.top100_hf': {
+      if (isVirtual) {
+        return { skipped: true, message: '虚拟(txt)模式跳过 Top100 高频赔率刷新' };
+      }
+      const r = await tennisInplayTick.refreshInplayOddsTick();
+      return { message: 'Top100 高频赔率刷新完成', metrics: r || {} };
     }
     case 'condition.query': {
       const tennisConditionApply = require('./tennisConditionApply');

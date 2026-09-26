@@ -1258,17 +1258,14 @@ const collectModalOpen = ref(false)
 const collectSaving = ref(false)
 const collectModalError = ref('')
 const collectHorizonDays = ref(1)
-const inplayFieldsSelected = ref(['score', 'odds'])
+const inplayFieldsSelected = ref(['odds'])
 
 const COLLECT_HORIZON_OPTS = [
   { days: 1, label: '1 天（今天）' },
   { days: 2, label: '2 天（今天起）' },
   { days: 5, label: '5 天（今天起）' },
 ]
-const INPLAY_FIELD_OPTS = [
-  { key: 'score', label: '比分' },
-  { key: 'odds', label: '赔率' },
-]
+const INPLAY_FIELD_OPTS = [{ key: 'odds', label: '赔率' }]
 
 const inplayFieldsOpen = ref(false)
 const inplayFieldsLabel = computed(() => {
@@ -1311,7 +1308,7 @@ async function loadInplayTickSettings() {
     const picked = []
     if (f.score !== false) picked.push('score')
     if (f.odds !== false) picked.push('odds')
-    inplayFieldsSelected.value = picked.length ? picked : ['score', 'odds']
+    inplayFieldsSelected.value = picked.length ? picked : ['odds']
   } catch {
     /* keep defaults */
   }
@@ -1351,7 +1348,7 @@ async function saveCollectSchedule() {
     collect: {
       inplay_tick_enabled: true,
       inplay_tick_fields: {
-        score: (inplayFieldsSelected.value || []).includes('score'),
+        score: false,
         odds: (inplayFieldsSelected.value || []).includes('odds'),
       },
       proxy,

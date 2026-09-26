@@ -598,7 +598,16 @@ export async function runTennisInplayTick() {
   return runCollectPartial({ sport: 'tennis' })
 }
 
-/** 盘中详情：异步刷新单场 Polymarket 赔率并写 Redis */
+/** 盘中详情：从 Redis 读取单场（不写回、不拉 Polymarket） */
+export async function fetchTennisInplayMatch(eventId) {
+  const { data } = await api.get(`/tennis-inplay/match/${encodeURIComponent(eventId)}`, {
+    params: { _: Date.now() },
+    headers: { 'Cache-Control': 'no-cache' },
+  })
+  return data
+}
+
+/** 手动触发单场 Polymarket 赔率采集并写 Redis */
 export async function refreshTennisInplayOdds(eventId, { clobOnly = true } = {}) {
   const { data } = await api.post('/tennis-inplay/odds/refresh', {
     eventId,

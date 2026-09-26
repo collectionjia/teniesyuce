@@ -271,7 +271,7 @@ router.post('/tick', auth(['admin']), async (req, res) => {
   }
 });
 
-/** 详情页：异步刷新单场 Polymarket 赔率并写回 Redis tennis:bundle:inplay */
+/** 手动：拉 Polymarket 单场赔率并写回 Redis（详情 1s 轮询走 GET /match/:id 只读） */
 router.post('/odds/refresh', optionalAuth(), async (req, res) => {
   try {
     const eventId = String(req.body?.eventId || req.query?.eventId || '').trim();

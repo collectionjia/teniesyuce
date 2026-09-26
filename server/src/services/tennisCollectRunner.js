@@ -1,5 +1,5 @@
 /**
- * 管理员「立即采集」：在 server 进程内执行 scripts/tennis-monitor/collect.py
+ * 管理员「立即采集」：Node 全量采集 → Redis tennis:bundle:full
  */
 const { spawn } = require('child_process');
 const fs = require('fs');
@@ -339,15 +339,12 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
-  if (!fs.existsSync(COLLECT_SCRIPT)) {
-    return { ok: false, status: 500, error: `collect.py not found: ${COLLECT_SCRIPT}` };
-  }
 
   running = true;
   const startedAt = nowIso();
   last = {
     status: 'running',
-    trigger: 'admin-collect.py',
+    trigger: 'admin-tennisFullCollect',
     started_at: startedAt,
     finished_at: null,
     exit_code: null,
@@ -356,110 +353,77 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
     requests: null,
     elapsed_sec: null,
   };
-  logBuffer = [`=== collect.py ${startedAt} trigger=admin ===`];
+  logBuffer = [`=== tennisFullCollect ${startedAt} trigger=admin ===`];
 
-  const args = [COLLECT_SCRIPT];
-  if (matchDate) args.push(String(matchDate));
-  if (!top100) args.push('--all');
-
-  const bin = pythonBin();
-  const proxyEnv = await proxyEnvForJob('top100');
-  const monitorEnv = loadMonitorEnvForChild();
+  const cfg = readScheduleConfig();
+  const tennisFullCollect = require('./tennisFullCollect');
   console.log(
-    `[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=${proxyEnv.COLLECT_TOP100_USE_PROXY} ipwo=${proxyEnv.IPWO_PROXY_USER ? 'yes' : 'no'}`,
+    `[tennis/collect] node full collect horizon=${cfg.collect_horizon_days} top100=${top100 !== false}`,
   );
 
-  child = spawn(bin, ['-u', ...args], {
-    cwd: MONITOR_DIR,
-    env: {
-      ...stripLegacyProxyEnv({ ...process.env, ...monitorEnv.env }),
-      ...proxyEnv,
-      PYTHONUNBUFFERED: '1',
-      PYTHONIOENCODING: 'utf-8',
-    },
-    windowsHide: true,
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-
-  child.stdout.on('data', (d) => pushLog(d));
-  child.stderr.on('data', (d) => pushLog(d));
-
-  child.on('error', (err) => {
-    running = false;
-    child = null;
-    const finishedAt = nowIso();
-    last = {
-      ...last,
-      status: 'failed',
-      finished_at: finishedAt,
-      exit_code: -1,
-      error: err.message || 'spawn failed',
-    };
-    appendLogFile(logBuffer, 'full');
-    console.error('[tennis/collect] spawn error:', err.message);
-  });
-
-  child.on('close', (code) => {
-    running = false;
-    child = null;
-    const finishedAt = nowIso();
-    const text = logBuffer.join('\n');
-    const meta = readLatestBundleMeta();
-    const parsedEvents = parseTotalEvents(text);
-    const emptyRun = /完成:\s*无(进行中)?比赛/.test(text);
-    const totalEvents = parsedEvents ?? (emptyRun ? 0 : (meta?.events ?? null));
-    const requests = meta?.requests || null;
-    const elapsed = elapsedSecFromTiming(meta?.timing);
-
-    if (code === 0 && (totalEvents == null || totalEvents > 0)) {
-      last = {
-        status: 'success',
-        trigger: 'admin-collect.py',
-        started_at: last.started_at,
-        finished_at: finishedAt,
-        exit_code: code,
-        error: null,
-        total_events: totalEvents ?? meta?.events ?? 0,
-        requests,
-        elapsed_sec: elapsed,
-        bundle_file: meta?.bundle_file || null,
-      };
-      console.log(`[tennis/collect] done events=${last.total_events} elapsed=${elapsed ?? '-'}s`);
-    } else if (code === 0 || emptyRun) {
-      last = {
-        status: 'success',
-        trigger: 'admin-collect.py',
-        started_at: last.started_at,
-        finished_at: finishedAt,
-        exit_code: code ?? 0,
-        error: null,
-        total_events: 0,
-        requests,
-        elapsed_sec: elapsed,
-        message: '无符合条件的比赛',
-      };
-      console.log('[tennis/collect] done events=0 (empty)');
-    } else {
+  void (async () => {
+    try {
+      const result = await tennisFullCollect.runFullCollect({
+        matchDate,
+        top100: top100 !== false,
+        horizonDays: cfg.collect_horizon_days,
+        onLog: (line) => pushLog(`${line}\n`),
+      });
+      const finishedAt = nowIso();
+      const elapsed = result.timing?.total ?? null;
+      if (result.ok) {
+        last = {
+          status: 'success',
+          trigger: 'admin-tennisFullCollect',
+          started_at: startedAt,
+          finished_at: finishedAt,
+          exit_code: 0,
+          error: null,
+          total_events: result.total_events ?? 0,
+          requests: result.requests || null,
+          elapsed_sec: elapsed,
+        };
+        console.log(`[tennis/collect] done events=${last.total_events} elapsed=${elapsed ?? '-'}s`);
+      } else {
+        last = {
+          status: 'failed',
+          trigger: 'admin-tennisFullCollect',
+          started_at: startedAt,
+          finished_at: finishedAt,
+          exit_code: 1,
+          error: result.persist?.redis?.error || 'full collect failed',
+          total_events: result.total_events ?? 0,
+          requests: result.requests || null,
+          elapsed_sec: elapsed,
+        };
+      }
+    } catch (err) {
+      const finishedAt = nowIso();
       last = {
         status: 'failed',
-        trigger: 'admin-collect.py',
-        started_at: last.started_at,
+        trigger: 'admin-tennisFullCollect',
+        started_at: startedAt,
         finished_at: finishedAt,
-        exit_code: code,
-        error: friendlyCollectError(code, text),
-        total_events: totalEvents,
-        requests,
-        elapsed_sec: elapsed,
+        exit_code: 1,
+        error: err.message || String(err),
+        total_events: null,
+        requests: null,
+        elapsed_sec: null,
       };
+      pushLog(`采集失败: ${last.error}\n`);
+      console.error('[tennis/collect]', last.error);
+    } finally {
+      running = false;
+      child = null;
+      appendLogFile(logBuffer, 'full');
+      try {
+        const tennisRedis = require('./tennisRedis');
+        tennisRedis.invalidateMemCache();
+      } catch { /* ignore */ }
     }
-    appendLogFile(logBuffer, 'full');
-    try {
-      const tennisRedis = require('./tennisRedis');
-      tennisRedis.invalidateMemCache();
-    } catch { /* ignore */ }
-  });
+  })();
 
-  return { ok: true, message: 'collect.py started', last: { ...last } };
+  return { ok: true, message: 'tennisFullCollect started', last: { ...last } };
 }
 
 async function startLiveCollect() {
@@ -854,7 +818,7 @@ module.exports = {
   isLiveRunning: () => liveRunning,
   getLast: () => ({ ...last }),
   isCollectEnabled,
-  isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
+  isCollectAvailable: () => true,
   isLiveCollectAvailable: () => fs.existsSync(COLLECT_LIVE_SCRIPT),
   isInplayRefreshAvailable: () => fs.existsSync(REFRESH_INPLAY_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,

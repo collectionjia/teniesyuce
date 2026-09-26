@@ -93,9 +93,16 @@ async function stampPhaseMarks() {
   return { preMarked, liveMarked };
 }
 
+function phaseMarkOf(m) {
+  const mark = String(m?.phaseMark || '').toLowerCase();
+  if (mark === 'not_started' || mark === 'live' || mark === 'ended') return mark;
+  if (isEnded(m)) return 'ended';
+  if (isLive(m)) return 'live';
+  return 'not_started';
+}
+
 function isNotStarted(m) {
-  if (isLive(m) || isEnded(m)) return false;
-  return true;
+  return phaseMarkOf(m) === 'not_started';
 }
 
 function currentRank(player, rankingsByPlayer = {}) {
@@ -234,9 +241,9 @@ async function splitFullToThreeBuckets(fullBundle) {
     || !!bundle?.virtualSim;
   const top = skipTop ? all : all.filter((m) => passesTop100(m, rankings));
 
-  const prematchMatches = top.filter(isNotStarted);
-  const inplayMatches = top.filter(isLive);
-  const settledMatches = top.filter(isEnded);
+  const prematchMatches = top.filter((m) => phaseMarkOf(m) === 'not_started');
+  const inplayMatches = top.filter((m) => phaseMarkOf(m) === 'live');
+  const settledMatches = top.filter((m) => phaseMarkOf(m) === 'ended');
 
   const prematch = {
     ...baseShell(bundle, { source: 'tennis-prematch', matches: prematchMatches }),

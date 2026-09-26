@@ -2137,9 +2137,11 @@ async function refreshDetailPolyOddsOnce() {
   if (!canDetailPolyOddsRefresh(m) || detailOddsInFlight) return
   detailOddsInFlight = true
   try {
-    const r = await api.refreshTennisInplayOdds(m.id, { clobOnly: true })
-    if (r?.poly && String(detailMatch.value?.id) === String(m.id)) {
-      applyPolyOddsToData(m.id, r.poly, r.odds_updated_at)
+    const r = await api.fetchTennisInplayMatch(m.id)
+    if (!r?.found || String(detailMatch.value?.id) !== String(m.id)) return
+    const poly = r.polymarket || r.polymarketByEvent?.[String(m.id)] || r.polymarketByEvent?.[m.id]
+    if (poly) {
+      applyPolyOddsToData(m.id, poly, r.odds_updated_at || r.fetched_at)
     }
   } catch {
     /* 详情赔率异步失败不打断页面 */

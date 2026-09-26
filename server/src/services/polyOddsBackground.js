@@ -1,5 +1,5 @@
 /**
- * 后台刷新 Redis 中已采集赛事的 Polymarket 赔率：网球盘中 + Dota2 + NFL。
+ * 后台刷新 Redis Polymarket 赔率：网球 inplay + Dota2 + NFL。
  * 启动：startOddsLoop()；POLY_ODDS_LOOP=0 关闭；POLY_ODDS_LOOP_MS 间隔（默认 1000）。
  */
 const tennisPolymarket = require('./tennisPolymarket');

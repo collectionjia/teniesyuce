@@ -45,13 +45,12 @@ function defaultForm() {
 
 const form = ref(defaultForm())
 
-const HIDDEN_JOB_TYPES = new Set(['collect.full', 'bet.scan'])
+const HIDDEN_JOB_TYPES = new Set(['collect.full', 'collect.top100_hf', 'bet.scan'])
 
 /** 任务类型展示名（覆盖 API 旧 label） */
 const JOB_TYPE_LABELS = {
   'collect.top100': 'Top100 全量采集',
-  'collect.inplay_tick': '盘中比分刷新',
-  'collect.top100_hf': 'Top100 高频采集',
+  'collect.inplay_tick': '盘中迁桶',
   'collect.dota2': 'Dota2 采集',
   'collect.dota2_hf': 'Dota2 高频采集',
   'collect.nfl': 'NFL 采集',
@@ -73,14 +72,7 @@ const JOB_TYPE_META = {
     intervalUnit: 'second',
     intervalPresets: [30, 60, 120],
     defaultIntervalSec: 60,
-    defaultName: '盘中比分刷新',
-  },
-  'collect.top100_hf': {
-    category: 'collect',
-    intervalUnit: 'second',
-    intervalPresets: [10, 30, 60, 120],
-    defaultIntervalSec: 30,
-    defaultName: 'Top100 高频采集',
+    defaultName: '盘中迁桶',
   },
   'collect.dota2': {
     category: 'collect',
@@ -115,7 +107,6 @@ const JOB_TYPE_META = {
 const DEFAULT_JOB_TYPES = [
   { jobType: 'collect.top100', category: 'collect' },
   { jobType: 'collect.inplay_tick', category: 'collect' },
-  { jobType: 'collect.top100_hf', category: 'collect' },
   { jobType: 'collect.dota2', category: 'collect' },
   { jobType: 'collect.dota2_hf', category: 'collect' },
   { jobType: 'collect.nfl', category: 'collect' },
@@ -171,7 +162,6 @@ const jobTypeOptions = computed(() => {
 const isCollectJobType = computed(() => categoryOfJobType(form.value.jobType) === 'collect')
 const isInplayTickJobType = computed(() =>
   form.value.jobType === 'collect.inplay_tick'
-  || form.value.jobType === 'collect.top100_hf'
   || form.value.jobType === 'collect.dota2'
   || form.value.jobType === 'collect.dota2_hf'
   || form.value.jobType === 'collect.nfl'
@@ -520,7 +510,7 @@ function formatRunDetail(r) {
   } else {
     parts.push(
       '=== 采集过程日志 ===\n'
-      + '(本次记录未包含过程日志。请部署最新代码后重新执行一轮「盘中比分刷新」。)',
+      + '(本次记录未包含过程日志。请部署最新代码后重新执行一轮「盘中赔率刷新」。)',
     )
   }
   if (m.score_failures) {
@@ -600,7 +590,7 @@ async function createJob() {
       return
     }
     if (form.value.jobType === 'collect.inplay_tick' && Number(form.value.intervalSec) < 10) {
-      err.value = '盘中比分刷新间隔至少 10 秒'
+      err.value = '盘中迁桶间隔至少 10 秒'
       return
     }
   } else {

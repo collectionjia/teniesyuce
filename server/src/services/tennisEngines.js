@@ -367,8 +367,8 @@ const DEFAULT_CONFIG = {
     enabled: true,
     inplay_tick_enabled: true,
     inplay_tick_fields: {
-      score: true,
-      odds: true,
+      score: false,
+      odds: false,
     },
     /** IPWO 代理：开关 + 账号（管理员页配置，不写 monitor.env） */
     proxy: {
@@ -622,7 +622,7 @@ function normalizeCollect(c = {}) {
     enabled: c.enabled !== false,
     inplay_tick_enabled: c.inplay_tick_enabled !== false,
     inplay_tick_fields: {
-      score: fields.score !== false,
+      score: fields.score === true,
       odds: fields.odds !== false,
     },
     proxy: {
