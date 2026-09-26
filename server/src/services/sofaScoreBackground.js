@@ -21,7 +21,7 @@ function loopSettings() {
   } catch {
     const n = Number(process.env.SOFA_SCORE_LOOP_MS);
     return {
-      score_enabled: !['0', 'false', 'no', 'off'].includes(String(process.env.SOFA_SCORE_LOOP || '1').toLowerCase()),
+      score_enabled: !['0', 'false', 'no', 'off'].includes(String(process.env.SOFA_SCORE_LOOP || '0').toLowerCase()),
       score_interval_ms: Number.isFinite(n) && n >= 5000 ? n : 30000,
     };
   }

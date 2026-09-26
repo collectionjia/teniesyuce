@@ -50,6 +50,15 @@ PUSH_TOKEN = (
     or os.environ.get("SOFA_MONITOR_TOKEN")
     or ""
 ).strip()
+# 本地刷新成功后自动推线上；默认：配置了 PUSH_URL 则开启
+_AUTO_PUSH_RAW = (os.environ.get("SOFA_BOARD_AUTO_PUSH") or "").strip().lower()
+AUTO_PUSH = (
+    _AUTO_PUSH_RAW in {"1", "true", "yes", "on"}
+    if _AUTO_PUSH_RAW
+    else bool(PUSH_URL)
+)
+_auto_push_lock = threading.Lock()
+_auto_push_inflight: set[str] = set()
 
 from tm.bundle import parse_player_rank_detail, slim_event  # noqa: E402
 from tm.bundle_store import (  # noqa: E402
@@ -349,6 +358,31 @@ def _enrich_event_ranks(ev: dict[str, Any], board: dict[str, Any]) -> None:
     ev["awayRank"] = lookup_player_rank(
         by_name=by_name, by_id=by_id, pid=away_p.get("id"), name=ev.get("away"), event_rank=away_p.get("rank")
     )
+    _stamp_player_ranks(ev)
+
+
+def _stamp_player_ranks(ev: dict[str, Any]) -> None:
+    """把现排名/最高写入 homePlayer/awayPlayer，供线上 listRankOf / listBestOf 使用。"""
+    home_p = ev.get("homePlayer")
+    away_p = ev.get("awayPlayer")
+    if isinstance(home_p, dict):
+        if ev.get("homeRank") is not None:
+            home_p["rank"] = ev["homeRank"]
+            home_p["ranking"] = ev["homeRank"]
+            home_p["currentRank"] = ev["homeRank"]
+        if ev.get("homeBestRank") is not None:
+            home_p["bestRank"] = ev["homeBestRank"]
+            home_p["best"] = ev["homeBestRank"]
+        ev["homePlayer"] = home_p
+    if isinstance(away_p, dict):
+        if ev.get("awayRank") is not None:
+            away_p["rank"] = ev["awayRank"]
+            away_p["ranking"] = ev["awayRank"]
+            away_p["currentRank"] = ev["awayRank"]
+        if ev.get("awayBestRank") is not None:
+            away_p["bestRank"] = ev["awayBestRank"]
+            away_p["best"] = ev["awayBestRank"]
+        ev["awayPlayer"] = away_p
 
 
 def _fill_best_ranks(client: SofascoreMobileClient, board: dict[str, Any], events: list[dict] | None = None) -> None:
@@ -407,6 +441,23 @@ def _apply_best_from_board(board: dict[str, Any], events: list[dict]) -> None:
         hid, aid = home_p.get("id"), away_p.get("id")
         ev["homeBestRank"] = by_id.get(int(hid)) if hid is not None else None
         ev["awayBestRank"] = by_id.get(int(aid)) if aid is not None else None
+        _stamp_player_ranks(ev)
+
+
+def _rankings_by_player(board: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """线上 TennisBoard 用 rankingsByPlayer[id].current / .best 显示排名。"""
+    out: dict[str, dict[str, Any]] = {}
+    for tour in ("atp", "wta"):
+        for p in board.get(tour) or []:
+            pid = p.get("id")
+            if pid is None:
+                continue
+            out[str(int(pid))] = {
+                "current": p.get("rank"),
+                "previous": p.get("previousRank"),
+                "best": p.get("bestRank"),
+            }
+    return out
 
 
 def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
@@ -481,6 +532,8 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
         with _cache_lock:
             _cache["data"] = updated
         _live_cache["at"] = time.time()
+        _save_disk_board(updated)
+        _schedule_auto_push("live")
 
         return _json_safe(
             {
@@ -595,6 +648,35 @@ def _store_board(data: dict[str, Any]) -> None:
     _save_disk_board(data)
 
 
+def _schedule_auto_push(mode: str) -> None:
+    """本地数据更新后异步推线上，不阻塞刷新。"""
+    if not AUTO_PUSH or not PUSH_URL:
+        return
+    mode = "full" if mode == "full" else "live"
+    with _auto_push_lock:
+        if mode in _auto_push_inflight:
+            return
+        _auto_push_inflight.add(mode)
+
+    def run() -> None:
+        try:
+            if mode == "full":
+                result = sync_full_to_redis(force=False)
+            else:
+                result = sync_live_to_redis(force=False)
+            ok = result.get("ok")
+            err = result.get("error")
+            n = result.get("events")
+            print(f"[board] auto-push {mode}: ok={ok} events={n}" + (f" err={err}" if err else ""))
+        except Exception as exc:
+            print(f"[board] auto-push {mode} failed: {exc}")
+        finally:
+            with _auto_push_lock:
+                _auto_push_inflight.discard(mode)
+
+    threading.Thread(target=run, daemon=True, name=f"board-auto-push-{mode}").start()
+
+
 def refresh_board_async(*, force: bool = False, force_ranks: bool = False) -> None:
     global _refreshing
     if not force:
@@ -614,6 +696,7 @@ def refresh_board_async(*, force: bool = False, force_ranks: bool = False) -> No
             f"[board] ok · {data.get('summary')} · {data.get('elapsed_sec')}s"
             f" · ranks_refreshed={data.get('ranks_refreshed')}"
         )
+        _schedule_auto_push("full")
     except Exception as exc:
         print(f"[board] refresh failed: {exc}")
     finally:
@@ -644,6 +727,7 @@ def get_board(*, force: bool = False, force_ranks: bool = False) -> dict[str, An
                 return {**cached, "cached": True}
         data = build_board(force_ranks=force_ranks)
         _store_board(data)
+        _schedule_auto_push("full")
         return data
 
 
@@ -659,6 +743,8 @@ def warm_startup() -> None:
 
 def _board_to_collect(board: dict[str, Any]) -> dict[str, Any]:
     events = [_normalize_match_scores(dict(e)) for e in (board.get("events") or []) if isinstance(e, dict)]
+    for ev in events:
+        _stamp_player_ranks(ev)
     return {
         "date": board.get("date") or today_bj(),
         "events": events,
@@ -668,6 +754,7 @@ def _board_to_collect(board: dict[str, Any]) -> dict[str, Any]:
             "wta": board.get("wta") or [],
             "summary": board.get("summary") or {},
         },
+        "rankingsByPlayer": _rankings_by_player(board),
         "top_rank_max": TOP_N,
         "filter_conditions": {"tier": "500_1000", "unfinished": True},
     }
@@ -715,7 +802,15 @@ def _push_http(mode: str, bundle: dict[str, Any]) -> dict[str, Any] | None:
     path = "full" if mode == "full" else "live"
     url = f"{PUSH_URL}/api/tennis-board/{path}"
     body = json.dumps({"bundle": bundle}, ensure_ascii=False).encode("utf-8")
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        # Cloudflare 会拦 Python-urllib 默认 UA
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+    }
     if PUSH_TOKEN:
         headers["Authorization"] = f"Bearer {PUSH_TOKEN}"
         headers["X-Board-Token"] = PUSH_TOKEN
@@ -817,11 +912,14 @@ def sync_live_to_redis(*, force: bool = False) -> dict[str, Any]:
         else:
             used_cache = True
     live_events = [_normalize_match_scores(dict(e)) for e in live_events if isinstance(e, dict)]
+    for ev in live_events:
+        _stamp_player_ranks(ev)
     collect = {
         "date": board.get("date") or today_bj(),
         "events": live_events,
         "top100": False,
         "top_rank_max": TOP_N,
+        "rankingsByPlayer": _rankings_by_player(board) if isinstance(board, dict) else {},
         "filter_conditions": {"tier": "500_1000", "live_only": True},
     }
     bundle = build_live_bundle_payload(collect)
@@ -973,6 +1071,7 @@ def main() -> None:
     print(f"  sync live → GET/POST /api/sync/live")
     if PUSH_URL:
         print(f"  push via HTTP → {PUSH_URL}/api/tennis-board/{{full,live}}")
+        print(f"  auto-push → {'ON' if AUTO_PUSH else 'OFF'}")
     else:
         print(f"  push via Redis → {_redis_host_public() or '(未配置 REDIS_URL)'}")
     server.serve_forever()

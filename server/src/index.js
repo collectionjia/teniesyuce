@@ -1,6 +1,7 @@
 /**
  * YUCE 后端入口：Express API。
- * 网球列表：collect.py → Redis → GET /api/tennis/today（默认不连 9004 monitor）。
+ * 网球列表：Redis → GET /api/tennis/today（默认不连 9004）。
+ * SofaScore 全量/刷分默认关；线上数据由 tennis-live-board:8765 经 /api/tennis-board 推送。
  */
 const express = require('express');
 const cors = require('cors');

@@ -42,16 +42,25 @@ let liveChild = null;
 let liveLast = { status: 'idle', events: [] };
 
 function isCollectEnabled() {
+  // TENNIS_SOFA_COLLECT_ENABLED 默认关（全量/高频采集先不用；数据由 :8765 推送）
+  const envRaw = process.env.TENNIS_SOFA_COLLECT_ENABLED;
+  if (envRaw == null || String(envRaw).trim() === '') {
+    /* fall through to schedule.json */
+  } else if (['0', 'false', 'no', 'off'].includes(String(envRaw).trim().toLowerCase())) {
+    return false;
+  } else if (['1', 'true', 'yes', 'on'].includes(String(envRaw).trim().toLowerCase())) {
+    /* env 显式开启时仍受 schedule 开关约束 */
+  }
   try {
     return readScheduleConfig().collect_enabled !== false;
   } catch {
-    return true;
+    return false;
   }
 }
 
 function readScheduleConfig() {
   const defaults = {
-    collect_enabled: true,
+    collect_enabled: false,
     live_poll_interval_sec: 300,
     collect_horizon_days: 1,
   };

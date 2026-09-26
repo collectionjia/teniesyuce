@@ -372,7 +372,8 @@ const DEFAULT_CONFIG = {
     },
     /** 后台比分/赔率刷新（管理员页配置，优先于 SOFA_SCORE_LOOP_MS / POLY_ODDS_LOOP_MS） */
     background: {
-      score_enabled: true,
+      // SofaScore 高频刷分默认关；数据由 tennis-live-board:8765 推送。SOFA_SCORE_LOOP=1 可再开
+      score_enabled: false,
       score_interval_sec: 30,
       odds_enabled: true,
       odds_interval_sec: 1,
@@ -645,7 +646,7 @@ function syncCollectBackgroundMem(collect) {
 function getCollectBackgroundSettings() {
   const envScoreMs = Number(process.env.SOFA_SCORE_LOOP_MS);
   const envOddsMs = Number(process.env.POLY_ODDS_LOOP_MS);
-  const envScoreEnabled = String(process.env.SOFA_SCORE_LOOP || '1').trim().toLowerCase();
+  const envScoreEnabled = String(process.env.SOFA_SCORE_LOOP || '0').trim().toLowerCase();
   const envOddsEnabled = String(process.env.POLY_ODDS_LOOP || '1').trim().toLowerCase();
   const bg = collectBackgroundMem;
   const scoreIntervalMs = Number.isFinite(envScoreMs) && envScoreMs >= 5000

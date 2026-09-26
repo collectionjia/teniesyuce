@@ -1,5 +1,5 @@
 {
-  "collect_enabled": true,
+  "collect_enabled": false,
   "live_poll_interval_sec": 300,
   "collect_horizon_days": 2,
   "collect_target": "top100"
