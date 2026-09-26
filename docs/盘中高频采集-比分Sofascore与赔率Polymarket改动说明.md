@@ -1,7 +1,8 @@
 # 盘中高频采集纠偏：比分 Sofascore(IPWO) + 赔率 Polymarket
 
-> 状态：待改（先方案，未动代码）  
+> 状态：**已实现**（Node 后台循环替代 Python `refresh_inplay.py`）  
 > 背景：生产「盘中比分刷新」在跑，但 `refresh_inplay.py` 把**比分也改成读 Polymarket Gamma**，导致无 slug 场次刷不到、有 slug 的也往往盘末才更新。  
+> **当前实现**：`sofaScoreBackground`（比分 IPWO）+ `polyOddsBackground`（赔率 CLOB 直连），见 `docs/网球数据采集流程.md`。下文为历史方案记录。  
 > 目标（产品约定）：
 
 | 通道 | 数据源 | 代理 |
@@ -15,13 +16,15 @@
 ## 1. 现状（错在哪）
 
 ```
-调度 job（界面间隔）
-  └─ collect.inplay_tick / collect.top100_hf
-       └─ tennisInplayTick.runInplayTick()
-            └─ tennisCollectRunner.runInplayRefreshAndWait()
-                 └─ refresh_inplay.py
-                      ├─ 比分 ← Polymarket Gamma   ❌ 应为 Sofascore+IPWO
-                      └─ 赔率 ← Polymarket CLOB    ✅ 方向对
+调度 job（界面间隔，可选）
+  └─ collect.inplay_tick → runBucketMigrate + 投注
+
+Server 启动（默认主路径）
+  ├─ sofaScoreBackground（30s）→ tennisSofascore + runBucketMigrate
+  └─ polyOddsBackground（1s）→ tennisPolymarket + runBucketMigrate
+
+已废弃（无调用方，TENNIS_PYTHON_COLLECT=0 默认关）
+  └─ refresh_inplay.py / runInplayRefreshAndWait()
 ```
 
 关键证据：

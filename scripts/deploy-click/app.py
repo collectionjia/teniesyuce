@@ -15,7 +15,8 @@ HOST = os.environ.get("DEPLOY_CLICK_HOST", "0.0.0.0")
 PORT = int(os.environ.get("DEPLOY_CLICK_PORT", "9009"))
 ROOT = Path(os.environ.get("DEPLOY_ROOT", "/opt/yuce/teniesyuce"))
 TOKEN_FILE = Path(os.environ.get("DEPLOY_CLICK_TOKEN_FILE", "/opt/yuce/deploy-click/token"))
-SCRIPT = ROOT / "scripts" / "deploy-145.sh"
+_default_script = ROOT / "scripts" / "deploy-145.sh"
+SCRIPT = Path(os.environ.get("DEPLOY_SCRIPT", str(_default_script)))
 SHELL_TIMEOUT = int(os.environ.get("DEPLOY_SHELL_TIMEOUT_SEC", "300"))
 
 _lock = threading.Lock()
@@ -189,7 +190,7 @@ PAGE = """<!DOCTYPE html>
   </div>
 
   <div id="pane-deploy" class="pane active">
-    <p class="meta">执行 <code>scripts/deploy-145.sh</code>（git pull + 重建容器）。同一时间只能跑一次。</p>
+    <p class="meta">执行部署脚本（git pull + 重建容器，默认 <code>scripts/deploy-145.sh</code>）。同一时间只能跑一次。</p>
     <button id="go" type="button">开始部署</button>
     <div id="log" class="log">等待操作…</div>
   </div>

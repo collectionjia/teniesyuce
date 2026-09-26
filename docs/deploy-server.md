@@ -20,12 +20,24 @@
   git clone git@github.com:collectionjia/yuce.git /opt/yuce
   ```
 
-## 3. 一键部署（Lightsail 网页终端）
+## 3. 一键部署
+
+**测试（215 :9018）：**
 
 ```bash
 cd /opt/yuce
-chmod +x scripts/deploy-server.sh
-bash scripts/deploy-server.sh
+git pull
+chmod +x scripts/*.sh
+bash scripts/docker-deploy-test-all.sh
+```
+
+**生产（215 :9001）：**
+
+```bash
+cd /opt/yuce
+git pull
+chmod +x scripts/*.sh
+bash scripts/docker-deploy-prod-all.sh
 ```
 
 **首次全新机器：**
@@ -39,16 +51,18 @@ sudo chown -R $USER:$USER "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 cp server/.env.example server/.env
 nano server/.env
-bash scripts/deploy-server.sh
+bash scripts/docker-deploy-prod-all.sh
 ```
 
 ## 4. 常用命令
 
 ```bash
-bash scripts/deploy-server.sh                 # 核心服务
-bash scripts/deploy-server.sh --web-only --no-cache
-bash scripts/deploy-server.sh --status
-bash scripts/deploy-server.sh --logs server
+bash scripts/docker-deploy-test-all.sh          # 测试 core + 五引擎
+bash scripts/docker-deploy-prod-all.sh          # 生产 core + 五引擎
+bash scripts/docker-deploy-prod-all.sh --no-cache
+bash scripts/docker-deploy.sh prod ps
+bash scripts/docker-deploy.sh prod logs -f server
+bash scripts/deploy-host-services.sh status
 ```
 
 ## 5. Compose 文件 / 测试与生产

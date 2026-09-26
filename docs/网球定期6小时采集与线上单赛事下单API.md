@@ -1012,7 +1012,7 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 | 全量采集节奏 | 线上约 **每 6 小时** 一次（调度 `collect.top100` / Node `tennisFullCollect`） |
 | 比分后台刷新 | `sofaScoreBackground` → `tennisSofascore.refreshInplayScoresOnce`（默认 30s，同步写四桶） |
 | PM 赔率后台刷新 | `polyOddsBackground` → `tennisPolymarket.refreshInplayOddsOnce`（默认 1s，同步写四桶） |
-| 桶同步写入 | `tennisThreeBuckets.writeAllTennisBuckets` |
+| 桶同步写入 | `writeScorePatches` / `writePolymarketPatches` |
 | 邮箱下单公共逻辑 | `server/src/services/tennisOrdersPublic.js` |
 | 单场 / 统一批量 | `server/src/routes/tennisOrders.js` |
 | 盘前批量 / 限价 | `server/src/routes/tennisPrematch.js` → `/trade/batch` · `/trade/sell` |

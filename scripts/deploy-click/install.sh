@@ -20,6 +20,8 @@ After=network.target
 [Service]
 User=ubuntu
 WorkingDirectory=/opt/yuce/deploy-click
+Environment=DEPLOY_ROOT=/opt/yuce/teniesyuce
+Environment=DEPLOY_SCRIPT=/opt/yuce/teniesyuce/scripts/deploy-145.sh
 ExecStart=/usr/bin/python3 /opt/yuce/deploy-click/app.py
 Restart=always
 RestartSec=2
