@@ -1,6 +1,7 @@
 # secrets / env
 *.pem
 *.key
+tennis-live-board/config.local.js
 .env
 .env.*
 !.env.example
@@ -37,6 +38,9 @@ Thumbs.db
 *.tgz
 *.tar.gz
 *.zip
+*.apk
+*.apk.*
+docs/apk-extract/
 _board_extract/
 bbbbb/
 dota2elo-deploy.tgz
