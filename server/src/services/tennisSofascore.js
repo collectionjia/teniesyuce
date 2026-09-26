@@ -2,6 +2,7 @@
  * 盘中比分：IPWO → Sofascore API（与 tennisPolymarket.js 对称，赔率走 PM 直连）。
  */
 const { httpsGetJson, beginSofaIpwoTick, getSofaIpwoStats } = require('../lib/httpProxyAgent');
+const sofaCurl = require('./tennisSofascoreCurl');
 
 const SCORE_LIVE_TYPES = new Set(['inprogress', 'live', 'interrupted', 'paused']);
 
@@ -139,25 +140,41 @@ async function throttle() {
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
 }
 
-async function sofaApiGet(path) {
+async function sofaApiGetNode(path) {
   const url = `${API_BASE}/${String(path).replace(/^\//, '')}`;
+  return httpsGetJson(url, {
+    scope: SOFA_SCOPE,
+    timeoutMs: REQUEST_TIMEOUT_MS,
+    headers: SOFA_HEADERS,
+  });
+}
+
+async function sofaApiGet(path) {
+  const apiPath = String(path).replace(/^\//, '');
+  const useCurl = sofaCurl.isEnabled();
   let lastErr = null;
   for (let attempt = 0; attempt < REQUEST_RETRIES; attempt += 1) {
     try {
       await throttle();
       lastRequestAt = Date.now();
-      return await httpsGetJson(url, {
-        scope: SOFA_SCOPE,
-        timeoutMs: REQUEST_TIMEOUT_MS,
-        headers: SOFA_HEADERS,
-      });
+      if (useCurl) {
+        return await sofaCurl.apiGet(apiPath, {
+          timeoutMs: REQUEST_TIMEOUT_MS,
+          referer: SOFA_HEADERS.Referer,
+        });
+      }
+      return await sofaApiGetNode(apiPath);
     } catch (err) {
       lastErr = err;
+      const msg = String(err?.message || err || '');
+      if (useCurl && /sofa worker exited|not running/i.test(msg)) {
+        sofaCurl.closeWorker();
+      }
       if (attempt + 1 >= REQUEST_RETRIES || !isRetryable(err)) break;
       await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
     }
   }
-  throw lastErr || new Error(`Sofascore request failed: ${url}`);
+  throw lastErr || new Error(`Sofascore request failed: ${apiPath}`);
 }
 
 async function fetchLiveTennisEvents() {

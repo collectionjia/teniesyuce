@@ -116,6 +116,11 @@ function getSofaIpwoStats() {
   return { last_tick: sofaIpwoStats.last_tick, total: sofaIpwoStats.total };
 }
 
+function bumpSofaIpwo() {
+  sofaIpwoStats.last_tick += 1;
+  sofaIpwoStats.total += 1;
+}
+
 function jobWantsProxy() {
   const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
   const key = job.includes('inplay') ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
@@ -200,4 +205,5 @@ module.exports = {
   httpsGetJson,
   beginSofaIpwoTick,
   getSofaIpwoStats,
+  bumpSofaIpwo,
 };
