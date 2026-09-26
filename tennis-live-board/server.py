@@ -967,7 +967,6 @@ class Handler(BaseHTTPRequestHandler):
 
 def main() -> None:
     warm_startup()
-    redis_host = _redis_host_public() or "(未配置 REDIS_URL)"
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"tennis-live-board http://{HOST}:{PORT}")
     print(f"  sync full → GET/POST /api/sync/full")
