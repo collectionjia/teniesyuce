@@ -652,6 +652,16 @@ export async function fetchCollectServiceStatus(params = {}) {
   return data
 }
 
+export async function fetchCollectBackgroundStatus() {
+  const { data } = await api.get('/admin/engines/collect/background')
+  return data
+}
+
+export async function clearCollectBackgroundLogs(kind = 'all') {
+  const { data } = await api.post('/admin/engines/collect/background/clear-logs', { kind })
+  return data
+}
+
 export async function runCollectFull(payload = {}) {
   const { data } = await api.post('/admin/engines/collect/full', { sport: 'tennis', ...payload })
   return data

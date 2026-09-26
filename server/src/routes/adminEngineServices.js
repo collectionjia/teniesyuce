@@ -27,6 +27,35 @@ router.get('/collect/status', async (req, res) => {
   }
 });
 
+router.get('/collect/background', async (_req, res) => {
+  try {
+    const tennisEngines = require('../services/tennisEngines');
+    const sofaScoreBackground = require('../services/sofaScoreBackground');
+    const polyOddsBackground = require('../services/polyOddsBackground');
+    res.json({
+      ok: true,
+      settings: tennisEngines.getCollectBackgroundSettings(),
+      score: sofaScoreBackground.statusPayload(),
+      odds: polyOddsBackground.statusPayload(),
+    });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.message });
+  }
+});
+
+router.post('/collect/background/clear-logs', async (req, res) => {
+  try {
+    const kind = String(req.body?.kind || 'all').toLowerCase();
+    const sofaScoreBackground = require('../services/sofaScoreBackground');
+    const polyOddsBackground = require('../services/polyOddsBackground');
+    if (kind === 'score' || kind === 'all') sofaScoreBackground.clearLogs();
+    if (kind === 'odds' || kind === 'all') polyOddsBackground.clearLogs();
+    res.json({ ok: true, kind });
+  } catch (e) {
+    res.status(e.status || 500).json({ ok: false, error: e.message });
+  }
+});
+
 router.post('/collect/full', async (req, res) => {
   try {
     const body = req.body || {};
