@@ -39,7 +39,7 @@ Thumbs.db
 *.tar.gz
 *.zip
 *.apk
-*.apk.*
+*.apk*
 docs/apk-extract/
 _board_extract/
 bbbbb/
