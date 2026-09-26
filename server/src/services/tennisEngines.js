@@ -703,34 +703,59 @@ function toPublicConfig(cfg) {
 }
 
 /**
- * 子进程代理环境。Top100：有 URL 则注入；无 URL 时不把 SOFA_*=空写下（避免盖掉子进程再读 monitor.env）。
- * 盘中强制直连（清掉代理键）。
+ * 拼 IPWO HTTP 代理 URL（与 Python tm.clients.proxy.ipwo_proxy_urls 一致）。
+ */
+function buildIpwoProxyUrl(ipwo = {}) {
+  const host = String(ipwo.host || process.env.IPWO_PROXY_HOST || 'us.ipwo.net').trim() || 'us.ipwo.net';
+  const port = String(ipwo.port || process.env.IPWO_PROXY_PORT || '7878').trim() || '7878';
+  let user = String(ipwo.user || process.env.IPWO_PROXY_USER || process.env.IPWO_USERNAME || '').trim();
+  const pass = String(ipwo.pass || process.env.IPWO_PROXY_PASS || process.env.IPWO_PASSWORD || '').trim();
+  const zone = String(ipwo.zone || process.env.IPWO_PROXY_ZONE || '').trim();
+  if (!user || !pass) return '';
+  if (zone && !user.includes('_custom_zone_') && !user.includes('_zone_')) {
+    user = `${user}_custom_zone_${zone.toUpperCase()}`;
+  }
+  const sess = String(ipwo.session || process.env.IPWO_PROXY_SESSION || '').trim();
+  if (sess && !user.includes('_sid_')) user = `${user}_sid_${sess}`;
+  const sticky = String(ipwo.stickyMin || process.env.IPWO_PROXY_STICKY_MIN || '').trim();
+  if (sticky && !user.includes('_time_')) user = `${user}_time_${parseInt(sticky, 10) || sticky}`;
+  return `http://${encodeURIComponent(user)}:${encodeURIComponent(pass)}@${host}:${port}`;
+}
+
+/**
+ * Top100：IPWO 或 SOFA_HTTP_PROXY；盘中强制直连。
+ * opts: { proxyUrl, ipwo: { host, port, user, pass, zone } }
  */
 function buildProxyProcessEnv(cfg, job = 'top100', opts = {}) {
   void cfg;
   const isInplay = String(job).toLowerCase().includes('inplay');
-  const url = String(opts.proxyUrl || process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
-  const clearIpwo = {
+  const ipwo = opts.ipwo && typeof opts.ipwo === 'object' ? opts.ipwo : {};
+  const fromIpwo = buildIpwoProxyUrl(ipwo);
+  // Top100：有 IPWO 凭证则优先 IPWO（避免残留静态 SOFA_HTTP_PROXY）
+  const url = String(fromIpwo || opts.proxyUrl || process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
+  const clearProxy = {
+    SOFA_HTTP_PROXY: '',
+    SOFA_HTTPS_PROXY: '',
+    HTTP_PROXY: '',
+    HTTPS_PROXY: '',
     IPWO_PROXY_HOST: '',
     IPWO_PROXY_PORT: '',
     IPWO_PROXY_USER: '',
     IPWO_PROXY_PASS: '',
     IPWO_PROXY_ZONE: '',
+    IPWO_PROXY_SESSION: '',
+    IPWO_PROXY_STICKY_MIN: '',
   };
   if (isInplay) {
     return {
       COLLECT_PROXY_JOB: 'inplay',
       COLLECT_TOP100_USE_PROXY: '0',
       COLLECT_INPLAY_USE_PROXY: '0',
-      SOFA_HTTP_PROXY: '',
-      SOFA_HTTPS_PROXY: '',
-      HTTP_PROXY: '',
-      HTTPS_PROXY: '',
-      ...clearIpwo,
+      ...clearProxy,
     };
   }
   if (url) {
-    return {
+    const out = {
       COLLECT_PROXY_JOB: 'top100',
       COLLECT_TOP100_USE_PROXY: '1',
       COLLECT_INPLAY_USE_PROXY: '0',
@@ -738,13 +763,20 @@ function buildProxyProcessEnv(cfg, job = 'top100', opts = {}) {
       SOFA_HTTPS_PROXY: url,
       HTTP_PROXY: url,
       HTTPS_PROXY: url,
-      ...clearIpwo,
     };
+    // 同步写入 IPWO_*，便于 Python sofa_proxy_map / 日志显示 mode=ipwo
+    if (ipwo.host || ipwo.user || process.env.IPWO_PROXY_USER) {
+      out.IPWO_PROXY_HOST = String(ipwo.host || process.env.IPWO_PROXY_HOST || 'us.ipwo.net');
+      out.IPWO_PROXY_PORT = String(ipwo.port || process.env.IPWO_PROXY_PORT || '7878');
+      out.IPWO_PROXY_USER = String(ipwo.user || process.env.IPWO_PROXY_USER || '');
+      out.IPWO_PROXY_PASS = String(ipwo.pass || process.env.IPWO_PROXY_PASS || '');
+      out.IPWO_PROXY_ZONE = String(ipwo.zone || process.env.IPWO_PROXY_ZONE || '');
+    }
+    return out;
   }
   return {
     COLLECT_PROXY_JOB: 'top100',
     COLLECT_INPLAY_USE_PROXY: '0',
-    ...clearIpwo,
   };
 }
 
@@ -1231,6 +1263,7 @@ module.exports = {
   writeConfig,
   toPublicConfig,
   buildProxyProcessEnv,
+  buildIpwoProxyUrl,
   getCollectBackgroundSettings,
   applyCollectBackgroundLoops,
   DEFAULT_CONFIG,

@@ -489,7 +489,16 @@ function buildBundlePayload(collect) {
 async function ensureProxyEnv(job = 'top100') {
   const cfg = await tennisEngines.getConfig();
   const proxyUrl = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
-  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, job, { proxyUrl }));
+  const ipwo = {
+    host: process.env.IPWO_PROXY_HOST || '',
+    port: process.env.IPWO_PROXY_PORT || '',
+    user: process.env.IPWO_PROXY_USER || '',
+    pass: process.env.IPWO_PROXY_PASS || '',
+    zone: process.env.IPWO_PROXY_ZONE || '',
+    session: process.env.IPWO_PROXY_SESSION || '',
+    stickyMin: process.env.IPWO_PROXY_STICKY_MIN || '',
+  };
+  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, job, { proxyUrl, ipwo }));
   const sofaCurl = require('./tennisSofascoreCurl');
   sofaCurl.closeWorker();
   sofaCurl.resetProbe();

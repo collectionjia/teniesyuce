@@ -225,29 +225,8 @@ function loadMonitorEnvForChild() {
   return { file, env };
 }
 
-/** Top100 代理 URL：process.env → 各 monitor.env* 里第一个非空 SOFA_HTTP_PROXY */
-function readSofaProxyFromEnvFile(filePath) {
-  try {
-    if (!filePath || !fs.existsSync(filePath)) return '';
-    for (const raw of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
-      const line = raw.trim();
-      if (!line || line.startsWith('#') || !line.includes('=')) continue;
-      const i = line.indexOf('=');
-      const key = line.slice(0, i).trim();
-      const val = line.slice(i + 1).trim().replace(/\r$/, '');
-      if (key === 'SOFA_HTTP_PROXY' || key === 'HTTP_PROXY') {
-        if (val) return val;
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  return '';
-}
-
-function resolveCollectProxyUrl() {
-  const fromProc = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
-  if (fromProc) return fromProc;
+/** 从 monitor.env* 读键；优先非空 */
+function readEnvKeysFromFiles(keys) {
   const appEnv = String(process.env.APP_ENV || '').trim().toLowerCase();
   const explicit = String(process.env.SOFA_MONITOR_ENV_FILE || '').trim();
   const candidates = [];
@@ -259,49 +238,64 @@ function resolveCollectProxyUrl() {
     candidates.push(path.join(MONITOR_DIR, 'monitor.env.prod'));
   }
   candidates.push(path.join(MONITOR_DIR, 'monitor.env'));
-  for (const p of candidates) {
-    const v = readSofaProxyFromEnvFile(p);
-    if (v) return v;
+  const out = {};
+  for (const key of keys) out[key] = '';
+  for (const filePath of candidates) {
+    try {
+      if (!filePath || !fs.existsSync(filePath)) continue;
+      for (const raw of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+        const line = raw.trim();
+        if (!line || line.startsWith('#') || !line.includes('=')) continue;
+        const i = line.indexOf('=');
+        const key = line.slice(0, i).trim();
+        const val = line.slice(i + 1).trim().replace(/\r$/, '');
+        if (keys.includes(key) && val && !out[key]) out[key] = val;
+      }
+    } catch {
+      /* ignore */
+    }
   }
-  return '';
+  return out;
 }
 
-/** 子进程代理环境：有 SOFA_HTTP_PROXY 时 Top100 走代理 */
+/** Top100：SOFA_HTTP_PROXY 或 IPWO_* → 代理 URL */
+function resolveCollectProxyOpts() {
+  const fromProc = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
+  const file = readEnvKeysFromFiles([
+    'SOFA_HTTP_PROXY',
+    'HTTP_PROXY',
+    'IPWO_PROXY_HOST',
+    'IPWO_PROXY_PORT',
+    'IPWO_PROXY_USER',
+    'IPWO_PROXY_PASS',
+    'IPWO_PROXY_ZONE',
+    'IPWO_PROXY_SESSION',
+    'IPWO_PROXY_STICKY_MIN',
+  ]);
+  const ipwo = {
+    host: process.env.IPWO_PROXY_HOST || file.IPWO_PROXY_HOST || '',
+    port: process.env.IPWO_PROXY_PORT || file.IPWO_PROXY_PORT || '',
+    user: process.env.IPWO_PROXY_USER || file.IPWO_PROXY_USER || '',
+    pass: process.env.IPWO_PROXY_PASS || file.IPWO_PROXY_PASS || '',
+    zone: process.env.IPWO_PROXY_ZONE || file.IPWO_PROXY_ZONE || '',
+    session: process.env.IPWO_PROXY_SESSION || file.IPWO_PROXY_SESSION || '',
+    stickyMin: process.env.IPWO_PROXY_STICKY_MIN || file.IPWO_PROXY_STICKY_MIN || '',
+  };
+  const proxyUrl = fromProc || file.SOFA_HTTP_PROXY || file.HTTP_PROXY || '';
+  return { proxyUrl, ipwo };
+}
+
+/** 子进程代理环境：Top100 走 IPWO / SOFA_HTTP_PROXY */
 async function proxyEnvForJob(job = 'top100') {
-  const proxyUrl = resolveCollectProxyUrl();
+  const opts = resolveCollectProxyOpts();
   try {
     const tennisEngines = require('./tennisEngines');
     const cfg = await tennisEngines.getConfig();
-    return tennisEngines.buildProxyProcessEnv(cfg, job, { proxyUrl });
+    return tennisEngines.buildProxyProcessEnv(cfg, job, opts);
   } catch (e) {
     console.warn('[tennis/collect] proxy config read failed:', e.message);
-    const isInplay = String(job).toLowerCase().includes('inplay');
-    if (isInplay) {
-      return {
-        COLLECT_PROXY_JOB: 'inplay',
-        COLLECT_TOP100_USE_PROXY: '0',
-        COLLECT_INPLAY_USE_PROXY: '0',
-        SOFA_HTTP_PROXY: '',
-        SOFA_HTTPS_PROXY: '',
-        HTTP_PROXY: '',
-        HTTPS_PROXY: '',
-      };
-    }
-    if (proxyUrl) {
-      return {
-        COLLECT_PROXY_JOB: 'top100',
-        COLLECT_TOP100_USE_PROXY: '1',
-        COLLECT_INPLAY_USE_PROXY: '0',
-        SOFA_HTTP_PROXY: proxyUrl,
-        SOFA_HTTPS_PROXY: proxyUrl,
-        HTTP_PROXY: proxyUrl,
-        HTTPS_PROXY: proxyUrl,
-      };
-    }
-    return {
-      COLLECT_PROXY_JOB: 'top100',
-      COLLECT_INPLAY_USE_PROXY: '0',
-    };
+    const tennisEngines = require('./tennisEngines');
+    return tennisEngines.buildProxyProcessEnv({}, job, opts);
   }
 }
 
