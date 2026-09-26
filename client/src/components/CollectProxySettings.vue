@@ -92,14 +92,9 @@ onMounted(load)
 
       <template v-if="!loading">
         <div class="grid gap-3 sm:grid-cols-2">
-          <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-            <span class="text-sm text-slate-700">Top100 全量采集走代理</span>
-            <input v-model="form.top100" type="checkbox" class="h-4 w-4" />
-          </label>
-          <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-            <span class="text-sm text-slate-700">盘中刷新走代理</span>
-            <input v-model="form.inplay_tick" type="checkbox" class="h-4 w-4" />
-          </label>
+          <p class="text-xs text-slate-500 sm:col-span-2">
+            Sofascore 采集统一经 IPWO 代理；Polymarket 仍直连。
+          </p>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2">

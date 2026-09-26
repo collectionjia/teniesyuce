@@ -135,6 +135,11 @@ app.listen(PORT, () => {
         console.error('[tennis/cache] startup failed:', err.message);
       }
       try {
+        await require('./services/tennisEngines').getConfig();
+      } catch (err) {
+        console.warn('[tennis/engines] preload config', err.message || err);
+      }
+      try {
         require('./services/sofaScoreBackground').startScoreLoop();
       } catch (err) {
         console.warn('[sofa-score] loop start failed', err.message || err);

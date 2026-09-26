@@ -380,6 +380,13 @@ const DEFAULT_CONFIG = {
       pass: '',
       zone: '',
     },
+    /** 后台比分/赔率刷新（管理员页配置，优先于 SOFA_SCORE_LOOP_MS / POLY_ODDS_LOOP_MS） */
+    background: {
+      score_enabled: true,
+      score_interval_sec: 30,
+      odds_enabled: true,
+      odds_interval_sec: 1,
+    },
   },
   condition: {
     enabled: false,
@@ -610,6 +617,77 @@ function normalizeBetting(betting) {
   return b;
 }
 
+function clampScoreIntervalSec(n, fallback = 30) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(600, Math.max(5, Math.round(v)));
+}
+
+function clampOddsIntervalSec(n, fallback = 1) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.min(60, Math.max(1, Math.round(v)));
+}
+
+function normalizeCollectBackground(bg = {}, baseBg = DEFAULT_CONFIG.collect.background) {
+  const inBg = bg && typeof bg === 'object' ? bg : {};
+  const base = baseBg || DEFAULT_CONFIG.collect.background;
+  return {
+    score_enabled: inBg.score_enabled != null ? !!inBg.score_enabled : base.score_enabled !== false,
+    score_interval_sec: clampScoreIntervalSec(
+      inBg.score_interval_sec != null ? inBg.score_interval_sec : base.score_interval_sec,
+    ),
+    odds_enabled: inBg.odds_enabled != null ? !!inBg.odds_enabled : base.odds_enabled !== false,
+    odds_interval_sec: clampOddsIntervalSec(
+      inBg.odds_interval_sec != null ? inBg.odds_interval_sec : base.odds_interval_sec,
+    ),
+  };
+}
+
+let collectBackgroundMem = normalizeCollectBackground();
+
+function syncCollectBackgroundMem(collect) {
+  collectBackgroundMem = normalizeCollectBackground(collect?.background);
+  return collectBackgroundMem;
+}
+
+/** 同步读取后台比分/赔率循环配置（由 getConfig/setConfig 刷新） */
+function getCollectBackgroundSettings() {
+  const envScoreMs = Number(process.env.SOFA_SCORE_LOOP_MS);
+  const envOddsMs = Number(process.env.POLY_ODDS_LOOP_MS);
+  const envScoreEnabled = String(process.env.SOFA_SCORE_LOOP || '1').trim().toLowerCase();
+  const envOddsEnabled = String(process.env.POLY_ODDS_LOOP || '1').trim().toLowerCase();
+  const bg = collectBackgroundMem;
+  const scoreIntervalMs = Number.isFinite(envScoreMs) && envScoreMs >= 5000
+    ? envScoreMs
+    : bg.score_interval_sec * 1000;
+  const oddsIntervalMs = Number.isFinite(envOddsMs) && envOddsMs >= 200
+    ? envOddsMs
+    : bg.odds_interval_sec * 1000;
+  return {
+    score_enabled: !['0', 'false', 'no', 'off'].includes(envScoreEnabled) && bg.score_enabled !== false,
+    score_interval_ms: scoreIntervalMs,
+    score_interval_sec: bg.score_interval_sec,
+    odds_enabled: !['0', 'false', 'no', 'off'].includes(envOddsEnabled) && bg.odds_enabled !== false,
+    odds_interval_ms: oddsIntervalMs,
+    odds_interval_sec: bg.odds_interval_sec,
+  };
+}
+
+function applyCollectBackgroundLoops(cfg) {
+  syncCollectBackgroundMem(cfg?.collect);
+  try {
+    require('./sofaScoreBackground').restartScoreLoop?.();
+  } catch (e) {
+    console.warn('[tennis/engines] restart score loop', e.message);
+  }
+  try {
+    require('./polyOddsBackground').restartOddsLoop?.();
+  } catch (e) {
+    console.warn('[tennis/engines] restart odds loop', e.message);
+  }
+}
+
 function normalizeCollect(c = {}) {
   const base = DEFAULT_CONFIG.collect;
   const fields = {
@@ -634,6 +712,7 @@ function normalizeCollect(c = {}) {
       pass: String(proxyIn.pass != null ? proxyIn.pass : baseProxy.pass || '').trim(),
       zone: String(proxyIn.zone != null ? proxyIn.zone : baseProxy.zone || '').trim(),
     },
+    background: normalizeCollectBackground(c.background, base.background),
   };
 }
 
@@ -654,8 +733,9 @@ function buildProxyProcessEnv(cfg, job = 'top100') {
   const isInplay = String(job).toLowerCase().includes('inplay');
   const env = {
     COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-    COLLECT_TOP100_USE_PROXY: p.top100 !== false ? '1' : '0',
-    COLLECT_INPLAY_USE_PROXY: p.inplay_tick !== false ? '1' : '0',
+    // Sofascore 采集统一经 IPWO；开关仅保留兼容旧配置/UI，不再关闭代理
+    COLLECT_TOP100_USE_PROXY: '1',
+    COLLECT_INPLAY_USE_PROXY: '1',
   };
   if (p.host) env.IPWO_PROXY_HOST = String(p.host);
   if (p.port) env.IPWO_PROXY_PORT = String(p.port);
@@ -764,10 +844,13 @@ async function getConfig() {
     }
     const cfg = normalizeConfig(parsed || JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
     await enrichBettingAccount(cfg);
+    syncCollectBackgroundMem(cfg.collect);
     return cfg;
   } catch (e) {
     console.error('[tennis/engines] getConfig', e.message);
-    return normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+    const cfg = normalizeConfig(JSON.parse(JSON.stringify(DEFAULT_CONFIG)));
+    syncCollectBackgroundMem(cfg.collect);
+    return cfg;
   }
 }
 
@@ -976,6 +1059,7 @@ async function setConfig(patch) {
     throw err;
   }
   await mirrorRedis(next);
+  applyCollectBackgroundLoops(next);
   return next;
 }
 
@@ -990,6 +1074,7 @@ async function writeConfig(cfg) {
     throw err;
   }
   await mirrorRedis(next);
+  applyCollectBackgroundLoops(next);
   return next;
 }
 
@@ -1153,6 +1238,8 @@ module.exports = {
   writeConfig,
   toPublicConfig,
   buildProxyProcessEnv,
+  getCollectBackgroundSettings,
+  applyCollectBackgroundLoops,
   DEFAULT_CONFIG,
   CONFIG_KEY,
   BUCKET_KEYS,

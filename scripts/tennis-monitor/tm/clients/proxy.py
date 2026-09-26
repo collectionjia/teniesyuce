@@ -78,15 +78,15 @@ def optional_proxy() -> dict[str, str]:
 
 def proxies_for(scope: str = "Sofascore", *, job: str | None = None) -> dict[str, str] | None:
     """
-    按任务开关返回 proxies。
-    - 开关关：强制直连（返回 None）
-    - 开关开 + Sofascore：必须有代理
-    - 开关开 + Polymarket：有代理用代理，否则直连
+    Sofascore 统一经 IPWO；Polymarket 有代理则用、否则直连。
     """
+    scope_l = str(scope).lower()
+    if scope_l == "polymarket":
+        return optional_proxy() or None
+    if scope_l == "sofascore":
+        return require_proxy(scope)
     if not use_proxy_for_job(job):
         return None
-    if str(scope).lower() == "polymarket":
-        return optional_proxy() or None
     return require_proxy(scope)
 
 

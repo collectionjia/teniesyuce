@@ -490,6 +490,8 @@ async function ensureProxyEnv(job = 'top100') {
   const cfg = await tennisEngines.getConfig();
   const env = tennisEngines.buildProxyProcessEnv(cfg, job);
   Object.assign(process.env, env);
+  // Sofascore 段统一走 IPWO（PM 段仍 scope=Polymarket 直连）
+  process.env.COLLECT_TOP100_USE_PROXY = '1';
 }
 
 async function runFullCollect(opts = {}) {

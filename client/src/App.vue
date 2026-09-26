@@ -13,6 +13,7 @@ import TennisSettledResults from './components/TennisSettledResults.vue'
 import Dota2Board from './components/Dota2Board.vue'
 import EngineApiKeys from './components/EngineApiKeys.vue'
 import CollectProxySettings from './components/CollectProxySettings.vue'
+import CollectIntervalSettings from './components/CollectIntervalSettings.vue'
 import EngineServicesCenter from './components/EngineServicesCenter.vue'
 import BtcApiKeysSettings from './components/BtcApiKeysSettings.vue'
 import WalletSettings from './components/WalletSettings.vue'
@@ -893,7 +894,7 @@ const headerTitle = computed(() => {
   const map = {
     user: { home: '赛事推荐', product: '产品详情', mine: '我的', help: '帮助手册' },
     agent: { overview: '分销概览', shop: '首页', product: '产品详情', clients: '我的客户', mine: '我的订阅', help: '帮助手册' },
-    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'tennis-settled-results': '完赛网球', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
+    admin: { overview: '平台概览', shop: '首页', manage: '管理中心', product: '产品详情', products: '产品管理', 'product-categories': '产品分类', agents: '代理管理', orders: '订单中心', users: '用户管理', mine: '我的订阅', help: '帮助手册', 'tennis-collect': '采集引擎', 'tennis-condition': '条件引擎', 'tennis-stop': '止损引擎', 'tennis-docks-editor': '虚拟日列表', 'tennis-top100': 'Top100 宽屏', 'tennis-settled-results': '完赛网球', 'engine-services': '五引擎服务', 'scheduler-center': '调度中心', 'engine-api-keys': '引擎 API Key', 'collect-proxy': '采集代理', 'collect-interval': '采集频率', 'btc-board': 'BTC 数据看板', 'btc-api-keys': 'BTC API 密钥', 'redeem-codes': '兑换码', 'daily-report': '运营日报', 'site-settings': '站点设置' },
   }
   return (map[role.value] && map[role.value][view.value]) || ''
 })
@@ -935,7 +936,7 @@ const paymentStatusStyle = computed(() => ({
   cancelled: { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '—' },
   error: { ring: 'bg-danger/10 ring-danger/20', icon: 'text-danger', glyph: '!' },
 }[paymentResult.status] || { ring: 'bg-slate-100 ring-slate-200', icon: 'text-slate-400', glyph: '?' }))
-const adminManageViews = ['manage', 'products', 'product-categories', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'collect-proxy', 'tennis-monitor', 'btc-board', 'btc-api-keys', 'redeem-codes', 'daily-report', 'site-settings']
+const adminManageViews = ['manage', 'products', 'product-categories', 'agents', 'orders', 'users', 'tennis-collect', 'tennis-condition', 'tennis-stop', 'engine-services', 'scheduler-center', 'engine-api-keys', 'collect-proxy', 'collect-interval', 'tennis-monitor', 'btc-board', 'btc-api-keys', 'redeem-codes', 'daily-report', 'site-settings']
 /** 模拟数据编辑：独立全屏页（?page=docks-editor） */
 const standaloneDocksEditor = ref(false)
 const standaloneDocksDate = ref('')
@@ -1084,7 +1085,8 @@ const adminManageSections = [
     desc: '站点与其它数据看板配置',
     items: [
       { view: 'site-settings', label: '站点设置', desc: '兑换码购买链接等前台配置', icon: 'link', color: 'from-slate-500 to-slate-700' },
-      { view: 'collect-proxy', label: '采集代理', desc: 'IPWO 账号 · Top100/盘中开关', icon: 'link', color: 'from-violet-500 to-indigo-600' },
+      { view: 'collect-proxy', label: '采集代理', desc: 'IPWO 账号 · Sofascore 统一走代理', icon: 'link', color: 'from-violet-500 to-indigo-600' },
+      { view: 'collect-interval', label: '采集频率', desc: '盘中比分 / PM 赔率刷新间隔', icon: 'chart', color: 'from-emerald-500 to-teal-600' },
       { view: 'btc-board', label: 'BTC 数据看板', desc: '数据同步开关与看板预览', icon: 'chart', color: 'from-cyan-500 to-blue-600' },
       { view: 'btc-api-keys', label: 'BTC API 密钥', desc: 'Alchemy · Polymarket QUICK 账号', icon: 'link', color: 'from-amber-500 to-orange-600' },
     ],
@@ -4554,6 +4556,13 @@ function productEmbedUrl(product) {
                 <span v-html="icon('back')"></span>返回管理中心
               </button>
               <CollectProxySettings />
+            </section>
+
+            <section v-else-if="role==='admin' && view==='collect-interval'" class="space-y-3 fade-up">
+              <button @click="go('manage')" class="text-sm text-primary-700 flex items-center gap-1 px-1">
+                <span v-html="icon('back')"></span>返回管理中心
+              </button>
+              <CollectIntervalSettings />
             </section>
 
             <section v-else-if="role==='admin' && view==='btc-board'" class="space-y-3 fade-up">

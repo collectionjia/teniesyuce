@@ -98,11 +98,12 @@ class HttpProxyAgent extends https.Agent {
   }
 }
 
-/** Polymarket 默认允许无代理直连；其它 scope 未配置代理时抛错（禁止直连）。
- * 管理员可关任务代理：COLLECT_TOP100_USE_PROXY / COLLECT_INPLAY_USE_PROXY=0 时强制直连。
+/** Polymarket 默认允许无代理直连；Sofascore 必须经 IPWO；其它 scope 未配置代理时抛错。
+ * 非 Sofascore 任务可由 COLLECT_TOP100_USE_PROXY / COLLECT_INPLAY_USE_PROXY=0 强制直连。
  */
 const _agents = new Map();
 const DIRECT_ALLOWED = new Set(['Polymarket', 'polymarket']);
+const SOFA_SCOPE = 'Sofascore';
 
 function jobWantsProxy() {
   const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
@@ -112,7 +113,8 @@ function jobWantsProxy() {
 }
 
 function requireProxyAgent(scope = '外网') {
-  if (!jobWantsProxy()) {
+  const scopeStr = String(scope);
+  if (scopeStr !== SOFA_SCOPE && !jobWantsProxy()) {
     const key = `${scope}|forced-direct`;
     _agents.set(key, undefined);
     return undefined;

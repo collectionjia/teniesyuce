@@ -1,6 +1,6 @@
 /**
  * 后台刷新 Redis Polymarket 赔率：网球 inplay + Dota2 + NFL。
- * 启动：startOddsLoop()；POLY_ODDS_LOOP=0 关闭；POLY_ODDS_LOOP_MS 间隔（默认 1000）。
+ * 间隔：引擎配置 collect.background.odds_interval_sec（默认 1s）；POLY_ODDS_LOOP_MS 可覆盖。
  */
 const tennisPolymarket = require('./tennisPolymarket');
 const dota2PmCollect = require('./dota2PmCollect');
@@ -8,14 +8,25 @@ const dota2PmCollect = require('./dota2PmCollect');
 let busy = false;
 let intervalHandle = null;
 
+function loopSettings() {
+  try {
+    return require('./tennisEngines').getCollectBackgroundSettings();
+  } catch {
+    const n = Number(process.env.POLY_ODDS_LOOP_MS);
+    return {
+      odds_enabled: !['0', 'false', 'no', 'off'].includes(String(process.env.POLY_ODDS_LOOP || '1').toLowerCase()),
+      odds_interval_ms: Number.isFinite(n) && n >= 200 ? n : 1000,
+    };
+  }
+}
+
 function loopEnabled() {
-  const v = String(process.env.POLY_ODDS_LOOP || '1').trim().toLowerCase();
-  return !['0', 'false', 'no', 'off'].includes(v);
+  return loopSettings().odds_enabled !== false;
 }
 
 function loopIntervalMs() {
-  const n = Number(process.env.POLY_ODDS_LOOP_MS);
-  return Number.isFinite(n) && n >= 200 ? n : 1000;
+  const ms = loopSettings().odds_interval_ms;
+  return Number.isFinite(ms) && ms >= 200 ? ms : 1000;
 }
 
 /**
@@ -87,10 +98,16 @@ async function tickOnce() {
   }
 }
 
+function stopOddsLoop() {
+  if (!intervalHandle) return;
+  clearInterval(intervalHandle);
+  intervalHandle = null;
+}
+
 function startOddsLoop() {
   if (intervalHandle) return;
   if (!loopEnabled()) {
-    console.log('[poly-odds] loop disabled (POLY_ODDS_LOOP=0)');
+    console.log('[poly-odds] loop disabled');
     return;
   }
   const intervalMs = loopIntervalMs();
@@ -105,15 +122,15 @@ function startOddsLoop() {
   }, 5_000);
 }
 
-function stopOddsLoop() {
-  if (!intervalHandle) return;
-  clearInterval(intervalHandle);
-  intervalHandle = null;
+function restartOddsLoop() {
+  stopOddsLoop();
+  startOddsLoop();
 }
 
 module.exports = {
   refreshAllOnce,
   startOddsLoop,
   stopOddsLoop,
+  restartOddsLoop,
   tickOnce,
 };

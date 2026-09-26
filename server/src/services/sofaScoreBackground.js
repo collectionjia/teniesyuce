@@ -1,20 +1,31 @@
 /**
  * 后台刷新 Redis 网球 inplay Sofascore 比分（IPWO）。
- * 启动：startScoreLoop()；SOFA_SCORE_LOOP=0 关闭；SOFA_SCORE_LOOP_MS 间隔（默认 30000）。
+ * 间隔：引擎配置 collect.background.score_interval_sec（默认 30s）；SOFA_SCORE_LOOP_MS 可覆盖。
  */
 const tennisSofascore = require('./tennisSofascore');
 
 let busy = false;
 let intervalHandle = null;
 
+function loopSettings() {
+  try {
+    return require('./tennisEngines').getCollectBackgroundSettings();
+  } catch {
+    const n = Number(process.env.SOFA_SCORE_LOOP_MS);
+    return {
+      score_enabled: !['0', 'false', 'no', 'off'].includes(String(process.env.SOFA_SCORE_LOOP || '1').toLowerCase()),
+      score_interval_ms: Number.isFinite(n) && n >= 5000 ? n : 30000,
+    };
+  }
+}
+
 function loopEnabled() {
-  const v = String(process.env.SOFA_SCORE_LOOP || '1').trim().toLowerCase();
-  return !['0', 'false', 'no', 'off'].includes(v);
+  return loopSettings().score_enabled !== false;
 }
 
 function loopIntervalMs() {
-  const n = Number(process.env.SOFA_SCORE_LOOP_MS);
-  return Number.isFinite(n) && n >= 5000 ? n : 30000;
+  const ms = loopSettings().score_interval_ms;
+  return Number.isFinite(ms) && ms >= 5000 ? ms : 30000;
 }
 
 async function tickOnce() {
@@ -45,10 +56,16 @@ async function tickOnce() {
   }
 }
 
+function stopScoreLoop() {
+  if (!intervalHandle) return;
+  clearInterval(intervalHandle);
+  intervalHandle = null;
+}
+
 function startScoreLoop() {
   if (intervalHandle) return;
   if (!loopEnabled()) {
-    console.log('[sofa-score] loop disabled (SOFA_SCORE_LOOP=0)');
+    console.log('[sofa-score] loop disabled');
     return;
   }
   const intervalMs = loopIntervalMs();
@@ -62,10 +79,9 @@ function startScoreLoop() {
   }, 8_000);
 }
 
-function stopScoreLoop() {
-  if (!intervalHandle) return;
-  clearInterval(intervalHandle);
-  intervalHandle = null;
+function restartScoreLoop() {
+  stopScoreLoop();
+  startScoreLoop();
 }
 
-module.exports = { startScoreLoop, stopScoreLoop, tickOnce };
+module.exports = { startScoreLoop, stopScoreLoop, restartScoreLoop, tickOnce };

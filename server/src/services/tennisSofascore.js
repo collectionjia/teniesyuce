@@ -151,9 +151,8 @@ async function ensureInplayProxyEnv() {
   const cfg = await tennisEngines.getConfig();
   Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, 'inplay'));
   process.env.COLLECT_PROXY_JOB = 'inplay';
-  if (!String(process.env.COLLECT_INPLAY_USE_PROXY || '').trim()) {
-    process.env.COLLECT_INPLAY_USE_PROXY = '1';
-  }
+  // Sofascore 统一走 IPWO；不被盘中 PM 直连 tick 的 COLLECT_INPLAY_USE_PROXY=0 污染
+  process.env.COLLECT_INPLAY_USE_PROXY = '1';
 }
 
 /**
