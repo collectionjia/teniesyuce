@@ -56,6 +56,8 @@ def is_ended_match(match: dict[str, Any] | None) -> bool:
 def group_scheduled(events: list[dict]) -> dict[str, Any]:
     groups: dict[str, list[dict]] = {}
     for ev in events:
+        if not isinstance(ev, dict):
+            continue
         key = ev.get("tournament") or ev.get("tournamentShort") or "Other"
         groups.setdefault(str(key), []).append(ev)
     tournaments = [{"name": name, "events": items} for name, items in groups.items()]
@@ -167,10 +169,13 @@ def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
     except ImportError:
         return {"ok": False, "error": "缺少 redis 包，请 pip install redis"}
     try:
-        client = redis.from_url(url, decode_responses=True)
+        client = redis.from_url(
+            url,
+            decode_responses=True,
+            socket_connect_timeout=15,
+            socket_timeout=60,
+        )
         payload = json.dumps(bundle, ensure_ascii=False)
-        client.set(BUNDLE_KEY, payload, ex=TTL_SEC)
-        client.set(META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
         # 附属 meta（三桶共享）
         meta = {
             "fetched_at": bundle.get("fetched_at"),
@@ -181,14 +186,15 @@ def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
             "eloByEvent": bundle.get("eloByEvent") or {},
             "birthYearByPlayer": bundle.get("birthYearByPlayer") or {},
         }
-        client.set(META_TODAY_KEY, json.dumps(meta, ensure_ascii=False), ex=TTL_SEC)
-        # 按状态粗拆三桶（强者 Top100 由 Node split 再精修；此处保证键存在）
+        # 按状态粗拆三桶
         events = []
         for t in (bundle.get("scheduled") or {}).get("tournaments") or []:
             for e in t.get("events") or []:
-                events.append(e)
+                if isinstance(e, dict):
+                    events.append(e)
         for e in (bundle.get("live") or {}).get("matches") or []:
-            events.append(e)
+            if isinstance(e, dict):
+                events.append(e)
         live_types = _LIVE_TYPES
         prematch_ev, inplay_ev, settled_ev = [], [], []
         for e in events:
@@ -229,12 +235,18 @@ def write_bundle_redis(bundle: dict[str, Any]) -> dict[str, Any]:
         pre["scheduled"] = group_scheduled(prematch_ev)
         inp = _shell(inplay_ev, "tennis-inplay", True)
         stl = _shell(settled_ev, "tennis-settled", True)
-        client.set(PREMATCH_BUNDLE_KEY, json.dumps(pre, ensure_ascii=False), ex=TTL_SEC)
-        client.set(PREMATCH_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
-        client.set(INPLAY_BUNDLE_KEY, json.dumps(inp, ensure_ascii=False), ex=TTL_SEC)
-        client.set(INPLAY_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
-        client.set(SETTLED_BUNDLE_KEY, json.dumps(stl, ensure_ascii=False), ex=TTL_SEC)
-        client.set(SETTLED_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+
+        pipe = client.pipeline(transaction=False)
+        pipe.set(BUNDLE_KEY, payload, ex=TTL_SEC)
+        pipe.set(META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        pipe.set(META_TODAY_KEY, json.dumps(meta, ensure_ascii=False), ex=TTL_SEC)
+        pipe.set(PREMATCH_BUNDLE_KEY, json.dumps(pre, ensure_ascii=False), ex=TTL_SEC)
+        pipe.set(PREMATCH_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        pipe.set(INPLAY_BUNDLE_KEY, json.dumps(inp, ensure_ascii=False), ex=TTL_SEC)
+        pipe.set(INPLAY_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        pipe.set(SETTLED_BUNDLE_KEY, json.dumps(stl, ensure_ascii=False), ex=TTL_SEC)
+        pipe.set(SETTLED_META_KEY, str(bundle.get("fetched_at") or ""), ex=TTL_SEC)
+        pipe.execute()
         return {
             "ok": True,
             "key": BUNDLE_KEY,
@@ -315,7 +327,15 @@ def _redis_client():
     except ImportError:
         return None, {"ok": False, "error": "缺少 redis 包，请 pip install redis"}
     try:
-        return redis.from_url(url, decode_responses=True), None
+        return (
+            redis.from_url(
+                url,
+                decode_responses=True,
+                socket_connect_timeout=10,
+                socket_timeout=30,
+            ),
+            None,
+        )
     except Exception as exc:
         return None, {"ok": False, "error": str(exc)}
 
@@ -329,7 +349,13 @@ def read_live_bundle_redis() -> dict[str, Any]:
         raw = client.get(INPLAY_BUNDLE_KEY)
         if not raw:
             return {"ok": True, "bundle": None, "key": INPLAY_BUNDLE_KEY}
-        return {"ok": True, "bundle": json.loads(raw), "key": INPLAY_BUNDLE_KEY}
+        bundle = json.loads(raw)
+        # 少数写入把 JSON 又当字符串塞进 Redis，loads 一次仍是 str
+        if isinstance(bundle, str):
+            bundle = json.loads(bundle)
+        if not isinstance(bundle, dict):
+            return {"ok": False, "error": f"inplay bundle 类型异常: {type(bundle).__name__}"}
+        return {"ok": True, "bundle": bundle, "key": INPLAY_BUNDLE_KEY}
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
@@ -506,9 +532,16 @@ def persist_live_collect(collect: dict[str, Any]) -> dict[str, Any]:
     match_date = collect.get("date") or today_bj()
     live_bundle = build_live_bundle_payload(collect)
     prev = read_live_bundle_redis()
-    prev_bundle = (prev.get("bundle") if prev.get("ok") else None) or {}
+    prev_bundle = prev.get("bundle") if prev.get("ok") else None
+    if isinstance(prev_bundle, str):
+        try:
+            prev_bundle = json.loads(prev_bundle)
+        except Exception:
+            prev_bundle = None
+    if not isinstance(prev_bundle, dict):
+        prev_bundle = {}
     prev_poly = prev_bundle.get("polymarketByEvent") or {}
-    if prev_poly:
+    if isinstance(prev_poly, dict) and prev_poly:
         live_bundle["polymarketByEvent"] = prev_poly
         if prev_bundle.get("odds_updated_at"):
             live_bundle["odds_updated_at"] = prev_bundle["odds_updated_at"]
@@ -525,5 +558,5 @@ def persist_live_collect(collect: dict[str, Any]) -> dict[str, Any]:
         "bundle_file": live_path.name if live_path else None,
         "bundle_path": str(live_path) if live_path else None,
         "events": len(collect.get("events") or []),
-        "redis": redis_result,
+        "redis": redis_result if isinstance(redis_result, dict) else {"ok": False, "error": str(redis_result)},
     }

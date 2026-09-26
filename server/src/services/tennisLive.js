@@ -116,8 +116,8 @@ function applyServiceEvent(target, source) {
   if (source.statusType != null) next.statusType = source.statusType;
   const scoreText = buildScoreText(source);
   if (scoreText) next.scoreText = scoreText;
-  const hs = source.home_score ?? source.homeScore;
-  const as = source.away_score ?? source.awayScore;
+  const hs = source.homeScore ?? source.home_score;
+  const as = source.awayScore ?? source.away_score;
   if (hs != null && typeof hs === 'object') next.homeScore = hs;
   else {
     const hvn = scoreVal(hs);
@@ -128,8 +128,13 @@ function applyServiceEvent(target, source) {
     const avn = scoreVal(as);
     if (avn != null) next.awayScore = avn;
   }
-  if (next.homeScore != null) next.home_score = next.homeScore;
-  if (next.awayScore != null) next.away_score = next.awayScore;
+  // 有 period 时 home_score 保持 null，避免被写成盘数 0
+  const hasPeriods = (obj) => obj && typeof obj === 'object'
+    && ['period1', 'period2', 'period3', 'period4', 'period5'].some((k) => obj[k] != null);
+  if (hasPeriods(next.homeScore)) next.home_score = null;
+  else if (next.homeScore != null) next.home_score = next.homeScore;
+  if (hasPeriods(next.awayScore)) next.away_score = null;
+  else if (next.awayScore != null) next.away_score = next.awayScore;
   return next;
 }
 

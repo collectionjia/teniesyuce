@@ -35,6 +35,10 @@ def _load_board_env() -> None:
             if key and key not in os.environ:
                 os.environ[key] = val
         break
+    # 看板推送可单独指定 Redis，避免写错测试库
+    board_redis = (os.environ.get("SOFA_BOARD_REDIS_URL") or "").strip()
+    if board_redis:
+        os.environ["REDIS_URL"] = board_redis
 
 
 _load_board_env()
@@ -63,8 +67,8 @@ from tm.enrich import _event_tour, _is_ended, tour_level_label  # noqa: E402
 
 HOST = os.environ.get("SOFA_BOARD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SOFA_BOARD_PORT", "8765"))
-# 可选：请求头 X-Board-Token 或 ?token=；未配置则不校验
-SYNC_TOKEN = (os.environ.get("SOFA_BOARD_SYNC_TOKEN") or os.environ.get("SOFA_MONITOR_TOKEN") or "").strip()
+# 仅显式配置 SOFA_BOARD_SYNC_TOKEN 时校验；不沿用 SOFA_MONITOR_TOKEN（本地看板按钮否则会 unauthorized）
+SYNC_TOKEN = (os.environ.get("SOFA_BOARD_SYNC_TOKEN") or "").strip()
 TOP_N = 100
 CACHE_DIR = ROOT / ".cache"
 BOARD_FILE = CACHE_DIR / "board.json"
@@ -641,9 +645,10 @@ def warm_startup() -> None:
 
 
 def _board_to_collect(board: dict[str, Any]) -> dict[str, Any]:
+    events = [_normalize_match_scores(dict(e)) for e in (board.get("events") or []) if isinstance(e, dict)]
     return {
         "date": board.get("date") or today_bj(),
-        "events": list(board.get("events") or []),
+        "events": events,
         "top100": False,
         "rankingsBoard": {
             "atp": board.get("atp") or [],
@@ -655,33 +660,84 @@ def _board_to_collect(board: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def sync_full_to_redis(*, force_ranks: bool = False) -> dict[str, Any]:
-    """全量：拉 500/1000 未结束 → 写 tennis:bundle:full + 三桶。"""
-    board = get_board(force=True, force_ranks=force_ranks)
+def _normalize_match_scores(ev: dict[str, Any]) -> dict[str, Any]:
+    """推 Redis 前：有 period 盘局时清掉误导性的 home_score=盘数 current。"""
+    hs = ev.get("homeScore")
+    as_ = ev.get("awayScore")
+    if isinstance(hs, dict) and any(hs.get(f"period{i}") is not None for i in range(1, 6)):
+        ev["home_score"] = None
+    if isinstance(as_, dict) and any(as_.get(f"period{i}") is not None for i in range(1, 6)):
+        ev["away_score"] = None
+    if not ev.get("scoreText") and isinstance(hs, dict) and isinstance(as_, dict):
+        parts = []
+        for key in ("period1", "period2", "period3", "period4", "period5"):
+            if hs.get(key) is not None and as_.get(key) is not None:
+                parts.append(f"{hs[key]}-{as_[key]}")
+        if parts:
+            ev["scoreText"] = " ".join(parts)
+    return ev
+
+
+def sync_full_to_redis(*, force: bool = False, force_ranks: bool = False) -> dict[str, Any]:
+    """全量推 Redis。默认用内存/磁盘缓存（快）；?refresh=1 才重拉 SofaScore。"""
+    used_cache = False
+    if not force and not force_ranks:
+        with _cache_lock:
+            board = _cache.get("data")
+        if board and board.get("ok") and (board.get("events") is not None):
+            used_cache = True
+        else:
+            board = None
+    else:
+        board = None
+    if board is None:
+        board = get_board(force=True, force_ranks=force_ranks)
     if not board.get("ok"):
         return {"ok": False, "error": board.get("error") or "board failed", "board": board}
     collect = _board_to_collect(board)
     redis_out = persist_collect_bundle(collect)
+    redis_info = redis_out.get("redis") if isinstance(redis_out.get("redis"), dict) else {}
     return {
-        "ok": bool((redis_out.get("redis") or {}).get("ok")),
+        "ok": bool(redis_info.get("ok")),
         "mode": "full",
+        "cached": used_cache,
         "date": collect.get("date"),
         "events": len(collect.get("events") or []),
         "summary": board.get("summary"),
-        "redis": redis_out.get("redis"),
+        "redis": redis_info,
         "bundle_file": redis_out.get("bundle_file"),
         "redis_url_host": _redis_host_public(),
+        "error": None
+        if redis_info.get("ok")
+        else (redis_info.get("error") or redis_info.get("reason") or "redis write failed"),
     }
 
 
-def sync_live_to_redis(*, force: bool = True) -> dict[str, Any]:
-    """高频：只刷新进行中比分 → 写 tennis:bundle:inplay。"""
-    live_res = refresh_live_board(force=force)
-    if not live_res.get("ok"):
-        return {"ok": False, "error": live_res.get("error") or "live refresh failed", "live": live_res}
-    with _cache_lock:
-        board = _cache.get("data") or {}
-    live_events = list(live_res.get("live") or board.get("live") or [])
+def sync_live_to_redis(*, force: bool = False) -> dict[str, Any]:
+    """高频推 inplay。默认推当前缓存 live；?refresh=1 先刷比分再推。"""
+    used_cache = False
+    live_res: dict[str, Any] | None = None
+    if force:
+        live_res = refresh_live_board(force=True)
+        if not live_res.get("ok"):
+            return {"ok": False, "error": live_res.get("error") or "live refresh failed", "live": live_res}
+        live_events = list(live_res.get("live") or [])
+        with _cache_lock:
+            board = _cache.get("data") or {}
+    else:
+        with _cache_lock:
+            board = _cache.get("data") or {}
+        live_events = list(board.get("live") or [])
+        if not live_events and not board.get("ok"):
+            live_res = refresh_live_board(force=True)
+            if not live_res.get("ok"):
+                return {"ok": False, "error": live_res.get("error") or "live refresh failed", "live": live_res}
+            live_events = list(live_res.get("live") or [])
+            with _cache_lock:
+                board = _cache.get("data") or {}
+        else:
+            used_cache = True
+    live_events = [_normalize_match_scores(dict(e)) for e in live_events if isinstance(e, dict)]
     collect = {
         "date": board.get("date") or today_bj(),
         "events": live_events,
@@ -690,16 +746,19 @@ def sync_live_to_redis(*, force: bool = True) -> dict[str, Any]:
         "filter_conditions": {"tier": "500_1000", "live_only": True},
     }
     redis_out = persist_live_collect(collect)
+    redis_info = redis_out.get("redis") if isinstance(redis_out.get("redis"), dict) else {}
     return {
-        "ok": bool((redis_out.get("redis") or {}).get("ok")),
+        "ok": bool(redis_info.get("ok")),
         "mode": "live",
+        "cached": used_cache,
         "date": collect.get("date"),
         "events": len(live_events),
-        "summary": live_res.get("summary") or board.get("summary"),
-        "redis": redis_out.get("redis"),
+        "summary": (live_res or {}).get("summary") if isinstance(live_res, dict) else board.get("summary"),
+        "redis": redis_info,
         "bundle_file": redis_out.get("bundle_file"),
-        "live_refreshed_at": live_res.get("live_refreshed_at"),
+        "live_refreshed_at": (live_res or {}).get("live_refreshed_at") if isinstance(live_res, dict) else None,
         "redis_url_host": _redis_host_public(),
+        "error": None if redis_info.get("ok") else (redis_info.get("error") or redis_info.get("reason") or "redis write failed"),
     }
 
 
@@ -731,6 +790,10 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _check_sync_token(self) -> bool:
+        # 本机访问不校验；外网才要求 SOFA_BOARD_SYNC_TOKEN
+        peer = (self.client_address[0] if self.client_address else "") or ""
+        if peer in {"127.0.0.1", "::1", "localhost"}:
+            return True
         if not SYNC_TOKEN:
             return True
         qs = parse_qs(urlparse(self.path).query)
@@ -739,11 +802,12 @@ class Handler(BaseHTTPRequestHandler):
             got = (self.headers.get("X-Board-Token") or "").strip()
         return got == SYNC_TOKEN
 
-    def _json_handler(self, fn: Any) -> None:
+    def _json_handler(self, fn: Any, *, ok_only_200: bool = False) -> None:
         try:
             data = fn()
             payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
-            code = 200 if data.get("ok") else 503
+            # sync 接口失败也 200，让前端能读到 redis error，而不是只显示 HTTP 503
+            code = 200 if (data.get("ok") or ok_only_200) else 503
             self._send(code, payload, "application/json; charset=utf-8")
         except Exception as exc:
             err = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False).encode("utf-8")
@@ -759,14 +823,17 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json; charset=utf-8")
                 return
             qs = parse_qs(urlparse(self.path).query)
+            force = (qs.get("refresh") or [""])[0] in {"1", "true", "yes"}
             force_ranks = (qs.get("ranks") or [""])[0] in {"1", "true", "yes"}
-            self._json_handler(lambda: sync_full_to_redis(force_ranks=force_ranks))
+            self._json_handler(lambda: sync_full_to_redis(force=force, force_ranks=force_ranks), ok_only_200=True)
             return
         if path in {"/api/sync/live", "/api/sync/live/"}:
             if not self._check_sync_token():
                 self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json; charset=utf-8")
                 return
-            self._json_handler(lambda: sync_live_to_redis(force=True))
+            qs = parse_qs(urlparse(self.path).query)
+            force = (qs.get("refresh") or [""])[0] in {"1", "true", "yes"}
+            self._json_handler(lambda: sync_live_to_redis(force=force), ok_only_200=True)
             return
         if path in {"/api/live", "/api/live/"}:
             qs = parse_qs(urlparse(self.path).query)

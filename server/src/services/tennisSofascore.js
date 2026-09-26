@@ -87,8 +87,17 @@ function slimEvent(ev) {
     statusType: status.type || ev?.statusType,
     homeScore: hs,
     awayScore: as_,
-    home_score: typeof hs === 'object' ? hs?.current : hs,
-    away_score: typeof as_ === 'object' ? as_?.current : as_,
+    home_score: (() => {
+      if (typeof hs !== 'object' || !hs) return hs;
+      // tennis current=盘分；有局分时勿写入 home_score，否则前端 ?? 把 0 当成比分
+      if (['period1', 'period2', 'period3', 'period4', 'period5'].some((k) => hs[k] != null)) return null;
+      return hs.current;
+    })(),
+    away_score: (() => {
+      if (typeof as_ !== 'object' || !as_) return as_;
+      if (['period1', 'period2', 'period3', 'period4', 'period5'].some((k) => as_[k] != null)) return null;
+      return as_.current;
+    })(),
     scoreText: eventScore(ev),
     slug,
     customId: ev?.customId,

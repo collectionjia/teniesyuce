@@ -2306,8 +2306,8 @@ function matchWinnerSide(m) {
   const w = String(m.winner || m.winnerCode || m.winner_code || '').toLowerCase()
   if (w === 'home' || w === '1' || w === 'h') return 'home'
   if (w === 'away' || w === '2' || w === 'a') return 'away'
-  const hsRaw = m.homeScore ?? m.home_score
-  const asRaw = m.awayScore ?? m.away_score
+  const hsRaw = scoreSideRaw(m, 'home')
+  const asRaw = scoreSideRaw(m, 'away')
   if (typeof hsRaw === 'number' && typeof asRaw === 'number' && hsRaw !== asRaw) {
     return hsRaw > asRaw ? 'home' : 'away'
   }
@@ -2571,9 +2571,16 @@ function parseScoreTextSides(text) {
   return { home: home.join(' '), away: away.join(' ') }
 }
 
+function scoreSideRaw(m, side) {
+  // 优先对象形态 homeScore（含 period1..）；勿用 home_score=0 盖住盘局分
+  const obj = side === 'home' ? m.homeScore : m.awayScore
+  if (obj && typeof obj === 'object') return obj
+  return side === 'home' ? m.home_score : m.away_score
+}
+
 function parsePeriodScoreSides(m) {
-  const hs = m.home_score ?? m.homeScore
-  const as = m.away_score ?? m.awayScore
+  const hs = scoreSideRaw(m, 'home')
+  const as = scoreSideRaw(m, 'away')
   if (!hs || typeof hs !== 'object' || !as || typeof as !== 'object') return null
   const home = []
   const away = []
@@ -2600,8 +2607,8 @@ function pairsFromScoreText(text) {
 }
 
 function pairsFromPeriods(m) {
-  const hs = m.home_score ?? m.homeScore
-  const as = m.away_score ?? m.awayScore
+  const hs = scoreSideRaw(m, 'home')
+  const as = scoreSideRaw(m, 'away')
   if (!hs || typeof hs !== 'object' || !as || typeof as !== 'object') return []
   const pairs = []
   for (const key of ['period1', 'period2', 'period3', 'period4', 'period5']) {
@@ -2640,7 +2647,7 @@ function liveSetCells(m, side) {
 }
 
 function livePointText(m, side) {
-  const raw = side === 'home' ? (m.home_score ?? m.homeScore) : (m.away_score ?? m.awayScore)
+  const raw = scoreSideRaw(m, side)
   if (raw && typeof raw === 'object' && raw.point != null && raw.point !== '' && raw.point !== '0') {
     return String(raw.point)
   }
@@ -2656,7 +2663,7 @@ function playerLiveScoreText(m, side) {
   }
   const periods = parsePeriodScoreSides(m)
   if (periods?.[side]) return periods[side]
-  const raw = side === 'home' ? (m.home_score ?? m.homeScore) : (m.away_score ?? m.awayScore)
+  const raw = scoreSideRaw(m, side)
   if (raw == null || raw === '') return ''
   if (typeof raw === 'object') {
     const cur = raw.current ?? raw.display ?? raw.score

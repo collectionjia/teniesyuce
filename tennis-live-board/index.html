@@ -112,6 +112,8 @@
       <label class="status">全量(秒) <input id="interval" type="number" min="30" max="600" value="60" /></label>
       <span class="chip" style="margin:0">LIVE 15s</span>
       <button id="refresh">立即刷新</button>
+      <button id="pushFull" title="推送到线上 Redis tennis:bundle:full">推送全量</button>
+      <button id="pushLive" title="推送到线上 Redis tennis:bundle:inplay">推送高频</button>
       <span id="status" class="status">加载中…</span>
     </div>
 
@@ -148,6 +150,8 @@
     const $ = (id) => document.getElementById(id);
     const API = '/api/board';
     const LIVE_API = '/api/live';
+    const SYNC_FULL = '/api/sync/full';
+    const SYNC_LIVE = '/api/sync/live';
     const LIVE_SEC = 15;
     let board = null;
     let tour = 'atp';
@@ -292,7 +296,10 @@
       try {
         const res = await fetch(url, { signal: ctrl.signal });
         const data = await res.json();
-        if (!res.ok || data.ok === false) throw new Error(data.error || `HTTP ${res.status}`);
+        if (!res.ok || data.ok === false) {
+          const detail = data.error || data.redis?.error || data.redis?.reason || data.message;
+          throw new Error(detail || `HTTP ${res.status}`);
+        }
         return data;
       } finally {
         clearTimeout(killer);
@@ -376,10 +383,44 @@
       timer = setInterval(() => load(false), sec * 1000);
     }
 
+    async function pushSync(kind) {
+      if (location.protocol === 'file:') return;
+      const url = kind === 'full' ? SYNC_FULL : SYNC_LIVE;
+      const btn = $(kind === 'full' ? 'pushFull' : 'pushLive');
+      const label = kind === 'full' ? '推送全量' : '推送高频';
+      btn.disabled = true;
+      $('refresh').disabled = true;
+      $('pushFull').disabled = true;
+      $('pushLive').disabled = true;
+      $('status').className = 'status';
+      startLoadTimer(`${label}…`);
+      try {
+        const data = await fetchJson(url, kind === 'full' ? 180000 : 60000);
+        const host = data.redis_url_host ? ` → ${data.redis_url_host}` : '';
+        const n = data.events ?? '?';
+        const cacheTag = data.cached ? ' · 缓存' : ' · 已刷新';
+        $('status').textContent = `${label}成功 · ${n} 场${cacheTag}${host} · ${new Date().toLocaleTimeString()}`;
+        // 推的是当前页数据，不必再整页重拉
+      } catch (err) {
+        let msg = err.name === 'AbortError' ? `${label}超时` : (err.message || String(err));
+        if (msg.includes('Failed to fetch')) msg = '无法连接服务';
+        $('status').textContent = `${label}失败: ${msg}`;
+        $('status').className = 'status err';
+      } finally {
+        stopLoadTimer();
+        btn.disabled = false;
+        $('refresh').disabled = false;
+        $('pushFull').disabled = false;
+        $('pushLive').disabled = false;
+      }
+    }
+
     document.querySelectorAll('.tab').forEach((el) => {
       el.addEventListener('click', () => setTour(el.dataset.tour));
     });
     $('refresh').addEventListener('click', () => load(true));
+    $('pushFull').addEventListener('click', () => pushSync('full'));
+    $('pushLive').addEventListener('click', () => pushSync('live'));
     $('interval').addEventListener('change', schedule);
 
     schedule();

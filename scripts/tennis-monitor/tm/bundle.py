@@ -50,6 +50,16 @@ def slim_event(ev: dict) -> dict:
         start_time = datetime.fromtimestamp(int(ts), BJ).strftime("%H:%M")
     eid = ev.get("id")
     ground_type = ev.get("groundType") or unique.get("groundType")
+    home_score_obj = ev.get("homeScore") if isinstance(ev.get("homeScore"), dict) else None
+    away_score_obj = ev.get("awayScore") if isinstance(ev.get("awayScore"), dict) else None
+    # tennis 的 current=盘分；有 period 时不要把 current 写成 home_score（前端 ?? 会把 0 当成比分）
+    def _flat_score(obj: dict | None) -> Any:
+        if not obj:
+            return None
+        if any(obj.get(f"period{i}") is not None for i in range(1, 6)):
+            return None
+        return obj.get("current")
+
     return {
         "id": eid,
         "level": tour_level_label(ev, tour),
@@ -62,14 +72,10 @@ def slim_event(ev: dict) -> dict:
         "awayPlayer": away,
         "status": status.get("description") or ev.get("status"),
         "statusType": status.get("type") or ev.get("statusType"),
-        "homeScore": ev.get("homeScore"),
-        "awayScore": ev.get("awayScore"),
-        "home_score": (ev.get("homeScore") or {}).get("current")
-        if isinstance(ev.get("homeScore"), dict)
-        else ev.get("homeScore"),
-        "away_score": (ev.get("awayScore") or {}).get("current")
-        if isinstance(ev.get("awayScore"), dict)
-        else ev.get("awayScore"),
+        "homeScore": home_score_obj if home_score_obj is not None else ev.get("homeScore"),
+        "awayScore": away_score_obj if away_score_obj is not None else ev.get("awayScore"),
+        "home_score": _flat_score(home_score_obj),
+        "away_score": _flat_score(away_score_obj),
         "scoreText": _event_score(ev),
         "tournament": unique.get("name") or tournament.get("name"),
         "tournamentShort": tournament.get("name") or unique.get("name"),
