@@ -16,12 +16,12 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from tm.clients.proxy import optional_proxy  # noqa: E402
+from tm.clients.sofascore_mobile import _uuid_file_candidates  # noqa: E402
 
 API_BASE = (os.environ.get("SOFA_MOBILE_API_BASE") or "https://api.sofascore.com/api/v1").rstrip("/")
 IMPERSONATE = os.environ.get("SOFA_CURL_IMPERSONATE", "chrome131")
 APP_VERSION = int(os.environ.get("SOFA_APP_VERSION", "250000"))
 USER_AGENT = os.environ.get("SOFA_MOBILE_UA", f"SofaScore/{APP_VERSION} Android/14")
-UUID_FILE = Path(os.environ.get("SOFA_DEVICE_UUID_FILE") or (_ROOT / ".sofa_device_uuid"))
 
 
 def _session():
@@ -41,12 +41,22 @@ def _session():
 
 
 def device_uuid() -> str:
-    if UUID_FILE.exists():
-        val = UUID_FILE.read_text(encoding="utf-8").strip()
-        if val:
-            return val
+    for path in _uuid_file_candidates():
+        try:
+            if path.is_file():
+                val = path.read_text(encoding="utf-8").strip()
+                if val:
+                    return val
+        except OSError:
+            continue
     val = str(uuid.uuid4())
-    UUID_FILE.write_text(val, encoding="utf-8")
+    for path in _uuid_file_candidates():
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(val, encoding="utf-8")
+            break
+        except OSError:
+            continue
     return val
 
 

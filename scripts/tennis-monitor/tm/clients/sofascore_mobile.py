@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -19,13 +20,21 @@ IMPERSONATE = os.environ.get("SOFA_CURL_IMPERSONATE", "chrome131")
 # APK 版本号，须为 int；对应 User-Agent 里的 SofaScore/250000
 APP_VERSION = int(os.environ.get("SOFA_APP_VERSION", "250000"))
 USER_AGENT = os.environ.get("SOFA_MOBILE_UA", f"SofaScore/{APP_VERSION} Android/14")
-# 持久化设备 UUID，模拟真机同一台设备反复 init
-UUID_FILE = Path(os.environ.get("SOFA_DEVICE_UUID_FILE") or (Path(__file__).resolve().parents[2] / ".sofa_device_uuid"))
 # 请求最小间隔（秒），模拟正常翻页节奏
 MIN_INTERVAL = float(os.environ.get("SOFA_MOBILE_MIN_INTERVAL", "0.8"))
 # 429/5xx 重试次数与退避基数
 MAX_RETRIES = max(1, int(os.environ.get("SOFA_MOBILE_RETRIES", "4")))
 RETRY_BACKOFF = float(os.environ.get("SOFA_MOBILE_RETRY_BACKOFF", "3.0"))
+
+
+def _uuid_file_candidates() -> list[Path]:
+    """包目录可能只读（容器/镜像）；依次试 env → 包目录 → /tmp。"""
+    env = (os.environ.get("SOFA_DEVICE_UUID_FILE") or "").strip()
+    if env:
+        return [Path(env)]
+    pkg = Path(__file__).resolve().parents[2] / ".sofa_device_uuid"
+    tmp = Path(tempfile.gettempdir()) / "sofa_device_uuid"
+    return [pkg, tmp]
 
 
 class SofascoreMobileClient:
@@ -45,6 +54,7 @@ class SofascoreMobileClient:
         if proxies:
             self.session.proxies.update(proxies)
         self._token: str | None = None  # 进程内缓存，首次 _api_get 时 lazy init
+        self._device_uuid_cache: str | None = None
         self._last_request_at = 0.0
         self._stats = {"total": 0, "api": 0, "retries": 0}
 
@@ -66,13 +76,27 @@ class SofascoreMobileClient:
             time.sleep(wait)
 
     def _device_uuid(self) -> str:
-        """读取或生成持久 UUID，写入 .sofa_device_uuid。"""
-        if UUID_FILE.exists():
-            val = UUID_FILE.read_text(encoding="utf-8").strip()
-            if val:
-                return val
+        """读取或生成设备 UUID；写盘失败（只读 FS）则落到 /tmp 或仅内存。"""
+        if self._device_uuid_cache:
+            return self._device_uuid_cache
+        for path in _uuid_file_candidates():
+            try:
+                if path.is_file():
+                    val = path.read_text(encoding="utf-8").strip()
+                    if val:
+                        self._device_uuid_cache = val
+                        return val
+            except OSError:
+                continue
         val = str(uuid.uuid4())
-        UUID_FILE.write_text(val, encoding="utf-8")
+        self._device_uuid_cache = val
+        for path in _uuid_file_candidates():
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(val, encoding="utf-8")
+                break
+            except OSError:
+                continue
         return val
 
     def _ensure_token(self, *, force: bool = False) -> str:
