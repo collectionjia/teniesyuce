@@ -32,15 +32,19 @@ def main() -> int:
         msg = str(exc)
         low = msg.lower()
         if "challenge" in low and "403" in low:
+            from tm.clients.proxy import proxy_status_public
+
+            st = proxy_status_public()
+            via = f"代理 {st.get('host')}" if st.get("enabled") else "直连 mobile API"
             print(
-                "采集失败: Sofascore 返回 403 challenge（机房 IP 被拦）。"
-                "当前为直连 mobile API；请检查出网或换出口后再试。"
+                f"采集失败: Sofascore 返回 403 challenge（出口被拦）。"
+                f"当前为{via}；请检查 SOFA_HTTP_PROXY / 换出口后再试。"
             )
             print(f"详情: {msg}")
         elif "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
             print(
                 "采集失败: HTTP 代理隧道失败。"
-                "采集默认直连；若设置了 HTTP_PROXY / SOFA_HTTP_PROXY 请检查或清空。"
+                "请检查 SOFA_HTTP_PROXY 账号/端口，或清空后直连。"
             )
             print(f"详情: {msg}")
         else:

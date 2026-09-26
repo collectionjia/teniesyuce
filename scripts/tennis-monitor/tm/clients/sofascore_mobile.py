@@ -48,11 +48,15 @@ class SofascoreMobileClient:
 
         self._curl = curl_requests
         self.session = curl_requests.Session(impersonate=IMPERSONATE)
-        # 默认直连；代理仅当调用方显式传入 proxies
+        # 默认直连；SofascoreClient 可写入 session.proxies，请求时显式带上
         self._token: str | None = None  # 进程内缓存，首次 _api_get 时 lazy init
         self._device_uuid_cache: str | None = None
         self._last_request_at = 0.0
         self._stats = {"total": 0, "api": 0, "retries": 0}
+
+    def _proxy_kwargs(self) -> dict[str, Any]:
+        proxies = dict(getattr(self.session, "proxies", None) or {})
+        return {"proxies": proxies} if proxies else {}
 
     def get_request_stats(self) -> dict[str, int]:
         return dict(self._stats)
@@ -113,6 +117,7 @@ class SofascoreMobileClient:
                         "User-Agent": USER_AGENT,
                     },
                     timeout=30,
+                    **self._proxy_kwargs(),
                 )
             except Exception as exc:
                 last_err = exc
@@ -153,6 +158,7 @@ class SofascoreMobileClient:
                         "User-Agent": USER_AGENT,
                     },
                     timeout=45,
+                    **self._proxy_kwargs(),
                 )
             except Exception as exc:
                 last_err = exc

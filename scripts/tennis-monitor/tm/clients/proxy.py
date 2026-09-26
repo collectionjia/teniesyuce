@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Collect HTTP proxy helpers — Sofascore/Polymarket go direct (no IPWO)."""
+"""Collect HTTP proxy helpers — SOFA_HTTP_PROXY / COLLECT_*_USE_PROXY."""
 from __future__ import annotations
 
 import os
@@ -28,11 +28,16 @@ def _flag_on(name: str) -> bool:
 
 
 def use_proxy_for_job(job: str | None = None) -> bool:
-    """Top100 / inplay 分别看 COLLECT_*_USE_PROXY；需同时有 SOFA_HTTP_PROXY。"""
+    """Top100：有 SOFA_HTTP_PROXY 即走代理（除非 COLLECT_TOP100_USE_PROXY=0）；盘中须显式开。"""
     j = (job or proxy_job()).strip().lower()
     if j in {"inplay", "inplay_tick", "refresh"}:
         return _flag_on("COLLECT_INPLAY_USE_PROXY")
-    return _flag_on("COLLECT_TOP100_USE_PROXY")
+    flag = _env("COLLECT_TOP100_USE_PROXY").lower()
+    if flag in {"0", "false", "no", "off"}:
+        return False
+    if flag in {"1", "true", "yes", "on"}:
+        return True
+    return bool(sofa_proxy_map())
 
 
 def optional_proxy() -> dict[str, str]:
@@ -40,7 +45,7 @@ def optional_proxy() -> dict[str, str]:
 
 
 def proxies_for(scope: str = "Sofascore", *, job: str | None = None) -> dict[str, str] | None:
-    """COLLECT_*_USE_PROXY=1 且设了 SOFA_HTTP_PROXY/HTTP_PROXY 时走代理。"""
+    """Top100 有代理 URL 时返回 proxies；盘中须显式 COLLECT_INPLAY_USE_PROXY=1。"""
     if not use_proxy_for_job(job):
         return None
     return sofa_proxy_map() or None

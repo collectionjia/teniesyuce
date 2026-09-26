@@ -8,7 +8,7 @@ MONITOR_ROOT = Path(__file__).resolve().parent.parent
 
 
 def resolve_monitor_env_path(path: str | Path | None = None) -> Path:
-    """按环境选 monitor 配置文件（均不进 Git）。
+    """按环境选 monitor 配置文件。
 
     优先级:
       1. 显式 path / SOFA_MONITOR_ENV_FILE
