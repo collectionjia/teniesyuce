@@ -38,12 +38,18 @@ function loopIntervalMs() {
 
 function statusPayload() {
   const s = loopSettings();
+  let ipwo = { last_tick: 0, total: 0 };
+  try {
+    ipwo = require('../lib/httpProxyAgent').getSofaIpwoStats();
+  } catch { /* ignore */ }
   return {
     running: !!intervalHandle,
     busy,
     enabled: s.score_enabled !== false,
     interval_ms: loopIntervalMs(),
     interval_sec: s.score_interval_sec,
+    ipwo_total: ipwo.total,
+    ipwo_last_tick: last.ipwo_calls ?? ipwo.last_tick,
     last: { ...last },
     logs: logLines.slice(-80),
   };
@@ -78,8 +84,17 @@ async function tickOnce() {
     const r = await tennisSofascore.refreshInplayScoresOnce();
     if (r.skipped) {
       const msg = r.reason || 'skipped';
-      last = { at: new Date().toISOString(), ok: true, message: msg, ms: Date.now() - t0 };
-      pushLog(`skip: ${msg}`);
+      const ipwoNote = r.ipwo_calls != null ? ` ipwo=${r.ipwo_calls}` : '';
+      last = {
+        at: new Date().toISOString(),
+        ok: true,
+        message: `${msg}${ipwoNote}`,
+        ms: Date.now() - t0,
+        ipwo_calls: r.ipwo_calls ?? 0,
+        ipwo_total: r.ipwo_total ?? 0,
+        skipped_not_started: r.skipped_not_started ?? 0,
+      };
+      pushLog(`skip: ${msg}${ipwoNote}`);
       return;
     }
 
@@ -89,6 +104,7 @@ async function tickOnce() {
     const ms = Date.now() - t0;
     const line =
       `updated=${r.updated || 0}/${r.failed || 0} tracked=${r.tracked || 0} `
+      + `skip_ns=${r.skipped_not_started || 0} ipwo=${r.ipwo_calls || 0} `
       + `mig=${migrated.migrated_prematch_to_inplay || 0}/${migrated.migrated_inplay_to_settled || 0} ${ms}ms`;
     console.log(`[sofa-score] ${line}`);
     last = {
@@ -98,6 +114,9 @@ async function tickOnce() {
       ms,
       updated: r.updated || 0,
       failed: r.failed || 0,
+      ipwo_calls: r.ipwo_calls ?? 0,
+      ipwo_total: r.ipwo_total ?? 0,
+      skipped_not_started: r.skipped_not_started ?? 0,
     };
     pushLog(line);
     if (r.process_log) pushLog(String(r.process_log).split('\n').slice(-3).join(' | '));

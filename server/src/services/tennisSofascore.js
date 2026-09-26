@@ -1,7 +1,9 @@
 /**
  * 盘中比分：IPWO → Sofascore API（与 tennisPolymarket.js 对称，赔率走 PM 直连）。
  */
-const { httpsGetJson } = require('../lib/httpProxyAgent');
+const { httpsGetJson, beginSofaIpwoTick, getSofaIpwoStats } = require('../lib/httpProxyAgent');
+
+const SCORE_LIVE_TYPES = new Set(['inprogress', 'live', 'interrupted', 'paused']);
 
 const API_BASE = (process.env.SOFA_API_BASE || 'https://www.sofascore.com/api/v1').replace(/\/$/, '');
 const MIN_INTERVAL_MS = Math.max(0, Number(process.env.SOFA_MIN_INTERVAL || 0.5) * 1000);
@@ -26,6 +28,37 @@ function matchLabel(m) {
   const home = m?.home || m?.homePlayer?.name || '?';
   const away = m?.away || m?.awayPlayer?.name || '?';
   return `${home} vs ${away}`;
+}
+
+function matchStatusType(m) {
+  return String(m?.statusType || m?.status?.type || m?.status || '').toLowerCase().trim();
+}
+
+/** 仅进行中（含暂停/中断）采比分；未开赛/已结束跳过 */
+function isScoreRefreshTarget(m) {
+  if (!m) return false;
+  if (m.virtualPhase === 'inplay') return true;
+  if (m.phaseMark === 'live') return true;
+  if (m.phaseMark === 'not_started' || m.phaseMark === 'ended') return false;
+  const st = matchStatusType(m);
+  if (SCORE_LIVE_TYPES.has(st)) return true;
+  if (['notstarted', 'finished', 'ended', 'cancelled', 'canceled', 'postponed', 'walkover'].includes(st)) {
+    return false;
+  }
+  return false;
+}
+
+function filterScoreTargets(fetchIds) {
+  const targets = new Map();
+  let skippedNotStarted = 0;
+  for (const [idKey, row] of fetchIds) {
+    if (isScoreRefreshTarget(row?.sample)) {
+      targets.set(idKey, row);
+    } else {
+      skippedNotStarted += 1;
+    }
+  }
+  return { targets, skippedNotStarted };
 }
 
 function eventScore(ev) {
@@ -171,25 +204,27 @@ async function refreshInplayScoresOnce(opts = {}) {
     };
   }
   await ensureInplayProxyEnv();
+  beginSofaIpwoTick();
   const tennisThreeBuckets = require('./tennisThreeBuckets');
   const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
   const bundle = buckets.inplay;
 
   let byId;
-  let fetchIds;
+  let rawIds;
   if (Array.isArray(opts.matches)) {
     byId = new Map();
     for (const m of opts.matches) {
       if (m?.id == null) continue;
       byId.set(String(m.id), { refs: [m], sample: m });
     }
-    fetchIds = byId;
+    rawIds = byId;
   } else {
     byId = tennisThreeBuckets.indexMatchRefsById(buckets);
     const inplayIds = tennisThreeBuckets.indexMatchRefsById({ inplay: buckets.inplay });
-    fetchIds = inplayIds.size ? inplayIds : byId;
+    rawIds = inplayIds.size ? inplayIds : byId;
   }
-  if (!fetchIds.size) {
+  if (!rawIds.size) {
+    const ipwo = getSofaIpwoStats();
     return {
       ok: true,
       updated: 0,
@@ -197,13 +232,34 @@ async function refreshInplayScoresOnce(opts = {}) {
       tracked: 0,
       skipped: true,
       reason: 'no inplay match ids',
+      ipwo_calls: ipwo.last_tick,
+      ipwo_total: ipwo.total,
       source: 'sofascore-ipwo',
       upstream: 'ipwo-sofascore',
       process_log: '[sofa] no match ids',
     };
   }
 
-  const lines = [`[sofa] tracked=${fetchIds.size}`];
+  const { targets: fetchIds, skippedNotStarted } = filterScoreTargets(rawIds);
+  if (!fetchIds.size) {
+    const ipwo = getSofaIpwoStats();
+    return {
+      ok: true,
+      updated: 0,
+      failed: 0,
+      tracked: 0,
+      skipped: true,
+      skipped_not_started: skippedNotStarted,
+      reason: skippedNotStarted ? 'no in-progress matches' : 'no score targets',
+      ipwo_calls: ipwo.last_tick,
+      ipwo_total: ipwo.total,
+      source: 'sofascore-ipwo',
+      upstream: 'ipwo-sofascore',
+      process_log: `[sofa] skip not-started=${skippedNotStarted}`,
+    };
+  }
+
+  const lines = [`[sofa] tracked=${fetchIds.size} skip_not_started=${skippedNotStarted}`];
   let updated = 0;
   let failed = 0;
   let liveFeed = 0;
@@ -260,7 +316,10 @@ async function refreshInplayScoresOnce(opts = {}) {
       : null;
   const written = sync ? Object.values(sync).some((r) => r.written) : false;
   const ok = written && (updated > 0 || failed === 0);
-  lines.push(`[sofa] done updated=${updated} failed=${failed} live=${liveFeed} detail=${detailFetch}`);
+  const ipwo = getSofaIpwoStats();
+  lines.push(
+    `[sofa] done updated=${updated} failed=${failed} live=${liveFeed} detail=${detailFetch} ipwo=${ipwo.last_tick}`,
+  );
   if (sync) lines.push(`[sofa] synced buckets=${JSON.stringify(sync)}`);
 
   return {
@@ -269,8 +328,11 @@ async function refreshInplayScoresOnce(opts = {}) {
     updated,
     failed,
     tracked: fetchIds.size,
+    skipped_not_started: skippedNotStarted,
     liveFeed,
     detailFetch,
+    ipwo_calls: ipwo.last_tick,
+    ipwo_total: ipwo.total,
     synced: sync,
     missed: missed.slice(0, 50),
     source: 'sofascore-ipwo',
@@ -348,8 +410,10 @@ async function listScoreTrackedMatches() {
   const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
   const byId = tennisThreeBuckets.indexMatchRefsById(buckets);
   const inplayIds = tennisThreeBuckets.indexMatchRefsById({ inplay: buckets.inplay });
-  const fetchIds = inplayIds.size ? inplayIds : byId;
+  const rawIds = inplayIds.size ? inplayIds : byId;
   const inplayOnly = inplayIds.size > 0;
+  const { targets: fetchIds, skippedNotStarted } = filterScoreTargets(rawIds);
+  const ipwo = getSofaIpwoStats();
 
   const matches = [];
   for (const [idKey, row] of fetchIds) {
@@ -368,6 +432,7 @@ async function listScoreTrackedMatches() {
       scoreText: m.scoreText || eventScore(m),
       startTime: m.startTime || m.startTimestamp || null,
       bucket: inplayOnly ? 'inplay' : 'all',
+      collectable: true,
       url: m.url || null,
     });
   }
@@ -381,7 +446,10 @@ async function listScoreTrackedMatches() {
   return {
     ok: true,
     count: matches.length,
+    raw_count: rawIds.size,
+    skipped_not_started: skippedNotStarted,
     inplayOnly,
+    ipwo_total: ipwo.total,
     score_updated_at: buckets.inplay?.score_updated_at || buckets.full?.score_updated_at || null,
     matches,
   };
@@ -397,6 +465,7 @@ module.exports = {
   refreshInplayScoresOnce,
   refreshInplayScoresByEventId,
   listScoreTrackedMatches,
+  isScoreRefreshTarget,
 };
 
 function loadEnv() {

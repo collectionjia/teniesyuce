@@ -105,6 +105,17 @@ const _agents = new Map();
 const DIRECT_ALLOWED = new Set(['Polymarket', 'polymarket']);
 const SOFA_SCOPE = 'Sofascore';
 
+/** Sofascore 经 IPWO 的请求计数（每次 httpsGetJson scope=Sofascore 且走代理 +1） */
+const sofaIpwoStats = { last_tick: 0, total: 0 };
+
+function beginSofaIpwoTick() {
+  sofaIpwoStats.last_tick = 0;
+}
+
+function getSofaIpwoStats() {
+  return { last_tick: sofaIpwoStats.last_tick, total: sofaIpwoStats.total };
+}
+
 function jobWantsProxy() {
   const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
   const key = job.includes('inplay') ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
@@ -146,6 +157,10 @@ function httpsGetJson(url, { scope = '外网', timeoutMs = 8000, headers = {}, a
       throw e;
     }
   })();
+  if (String(scope) === SOFA_SCOPE && agent) {
+    sofaIpwoStats.last_tick += 1;
+    sofaIpwoStats.total += 1;
+  }
   return new Promise((resolve, reject) => {
     const req = https.get(
       url,
@@ -178,4 +193,11 @@ function httpsGetJson(url, { scope = '外网', timeoutMs = 8000, headers = {}, a
   });
 }
 
-module.exports = { HttpProxyAgent, proxyFromEnv, requireProxyAgent, httpsGetJson };
+module.exports = {
+  HttpProxyAgent,
+  proxyFromEnv,
+  requireProxyAgent,
+  httpsGetJson,
+  beginSofaIpwoTick,
+  getSofaIpwoStats,
+};

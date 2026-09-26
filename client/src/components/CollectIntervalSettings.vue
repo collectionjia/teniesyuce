@@ -142,7 +142,15 @@ onUnmounted(() => {
         <!-- 比分 -->
         <div class="rounded-xl border border-slate-200 p-3 space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="font-medium text-sm">Sofascore 比分</div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="font-medium text-sm">Sofascore 比分</div>
+              <span class="ipwo-badge" title="经 IPWO 请求 Sofascore 累计次数">
+                IPWO 累计 {{ live?.score?.ipwo_total ?? 0 }} 次
+                <template v-if="live?.score?.last?.ipwo_calls != null">
+                  · 上轮 {{ live.score.last.ipwo_calls }} 次
+                </template>
+              </span>
+            </div>
             <label class="collect-toggle">
               <input v-model="form.score_enabled" type="checkbox" class="sr-only" />
               <span class="toggle-track" :class="{ on: form.score_enabled }" />
@@ -179,14 +187,17 @@ onUnmounted(() => {
               {{ scoreListLoading ? '加载中…' : (scoreListOpen ? '收起赛事列表' : '赛事列表') }}
             </button>
             <span v-if="scoreList?.count != null" class="text-xs text-slate-500">
-              {{ scoreList.inplayOnly ? '盘中' : '全桶' }} · {{ scoreList.count }} 场
+              进行中 {{ scoreList.count }} 场
+              <template v-if="scoreList.skipped_not_started"> · 跳过未开赛 {{ scoreList.skipped_not_started }}</template>
             </span>
           </div>
           <div v-if="scoreListOpen" class="match-list-wrap">
             <p v-if="scoreListLoading" class="text-xs text-slate-400">加载赛事…</p>
             <p v-else-if="scoreList?.error" class="text-xs text-rose-600">{{ scoreList.error }}</p>
             <p v-else-if="scoreList?.message" class="text-xs text-slate-500">{{ scoreList.message }}</p>
-            <p v-else-if="!scoreList?.matches?.length" class="text-xs text-slate-400">暂无待刷比分场次（盘中桶为空）</p>
+            <p v-else-if="!scoreList?.matches?.length" class="text-xs text-slate-400">
+              暂无进行中场次（未开赛已跳过{{ scoreList.skipped_not_started ? ` ${scoreList.skipped_not_started} 场` : '' }}）
+            </p>
             <table v-else class="match-table">
               <thead>
                 <tr>
@@ -342,6 +353,13 @@ onUnmounted(() => {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+.ipwo-badge {
+  font-size: 11px;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 .btn-secondary {
   padding: 6px 12px;
