@@ -1,5 +1,5 @@
 /**
- * 后台刷新 Redis 网球 inplay Sofascore 比分（IPWO）。
+ * 后台刷新 Redis 网球 inplay Sofascore 比分（直连）。
  * 间隔：引擎配置 collect.background.score_interval_sec（默认 30s）；SOFA_SCORE_LOOP_MS 可覆盖。
  */
 const tennisSofascore = require('./tennisSofascore');

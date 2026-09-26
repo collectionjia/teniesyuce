@@ -285,7 +285,7 @@ def collect_tennis_events(
 
 
 def refresh_live_set_scores(client, events: list[dict]) -> list[dict]:
-    """经 IPWO 拉每场 event 详情，补齐 period1..5（各盘局分）。"""
+    """拉每场 event 详情，补齐 period1..5（各盘局分）。"""
     if not events:
         return events
     out: list[dict] = []

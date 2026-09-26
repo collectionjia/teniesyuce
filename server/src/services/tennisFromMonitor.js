@@ -170,7 +170,7 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
     if (myGen !== refreshGeneration) return null;
 
     bundle.dataSource = pref;
-    bundle.upstream = useDocks500 ? 'docks500' : useAllsports ? 'allsportsapi2' : 'ipwo';
+    bundle.upstream = useDocks500 ? 'docks500' : useAllsports ? 'allsportsapi2' : 'sofascore';
     bundle.source = bundle.upstream;
     if (useAllsports && !(Number(bundle.events) > 0)) {
       const existing = await tennisCache.getBundle();

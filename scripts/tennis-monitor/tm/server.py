@@ -65,22 +65,12 @@ def _auth_ok(handler: BaseHTTPRequestHandler) -> bool:
 def _friendly_error(exc: Exception | str) -> str:
     msg = str(exc).strip()
     low = msg.lower()
-    if "431" in msg or "traffic limit" in low or "exceeds the sub user" in low:
-        return "IPWO 代理子账号流量已用尽，请到 ipwo.net 充值或更换子账号"
-    if "sub user status" in low or ("424" in msg and "407" in msg):
-        return "IPWO 子账号状态异常（流量用尽或已停用），请到 ipwo.net 检查子账号"
-    if "user status error" in low:
-        return "IPWO 主账号状态异常（欠费/停用/密码错误），请检查 ipwo.net 或 monitor.env 密码"
-    if "407" in msg or "418" in msg or "421" in msg or "auth info" in low or "password wrong" in low:
-        return "IPWO 代理认证失败，请检查 monitor.env 用户名/密码/Zone（格式：用户名_custom_zone_US）"
-    if "connect tunnel failed" in low and ("403" in msg or "407" in msg):
-        return "IPWO 代理拒绝连接（账号状态或认证问题），请到 ipwo.net 检查流量与密码"
-    if "proxyerror" in low or "tunnel connection failed" in low or "unable to connect to proxy" in low:
-        return "无法连接 IPWO 代理，请检查 monitor.env 与账号流量"
+    if "connect tunnel failed" in low or "proxyerror" in low or "tunnel connection failed" in low or "unable to connect to proxy" in low:
+        return "HTTP 代理隧道失败；采集默认直连，请检查或清空 HTTP_PROXY / SOFA_HTTP_PROXY"
     if "timeout" in low or "timed out" in low:
-        return "请求超时（代理或网络响应慢），请稍后重试"
+        return "请求超时（网络响应慢），请稍后重试"
     if "403" in msg or "forbidden" in low:
-        return "数据源拒绝访问（403），代理 IP 可能被风控，请更换 IPWO 地区或稍后重试"
+        return "数据源拒绝访问（403），请检查出网或稍后重试"
     if "top20" in low and "失败" in msg:
         return msg
     if "collect already running" in low:

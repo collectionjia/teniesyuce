@@ -48,7 +48,7 @@ class SofascoreMobileClient:
 
         self._curl = curl_requests
         self.session = curl_requests.Session(impersonate=IMPERSONATE)
-        # 代理由 SofascoreClient / 调用方按 COLLECT_*_USE_PROXY 决定，此处不自动挂 IPWO
+        # 默认直连；代理仅当调用方显式传入 proxies
         self._token: str | None = None  # 进程内缓存，首次 _api_get 时 lazy init
         self._device_uuid_cache: str | None = None
         self._last_request_at = 0.0

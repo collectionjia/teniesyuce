@@ -488,20 +488,7 @@ function buildBundlePayload(collect) {
 
 async function ensureProxyEnv(job = 'top100') {
   const cfg = await tennisEngines.getConfig();
-  const env = tennisEngines.buildProxyProcessEnv(cfg, job);
-  Object.assign(process.env, env);
-  const p = cfg?.collect?.proxy || {};
-  const isInplay = String(job).toLowerCase().includes('inplay');
-  const useProxy = isInplay
-    ? String(process.env.COLLECT_INPLAY_USE_PROXY || '0') === '1'
-    : String(process.env.COLLECT_TOP100_USE_PROXY || '0') === '1';
-  if (useProxy) {
-    const user = String(p.user || process.env.IPWO_PROXY_USER || '').trim();
-    const pass = String(p.pass || process.env.IPWO_PROXY_PASS || '').trim();
-    if (!user || !pass) {
-      throw new Error('IPWO 代理未配置账号/密码，请到管理中心「采集代理」填写后重试');
-    }
-  }
+  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, job));
   const sofaCurl = require('./tennisSofascoreCurl');
   sofaCurl.closeWorker();
   sofaCurl.resetProbe();
@@ -547,7 +534,7 @@ async function runFullCollectInner(opts = {}) {
   }
 
   let t0 = Date.now();
-  onLog(`[1/${STEPS}] IPWO 代理已就绪 · Sofascore=${sofaVia}`);
+  onLog(`[1/${STEPS}] 直连就绪 · Sofascore=${sofaVia}`);
   timing.step1 = (Date.now() - t0) / 1000;
 
   t0 = Date.now();

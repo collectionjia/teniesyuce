@@ -114,12 +114,9 @@ function isEnabled() {
 
 function proxyEnvKey() {
   return [
-    process.env.IPWO_PROXY_HOST,
-    process.env.IPWO_PROXY_PORT,
-    process.env.IPWO_PROXY_USER,
-    process.env.IPWO_PROXY_PASS,
-    process.env.IPWO_PROXY_ZONE,
-    process.env.COLLECT_PROXY_JOB,
+    process.env.SOFA_HTTP_PROXY || '',
+    process.env.HTTP_PROXY || '',
+    process.env.COLLECT_PROXY_JOB || '',
   ].join('|');
 }
 

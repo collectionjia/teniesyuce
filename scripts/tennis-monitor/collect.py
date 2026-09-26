@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""简化采集：IPWO → Top100/tier → Polymarket → Sofascore → 输出 → Redis
+"""简化采集：Top100/tier → Polymarket → Sofascore → 输出 → Redis
 
 写入（独立，不写入 collect_live）:
   Redis  tennis:bundle:full          （collect 全量赛程）
@@ -34,13 +34,13 @@ def main() -> int:
         if "challenge" in low and "403" in low:
             print(
                 "采集失败: Sofascore 返回 403 challenge（机房 IP 被拦）。"
-                "请在 scripts/tennis-monitor/monitor.env.test（测试）或 monitor.env.prod（生产）"
-                "配置可用的 IPWO 住宅代理后重试（勿提交 Git）。"
+                "当前为直连 mobile API；请检查出网或换出口后再试。"
             )
             print(f"详情: {msg}")
         elif "CONNECT tunnel failed" in msg or "curl: (7)" in msg:
             print(
-                "采集失败: IPWO 代理被拒绝 (403)。请检查 monitor.env 代理账号/额度；采集已禁止直连，请修复代理后再试。"
+                "采集失败: HTTP 代理隧道失败。"
+                "采集默认直连；若设置了 HTTP_PROXY / SOFA_HTTP_PROXY 请检查或清空。"
             )
             print(f"详情: {msg}")
         else:

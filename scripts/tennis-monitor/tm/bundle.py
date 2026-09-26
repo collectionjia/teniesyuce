@@ -355,11 +355,11 @@ def _choices_to_home_away(choices: list[dict]) -> tuple[float | None, float | No
 def _odds_payload(event_id: int, home_dec: float | None, away_dec: float | None) -> dict[str, Any]:
     return {
         "eventId": event_id,
-        "source": "ipwo",
+        "source": "sofascore",
         "full_time": {
             "home": {"decimal": home_dec, "change": 0},
             "away": {"decimal": away_dec, "change": 0},
-            "source": "ipwo",
+            "source": "sofascore",
         },
     }
 

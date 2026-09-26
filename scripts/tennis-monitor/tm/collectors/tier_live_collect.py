@@ -1,4 +1,4 @@
-"""进行中采集：IPWO → Top100/tier live → 比分/排名 → 独立写入 tennis:bundle:inplay（PM 赔率由 server poly-odds 循环刷新）。"""
+"""进行中采集：Top100/tier live → 比分/排名 → 独立写入 tennis:bundle:inplay（PM 赔率由 server poly-odds 循环刷新）。"""
 from __future__ import annotations
 
 import os
@@ -41,11 +41,11 @@ def log_live_collect_header(*, filter_conditions: bool = False, top100: bool = T
     p = proxy_status_public()
     if p.get("enabled"):
         print(
-            f"[1/{_STEPS}] IPWO 代理已就绪 "
+            f"[1/{_STEPS}] HTTP 代理已启用 "
             f"({p.get('mode')} {p.get('host')} zone={p.get('zone') or '-'})"
         )
     else:
-        print(f"[1/{_STEPS}] 未配置 IPWO 代理，禁止直连采集（请在 monitor.env 配置 IPWO_* 后再试）")
+        print(f"[1/{_STEPS}] 直连（无代理）")
     if not filter_conditions:
         print(f"[2/{_STEPS}] 进行中 · 前 {simple_limit} 场（无 tier/Top100 过滤）")
     elif top100:

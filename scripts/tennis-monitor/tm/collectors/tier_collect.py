@@ -1,4 +1,4 @@
-"""简化采集：IPWO → Top100/tier → Polymarket → Sofascore → 输出 → Redis。"""
+"""简化采集：Top100/tier → Polymarket → Sofascore → 输出 → Redis。"""
 from __future__ import annotations
 
 import os
@@ -55,11 +55,11 @@ def log_collect_header(*, match_date: str | None = None, top100: bool = True) ->
     p = proxy_status_public()
     if p.get("enabled"):
         print(
-            f"[1/{_STEPS}] IPWO 代理已就绪 "
+            f"[1/{_STEPS}] HTTP 代理已启用 "
             f"({p.get('mode')} {p.get('host')} zone={p.get('zone') or '-'})"
         )
     else:
-        print(f"[1/{_STEPS}] 未配置 IPWO 代理，禁止直连采集（请在 monitor.env 配置 IPWO_* 后再试）")
+        print(f"[1/{_STEPS}] 直连（无代理）")
     if top100:
         print(f"[2/{_STEPS}] 球员 Top100 + 赛事：ATP/WTA 各前 {_TOP_N} 名 · GS/500/1000")
     else:

@@ -220,7 +220,7 @@ function parseTotalEvents(text) {
 function friendlyCollectError(code, text) {
   const t = String(text || '');
   if (/CONNECT tunnel failed|curl:\s*\(7\)/i.test(t) || /代理被拒绝/i.test(t)) {
-    return 'IPWO 代理被拒绝 (403)，请检查 monitor.env 代理账号/额度；采集禁止直连，请修复代理后重试';
+    return 'HTTP 代理隧道失败；采集默认直连，请检查或清空 HTTP_PROXY / SOFA_HTTP_PROXY';
   }
   const failLine = [...t.split(/\r?\n/)].reverse().find((l) => /采集失败:/.test(l));
   if (failLine) return failLine.replace(/^采集失败:\s*/, '').slice(0, 200);

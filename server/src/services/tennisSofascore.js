@@ -1,5 +1,5 @@
 /**
- * 盘中比分：IPWO → Sofascore API（与 tennisPolymarket.js 对称，赔率走 PM 直连）。
+ * 盘中比分：Sofascore API 直连（与 tennisPolymarket.js 对称，赔率走 PM 直连）。
  */
 const { httpsGetJson, beginSofaIpwoTick, getSofaIpwoStats } = require('../lib/httpProxyAgent');
 const sofaCurl = require('./tennisSofascoreCurl');

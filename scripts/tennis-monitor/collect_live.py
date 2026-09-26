@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""进行中采集：IPWO → live Top100/tier → 比分/排名 → Redis（PM 赔率由 server poly-odds 循环刷新）
+"""进行中采集：live Top100/tier → 比分/排名 → Redis（PM 赔率由 server poly-odds 循环刷新）
 
 写入（独立，不合并 collect 全量包）:
   Redis  tennis:bundle:inplay       （collect_live 专用）

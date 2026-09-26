@@ -144,12 +144,6 @@ onUnmounted(() => {
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex flex-wrap items-center gap-2">
               <div class="font-medium text-sm">Sofascore 比分</div>
-              <span class="ipwo-badge" title="经 IPWO 请求 Sofascore 累计次数">
-                IPWO 累计 {{ live?.score?.ipwo_total ?? 0 }} 次
-                <template v-if="live?.score?.last?.ipwo_calls != null">
-                  · 上轮 {{ live.score.last.ipwo_calls }} 次
-                </template>
-              </span>
             </div>
             <label class="collect-toggle">
               <input v-model="form.score_enabled" type="checkbox" class="sr-only" />
@@ -353,13 +347,6 @@ onUnmounted(() => {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
-}
-.ipwo-badge {
-  font-size: 11px;
-  color: #0369a1;
-  background: #e0f2fe;
-  padding: 2px 8px;
-  border-radius: 999px;
 }
 .btn-secondary {
   padding: 6px 12px;

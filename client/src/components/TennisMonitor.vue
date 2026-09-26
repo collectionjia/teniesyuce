@@ -484,7 +484,7 @@ const lastRealSource = ref('ipwo')
 const tennisDataSourceLabel = computed(() => {
   if (tennisDataSource.value === 'docks500') return '虚拟(txt)'
   if (tennisDataSource.value === 'api') return 'AllSports API'
-  return 'IPWO'
+  return 'Sofascore'
 })
 
 const pageSub = computed(() => {
@@ -547,7 +547,7 @@ const redisUpstreamLabel = computed(() => {
   const up = dataSource.value?.redis_upstream
   if (!up) return '—'
   if (String(up).includes('allsports')) return 'AllSports API'
-  if (String(up).includes('ipwo')) return 'IPWO'
+  if (String(up).includes('ipwo') || String(up).includes('sofa')) return 'Sofascore'
   if (String(up).includes('docks500') || String(up).includes('docks')) return '500回放'
   return up
 })
@@ -1874,7 +1874,7 @@ onUnmounted(() => {
                 :disabled="dataSourceSaving || loading"
                 @change="onDataSourceChange('ipwo')"
               >
-              IPWO
+              Sofascore
             </label>
             <label class="source-opt" :class="{ on: tennisDataSource === 'api', disabled: !dataSource?.api_available }">
               <input

@@ -46,7 +46,7 @@ function label(source) {
   const v = normalize(source);
   if (v === 'api') return 'AllSports API';
   if (v === 'docks500') return '虚拟(txt)';
-  return 'IPWO';
+  return 'Sofascore';
 }
 
 module.exports = {

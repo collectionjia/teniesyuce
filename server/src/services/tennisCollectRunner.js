@@ -186,7 +186,7 @@ function pushLog(chunk) {
   if (logBuffer.length > 4000) logBuffer = logBuffer.slice(-4000);
 }
 
-/** 读取 monitor.env*：补齐进程里缺失或为空的 IPWO/REDIS，避免空环境变量挡住文件配置 */
+/** 读取 monitor.env*：补齐进程里缺失或为空的 REDIS 等，避免空环境变量挡住文件配置 */
 function loadMonitorEnvForChild() {
   const appEnv = String(process.env.APP_ENV || '').trim().toLowerCase();
   const explicit = String(process.env.SOFA_MONITOR_ENV_FILE || '').trim();
@@ -262,7 +262,7 @@ function parseLiveCollectSummary(text) {
   const m = t.match(/完成:\s*(\d+)\s*场进行中/);
   const pm = t.match(/PM\s+(\d+)/);
   const redisFail = /Redis 失败|未配置 REDIS_URL/.test(t);
-  const noProxy = /未配置 IPWO|必须经 IPWO|禁止直连/.test(t);
+  const noProxy = false;
   return {
     total_events: m ? Number(m[1]) : (/完成:\s*无进行中比赛/.test(t) ? 0 : null),
     polymarket_matched: pm ? Number(pm[1]) : null,
@@ -310,14 +310,14 @@ function friendlyCollectError(code, text) {
     return (hit || 'Sofascore curl_cffi 不可用，请重建镜像或安装 requirements.txt 后重启').slice(0, 240);
   }
   if (/CONNECT tunnel failed|curl:\s*\(7\)/i.test(t) || /代理被拒绝/i.test(t)) {
-    return 'IPWO 代理被拒绝 (403)，请检查 monitor.env 代理账号/额度；采集禁止直连，请修复代理后重试';
+    return 'HTTP 代理隧道失败；采集默认直连，请检查是否误设 HTTP_PROXY / SOFA_HTTP_PROXY';
   }
   if (/Failed to perform|curl_cffi|ProxyError|Tunnel connection failed|SOCKS|Connection reset|timed out|Timeout/i.test(t)) {
     const hit = [...t.split(/\r?\n/)].reverse().find((l) =>
       /Failed to perform|ProxyError|Tunnel|SOCKS|Connection reset|timed out|Timeout|curl_cffi|采集失败/i.test(l),
     );
     if (hit) return hit.replace(/^采集失败:\s*/, '').slice(0, 240);
-    return 'Sofascore/代理网络失败（超时或隧道失败），请检查 IPWO 与容器出网';
+    return 'Sofascore 网络失败（超时或连接失败），请检查容器出网';
   }
   const failLine = [...t.split(/\r?\n/)].reverse().find((l) => /采集失败:/.test(l));
   if (failLine) return failLine.replace(/^采集失败:\s*/, '').slice(0, 240);
@@ -343,7 +343,7 @@ function parseFullCollectSummary(text) {
   const m = t.match(/完成:\s*(\d+)\s*场/);
   const emptyRun = /完成:\s*无比赛/.test(t);
   const redisFail = /Redis 失败|未配置 REDIS_URL/.test(t);
-  const noProxy = /未配置 IPWO|必须经 IPWO|禁止直连/.test(t);
+  const noProxy = false;
   return {
     total_events: m ? Number(m[1]) : (emptyRun ? 0 : null),
     redis_failed: redisFail,
@@ -399,9 +399,7 @@ async function startCollect({ matchDate = null, top100 = true, wait = false, tri
     if (!top100) args.push('--all');
 
     const bin = pythonBin();
-    console.log(
-      `[tennis/collect] spawn ${bin} -u ${args.join(' ')} ipwo=${proxyEnv.IPWO_PROXY_USER ? 'yes' : 'no'}`,
-    );
+    console.log(`[tennis/collect] spawn ${bin} -u ${args.join(' ')} proxy=direct`);
 
     try {
       return await new Promise((resolve) => {
@@ -446,8 +444,6 @@ async function startCollect({ matchDate = null, top100 = true, wait = false, tri
 
           if (code !== 0) {
             error = friendlyCollectError(code, text) || `collect.py 退出码 ${code}`;
-          } else if (summary.no_proxy) {
-            error = '未配置 IPWO 代理，无法采集 Sofascore';
           } else if (summary.redis_failed) {
             error = 'Redis 写入失败：请在 monitor.env 配置与 server 一致的 REDIS_URL';
           }
@@ -569,15 +565,15 @@ async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = fals
   };
   pushLog(`=== collect_live.py --filter=true ${startedAt} trigger=${trigger} ===`);
   if (monitorEnv.file) {
-    pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}（代理账号以管理员库为准）`);
+    pushLog(`[env] child fills empty keys from ${path.basename(monitorEnv.file)}`);
   } else {
-    pushLog('[env] 未找到 monitor.env*；代理请在管理中心「采集代理」配置');
+    pushLog('[env] 未找到 monitor.env*');
   }
 
   const bin = pythonBin();
   const liveArgs = ['-u', COLLECT_LIVE_SCRIPT, '--filter=true'];
   const proxyEnv = await proxyEnvForJob('top100');
-  console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')} ipwo=${proxyEnv.IPWO_PROXY_USER ? 'yes' : 'no'}`);
+  console.log(`[tennis/collect-live] spawn ${bin} ${liveArgs.join(' ')} proxy=direct`);
   liveChild = spawn(bin, liveArgs, {
     cwd: MONITOR_DIR,
     env: {
@@ -641,8 +637,6 @@ async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = fals
     let error = null;
     if (code !== 0) {
       error = friendlyCollectError(code, text) || `collect_live.py 退出码 ${code}`;
-    } else if (summary.no_proxy) {
-      error = '未配置 IPWO 代理，无法采集比分/Polymarket';
     } else if (summary.redis_failed) {
       error = 'Redis 写入失败：请在 monitor.env 配置与 server 一致的 REDIS_URL';
     }

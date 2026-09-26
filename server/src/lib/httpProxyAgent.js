@@ -1,7 +1,7 @@
 /**
- * 极简 HTTP CONNECT 隧道代理（仅 node:net/tls 内置模块，无第三方依赖）。
- * 供 node:https 请求经 IPWO（或 SOFA_HTTP_PROXY 覆盖）代理访问外网，禁止直连。
- * 代理地址从环境变量读取，规则与 scripts/tennis-monitor/tm/clients/proxy.py 保持一致。
+ * Optional HTTP CONNECT tunnel (node:net/tls only).
+ * Sofascore / Polymarket default to direct; only SOFA_HTTP_PROXY / HTTP_PROXY enable a tunnel.
+ * IPWO support removed.
  */
 const net = require('net');
 const tls = require('tls');
@@ -9,20 +9,8 @@ const https = require('https');
 
 function proxyFromEnv() {
   const direct = String(process.env.SOFA_HTTP_PROXY || process.env.HTTP_PROXY || '').trim();
-  if (direct) {
-    return String(process.env.SOFA_HTTPS_PROXY || process.env.HTTPS_PROXY || direct).trim();
-  }
-  const user = String(process.env.IPWO_PROXY_USER || process.env.IPWO_USERNAME || '').trim();
-  const pass = String(process.env.IPWO_PROXY_PASS || process.env.IPWO_PASSWORD || '').trim();
-  if (!user || !pass) return '';
-  let u = user;
-  const zone = String(process.env.IPWO_PROXY_ZONE || '').trim();
-  if (zone && !u.includes('_custom_zone_') && !u.includes('_zone_')) {
-    u = `${u}_custom_zone_${zone.toUpperCase()}`;
-  }
-  const host = String(process.env.IPWO_PROXY_HOST || 'us.ipwo.net').trim();
-  const port = String(process.env.IPWO_PROXY_PORT || '7878').trim();
-  return `http://${encodeURIComponent(u)}:${encodeURIComponent(pass)}@${host}:${port}`;
+  if (!direct) return '';
+  return String(process.env.SOFA_HTTPS_PROXY || process.env.HTTPS_PROXY || direct).trim();
 }
 
 /** https.Agent：createConnection 经代理 CONNECT 建立 TLS 隧道。 */
@@ -98,14 +86,10 @@ class HttpProxyAgent extends https.Agent {
   }
 }
 
-/** Polymarket 默认允许无代理直连；Sofascore 必须经 IPWO；其它 scope 未配置代理时抛错。
- * 非 Sofascore 任务可由 COLLECT_TOP100_USE_PROXY / COLLECT_INPLAY_USE_PROXY=0 强制直连。
- */
 const _agents = new Map();
-const DIRECT_ALLOWED = new Set(['Polymarket', 'polymarket']);
 const SOFA_SCOPE = 'Sofascore';
 
-/** Sofascore 经 IPWO 的请求计数（每次 httpsGetJson scope=Sofascore 且走代理 +1） */
+/** Compat counters (were IPWO hits; now any Sofascore request via tunnel). */
 const sofaIpwoStats = { last_tick: 0, total: 0 };
 
 function beginSofaIpwoTick() {
@@ -125,46 +109,32 @@ function jobWantsProxy() {
   const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
   const isInplay = job.includes('inplay');
   const key = isInplay ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
-  // Sofascore 默认直连（mobile API）；仅显式设为 1 时走代理
   const v = String(process.env[key] || '0').trim().toLowerCase();
   return ['1', 'true', 'yes', 'on'].includes(v);
 }
 
+/** Never required — missing proxy means direct. */
 function requireProxyAgent(scope = '外网') {
-  const scopeStr = String(scope);
-  // Top100 / 盘中关代理时 Sofascore 允许直连（mobile API）
   if (!jobWantsProxy()) {
     const key = `${scope}|forced-direct`;
     _agents.set(key, undefined);
     return undefined;
   }
-  const key = `${scope}|${proxyFromEnv() || 'direct'}`;
-  if (_agents.has(key)) return _agents.get(key);
   const url = proxyFromEnv();
+  const key = `${scope}|${url || 'direct'}`;
+  if (_agents.has(key)) return _agents.get(key);
   if (!url) {
-    if (DIRECT_ALLOWED.has(String(scope))) {
-      _agents.set(key, undefined);
-      return undefined;
-    }
-    throw new Error(
-      `${scope} 采集必须经 IPWO 代理，禁止直连。请到管理中心「采集代理」配置账号后重试。`
-    );
+    _agents.set(key, undefined);
+    return undefined;
   }
   const agent = new HttpProxyAgent(url);
   _agents.set(key, agent);
   return agent;
 }
 
-/** 经代理发起 HTTPS GET 并解析 JSON。Polymarket scope 无代理时直连。 */
 function httpsGetJson(url, { scope = '外网', timeoutMs = 8000, headers = {}, allowDirect = false } = {}) {
-  const agent = (() => {
-    try {
-      return requireProxyAgent(scope);
-    } catch (e) {
-      if (allowDirect || DIRECT_ALLOWED.has(String(scope))) return undefined;
-      throw e;
-    }
-  })();
+  void allowDirect;
+  const agent = requireProxyAgent(scope);
   if (String(scope) === SOFA_SCOPE && agent) {
     sofaIpwoStats.last_tick += 1;
     sofaIpwoStats.total += 1;

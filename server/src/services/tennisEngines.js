@@ -370,16 +370,6 @@ const DEFAULT_CONFIG = {
       score: false,
       odds: false,
     },
-    /** IPWO 代理：开关 + 账号（管理员页配置，不写 monitor.env） */
-    proxy: {
-      top100: true,
-      inplay_tick: true,
-      host: 'us.ipwo.net',
-      port: '7878',
-      user: '',
-      pass: '',
-      zone: '',
-    },
     /** 后台比分/赔率刷新（管理员页配置，优先于 SOFA_SCORE_LOOP_MS / POLY_ODDS_LOOP_MS） */
     background: {
       score_enabled: true,
@@ -694,8 +684,6 @@ function normalizeCollect(c = {}) {
     ...base.inplay_tick_fields,
     ...(c.inplay_tick_fields && typeof c.inplay_tick_fields === 'object' ? c.inplay_tick_fields : {}),
   };
-  const proxyIn = c.proxy && typeof c.proxy === 'object' ? c.proxy : {};
-  const baseProxy = base.proxy || {};
   return {
     enabled: c.enabled !== false,
     inplay_tick_enabled: c.inplay_tick_enabled !== false,
@@ -703,63 +691,35 @@ function normalizeCollect(c = {}) {
       score: fields.score === true,
       odds: fields.odds !== false,
     },
-    proxy: {
-      // Sofascore（Top100 / 盘中）默认直连 mobile API；开关保留兼容 UI
-      top100: proxyIn.top100 === true,
-      inplay_tick: proxyIn.inplay_tick === true,
-      host: String(proxyIn.host != null ? proxyIn.host : baseProxy.host || 'us.ipwo.net').trim() || 'us.ipwo.net',
-      port: String(proxyIn.port != null ? proxyIn.port : baseProxy.port || '7878').trim() || '7878',
-      user: String(proxyIn.user != null ? proxyIn.user : baseProxy.user || '').trim(),
-      pass: String(proxyIn.pass != null ? proxyIn.pass : baseProxy.pass || '').trim(),
-      zone: String(proxyIn.zone != null ? proxyIn.zone : baseProxy.zone || '').trim(),
-    },
     background: normalizeCollectBackground(c.background, base.background),
   };
 }
 
-/** API 对外：不回传明文密码 */
+/** API 对外 */
 function toPublicConfig(cfg) {
   const next = cfg && typeof cfg === 'object' ? JSON.parse(JSON.stringify(cfg)) : normalizeConfig({});
-  const p = next?.collect?.proxy;
-  if (p && typeof p === 'object') {
-    p.passSet = !!String(p.pass || '').trim();
-    p.pass = '';
-  }
+  if (next?.collect?.proxy) delete next.collect.proxy;
   return next;
 }
 
-/** 生成子进程 / 本进程 IPWO 环境（以管理员库配置为准） */
+/** 子进程 / 本进程：强制直连，清掉遗留 IPWO / HTTP_PROXY */
 function buildProxyProcessEnv(cfg, job = 'top100') {
-  const p = cfg?.collect?.proxy || {};
+  void cfg;
   const isInplay = String(job).toLowerCase().includes('inplay');
-  const top100Use = false; // Top100 / 立即采集：mobile API 直连，不走 IPWO
-  const inplayUse = false; // 盘中 Sofascore 同样直连
-  const useProxy = isInplay ? inplayUse : top100Use;
-  const env = {
+  return {
     COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-    COLLECT_TOP100_USE_PROXY: top100Use ? '1' : '0',
-    COLLECT_INPLAY_USE_PROXY: inplayUse ? '1' : '0',
+    COLLECT_TOP100_USE_PROXY: '0',
+    COLLECT_INPLAY_USE_PROXY: '0',
+    SOFA_HTTP_PROXY: '',
+    SOFA_HTTPS_PROXY: '',
+    HTTP_PROXY: '',
+    HTTPS_PROXY: '',
+    IPWO_PROXY_HOST: '',
+    IPWO_PROXY_PORT: '',
+    IPWO_PROXY_USER: '',
+    IPWO_PROXY_PASS: '',
+    IPWO_PROXY_ZONE: '',
   };
-  // 清掉可能覆盖的直连代理 env
-  env.SOFA_HTTP_PROXY = '';
-  env.SOFA_HTTPS_PROXY = '';
-  env.HTTP_PROXY = '';
-  env.HTTPS_PROXY = '';
-  if (!useProxy) {
-    // 本任务直连：勿注入坏端口的 IPWO，避免 curl (5)
-    env.IPWO_PROXY_HOST = '';
-    env.IPWO_PROXY_PORT = '';
-    env.IPWO_PROXY_USER = '';
-    env.IPWO_PROXY_PASS = '';
-    env.IPWO_PROXY_ZONE = '';
-    return env;
-  }
-  if (p.host) env.IPWO_PROXY_HOST = String(p.host);
-  if (p.port) env.IPWO_PROXY_PORT = String(p.port);
-  if (p.user) env.IPWO_PROXY_USER = String(p.user);
-  if (p.pass) env.IPWO_PROXY_PASS = String(p.pass);
-  if (p.zone) env.IPWO_PROXY_ZONE = String(p.zone);
-  return env;
 }
 
 function normalizeConfig(cfg) {
@@ -975,18 +935,13 @@ async function resolveBettingUser(patchBetting, nextBetting) {
 async function setConfig(patch) {
   const cur = await getConfig();
   let incoming = patch && typeof patch === 'object' ? { ...patch } : {};
-  // 密码留空 = 保留原密码
-  if (incoming.collect?.proxy && typeof incoming.collect.proxy === 'object') {
-    const prox = { ...incoming.collect.proxy };
-    if (!String(prox.pass || '').trim()) {
-      prox.pass = cur.collect?.proxy?.pass || '';
-    }
-    incoming = {
-      ...incoming,
-      collect: { ...incoming.collect, proxy: prox },
-    };
+  if (incoming.collect && typeof incoming.collect === 'object') {
+    const { proxy: _dropProxy, ...restCollect } = incoming.collect;
+    void _dropProxy;
+    incoming = { ...incoming, collect: restCollect };
   }
   let next = deepMerge(cur, incoming || {});
+  if (next?.collect?.proxy) delete next.collect.proxy;
   // 整桶 groups 以 patch 为准（避免与旧组合并残留）
   const patchBuckets = patch?.condition?.buckets;
   if (patchBuckets && typeof patchBuckets === 'object') {

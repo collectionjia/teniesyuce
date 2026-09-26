@@ -2,7 +2,7 @@
 """轻量盘中刷新：只更新 Redis tennis:bundle:inplay 里已有场次。
 
 - 只刷有 Polymarket slug 的场次
-- 比分：Sofascore(IPWO)；赔率：Polymarket CLOB mid（直连，无簿则该场赔率 miss）
+- 比分：Sofascore 直连；赔率：Polymarket CLOB mid（直连，无簿则该场赔率 miss）
 - 仅刷包内已有场次；完赛迁入 settled
 
 用法:
@@ -196,13 +196,13 @@ def select_matches_with_slug(
 def refresh_scores_sofascore(
     matches: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """IPWO → Sofascore：刷有 slug 的场次比分/状态。"""
+    """Sofascore 直连：刷有 slug 的场次比分/状态。"""
     scores: dict[str, Any] = {
         "updated": 0,
         "failed": 0,
         "skipped": False,
-        "source": "sofascore-ipwo",
-        "upstream": "ipwo",
+        "source": "sofascore",
+        "upstream": "sofascore",
     }
     if not matches:
         scores.update({"skipped": True, "reason": "no matches with slug", "ok": True})
@@ -216,10 +216,8 @@ def refresh_scores_sofascore(
         scores.update({"skipped": True, "reason": "no match ids", "ok": True})
         return scores
 
-    # 确保盘中任务走代理开关（Sofascore 侧 require_proxy）
     os.environ.setdefault("COLLECT_PROXY_JOB", "inplay")
-    if not (os.environ.get("COLLECT_INPLAY_USE_PROXY") or "").strip():
-        os.environ["COLLECT_INPLAY_USE_PROXY"] = "1"
+    os.environ["COLLECT_INPLAY_USE_PROXY"] = "0"
 
     missed: list[dict[str, Any]] = []
     live_hit = 0
@@ -412,7 +410,7 @@ def refresh_odds_polymarket(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="只刷 Redis 盘中包：Sofascore(IPWO) 比分 + Polymarket 直连赔率"
+        description="只刷 Redis 盘中包：Sofascore 比分 + Polymarket 直连赔率"
     )
     parser.add_argument("--scores-only", action="store_true", help="只刷 Sofascore 比分/状态")
     parser.add_argument("--odds-only", action="store_true", help="只刷 Polymarket CLOB 赔率")
@@ -508,7 +506,7 @@ def main() -> int:
     now = datetime.now(timezone.utc).isoformat()
     bundle["tick_at"] = now
     bundle["serverTime"] = int(time.time())
-    bundle["upstream"] = "ipwo+polymarket"
+    bundle["upstream"] = "sofascore+polymarket"
     bundle["collectScript"] = "refresh_inplay"
     if want_score and not scores.get("skipped"):
         bundle["score_updated_at"] = now

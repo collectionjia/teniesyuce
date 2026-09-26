@@ -101,7 +101,7 @@ def build_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
         "top_rank_max": collect.get("top_rank_max") or (_TOP_N_DEFAULT if collect.get("top100") else None),
         "exclude_ended": True,
         "source": "tennis-collect",
-        "upstream": "ipwo",
+        "upstream": "sofascore",
         "dataSource": DATA_SOURCE_COLLECT,
         "collectScript": "collect",
         "scheduled": group_scheduled(events),
@@ -267,7 +267,7 @@ def build_live_bundle_payload(collect: dict[str, Any]) -> dict[str, Any]:
         "top_rank_max": collect.get("top_rank_max"),
         "exclude_ended": True,
         "source": "tennis-collect-live",
-        "upstream": "ipwo",
+        "upstream": "sofascore",
         "dataSource": DATA_SOURCE_COLLECT_LIVE,
         "collectScript": "collect_live",
         "scheduled": {
