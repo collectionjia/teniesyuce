@@ -2,7 +2,6 @@ const tennisCache = require('./tennisCache');
 const tennisRangeCache = require('./tennisRangeCache');
 const tennisFromMonitor = require('./tennisFromMonitor');
 const tennisLive = require('./tennisLive');
-const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
 const {
   buildRangeBundle,
   allEventsFromBundle,
@@ -129,11 +128,6 @@ async function refreshRangeBundleFromMonitor() {
         console.error('[tennis/range] live overlay:', e.message);
       }
 
-      try {
-        await applyPolymarketLinks(base);
-      } catch (e) {
-        console.error('[tennis/range] poly match:', e.message);
-      }
     }
 
     const rangeBundle = buildRangeBundle(base, { requirePoly: false });

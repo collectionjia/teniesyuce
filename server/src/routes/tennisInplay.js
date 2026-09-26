@@ -271,25 +271,4 @@ router.post('/tick', auth(['admin']), async (req, res) => {
   }
 });
 
-/** 手动：拉 Polymarket 单场赔率并写回 Redis（详情 1s 轮询走 GET /match/:id 只读） */
-router.post('/odds/refresh', optionalAuth(), async (req, res) => {
-  try {
-    const eventId = String(req.body?.eventId || req.query?.eventId || '').trim();
-    if (!eventId) {
-      return res.status(400).json({ ok: false, error: 'eventId 不能为空' });
-    }
-    const tennisPolymarket = require('../services/tennisPolymarket');
-    const clobOnly = req.body?.clobOnly !== false && req.query?.clobOnly !== '0';
-    process.env.COLLECT_INPLAY_USE_PROXY = process.env.COLLECT_INPLAY_USE_PROXY || '0';
-    const result = await tennisPolymarket.refreshInplayOddsByEventId(eventId, { clobOnly });
-    if (!result.ok) {
-      return res.status(200).json({ ok: false, ...result });
-    }
-    res.json(result);
-  } catch (e) {
-    console.error('[tennis-inplay/odds/refresh]', e);
-    res.status(500).json({ ok: false, error: e.message || 'odds refresh failed' });
-  }
-});
-
 module.exports = router;

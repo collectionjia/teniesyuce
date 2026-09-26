@@ -505,6 +505,13 @@ def persist_live_collect(collect: dict[str, Any]) -> dict[str, Any]:
     """仅写入 collect_live 独立 Redis（tennis:bundle:inplay），不触碰 tennis:bundle:full。"""
     match_date = collect.get("date") or today_bj()
     live_bundle = build_live_bundle_payload(collect)
+    prev = read_live_bundle_redis()
+    prev_bundle = (prev.get("bundle") if prev.get("ok") else None) or {}
+    prev_poly = prev_bundle.get("polymarketByEvent") or {}
+    if prev_poly:
+        live_bundle["polymarketByEvent"] = prev_poly
+        if prev_bundle.get("odds_updated_at"):
+            live_bundle["odds_updated_at"] = prev_bundle["odds_updated_at"]
     live_path: Path | None = None
     try:
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

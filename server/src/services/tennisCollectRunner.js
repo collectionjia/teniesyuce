@@ -551,7 +551,7 @@ async function runInplayRefreshAndWait({
 }
 
 /**
- * 同步跑 collect_live.py（IPWO → Sofascore 比分/状态 + Polymarket），写完 Redis 再返回。
+ * 同步跑 collect_live.py（IPWO → Sofascore 比分/状态），写完 Redis 再返回（PM 赔率由 poly-odds 循环）。
  * 供调度「盘中比分刷新」使用。
  */
 async function runLiveCollectAndWait({ timeoutMs = 180000 } = {}) {

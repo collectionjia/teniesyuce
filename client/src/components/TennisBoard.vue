@@ -2238,15 +2238,7 @@ function refreshScoreOddsCollect() {
 }
 
 function onPolymarketAction(m) {
-  // 必须先同步打开：await 采集后再 window.open 会丢掉用户手势，弹窗被浏览器拦截
   openMarket(m)
-  if (m?.id && (isInplayMode.value || isMixMode.value)) {
-    void api.refreshTennisInplayOdds(m.id, { clobOnly: true })
-      .then((r) => {
-        if (r?.poly) applyPolyOddsToData(m.id, r.poly, r.odds_updated_at)
-      })
-      .catch(() => {})
-  }
 }
 
 function fmtRefreshClock(iso) {

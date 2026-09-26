@@ -606,16 +606,6 @@ export async function fetchTennisInplayMatch(eventId) {
   })
   return data
 }
-
-/** 手动触发单场 Polymarket 赔率采集并写 Redis */
-export async function refreshTennisInplayOdds(eventId, { clobOnly = true } = {}) {
-  const { data } = await api.post('/tennis-inplay/odds/refresh', {
-    eventId,
-    clobOnly,
-  })
-  return data
-}
-
 // --- 五引擎服务（经 server 代理 /admin/engines/*）---
 export async function fetchEngineServicesOverview() {
   try {

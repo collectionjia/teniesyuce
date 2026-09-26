@@ -1,4 +1,4 @@
-"""进行中采集：IPWO → Top100/tier live → Polymarket → 排名/赔率 → 独立写入 tennis:bundle:inplay。"""
+"""进行中采集：IPWO → Top100/tier live → 比分/排名 → 独立写入 tennis:bundle:inplay（PM 赔率由 server poly-odds 循环刷新）。"""
 from __future__ import annotations
 
 import os
@@ -7,7 +7,6 @@ from typing import Any
 
 from tm.bundle import enrich_odds_for_events, enrich_rankings_from_events, fill_missing_birth_years, slim_event
 from tm.bundle_store import INPLAY_BUNDLE_KEY, persist_live_collect
-from tm.clients.polymarket import enrich_events_polymarket, get_request_count
 from tm.clients.proxy import proxy_status_public
 from tm.clients.sofascore import SofascoreClient
 from tm.collectors.events import (
@@ -34,40 +33,6 @@ from tm.db.writer import collect_mysql_policy_message, log_collect_mysql_policy
 
 
 _SIMPLE_LIMIT_DEFAULT = int(os.environ.get("SOFA_LIVE_SIMPLE_LIMIT", "20"))
-
-
-_SCORE_KEYS = ("scoreText", "score", "homeScore", "awayScore", "home_score", "away_score")
-
-
-def _has_outer_link(poly: dict | None) -> bool:
-    url = str((poly or {}).get("url") or "")
-    return "polymarket.com/event/" in url.lower()
-
-
-def _apply_linked_scores(client, raw_events: list[dict], slim_events: list[dict], polymarket_by_event: dict) -> list[dict]:
-    """只给有 Polymarket 外链的场次拉盘局比分；没有外链的不保留比分。"""
-    raw_by_id = {str(ev.get("id")): ev for ev in raw_events if ev.get("id") is not None}
-    linked_raw = []
-    for ev in slim_events:
-        eid = str(ev.get("id"))
-        if _has_outer_link(polymarket_by_event.get(eid)) and eid in raw_by_id:
-            linked_raw.append(raw_by_id[eid])
-    refreshed = {str(ev.get("id")): slim_event(ev) for ev in refresh_live_set_scores(client, linked_raw)}
-    out = []
-    for ev in slim_events:
-        eid = str(ev.get("id"))
-        if eid in refreshed:
-            row = refreshed[eid]
-            print(f"      {row.get('home')} vs {row.get('away')}  {row.get('scoreText') or '-'}")
-            out.append(row)
-            continue
-        for key in _SCORE_KEYS:
-            ev.pop(key, None)
-        out.append(ev)
-    skipped = len(slim_events) - len(refreshed)
-    if skipped:
-        print(f"      无外链，跳过比分 {skipped} 场")
-    return out
 
 
 def log_live_collect_header(*, filter_conditions: bool = False, top100: bool = True, simple_limit: int = _SIMPLE_LIMIT_DEFAULT) -> str:
@@ -123,7 +88,6 @@ def run_tier_live_collect(
     polymarket_by_event: dict[str, Any] = {}
     extra_rankings = 0
     odds_events = 0
-    poly_requests_before = 0
     tier_before = 0
     try:
         with SofascoreClient() as client:
@@ -154,13 +118,15 @@ def run_tier_live_collect(
                 if filter_conditions and top100 and tier_before != len(slim_events):
                     print(f"      Top100 过滤：{tier_before} → {len(slim_events)} 场")
 
-                print(f"[3/{_STEPS}] Polymarket 比赛详情与赔率：{len(slim_events)} 场")
+                print(f"[3/{_STEPS}] 比分刷新：{len(slim_events)} 场（Polymarket 跳过）")
                 t0 = time.perf_counter()
-                poly_requests_before = get_request_count()
-                polymarket_by_event = enrich_events_polymarket(slim_events)
-                slim_events = _apply_linked_scores(client, raw_events, slim_events, polymarket_by_event)
+                refreshed = {
+                    str(ev.get("id")): slim_event(ev)
+                    for ev in refresh_live_set_scores(client, raw_events)
+                }
+                slim_events = [refreshed.get(str(ev.get("id")), ev) for ev in slim_events]
                 timing["step3"] = time.perf_counter() - t0
-                log_step_done(3, _STEP_LABELS[2], timing["step3"])
+                log_step_done(3, "比分刷新", timing["step3"])
 
                 enrich_board = board
                 if enrich_board is None:
@@ -184,8 +150,7 @@ def run_tier_live_collect(
                 print(
                     f"      排名 {len(rankings_by_player)} 人 · "
                     f"年龄 {len(birth_year_by_player)} 人 · "
-                    f"赔率 {len(odds_by_event)}/{len(slim_events)} · "
-                    f"PM {len(polymarket_by_event)}/{len(slim_events)}"
+                    f"赔率 {len(odds_by_event)}/{len(slim_events)}"
                 )
             else:
                 timing["step3"] = 0.0
@@ -199,15 +164,14 @@ def run_tier_live_collect(
             os.environ["SOFA_LOG_MATCHES"] = prev_log
 
     collect_stats = get_collect_stats()
-    poly_requests = max(0, get_request_count() - poly_requests_before)
     request_stats = build_request_stats(
         client_stats,
         top100=filter_conditions and top100,
         collect_stats=collect_stats,
         extra_rankings=extra_rankings,
         odds_events=odds_events,
-        polymarket_events=len(polymarket_by_event),
-        poly_requests=poly_requests,
+        polymarket_events=0,
+        poly_requests=0,
     )
     t0 = time.perf_counter()
     log_tier_matches(

@@ -2,7 +2,6 @@ const tennisCache = require('./tennisCache');
 const tennisNewCache = require('./tennisNewCache');
 const tennisFromMonitor = require('./tennisFromMonitor');
 const tennisLive = require('./tennisLive');
-const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
 const {
   buildNewBundle,
   allEventsFromBundle,
@@ -125,11 +124,6 @@ async function refreshNewBundleFromMonitor() {
       mergeTop100BoardRankings(base);
       tennisFromMonitor.buildRankingsFromEvents(base);
 
-      try {
-        await applyPolymarketLinks(base);
-      } catch (e) {
-        console.error('[tennis/new] poly match:', e.message);
-      }
     }
 
     const newBundle = buildNewBundle(base);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""进行中采集：IPWO → live Top100/tier → Polymarket → 排名/赔率 → Redis
+"""进行中采集：IPWO → live Top100/tier → 比分/排名 → Redis（PM 赔率由 server poly-odds 循环刷新）
 
 写入（独立，不合并 collect 全量包）:
   Redis  tennis:bundle:inplay       （collect_live 专用）
@@ -101,7 +101,6 @@ def main() -> int:
         mode = f"前{result.get('simple_limit') or args.limit}场"
     print(
         f"完成: {result.get('total_events')} 场进行中 ({mode}) · "
-        f"PM {len(result.get('polymarketByEvent') or {})} · "
         f"{redis_part} · "
         f"HTTP {req.get('http_total')} 次 "
         f"(api={req.get('http_api')} poly={req.get('poly_requests', 0)}req)"

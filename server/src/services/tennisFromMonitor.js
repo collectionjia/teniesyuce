@@ -1,6 +1,5 @@
 const tennisCache = require('./tennisCache');
 const tennisLive = require('./tennisLive');
-const { applyPolymarketLinks } = require('./tennisPolymarketMatch');
 const allsports = require('./allsports');
 const tennisDataSource = require('./tennisDataSource');
 
@@ -195,33 +194,13 @@ async function refreshRedisFromMonitor({ includeLive = true } = {}) {
       }
     }
 
-    let polyStats = null;
-    if (!useDocks500) {
-      try {
-        polyStats = await applyPolymarketLinks(bundle);
-        bundle.polyMatch = polyStats;
-        if (polyStats.fromGamma || polyStats.fromMysql || polyStats.prices?.updated) {
-          console.log(
-            `[tennis/monitor-redis] poly linked=${polyStats.matched} gamma=${polyStats.fromGamma} ` +
-              `prices=${polyStats.prices?.updated || 0} ms=${polyStats.timingMs?.total || 0}`,
-          );
-        }
-      } catch (e) {
-        console.error('[tennis/monitor-redis] poly match:', e.message);
-      }
-    }
-
     const redisRefreshMs = Date.now() - redisStarted;
     bundle.redisRefresh = {
       totalMs: redisRefreshMs,
-      polyMs: polyStats?.timingMs?.total || 0,
-      polyMatchMs: polyStats?.timingMs?.match || 0,
-      polyPriceMs: polyStats?.timingMs?.prices || 0,
       at: new Date().toISOString(),
     };
     lastRedisRefresh = {
       requests: bundle.requests || null,
-      poly: polyStats,
       redisRefresh: bundle.redisRefresh,
       upstream: bundle.upstream,
       events: bundle.events,

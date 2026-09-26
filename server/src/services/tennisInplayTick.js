@@ -1,6 +1,6 @@
 /**
  * 盘中 tick：迁桶 / PM 结算打标 / 可选投注。
- * 赔率写入：collect.top100 全量、poly-odds 后台循环、手动单场刷新。
+ * 赔率写入：collect.top100 全量、poly-odds 后台循环。
  */
 const tennisInplayCache = require('./tennisInplayCache');
 const tennisThreeBuckets = require('./tennisThreeBuckets');
