@@ -145,8 +145,12 @@ async function fetchEvent(eventId) {
   return inner;
 }
 
-function ensureInplayProxyEnv() {
-  process.env.COLLECT_PROXY_JOB = process.env.COLLECT_PROXY_JOB || 'inplay';
+/** 每次刷新前从引擎库加载 IPWO，避免后台循环丢代理配置 */
+async function ensureInplayProxyEnv() {
+  const tennisEngines = require('./tennisEngines');
+  const cfg = await tennisEngines.getConfig();
+  Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, 'inplay'));
+  process.env.COLLECT_PROXY_JOB = 'inplay';
   if (!String(process.env.COLLECT_INPLAY_USE_PROXY || '').trim()) {
     process.env.COLLECT_INPLAY_USE_PROXY = '1';
   }
@@ -167,7 +171,7 @@ async function refreshInplayScoresOnce(opts = {}) {
       reason: 'full-collect pause',
     };
   }
-  ensureInplayProxyEnv();
+  await ensureInplayProxyEnv();
   const tennisThreeBuckets = require('./tennisThreeBuckets');
   const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
   const bundle = buckets.inplay;
@@ -292,7 +296,7 @@ async function refreshInplayScoresByEventId(eventId) {
   const row = byId.get(idKey);
   if (!row?.refs?.length) return { ok: false, error: 'match not in any bundle', eventId: idKey };
 
-  ensureInplayProxyEnv();
+  await ensureInplayProxyEnv();
   try {
     let raw = null;
     try {
@@ -385,8 +389,7 @@ async function main(argv = process.argv.slice(2)) {
     return;
   }
 
-  ensureInplayProxyEnv();
-  process.env.COLLECT_PROXY_JOB = 'inplay';
+  await ensureInplayProxyEnv();
 
   const runBundle = async () => {
     const r = await refreshInplayScoresOnce();
