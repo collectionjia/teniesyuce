@@ -45,6 +45,7 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/agent', agentRoutes);
 // 管理员子路由（须在 /api/admin 通用路由之前挂载）
 app.use('/api/admin/tennis-monitor', tennisMonitorRoutes);
+app.use('/api/tennis-board', require('./routes/tennisBoardPush'));
 app.use('/api/admin/btc-board', btcAdminRoutes);
 app.use('/api/admin/engines', adminEngineServicesRoutes);
 app.use('/api/admin', adminSchedulerRoutes);

@@ -43,8 +43,21 @@ def _load_board_env() -> None:
 
 _load_board_env()
 
+# 线上 HTTP 推送（生产 Redis 仅服务器本机可达时用）
+PUSH_URL = (os.environ.get("SOFA_BOARD_PUSH_URL") or "").rstrip("/")
+PUSH_TOKEN = (
+    os.environ.get("SOFA_BOARD_PUSH_TOKEN")
+    or os.environ.get("SOFA_MONITOR_TOKEN")
+    or ""
+).strip()
+
 from tm.bundle import parse_player_rank_detail, slim_event  # noqa: E402
-from tm.bundle_store import persist_collect_bundle, persist_live_collect  # noqa: E402
+from tm.bundle_store import (  # noqa: E402
+    build_bundle_payload,
+    build_live_bundle_payload,
+    persist_collect_bundle,
+    persist_live_collect,
+)
 from tm.clients.sofascore import _event_score  # noqa: E402
 from tm.clients.sofascore_mobile import SofascoreMobileClient  # noqa: E402
 from tm.collectors.events import (  # noqa: E402
@@ -678,8 +691,58 @@ def _normalize_match_scores(ev: dict[str, Any]) -> dict[str, Any]:
     return ev
 
 
+def _redis_host_public() -> str:
+    url = (os.environ.get("REDIS_URL") or "").strip()
+    if not url:
+        return ""
+    # redis://host:port/... → host:port
+    try:
+        from urllib.parse import urlparse as _up
+
+        u = _up(url)
+        return f"{u.hostname}:{u.port}" if u.hostname else url.split("@")[-1][:80]
+    except Exception:
+        return url[:80]
+
+
+def _push_http(mode: str, bundle: dict[str, Any]) -> dict[str, Any] | None:
+    """若配置了 SOFA_BOARD_PUSH_URL，POST 到线上 /api/tennis-board/{full|live}。"""
+    if not PUSH_URL:
+        return None
+    import urllib.error
+    import urllib.request
+
+    path = "full" if mode == "full" else "live"
+    url = f"{PUSH_URL}/api/tennis-board/{path}"
+    body = json.dumps({"bundle": bundle}, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if PUSH_TOKEN:
+        headers["Authorization"] = f"Bearer {PUSH_TOKEN}"
+        headers["X-Board-Token"] = PUSH_TOKEN
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+            data = json.loads(raw) if raw else {}
+            if not isinstance(data, dict):
+                return {"ok": False, "error": "invalid push response"}
+            data.setdefault("via", "http")
+            data.setdefault("push_url", url)
+            return data
+    except urllib.error.HTTPError as exc:
+        try:
+            detail = exc.read().decode("utf-8", errors="replace")
+            parsed = json.loads(detail) if detail else {}
+            err = parsed.get("error") if isinstance(parsed, dict) else detail
+        except Exception:
+            err = str(exc)
+        return {"ok": False, "error": err or f"HTTP {exc.code}", "push_url": url}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "push_url": url}
+
+
 def sync_full_to_redis(*, force: bool = False, force_ranks: bool = False) -> dict[str, Any]:
-    """全量推 Redis。默认用内存/磁盘缓存（快）；?refresh=1 才重拉 SofaScore。"""
+    """全量推：优先 HTTP 到线上；否则写 REDIS_URL。"""
     used_cache = False
     if not force and not force_ranks:
         with _cache_lock:
@@ -695,11 +758,27 @@ def sync_full_to_redis(*, force: bool = False, force_ranks: bool = False) -> dic
     if not board.get("ok"):
         return {"ok": False, "error": board.get("error") or "board failed", "board": board}
     collect = _board_to_collect(board)
+    bundle = build_bundle_payload(collect)
+    http_out = _push_http("full", bundle)
+    if http_out is not None:
+        return {
+            "ok": bool(http_out.get("ok")),
+            "mode": "full",
+            "via": "http",
+            "cached": used_cache,
+            "date": collect.get("date"),
+            "events": len(collect.get("events") or []),
+            "summary": board.get("summary"),
+            "redis": http_out,
+            "redis_url_host": PUSH_URL,
+            "error": None if http_out.get("ok") else (http_out.get("error") or "http push failed"),
+        }
     redis_out = persist_collect_bundle(collect)
     redis_info = redis_out.get("redis") if isinstance(redis_out.get("redis"), dict) else {}
     return {
         "ok": bool(redis_info.get("ok")),
         "mode": "full",
+        "via": "redis",
         "cached": used_cache,
         "date": collect.get("date"),
         "events": len(collect.get("events") or []),
@@ -714,7 +793,7 @@ def sync_full_to_redis(*, force: bool = False, force_ranks: bool = False) -> dic
 
 
 def sync_live_to_redis(*, force: bool = False) -> dict[str, Any]:
-    """高频推 inplay。默认推当前缓存 live；?refresh=1 先刷比分再推。"""
+    """高频推：优先 HTTP 到线上；否则写 REDIS_URL inplay。"""
     used_cache = False
     live_res: dict[str, Any] | None = None
     if force:
@@ -745,11 +824,28 @@ def sync_live_to_redis(*, force: bool = False) -> dict[str, Any]:
         "top_rank_max": TOP_N,
         "filter_conditions": {"tier": "500_1000", "live_only": True},
     }
+    bundle = build_live_bundle_payload(collect)
+    http_out = _push_http("live", bundle)
+    if http_out is not None:
+        return {
+            "ok": bool(http_out.get("ok")),
+            "mode": "live",
+            "via": "http",
+            "cached": used_cache,
+            "date": collect.get("date"),
+            "events": len(live_events),
+            "summary": (live_res or {}).get("summary") if isinstance(live_res, dict) else board.get("summary"),
+            "redis": http_out,
+            "redis_url_host": PUSH_URL,
+            "live_refreshed_at": (live_res or {}).get("live_refreshed_at") if isinstance(live_res, dict) else None,
+            "error": None if http_out.get("ok") else (http_out.get("error") or "http push failed"),
+        }
     redis_out = persist_live_collect(collect)
     redis_info = redis_out.get("redis") if isinstance(redis_out.get("redis"), dict) else {}
     return {
         "ok": bool(redis_info.get("ok")),
         "mode": "live",
+        "via": "redis",
         "cached": used_cache,
         "date": collect.get("date"),
         "events": len(live_events),
@@ -760,20 +856,6 @@ def sync_live_to_redis(*, force: bool = False) -> dict[str, Any]:
         "redis_url_host": _redis_host_public(),
         "error": None if redis_info.get("ok") else (redis_info.get("error") or redis_info.get("reason") or "redis write failed"),
     }
-
-
-def _redis_host_public() -> str:
-    url = (os.environ.get("REDIS_URL") or "").strip()
-    if not url:
-        return ""
-    # redis://host:port/... → host:port
-    try:
-        from urllib.parse import urlparse as _up
-
-        u = _up(url)
-        return f"{u.hostname}:{u.port}" if u.hostname else url.split("@")[-1][:80]
-    except Exception:
-        return url[:80]
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -888,8 +970,12 @@ def main() -> None:
     redis_host = _redis_host_public() or "(未配置 REDIS_URL)"
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"tennis-live-board http://{HOST}:{PORT}")
-    print(f"  sync full → GET/POST /api/sync/full  → Redis {redis_host} tennis:bundle:full")
-    print(f"  sync live → GET/POST /api/sync/live  → Redis {redis_host} tennis:bundle:inplay")
+    print(f"  sync full → GET/POST /api/sync/full")
+    print(f"  sync live → GET/POST /api/sync/live")
+    if PUSH_URL:
+        print(f"  push via HTTP → {PUSH_URL}/api/tennis-board/{{full,live}}")
+    else:
+        print(f"  push via Redis → {_redis_host_public() or '(未配置 REDIS_URL)'}")
     server.serve_forever()
 
 
