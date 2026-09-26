@@ -9,7 +9,14 @@ from tm.clients.sofascore import SofascoreClient
 
 
 def main() -> None:
-    client = SofascoreClient()
+    client: SofascoreClient | None = None
+
+    def client_or_create() -> SofascoreClient:
+        nonlocal client
+        if client is None:
+            client = SofascoreClient()
+        return client
+
     for raw in sys.stdin:
         line = raw.strip()
         if not line:
@@ -31,7 +38,7 @@ def main() -> None:
             continue
         referer = req.get("referer")
         try:
-            data = client._api_get(path, referer=referer or None)
+            data = client_or_create()._api_get(path, referer=referer or None)
             print(json.dumps({"ok": True, "data": data}, ensure_ascii=False), flush=True)
         except Exception as exc:
             print(json.dumps({"ok": False, "error": str(exc) or repr(exc)}, ensure_ascii=False), flush=True)

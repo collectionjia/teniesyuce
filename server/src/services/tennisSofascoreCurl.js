@@ -20,10 +20,16 @@ function resolveMonitorDir() {
   return path.resolve(candidates[1]);
 }
 
-const MONITOR_DIR = resolveMonitorDir();
-const WORKER_SCRIPT = path.join(MONITOR_DIR, 'bin', 'sofa_json_worker.py');
+function monitorDir() {
+  return resolveMonitorDir();
+}
+
+function workerScript() {
+  return path.join(monitorDir(), 'bin', 'sofa_json_worker.py');
+}
 
 let curlAvailable = null;
+let lastProbeNote = '';
 let child = null;
 let buf = '';
 /** @type {{ resolve: (v: unknown) => void, reject: (e: Error) => void, timer: ReturnType<typeof setTimeout> } | null} */
@@ -33,10 +39,11 @@ let lastProxyKey = '';
 
 function pythonBin() {
   if (process.env.TENNIS_PYTHON) return process.env.TENNIS_PYTHON;
+  const dir = monitorDir();
   const inDocker = process.env.TENNIS_MONITOR_DIR === '/tennis-monitor';
-  const venvPy = path.join(MONITOR_DIR, 'venv', 'bin', 'python');
+  const venvPy = path.join(dir, 'venv', 'bin', 'python');
   const candidates = [
-    ...(inDocker ? [] : [venvPy, path.join(MONITOR_DIR, 'venv', 'Scripts', 'python.exe')]),
+    ...(inDocker ? [] : [venvPy, path.join(dir, 'venv', 'Scripts', 'python.exe')]),
     process.env.PYTHON,
     ...(process.platform === 'win32' ? ['python', 'py', 'python3'] : ['python3', 'python']),
   ].filter(Boolean);
@@ -53,10 +60,19 @@ function pythonBin() {
   return process.platform === 'win32' ? 'python' : 'python3';
 }
 
-function probeCurlAvailable() {
-  if (curlAvailable != null) return curlAvailable;
-  if (!fs.existsSync(WORKER_SCRIPT)) {
+function resetProbe() {
+  curlAvailable = null;
+  lastProbeNote = '';
+}
+
+function probeCurlAvailable(force = false) {
+  if (!force && curlAvailable != null) return curlAvailable;
+  const dir = monitorDir();
+  const script = workerScript();
+  if (!fs.existsSync(script)) {
     curlAvailable = false;
+    lastProbeNote = `worker missing: ${script}`;
+    console.warn(`[tennis/sofa-curl] ${lastProbeNote}`);
     return false;
   }
   const bin = pythonBin();
@@ -65,26 +81,35 @@ function probeCurlAvailable() {
       bin,
       ['-c', 'from curl_cffi import requests; print("ok")'],
       {
-        cwd: MONITOR_DIR,
-        env: { ...process.env, PYTHONPATH: MONITOR_DIR },
+        cwd: dir,
+        env: { ...process.env, PYTHONPATH: dir },
         encoding: 'utf8',
         timeout: 15000,
         windowsHide: true,
       },
     );
     curlAvailable = r.status === 0 && String(r.stdout || '').includes('ok');
-  } catch {
+    if (!curlAvailable) {
+      const detail = String(r.stderr || r.stdout || `exit ${r.status}`).trim().split(/\r?\n/)[0];
+      lastProbeNote = `${bin}: ${detail || 'curl_cffi import failed'}`;
+    }
+  } catch (err) {
     curlAvailable = false;
+    lastProbeNote = `${bin}: ${err?.message || err}`;
   }
   if (!curlAvailable) {
-    console.warn('[tennis/sofa-curl] curl_cffi unavailable, fallback Node https (may 403)');
+    console.warn(`[tennis/sofa-curl] curl_cffi unavailable (${lastProbeNote || 'unknown'})`);
   }
   return curlAvailable;
 }
 
+function probeNote() {
+  return lastProbeNote;
+}
+
 function isEnabled() {
   if (String(process.env.SOFA_USE_NODE_HTTP || '').trim() === '1') return false;
-  return probeCurlAvailable();
+  return probeCurlAvailable(false);
 }
 
 function proxyEnvKey() {
@@ -135,13 +160,14 @@ async function ensureWorker() {
   if (starting) return starting;
   starting = new Promise((resolve, reject) => {
     const bin = pythonBin();
-    const proc = spawn(bin, ['-u', WORKER_SCRIPT], {
-      cwd: MONITOR_DIR,
+    const dir = monitorDir();
+    const proc = spawn(bin, ['-u', workerScript()], {
+      cwd: dir,
       env: {
         ...process.env,
         PYTHONUNBUFFERED: '1',
         PYTHONIOENCODING: 'utf-8',
-        PYTHONPATH: MONITOR_DIR,
+        PYTHONPATH: dir,
       },
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true,
@@ -230,6 +256,12 @@ module.exports = {
   isEnabled,
   apiGet,
   closeWorker,
-  WORKER_SCRIPT,
-  MONITOR_DIR,
+  resetProbe,
+  probeNote,
+  get WORKER_SCRIPT() {
+    return workerScript();
+  },
+  get MONITOR_DIR() {
+    return monitorDir();
+  },
 };

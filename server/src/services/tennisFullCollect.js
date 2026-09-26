@@ -492,6 +492,16 @@ async function ensureProxyEnv(job = 'top100') {
   Object.assign(process.env, env);
   // Sofascore 段统一走 IPWO（PM 段仍 scope=Polymarket 直连）
   process.env.COLLECT_TOP100_USE_PROXY = '1';
+  const p = cfg?.collect?.proxy || {};
+  const user = String(p.user || process.env.IPWO_PROXY_USER || '').trim();
+  const pass = String(p.pass || process.env.IPWO_PROXY_PASS || '').trim();
+  if (!user || !pass) {
+    throw new Error('IPWO 代理未配置账号/密码，请到管理中心「采集代理」填写后重试');
+  }
+  const sofaCurl = require('./tennisSofascoreCurl');
+  sofaCurl.closeWorker();
+  sofaCurl.resetProbe();
+  return sofaCurl;
 }
 
 async function runFullCollect(opts = {}) {
@@ -519,10 +529,21 @@ async function runFullCollectInner(opts = {}) {
     horizonDays > 1 ? `${matchDate}..${dates[dates.length - 1]}（${horizonDays}天）` : matchDate;
 
   onLog(`=== 网球采集 ${rangeLabel} (Node) ===`);
-  await ensureProxyEnv('top100');
+  const sofaCurl = await ensureProxyEnv('top100');
+  const sofaVia = sofaCurl.isEnabled()
+    ? 'curl_cffi'
+    : String(process.env.SOFA_USE_NODE_HTTP || '').trim() === '1'
+      ? 'Node(https)'
+      : null;
+  if (!sofaVia) {
+    const note = typeof sofaCurl.probeNote === 'function' ? sofaCurl.probeNote() : '';
+    throw new Error(
+      `Sofascore curl_cffi 不可用${note ? ` (${note})` : ''}，无法采集。请重建 server/collect 镜像或安装 scripts/tennis-monitor/requirements.txt 后重启。`,
+    );
+  }
 
   let t0 = Date.now();
-  onLog(`[1/${STEPS}] IPWO 代理已就绪`);
+  onLog(`[1/${STEPS}] IPWO 代理已就绪 · Sofascore=${sofaVia}`);
   timing.step1 = (Date.now() - t0) / 1000;
 
   t0 = Date.now();

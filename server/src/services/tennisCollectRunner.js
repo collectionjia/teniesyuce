@@ -302,6 +302,13 @@ function parseTotalEvents(text) {
 
 function friendlyCollectError(code, text) {
   const t = String(text || '');
+  if (/sofascore\.com HTTP 403/i.test(t) || /Node HTTPS 会被 403/i.test(t)) {
+    return 'Sofascore 403：需 Python curl_cffi（Chrome TLS），Node 直连会被拒。请重建 server/collect 镜像或安装 scripts/tennis-monitor/requirements.txt 后重启服务';
+  }
+  if (/curl_cffi 不可用/i.test(t)) {
+    const hit = [...t.split(/\r?\n/)].find((l) => /curl_cffi 不可用/i.test(l));
+    return (hit || 'Sofascore curl_cffi 不可用，请重建镜像或安装 requirements.txt 后重启').slice(0, 240);
+  }
   if (/CONNECT tunnel failed|curl:\s*\(7\)/i.test(t) || /代理被拒绝/i.test(t)) {
     return 'IPWO 代理被拒绝 (403)，请检查 monitor.env 代理账号/额度；采集禁止直连，请修复代理后重试';
   }

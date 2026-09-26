@@ -149,11 +149,21 @@ async function sofaApiGetNode(path) {
   });
 }
 
+function sofaCurlRequiredError() {
+  const note = typeof sofaCurl.probeNote === 'function' ? sofaCurl.probeNote() : '';
+  const hint = note ? ` (${note})` : '';
+  return new Error(
+    `Sofascore 需 Python curl_cffi（Chrome TLS），Node HTTPS 会被 403${hint}。`
+      + '请重建 server/collect 镜像，或在 scripts/tennis-monitor 安装 requirements.txt 后重启服务。',
+  );
+}
+
 async function sofaApiGet(path) {
   const apiPath = String(path).replace(/^\//, '');
-  const useCurl = sofaCurl.isEnabled();
+  const allowNode = String(process.env.SOFA_USE_NODE_HTTP || '').trim() === '1';
   let lastErr = null;
   for (let attempt = 0; attempt < REQUEST_RETRIES; attempt += 1) {
+    const useCurl = sofaCurl.isEnabled();
     try {
       await throttle();
       lastRequestAt = Date.now();
@@ -163,12 +173,16 @@ async function sofaApiGet(path) {
           referer: SOFA_HEADERS.Referer,
         });
       }
+      if (!allowNode) throw sofaCurlRequiredError();
       return await sofaApiGetNode(apiPath);
     } catch (err) {
       lastErr = err;
       const msg = String(err?.message || err || '');
       if (useCurl && /sofa worker exited|not running/i.test(msg)) {
         sofaCurl.closeWorker();
+      }
+      if (!useCurl && /http 403/i.test(msg) && !allowNode) {
+        throw sofaCurlRequiredError();
       }
       if (attempt + 1 >= REQUEST_RETRIES || !isRetryable(err)) break;
       await new Promise((r) => setTimeout(r, RETRY_BACKOFF_MS * (attempt + 1)));
@@ -203,6 +217,8 @@ async function ensureInplayProxyEnv() {
   process.env.COLLECT_PROXY_JOB = 'inplay';
   // Sofascore 统一走 IPWO；不被盘中 PM 直连 tick 的 COLLECT_INPLAY_USE_PROXY=0 污染
   process.env.COLLECT_INPLAY_USE_PROXY = '1';
+  sofaCurl.closeWorker();
+  sofaCurl.resetProbe();
 }
 
 /**
