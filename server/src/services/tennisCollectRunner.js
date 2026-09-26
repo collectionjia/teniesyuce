@@ -28,6 +28,8 @@ const REFRESH_INPLAY_SCRIPT = path.join(MONITOR_DIR, 'refresh_inplay.py');
 const OUTPUT_DIR = path.join(MONITOR_DIR, 'output');
 const LOG_DIR = path.join(MONITOR_DIR, 'logs');
 
+const tennisPythonCollect = require('./tennisPythonCollect');
+
 const ALLOWED_LIVE_POLL_INTERVALS = [0, 60, 120, 300];
 const ALLOWED_COLLECT_HORIZON_DAYS = [1, 2, 3, 5];
 
@@ -335,33 +337,33 @@ function elapsedSecFromTiming(timing) {
   return typeof total === 'number' && Number.isFinite(total) ? Math.round(total * 10) / 10 : null;
 }
 
-async function startCollect({ matchDate = null, top100 = true } = {}) {
+async function startCollect({ matchDate = null, top100 = true, wait = false, trigger = 'admin-tennisFullCollect' } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
 
-  running = true;
-  const startedAt = nowIso();
-  last = {
-    status: 'running',
-    trigger: 'admin-tennisFullCollect',
-    started_at: startedAt,
-    finished_at: null,
-    exit_code: null,
-    error: null,
-    total_events: null,
-    requests: null,
-    elapsed_sec: null,
-  };
-  logBuffer = [`=== tennisFullCollect ${startedAt} trigger=admin ===`];
+  const execute = async () => {
+    running = true;
+    const startedAt = nowIso();
+    last = {
+      status: 'running',
+      trigger,
+      started_at: startedAt,
+      finished_at: null,
+      exit_code: null,
+      error: null,
+      total_events: null,
+      requests: null,
+      elapsed_sec: null,
+    };
+    logBuffer = [`=== tennisFullCollect ${startedAt} trigger=${trigger} ===`];
 
-  const cfg = readScheduleConfig();
-  const tennisFullCollect = require('./tennisFullCollect');
-  console.log(
-    `[tennis/collect] node full collect horizon=${cfg.collect_horizon_days} top100=${top100 !== false}`,
-  );
+    const cfg = readScheduleConfig();
+    const tennisFullCollect = require('./tennisFullCollect');
+    console.log(
+      `[tennis/collect] node full collect horizon=${cfg.collect_horizon_days} top100=${top100 !== false}`,
+    );
 
-  void (async () => {
     try {
       const result = await tennisFullCollect.runFullCollect({
         matchDate,
@@ -374,7 +376,7 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
       if (result.ok) {
         last = {
           status: 'success',
-          trigger: 'admin-tennisFullCollect',
+          trigger,
           started_at: startedAt,
           finished_at: finishedAt,
           exit_code: 0,
@@ -387,7 +389,7 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
       } else {
         last = {
           status: 'failed',
-          trigger: 'admin-tennisFullCollect',
+          trigger,
           started_at: startedAt,
           finished_at: finishedAt,
           exit_code: 1,
@@ -397,11 +399,19 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
           elapsed_sec: elapsed,
         };
       }
+      return {
+        ok: result.ok,
+        last: { ...last },
+        error: last.error,
+        total_events: last.total_events,
+        elapsed_sec: last.elapsed_sec,
+        requests: last.requests,
+      };
     } catch (err) {
       const finishedAt = nowIso();
       last = {
         status: 'failed',
-        trigger: 'admin-tennisFullCollect',
+        trigger,
         started_at: startedAt,
         finished_at: finishedAt,
         exit_code: 1,
@@ -412,6 +422,7 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
       };
       pushLog(`采集失败: ${last.error}\n`);
       console.error('[tennis/collect]', last.error);
+      return { ok: false, last: { ...last }, error: last.error };
     } finally {
       running = false;
       child = null;
@@ -421,8 +432,22 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
         tennisRedis.invalidateMemCache();
       } catch { /* ignore */ }
     }
-  })();
+  };
 
+  if (wait) {
+    const result = await execute();
+    return {
+      ok: result.ok,
+      message: result.ok ? 'tennisFullCollect done' : 'tennisFullCollect failed',
+      last: result.last,
+      error: result.error || null,
+      total_events: result.total_events ?? null,
+      elapsed_sec: result.elapsed_sec ?? null,
+      requests: result.requests || null,
+    };
+  }
+
+  void execute();
   return { ok: true, message: 'tennisFullCollect started', last: { ...last } };
 }
 
@@ -441,6 +466,9 @@ async function runInplayRefreshAndWait({
   scoresOnly = false,
   oddsOnly = false,
 } = {}) {
+  if (!tennisPythonCollect.isEnabled()) {
+    return tennisPythonCollect.blockedResponse('refresh_inplay.py', { upstream: 'ipwo' });
+  }
   const timeout = Math.max(15000, Number(timeoutMs) || 120000);
   if (!fs.existsSync(REFRESH_INPLAY_SCRIPT)) {
     return {
@@ -604,6 +632,13 @@ function waitForLiveCollectIdle(timeoutMs) {
 async function beginLiveCollect({ trigger = 'admin-collect_live.py', wait = false } = {}) {
   if (liveRunning) {
     return { ok: false, status: 409, error: 'live collect already running', last: { ...liveLast } };
+  }
+  if (!tennisPythonCollect.isEnabled()) {
+    const blocked = tennisPythonCollect.blockedResponse('collect_live.py', { last: { ...liveLast } });
+    if (wait) {
+      return { ...blocked, done: Promise.resolve({ ...blocked, last: { ...liveLast } }) };
+    }
+    return blocked;
   }
   if (!isCollectEnabled()) {
     return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last: { ...liveLast } };
@@ -819,7 +854,7 @@ module.exports = {
   getLast: () => ({ ...last }),
   isCollectEnabled,
   isCollectAvailable: () => true,
-  isLiveCollectAvailable: () => fs.existsSync(COLLECT_LIVE_SCRIPT),
-  isInplayRefreshAvailable: () => fs.existsSync(REFRESH_INPLAY_SCRIPT),
+  isLiveCollectAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(COLLECT_LIVE_SCRIPT),
+  isInplayRefreshAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(REFRESH_INPLAY_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

@@ -4,6 +4,8 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { svc } = require('./lib/serverBridge');
+const tennisPythonCollect = svc('tennisPythonCollect');
 
 function resolveMonitorDir() {
   if (process.env.TENNIS_MONITOR_DIR) {
@@ -236,6 +238,9 @@ async function startCollect({ matchDate = null, top100 = true } = {}) {
   if (running) {
     return { ok: false, status: 409, error: 'collect already running', last };
   }
+  if (!tennisPythonCollect.isEnabled()) {
+    return { ok: false, status: 503, ...tennisPythonCollect.blockedResponse('collect.py', { last }) };
+  }
   if (!fs.existsSync(COLLECT_SCRIPT)) {
     return { ok: false, status: 500, error: `collect.py not found: ${COLLECT_SCRIPT}` };
   }
@@ -375,6 +380,9 @@ function startLiveCollect() {
   }
   if (!isCollectEnabled()) {
     return { ok: false, status: 403, error: '采集已关闭，请在管理页打开采集开关', last: { ...liveLast } };
+  }
+  if (!tennisPythonCollect.isEnabled()) {
+    return { ok: false, status: 503, ...tennisPythonCollect.blockedResponse('collect_live.py', { last: { ...liveLast } }) };
   }
   if (!fs.existsSync(COLLECT_LIVE_SCRIPT)) {
     return { ok: false, status: 500, error: `collect_live.py not found: ${COLLECT_LIVE_SCRIPT}` };
@@ -526,7 +534,7 @@ module.exports = {
   isLiveRunning: () => liveRunning,
   getLast: () => ({ ...last }),
   isCollectEnabled,
-  isCollectAvailable: () => fs.existsSync(COLLECT_SCRIPT),
-  isLiveCollectAvailable: () => fs.existsSync(COLLECT_LIVE_SCRIPT),
+  isCollectAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(COLLECT_SCRIPT),
+  isLiveCollectAvailable: () => tennisPythonCollect.isEnabled() && fs.existsSync(COLLECT_LIVE_SCRIPT),
   getCollectScript: () => COLLECT_SCRIPT,
 };

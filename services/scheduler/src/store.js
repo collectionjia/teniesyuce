@@ -120,7 +120,7 @@ const PRESET_JOBS = [
     name: 'Top100 全量采集',
     job_type: 'collect.top100',
     engine: 'collect',
-    enabled: 0,
+    enabled: 1,
     schedule_mode: 'interval',
     interval_sec: 6 * 3600,
     mutex_key: 'job_collect_top100',
@@ -180,6 +180,7 @@ function normalizeDailyTime(v) {
 }
 
 const PRESETS_SEEDED_KEY = 'scheduler_presets_seeded';
+const TOP100_DEFAULT_ON_KEY = 'scheduler_top100_default_on_v1';
 
 async function ensureAppSettingsTable() {
   await pool.query(`
@@ -239,6 +240,13 @@ async function seedPresetJobsIfNeeded() {
   await setAppSetting(PRESETS_SEEDED_KEY, '1');
 }
 
+/** 一次性：旧库把 Top100 全量采集默认打开 */
+async function migrateTop100DefaultOn() {
+  if (await getAppSetting(TOP100_DEFAULT_ON_KEY) === '1') return;
+  await pool.query(`UPDATE scheduler_jobs SET enabled=1 WHERE id='job_collect_top100'`);
+  await setAppSetting(TOP100_DEFAULT_ON_KEY, '1');
+}
+
 async function ensureTables() {
   if (ready) return;
   await pool.query(`
@@ -281,6 +289,7 @@ async function ensureTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   await seedPresetJobsIfNeeded();
+  await migrateTop100DefaultOn();
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_full'`);
   await pool.query(`UPDATE scheduler_jobs SET enabled=0 WHERE id='job_collect_top100_hf'`);
   await pool.query(

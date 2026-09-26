@@ -115,6 +115,16 @@ app.listen(PORT, () => {
       } catch (err) {
         console.error('[tennis/cache] startup failed:', err.message);
       }
+      try {
+        require('./services/sofaScoreBackground').startScoreLoop();
+      } catch (err) {
+        console.warn('[sofa-score] loop start failed', err.message || err);
+      }
+      try {
+        require('./services/polyOddsBackground').startOddsLoop();
+      } catch (err) {
+        console.warn('[poly-odds] loop start failed', err.message || err);
+      }
     } catch (err) {
       console.error('[tennis/cache] startup failed:', err.message);
     }

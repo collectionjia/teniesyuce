@@ -54,13 +54,23 @@ async function collectFullLocal(body = {}) {
     const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || body.date || null,
       top100: true,
+      wait: true,
+      trigger: 'engine-collect.top100',
     });
     if (!started.ok) {
       const err = new Error(started.error || 'collect.top100 start failed');
       err.status = started.status || 500;
       throw err;
     }
-    return { message: 'collect.top100 started', metrics: started.last || {} };
+    if (started.last?.status === 'failed') {
+      const err = new Error(started.error || started.last?.error || 'collect.top100 failed');
+      err.status = 500;
+      throw err;
+    }
+    return {
+      message: `collect.top100 done · ${started.last?.total_events ?? 0} events`,
+      metrics: started.last || {},
+    };
   }
   const tennisThreeBuckets = require('./tennisThreeBuckets');
   if (pref === 'docks500') {

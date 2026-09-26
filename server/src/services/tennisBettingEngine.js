@@ -10,6 +10,8 @@ const tennisTrade = require('./tennisTrade');
 const tennisConditionApply = require('./tennisConditionApply');
 const tennisDataSource = require('./tennisDataSource');
 const tennisBettingExecLog = require('./tennisBettingExecLog');
+const tennisThreeBuckets = require('./tennisThreeBuckets');
+const { resolveInPlay, applyPmSettle } = require('./tennisInplayMatchQuery');
 
 const STATE_KEY = 'tennis:engines:betting:state';
 
@@ -533,6 +535,15 @@ function flattenPrematchMatches(bundle) {
   );
 }
 
+/** 盘中买入：排除已结束 / PM 已结算 / 非进行中（止损仍扫全量） */
+function inplayEligibleForBuy(m, bundle) {
+  const polyMap = bundle?.polymarketByEvent || {};
+  const poly = polyMap[String(m?.id)] || polyMap[m?.id];
+  const row = poly ? applyPmSettle({ ...m }, poly) : m;
+  if (tennisThreeBuckets.isEnded(row)) return false;
+  return resolveInPlay(row);
+}
+
 function matchLabel(m) {
   const home = m?.homePlayer?.name || m?.home || '?';
   const away = m?.awayPlayer?.name || m?.away || '?';
@@ -732,6 +743,7 @@ async function runBucketPass({
     for (const m of matches) {
       const id = String(m.id);
       if (!matchInAllowSet(allowSet, id)) continue;
+      if (bucketKey === 'inplay' && !inplayEligibleForBuy(m, bundle)) continue;
       // 仅挡「本策略已买/已卖」；其它策略对同一场仍可买
       if (hasStrategyEvent(placed, primarySk, id) || hasStrategyEvent(sold, primarySk, id)) continue;
       const side = pickStrongSide(m, rankings);

@@ -57,6 +57,7 @@ async function refreshAllOnce(opts = {}) {
 
 function fmtPart(label, r) {
   if (!r) return `${label}=?`;
+  if (r.skipped) return `${label}=skip`;
   if (r.error && !r.scanned) return `${label}=err`;
   return `${label}=${r.updated || 0}/${r.failed || 0}`;
 }
@@ -65,10 +66,20 @@ async function tickOnce() {
   if (busy) return;
   busy = true;
   const t0 = Date.now();
-  const warn = console.warn;
-  console.warn = () => {};
   try {
     const r = await refreshAllOnce({ clobOnly: true });
+    if (r.tennis?.updated > 0) {
+      try {
+        const tennisInplayTick = require('./tennisInplayTick');
+        await tennisInplayTick.runBucketMigrate({
+          skipPrematch: true,
+          skipAdmit: true,
+          skipPhaseMarks: true,
+        });
+      } catch (e) {
+        console.warn('[poly-odds] migrate after odds failed', e.message || e);
+      }
+    }
     const ms = Date.now() - t0;
     console.log(
       `[poly-odds] ${fmtPart('tennis', r.tennis)} ${fmtPart('dota', r.dota)} ${fmtPart('nfl', r.nfl)} ${ms}ms`,
@@ -76,7 +87,6 @@ async function tickOnce() {
   } catch (e) {
     console.error('[poly-odds] tick failed', e.message || e);
   } finally {
-    console.warn = warn;
     busy = false;
   }
 }

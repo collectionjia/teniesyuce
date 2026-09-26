@@ -120,6 +120,39 @@ async function refreshInplayOddsTick() {
   };
 }
 
+/** 迁桶：盘前→盘中、PM 结算打标、完赛→盘后（比分/赔率循环也会调） */
+async function runBucketMigrate(opts = {}) {
+  const skipPrematch = opts.skipPrematch === true;
+  const skipAdmit = opts.skipAdmit === true;
+  const skipPhaseMarks = opts.skipPhaseMarks === true;
+
+  const migratePre = skipPrematch
+    ? { moved: 0 }
+    : await tennisThreeBuckets.migratePrematchByStartTime();
+  const admitLive = skipAdmit
+    ? { admitted: 0 }
+    : await tennisThreeBuckets.admitLiveFromFull();
+
+  let bundle = await tennisInplayCache.getBundle();
+  const pmSettle = applyPmSettleOntoInplay(bundle);
+  if (bundle && pmSettle.settled > 0) {
+    await tennisInplayCache.setCachedBundle(bundle);
+  }
+
+  const migrateEnd = await tennisThreeBuckets.migrateInplayEnded();
+  const phaseMarks = skipPhaseMarks ? null : await tennisThreeBuckets.stampPhaseMarks();
+  bundle = await tennisInplayCache.getBundle();
+
+  return {
+    admitted_live_from_full: admitLive?.admitted || 0,
+    migrated_prematch_to_inplay: migratePre.moved || 0,
+    migrated_inplay_to_settled: migrateEnd.moved || 0,
+    pm_settled_marked: pmSettle.settled || 0,
+    phase_marks: phaseMarks,
+    inplay_matches: bundle?.live?.matches?.length || 0,
+  };
+}
+
 async function runInplayTick({ skipBetting = false } = {}) {
   const tennisDataSource = require('./tennisDataSource');
   if ((await tennisDataSource.get()) === 'docks500') {
@@ -148,8 +181,9 @@ async function runInplayTick({ skipBetting = false } = {}) {
     };
   }
 
-  const migratePre = await tennisThreeBuckets.migratePrematchByStartTime();
-  const admitLive = await tennisThreeBuckets.admitLiveFromFull();
+  let bundle = await tennisInplayCache.getBundle();
+  const matchCount = bundle?.live?.matches?.length || 0;
+  const migrated = await runBucketMigrate();
 
   const scores = {
     updated: 0,
@@ -169,17 +203,6 @@ async function runInplayTick({ skipBetting = false } = {}) {
     '[odds] skipped (use full collect / poly-odds loop)',
   ];
 
-  let bundle = await tennisInplayCache.getBundle();
-  const matchCount = bundle?.live?.matches?.length || 0;
-
-  bundle = await tennisInplayCache.getBundle();
-  const pmSettle = applyPmSettleOntoInplay(bundle);
-  if (bundle && pmSettle.settled > 0) {
-    await tennisInplayCache.setCachedBundle(bundle);
-  }
-
-  const migrateEnd = await tennisThreeBuckets.migrateInplayEnded();
-  const phaseMarks = await tennisThreeBuckets.stampPhaseMarks();
   bundle = await tennisInplayCache.getBundle();
   const tickAt = bundle?.tick_at || new Date().toISOString();
 
@@ -205,14 +228,14 @@ async function runInplayTick({ skipBetting = false } = {}) {
     score_failures: null,
     odds_failures: null,
     process_log: [`[inplay-tick] inplay=${matchCount}`, ...refreshLogs].join('\n'),
-    admitted_live_from_full: admitLive?.admitted || 0,
-    migrated_prematch_to_inplay: migratePre.moved || 0,
-    migrated_inplay_to_settled: migrateEnd.moved || 0,
-    pm_settled_marked: pmSettle.settled || 0,
-    phase_marks: phaseMarks,
-    inplay_matches: bundle?.live?.matches?.length || 0,
+    ...migrated,
     betting,
   };
 }
 
-module.exports = { runInplayTick, refreshInplayOddsTick, stampInplayRefreshTimes };
+module.exports = {
+  runInplayTick,
+  runBucketMigrate,
+  refreshInplayOddsTick,
+  stampInplayRefreshTimes,
+};

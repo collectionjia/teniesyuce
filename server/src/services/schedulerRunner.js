@@ -109,9 +109,17 @@ async function executeJobType(job, params = {}) {
       const started = await tennisCollectRunner.startCollect({
         matchDate: params.matchDate || null,
         top100: params.top100 !== false,
+        wait: true,
+        trigger: 'scheduler-collect.top100',
       });
       if (!started.ok) throw new Error(started.error || 'collect.top100 start failed');
-      return { message: 'collect.top100 started', metrics: started.last || {} };
+      if (started.last?.status === 'failed') {
+        throw new Error(started.error || started.last?.error || 'collect.top100 failed');
+      }
+      return {
+        message: `collect.top100 done · ${started.last?.total_events ?? 0} events`,
+        metrics: started.last || {},
+      };
     }
     case 'collect.inplay_tick': {
       if (isVirtual) {

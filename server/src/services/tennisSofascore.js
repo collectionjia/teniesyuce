@@ -158,28 +158,19 @@ function ensureInplayProxyEnv() {
  */
 async function refreshInplayScoresOnce(opts = {}) {
   ensureInplayProxyEnv();
-  const inplayCache = require('./tennisInplayCache');
-  const bundle = await inplayCache.getBundle();
-  if (!bundle) {
-    return {
-      ok: false,
-      updated: 0,
-      failed: 0,
-      tracked: 0,
-      error: 'empty inplay bundle',
-      source: 'sofascore-ipwo',
-      upstream: 'ipwo-sofascore',
-      process_log: '[sofa] empty inplay bundle',
-    };
-  }
+  const tennisThreeBuckets = require('./tennisThreeBuckets');
+  const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
+  const bundle = buckets.inplay;
 
-  const matches = Array.isArray(opts.matches)
-    ? opts.matches
-    : bundle.live?.matches || [];
-  const byId = new Map();
-  for (const m of matches) {
-    if (m?.id == null) continue;
-    byId.set(Number(m.id), m);
+  let byId;
+  if (Array.isArray(opts.matches)) {
+    byId = new Map();
+    for (const m of opts.matches) {
+      if (m?.id == null) continue;
+      byId.set(String(m.id), { refs: [m], sample: m });
+    }
+  } else {
+    byId = tennisThreeBuckets.indexMatchRefsById(buckets);
   }
   if (!byId.size) {
     return {
@@ -201,6 +192,7 @@ async function refreshInplayScoresOnce(opts = {}) {
   let liveFeed = 0;
   let detailFetch = 0;
   const missed = [];
+  const scorePatches = new Map();
 
   let liveById = new Map();
   try {
@@ -213,7 +205,8 @@ async function refreshInplayScoresOnce(opts = {}) {
     console.warn('[tennis/sofa] live list failed:', reason);
   }
 
-  for (const [iid, match] of byId) {
+  for (const [idKey, { refs, sample: match }] of byId) {
+    const iid = Number(idKey);
     const label = matchLabel(match);
     try {
       let raw = liveById.get(iid);
@@ -223,29 +216,33 @@ async function refreshInplayScoresOnce(opts = {}) {
         raw = await fetchEvent(iid);
         detailFetch += 1;
       }
-      applySofaSlimToMatch(match, slimEvent(raw));
+      const slim = slimEvent(raw);
+      for (const ref of refs) applySofaSlimToMatch(ref, slim);
+      const patch = tennisThreeBuckets.pickScorePatch(match);
+      if (patch) scorePatches.set(idKey, patch);
       updated += 1;
-      lines.push(`[sofa] ok id=${iid} ${label} score=${match.scoreText || '-'}`);
+      lines.push(`[sofa] ok id=${idKey} ${label} score=${match.scoreText || '-'}`);
     } catch (err) {
       failed += 1;
       const reason = err.message || String(err);
-      missed.push({ id: iid, home: match.home, away: match.away, reason });
-      lines.push(`[sofa] fail id=${iid} ${label}: ${reason}`);
-      console.warn(`[tennis/sofa] id=${iid}:`, reason);
+      missed.push({ id: idKey, home: match.home, away: match.away, reason });
+      lines.push(`[sofa] fail id=${idKey} ${label}: ${reason}`);
+      console.warn(`[tennis/sofa] id=${idKey}:`, reason);
     }
   }
 
   const now = new Date().toISOString();
-  bundle.tick_at = now;
-  bundle.fetched_at = bundle.fetched_at || now;
-  bundle.serverTime = Math.floor(Date.now() / 1000);
-  bundle.upstream = bundle.upstream || 'ipwo+polymarket';
-  bundle.collectScript = bundle.collectScript || 'tennisSofascore';
-  if (updated > 0) bundle.score_updated_at = now;
-
-  const written = await inplayCache.setCachedBundle(bundle, now);
+  const sync =
+    scorePatches.size > 0
+      ? await tennisThreeBuckets.writeScorePatches(scorePatches, {
+          score_updated_at: now,
+          tick_at: now,
+        })
+      : null;
+  const written = sync ? Object.values(sync).some((r) => r.written) : false;
   const ok = written && (updated > 0 || failed === 0);
   lines.push(`[sofa] done updated=${updated} failed=${failed} live=${liveFeed} detail=${detailFetch}`);
+  if (sync) lines.push(`[sofa] synced buckets=${JSON.stringify(sync)}`);
 
   return {
     ok,
@@ -255,11 +252,12 @@ async function refreshInplayScoresOnce(opts = {}) {
     tracked: byId.size,
     liveFeed,
     detailFetch,
+    synced: sync,
     missed: missed.slice(0, 50),
     source: 'sofascore-ipwo',
     upstream: 'ipwo-sofascore',
-    score_updated_at: updated > 0 ? now : bundle.score_updated_at || null,
-    error: !written ? 'redis write failed' : failed > 0 && updated === 0 ? 'all score fetches failed' : null,
+    score_updated_at: updated > 0 ? now : bundle?.score_updated_at || null,
+    error: !written && updated > 0 ? 'redis write failed' : failed > 0 && updated === 0 ? 'all score fetches failed' : null,
     process_log: lines.join('\n'),
   };
 }
@@ -272,13 +270,11 @@ async function refreshInplayScoresByEventId(eventId) {
   const idKey = String(eventId ?? '').trim();
   if (!idKey) return { ok: false, error: 'empty eventId' };
 
-  const inplayCache = require('./tennisInplayCache');
-  const bundle = await inplayCache.getBundle();
-  if (!bundle) return { ok: false, error: 'empty inplay bundle', eventId: idKey };
-
-  const matches = bundle.live?.matches || [];
-  const match = matches.find((m) => String(m?.id) === idKey || Number(m?.id) === Number(idKey));
-  if (!match) return { ok: false, error: 'match not in inplay bundle', eventId: idKey };
+  const tennisThreeBuckets = require('./tennisThreeBuckets');
+  const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
+  const byId = tennisThreeBuckets.indexMatchRefsById(buckets);
+  const row = byId.get(idKey);
+  if (!row?.refs?.length) return { ok: false, error: 'match not in any bundle', eventId: idKey };
 
   ensureInplayProxyEnv();
   try {
@@ -290,18 +286,25 @@ async function refreshInplayScoresByEventId(eventId) {
       /* live list optional */
     }
     if (!raw) raw = await fetchEvent(idKey);
-    applySofaSlimToMatch(match, slimEvent(raw));
+    const slim = slimEvent(raw);
+    for (const ref of row.refs) applySofaSlimToMatch(ref, slim);
+    const match = row.sample;
+    const patch = tennisThreeBuckets.pickScorePatch(match);
+    if (!patch) return { ok: false, eventId: idKey, error: 'empty score patch' };
     const now = new Date().toISOString();
-    bundle.score_updated_at = now;
-    bundle.tick_at = now;
-    const written = await inplayCache.setCachedBundle(bundle, now);
+    const sync = await tennisThreeBuckets.writeScorePatches(new Map([[idKey, patch]]), {
+      score_updated_at: now,
+      tick_at: now,
+    });
+    const written = Object.values(sync).some((r) => r.written);
     return {
-      ok: !!written,
+      ok: written,
       written,
       eventId: idKey,
       scoreText: match.scoreText,
       status: match.status,
       statusType: match.statusType,
+      synced: sync,
       score_updated_at: now,
     };
   } catch (err) {

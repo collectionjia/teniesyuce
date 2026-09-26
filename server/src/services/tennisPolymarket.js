@@ -3,6 +3,7 @@
  * 优先 CLOB order book mid（贴盘口深度），无盘口时回退 Gamma outcomePrices。
  */
 const { httpsGetJson } = require('../lib/httpProxyAgent');
+const tennisThreeBuckets = require('./tennisThreeBuckets');
 
 const GAMMA = 'https://gamma-api.polymarket.com';
 const CLOB = process.env.POLY_CLOB_BASE || 'https://clob.polymarket.com';
@@ -182,6 +183,21 @@ async function mapPool(items, limit, fn) {
   return out;
 }
 
+/** 只刷 inplay + prematch 场次，跳过 full/settled 孤儿 slug */
+function polyEntriesForActiveBuckets(buckets) {
+  const ids = new Set();
+  for (const m of buckets.inplay?.live?.matches || []) {
+    if (m?.id != null) ids.add(String(m.id));
+  }
+  for (const t of buckets.prematch?.scheduled?.tournaments || []) {
+    for (const e of t.events || []) {
+      if (e?.id != null) ids.add(String(e.id));
+    }
+  }
+  const merged = tennisThreeBuckets.mergePolymarketMaps(buckets);
+  return Object.entries(merged).filter(([id, v]) => ids.has(String(id)) && v && extractSlug(v));
+}
+
 /**
  * 就地刷新 bundle.polymarketByEvent 的 moneyline 价。
  * @returns {{ updated: number, failed: number }}
@@ -249,28 +265,35 @@ async function refreshPolymarketPrices(bundle) {
  * @param {{ clobOnly?: boolean, concurrency?: number }} [opts]
  */
 async function refreshInplayOddsOnce(opts = {}) {
+  const tennisDataSource = require('./tennisDataSource');
+  if ((await tennisDataSource.get()) === 'docks500') {
+    return {
+      ok: true,
+      skipped: true,
+      updated: 0,
+      failed: 0,
+      scanned: 0,
+      reason: 'virtual docks500',
+    };
+  }
   const clobOnly = opts.clobOnly !== false; // 默认 CLOB-only，避免结算价 0/1
   const concurrency = Math.max(1, Number(opts.concurrency) || CONCURRENCY);
-  const inplayCache = require('./tennisInplayCache');
-  const bundle = await inplayCache.getBundle();
-  if (!bundle) {
-    return { ok: false, updated: 0, failed: 0, scanned: 0, error: 'empty inplay bundle' };
-  }
-  const map = bundle.polymarketByEvent;
-  if (!map || typeof map !== 'object') {
-    return { ok: false, updated: 0, failed: 0, scanned: 0, error: 'no polymarketByEvent' };
+  const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
+  const entries = polyEntriesForActiveBuckets(buckets);
+  if (!entries.length) {
+    return { ok: true, updated: 0, failed: 0, scanned: 0, skipped: true, reason: 'no active slugs' };
   }
 
-  const entries = Object.entries(map).filter(([, v]) => v && extractSlug(v));
   let updated = 0;
   let failed = 0;
   const rows = [];
+  const polyPatch = {};
 
   await mapPool(entries, concurrency, async ([id, poly]) => {
     const slug = extractSlug(poly);
     const r = await updatePolymarketOddsBySlug(slug, { clobOnly, poly });
     if (r.ok && r.poly) {
-      map[id] = r.poly;
+      polyPatch[id] = r.poly;
       updated += 1;
       rows.push({
         id,
@@ -289,16 +312,21 @@ async function refreshInplayOddsOnce(opts = {}) {
   });
 
   const now = new Date().toISOString();
-  bundle.odds_updated_at = now;
-  bundle.tick_at = bundle.tick_at || now;
-  const written = await inplayCache.setCachedBundle(bundle, now);
+  const sync = updated > 0
+    ? await tennisThreeBuckets.writePolymarketPatches(polyPatch, {
+        odds_updated_at: now,
+        tick_at: now,
+      })
+    : null;
+  const written = sync ? Object.values(sync).some((r) => r.written) : false;
   return {
-    ok: written && failed === 0,
+    ok: written || (updated > 0 && failed === 0),
     written,
     updated,
     failed,
     scanned: entries.length,
     rows,
+    synced: sync,
     odds_updated_at: now,
   };
 }
@@ -309,15 +337,16 @@ async function refreshInplayOddsOnce(opts = {}) {
  * @param {{ clobOnly?: boolean }} [opts]
  */
 async function refreshInplayOddsByEventId(eventId, opts = {}) {
+  const tennisDataSource = require('./tennisDataSource');
+  if ((await tennisDataSource.get()) === 'docks500') {
+    return { ok: true, skipped: true, reason: 'virtual docks500', eventId: String(eventId ?? '') };
+  }
   const clobOnly = opts.clobOnly !== false;
   const idKey = String(eventId ?? '').trim();
   if (!idKey) return { ok: false, error: 'empty eventId' };
 
-  const inplayCache = require('./tennisInplayCache');
-  const bundle = await inplayCache.getBundle();
-  if (!bundle) return { ok: false, error: 'empty inplay bundle', eventId: idKey };
-
-  const map = bundle.polymarketByEvent;
+  const buckets = await tennisThreeBuckets.loadAllTennisBuckets();
+  const map = tennisThreeBuckets.mergePolymarketMaps(buckets);
   if (!map || typeof map !== 'object') {
     return { ok: false, error: 'no polymarketByEvent', eventId: idKey };
   }
@@ -334,16 +363,18 @@ async function refreshInplayOddsByEventId(eventId, opts = {}) {
     return { ok: false, eventId: idKey, slug, error: r.error || 'refresh failed' };
   }
 
-  map[idKey] = r.poly;
-  if (map[Number(idKey)] != null && String(Number(idKey)) !== idKey) {
-    map[Number(idKey)] = r.poly;
-  }
+  const polyPatch = { [idKey]: r.poly };
+  const numKey = String(Number(idKey));
+  if (numKey !== idKey && map[numKey] != null) polyPatch[numKey] = r.poly;
 
   const now = new Date().toISOString();
-  bundle.odds_updated_at = now;
-  const written = await inplayCache.setCachedBundle(bundle, now);
+  const sync = await tennisThreeBuckets.writePolymarketPatches(polyPatch, {
+    odds_updated_at: now,
+    tick_at: now,
+  });
+  const written = Object.values(sync).some((r) => r.written);
   return {
-    ok: !!written,
+    ok: written,
     written,
     eventId: idKey,
     slug,
@@ -351,6 +382,7 @@ async function refreshInplayOddsByEventId(eventId, opts = {}) {
     home_price: r.home_price,
     away_price: r.away_price,
     source: r.source,
+    synced: sync,
     odds_updated_at: now,
   };
 }

@@ -21,12 +21,6 @@ try {
   console.warn('[dota2] collect loop start failed', err.message || err);
 }
 
-try {
-  require('../services/polyOddsBackground').startOddsLoop();
-} catch (err) {
-  console.warn('[poly-odds] loop start failed', err.message || err);
-}
-
 function upstreamBase() {
   const raw = process.env.DOTA2ELO_URL
     || process.env.DOTA2ELO_PRODUCT_URL

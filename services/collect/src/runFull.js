@@ -62,12 +62,17 @@ async function runFull(body = {}) {
     const started = await tennisCollectRunner.startCollect({
       matchDate: body.matchDate || null,
       top100: body.top100 !== false,
+      wait: true,
+      trigger: 'collect-service-top100',
     });
     if (!started.ok) {
       throw new Error(started.error || 'collect.top100 start failed');
     }
+    if (started.last?.status === 'failed') {
+      throw new Error(started.error || started.last?.error || 'collect.top100 failed');
+    }
     return {
-      message: 'collect.top100 started',
+      message: `collect.top100 done · ${started.last?.total_events ?? 0} events`,
       metrics: started.last || {},
     };
   }

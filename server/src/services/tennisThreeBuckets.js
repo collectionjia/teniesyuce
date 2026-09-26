@@ -546,6 +546,203 @@ async function seedVirtualPrematchInplay(opts = {}) {
   };
 }
 
+function forEachMatchInBundle(bundle, fn) {
+  if (!bundle || typeof fn !== 'function') return;
+  for (const t of bundle.scheduled?.tournaments || []) {
+    for (const e of t.events || []) fn(e);
+  }
+  for (const m of bundle.live?.matches || []) fn(m);
+}
+
+/** @returns {Map<string, { refs: object[], sample: object }>} */
+function indexMatchRefsById(buckets) {
+  const byId = new Map();
+  const list = buckets && typeof buckets === 'object' ? Object.values(buckets) : buckets;
+  for (const bundle of list || []) {
+    if (!bundle) continue;
+    forEachMatchInBundle(bundle, (m) => {
+      if (m?.id == null) return;
+      const id = String(m.id);
+      if (!byId.has(id)) byId.set(id, { refs: [], sample: m });
+      const row = byId.get(id);
+      row.refs.push(m);
+      row.sample = m;
+    });
+  }
+  return byId;
+}
+
+async function loadAllTennisBuckets() {
+  const [full, prematch, inplay, settled] = await Promise.all([
+    tennisCache.getBundle(),
+    tennisPrematchCache.getBundle(),
+    tennisInplayCache.getBundle(),
+    tennisSettledCache.getBundle(),
+  ]);
+  return { full, prematch, inplay, settled };
+}
+
+function mergePolymarketMaps(buckets) {
+  const map = {};
+  for (const bundle of Object.values(buckets || {})) {
+    if (!bundle?.polymarketByEvent) continue;
+    Object.assign(map, bundle.polymarketByEvent);
+  }
+  return map;
+}
+
+function applyPolymarketMapToBuckets(buckets, map) {
+  if (!map || typeof map !== 'object') return;
+  for (const bundle of Object.values(buckets || {})) {
+    if (!bundle) continue;
+    bundle.polymarketByEvent = { ...(bundle.polymarketByEvent || {}), ...map };
+  }
+}
+
+const SCORE_PATCH_KEYS = [
+  'status',
+  'statusType',
+  'homeScore',
+  'awayScore',
+  'home_score',
+  'away_score',
+  'scoreText',
+  'slug',
+  'customId',
+  'url',
+  'phaseMark',
+  'phaseLabel',
+];
+
+function pickScorePatch(match) {
+  if (!match) return null;
+  const patch = {};
+  for (const key of SCORE_PATCH_KEYS) {
+    if (match[key] != null) patch[key] = match[key];
+  }
+  return Object.keys(patch).length ? patch : null;
+}
+
+function applyScorePatch(match, patch) {
+  if (!match || !patch) return match;
+  for (const key of SCORE_PATCH_KEYS) {
+    if (patch[key] != null) match[key] = patch[key];
+  }
+  return match;
+}
+
+function applyScorePatchesToBundle(bundle, patchById) {
+  const map = patchById instanceof Map ? patchById : new Map(Object.entries(patchById || {}));
+  if (!bundle || !map.size) return 0;
+  let applied = 0;
+  forEachMatchInBundle(bundle, (m) => {
+    if (m?.id == null) return;
+    const patch = map.get(String(m.id));
+    if (!patch) return;
+    applyScorePatch(m, patch);
+    applied += 1;
+  });
+  return applied;
+}
+
+/** 只 patch 比分字段：写前重读 Redis，不覆盖 polymarketByEvent */
+async function writeScorePatches(patchById, opts = {}) {
+  const map = patchById instanceof Map ? patchById : new Map(Object.entries(patchById || {}));
+  if (!map.size) return {};
+  const now = opts.tick_at || new Date().toISOString();
+  const results = {};
+  let freshFull = null;
+  for (const [name, cache] of [
+    ['full', tennisCache],
+    ['prematch', tennisPrematchCache],
+    ['inplay', tennisInplayCache],
+    ['settled', tennisSettledCache],
+  ]) {
+    const bundle = await cache.getBundle();
+    if (!bundle) {
+      results[name] = { skipped: true };
+      continue;
+    }
+    const applied = applyScorePatchesToBundle(bundle, map);
+    if (!applied) {
+      results[name] = { skipped: true, reason: 'no matches' };
+      continue;
+    }
+    if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
+    bundle.tick_at = now;
+    bundle.serverTime = Math.floor(Date.now() / 1000);
+    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+    results[name] = { written, applied };
+    if (name === 'full') freshFull = bundle;
+  }
+  if (freshFull && results.full?.written) await writeMeta(freshFull);
+  return results;
+}
+
+/** 只 patch polymarketByEvent：写前重读 Redis，不覆盖比分 */
+async function writePolymarketPatches(polyPatch, opts = {}) {
+  if (!polyPatch || typeof polyPatch !== 'object' || !Object.keys(polyPatch).length) return {};
+  const now = opts.tick_at || new Date().toISOString();
+  const results = {};
+  for (const [name, cache] of [
+    ['full', tennisCache],
+    ['prematch', tennisPrematchCache],
+    ['inplay', tennisInplayCache],
+    ['settled', tennisSettledCache],
+  ]) {
+    const bundle = await cache.getBundle();
+    if (!bundle) {
+      results[name] = { skipped: true };
+      continue;
+    }
+    let touched = 0;
+    const polyMap = { ...(bundle.polymarketByEvent || {}) };
+    for (const [id, poly] of Object.entries(polyPatch)) {
+      if (!poly) continue;
+      polyMap[id] = poly;
+      touched += 1;
+    }
+    if (!touched) {
+      results[name] = { skipped: true, reason: 'no poly keys' };
+      continue;
+    }
+    bundle.polymarketByEvent = polyMap;
+    if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
+    bundle.tick_at = now;
+    bundle.serverTime = Math.floor(Date.now() / 1000);
+    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+    results[name] = { written, applied: touched };
+  }
+  return results;
+}
+
+async function writeAllTennisBuckets(buckets, opts = {}) {
+  const now = opts.tick_at || new Date().toISOString();
+  const results = {};
+  const entries = [
+    ['full', tennisCache, buckets?.full],
+    ['prematch', tennisPrematchCache, buckets?.prematch],
+    ['inplay', tennisInplayCache, buckets?.inplay],
+    ['settled', tennisSettledCache, buckets?.settled],
+  ];
+  for (const [name, cache, bundle] of entries) {
+    if (!bundle) {
+      results[name] = { skipped: true };
+      continue;
+    }
+    if (opts.score_updated_at) bundle.score_updated_at = opts.score_updated_at;
+    if (opts.odds_updated_at) bundle.odds_updated_at = opts.odds_updated_at;
+    bundle.tick_at = now;
+    bundle.serverTime = Math.floor(Date.now() / 1000);
+    const written = await cache.setCachedBundle(bundle, bundle.fetched_at || now);
+    results[name] = { written };
+  }
+  if (buckets?.full && results.full?.written) {
+    await writeMeta(buckets.full);
+  }
+  return results;
+}
+
 module.exports = {
   splitFullToThreeBuckets,
   migratePrematchByStartTime,
@@ -558,5 +755,14 @@ module.exports = {
   isEnded,
   isPmSettled,
   isNotStarted,
+  forEachMatchInBundle,
+  indexMatchRefsById,
+  loadAllTennisBuckets,
+  mergePolymarketMaps,
+  applyPolymarketMapToBuckets,
+  pickScorePatch,
+  writeScorePatches,
+  writePolymarketPatches,
+  writeAllTennisBuckets,
   META_TODAY_KEY,
 };

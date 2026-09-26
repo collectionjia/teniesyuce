@@ -64,7 +64,16 @@ curl -s 'https://www.yuce.bid/api/health'
 
 ## 3. 定期采集后的数据接口
 
-线上 **每 6 小时**执行全量采集（Top100 + 赛程/赔率/Polymarket），写入 Redis；读接口只取快照，**不会在请求时再打 Sofascore**。
+线上 **每 6 小时**执行全量采集（Top100 + 赛程/赔率/Polymarket），写入 Redis 全量包并拆到盘前/盘中/盘后三桶。
+
+除全量外，服务端后台还会：
+
+| 后台任务 | 默认频率 | 写入范围 |
+|----------|----------|----------|
+| 比分刷新（Sofascore + IPWO） | 约 30s | `full` + prematch + inplay + settled（同 `eventId` 同步） |
+| PM 赔率刷新（CLOB 直连） | 约 1s | 同上，同步 `polymarketByEvent` |
+
+读接口只取 Redis 快照，**不会在请求时再打 Sofascore / Polymarket**；盘前/盘后桶中的比分与 PM 价也会随后台刷新更新，不必等下一次 6h 全量。
 
 | 桶 | 说明 | HTTP |
 |----|------|------|
@@ -78,7 +87,9 @@ curl -s 'https://www.yuce.bid/api/health'
 - Method：`GET`
 - **无需 Header 鉴权**
 - 无数据时仍 **HTTP 200**，`empty: true`，`events: 0`
-- **返回采集写入 Redis 的原始快照**，不套产品「条件组」筛选（条件筛选仅用于站内订阅页展示，不影响本接口）
+- **返回 Redis 快照**（全量采集 + 后台比分/赔率刷新后的结果），不套产品「条件组」筛选（条件筛选仅用于站内订阅页展示，不影响本接口）
+- `fetched_at`：最近一次**全量采集**时间；`score_updated_at` / `odds_updated_at` / `tick_at`：后台刷新时间（有则返回，盘前/盘后也可能出现）
+- 场次**不会**因开赛/完赛自动在桶之间迁移（仍靠 6h 全量重采拆桶）；后台只同步各桶内已有同场次的字段
 - 站内会员列表需条件筛选时，加查询参数 **`applyCondition=1`**（订阅页自动带上；对外 API 对接请勿传此参数）
 
 ### 3.1 盘前 · `GET /api/tennis-prematch/today`
@@ -157,9 +168,14 @@ curl -s 'https://www.yuce.bid/api/tennis-prematch/today'
     }
   },
   "birthYearByPlayer": { "111": 1993 },
-  "serverTime": 1758100000
+  "serverTime": 1758100000,
+  "tick_at": "2026-09-17T08:30:05.000Z",
+  "score_updated_at": "2026-09-17T08:30:00.000Z",
+  "odds_updated_at": "2026-09-17T08:30:05.000Z"
 }
 ```
+
+> `tick_at` / `score_updated_at` / `odds_updated_at` 为可选字段：有后台刷新时出现；`fetched_at` 仍表示全量采集时间。
 
 ### 3.2 盘中列表 · `GET /api/tennis-inplay/today`
 
@@ -993,16 +1009,18 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 
 | 说明 | 内容 |
 |------|------|
-| 全量采集节奏 | 线上约 **每 6 小时** 一次（crontab Top100 collect） |
-| 进行中刷新 | `collect_live` / inplay tick（与全量独立） |
+| 全量采集节奏 | 线上约 **每 6 小时** 一次（调度 `collect.top100` / Node `tennisFullCollect`） |
+| 比分后台刷新 | `sofaScoreBackground` → `tennisSofascore.refreshInplayScoresOnce`（默认 30s，同步写四桶） |
+| PM 赔率后台刷新 | `polyOddsBackground` → `tennisPolymarket.refreshInplayOddsOnce`（默认 1s，同步写四桶） |
+| 桶同步写入 | `tennisThreeBuckets.writeAllTennisBuckets` |
 | 邮箱下单公共逻辑 | `server/src/services/tennisOrdersPublic.js` |
 | 单场 / 统一批量 | `server/src/routes/tennisOrders.js` |
 | 盘前批量 / 限价 | `server/src/routes/tennisPrematch.js` → `/trade/batch` · `/trade/sell` |
 | 盘中列表 / 单场 | `server/src/routes/tennisInplay.js` → `/today` · `/match/:eventId` |
 | 盘中批量 / 限价 | `server/src/routes/tennisInplay.js` → `/trade/batch` · `/trade/sell` |
 | 限价 CLOB | `server/src/services/polymarketTrade.js` → `placeLimitBuy` / `placeLimitSell` |
-| 全量采集脚本 | `scripts/tennis-monitor/collect.py` |
-| 进行中采集 | `scripts/tennis-monitor/collect_live.py` |
+| Python 采集（默认关） | `scripts/tennis-monitor/collect.py` 等，`TENNIS_PYTHON_COLLECT=0` |
+| 内部流程说明 | [`网球数据采集流程.md`](./网球数据采集流程.md) |
 
 引擎调度 / API Key 见：[`引擎API对外中心-接口文档.md`](./引擎API对外中心-接口文档.md)（仍使用 API Key，与本文件无关）。
 限价底层 REST/SDK 见：[`Polymarket限价单API说明.md`](./Polymarket限价单API说明.md)。
