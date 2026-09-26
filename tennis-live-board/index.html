@@ -106,7 +106,7 @@
 <body>
   <div class="wrap">
     <h1>ATP / WTA Top100</h1>
-    <p class="sub">SofaScore · Top100 · 进行中比赛每 15 秒刷新比分</p>
+    <p class="sub">SofaScore · ATP/WTA 500·1000 · 未开赛+进行中 · LIVE 15s</p>
 
     <div class="toolbar">
       <label class="status">全量(秒) <input id="interval" type="number" min="30" max="600" value="60" /></label>
@@ -190,6 +190,7 @@
         `<span class="chip"><strong>${s.wta_players || 0}</strong> WTA</span>`,
         `<span class="chip">赛事 <strong>${s.total_events || 0}</strong></span>`,
         `<span class="chip">进行中 <strong>${s.live_events || 0}</strong></span>`,
+        `<span class="chip">未开赛 <strong>${s.upcoming_events || 0}</strong></span>`,
         `<span class="chip">${esc(data.date || '')}</span>`,
       ].join('');
     }
@@ -225,7 +226,7 @@
       if (!groups.length) {
         const empty = document.createElement('div');
         empty.className = 'empty panel';
-        empty.textContent = '今日暂无 Top100 相关赛事';
+        empty.textContent = '暂无 ATP/WTA 500·1000 未结束赛事';
         root.appendChild(empty);
         return;
       }
@@ -248,7 +249,7 @@
               <div class="p2">${playerLabel(ev.away, awayRank, awayBest)}</div>
             </div>
             <div class="meta">
-              ${live ? '<span class="live-badge">LIVE</span>' : ''}
+              ${live ? '<span class="live-badge">LIVE</span>' : '<span class="chip" style="margin:0;padding:2px 8px;font-size:0.7rem">未开赛</span>'}
               <span>${esc(ev.status || '—')}</span>
               <span>${esc(ev.scoreText || '')}</span>
               <span>${esc(ev.roundLabel || ev.roundInfo?.name || '')}</span>

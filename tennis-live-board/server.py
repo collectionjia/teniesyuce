@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""本地看板：静态页 + /api/board（ATP/WTA Top100 + 赛事）。"""
+"""本地看板：静态页 + /api/board；/api/sync/full|/api/sync/live 推线上 Redis。"""
 from __future__ import annotations
 
 import copy
@@ -19,10 +19,37 @@ MONITOR = ROOT.parent / "scripts" / "tennis-monitor"
 if str(MONITOR) not in sys.path:
     sys.path.insert(0, str(MONITOR))
 
+
+def _load_board_env() -> None:
+    """加载 monitor.env（REDIS_URL / IPWO 等），已有环境变量不覆盖。"""
+    for name in ("monitor.env", "monitor.env.prod"):
+        path = MONITOR / name
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip().strip("\r")
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key, val = key.strip(), val.strip()
+            if key and key not in os.environ:
+                os.environ[key] = val
+        break
+
+
+_load_board_env()
+
 from tm.bundle import parse_player_rank_detail, slim_event  # noqa: E402
+from tm.bundle_store import persist_collect_bundle, persist_live_collect  # noqa: E402
 from tm.clients.sofascore import _event_score  # noqa: E402
 from tm.clients.sofascore_mobile import SofascoreMobileClient  # noqa: E402
-from tm.collectors.events import today_bj  # noqa: E402
+from tm.collectors.events import (  # noqa: E402
+    collect_date_list,
+    fetch_tournament_events,
+    list_scheduled_tournaments,
+    read_collect_horizon_days,
+    today_bj,
+)
 from tm.collectors.rankings import (  # noqa: E402
     RANK_PATHS,
     attach_matches,
@@ -32,10 +59,12 @@ from tm.collectors.rankings import (  # noqa: E402
     name_keys,
     norm_name,
 )
-from tm.enrich import _event_tour  # noqa: E402
+from tm.enrich import _event_tour, _is_ended, tour_level_label  # noqa: E402
 
 HOST = os.environ.get("SOFA_BOARD_HOST", "127.0.0.1")
 PORT = int(os.environ.get("SOFA_BOARD_PORT", "8765"))
+# 可选：请求头 X-Board-Token 或 ?token=；未配置则不校验
+SYNC_TOKEN = (os.environ.get("SOFA_BOARD_SYNC_TOKEN") or os.environ.get("SOFA_MONITOR_TOKEN") or "").strip()
 TOP_N = 100
 CACHE_DIR = ROOT / ".cache"
 BOARD_FILE = CACHE_DIR / "board.json"
@@ -171,6 +200,11 @@ def _is_live(ev: dict) -> bool:
     return any(k in desc for k in ("set", "live", "progress"))
 
 
+def _is_unfinished(ev: dict) -> bool:
+    """未开赛 + 比赛中（排除完赛/取消）。"""
+    return not _is_ended(ev)
+
+
 def fetch_rank_board_client(client: SofascoreMobileClient, top_n: int) -> dict[str, Any]:
     board: dict[str, Any] = {
         "atp": [],
@@ -213,16 +247,57 @@ def fetch_rank_board_client(client: SofascoreMobileClient, top_n: int) -> dict[s
     return board
 
 
-def _fetch_day_events(client: SofascoreMobileClient, match_date: str, *, max_pages: int = 2) -> list[dict]:
+def _want_board_tournament(tournament: dict) -> bool:
+    """仅 ATP/WTA 500 / 1000。"""
+    unique = tournament.get("uniqueTournament") or {}
+    cat = str((unique.get("category") or {}).get("slug") or "").lower()
+    if cat not in {"atp", "wta"}:
+        return False
+    tour = "WTA" if cat == "wta" else "ATP"
+    label = tour_level_label({"uniqueTournament": unique, "tournament": tournament}, tour)
+    return label.endswith(" 1000") or label.endswith(" 500")
+
+
+def _is_500_1000_event(ev: dict) -> bool:
+    label = tour_level_label(ev, _event_tour(ev))
+    return label.endswith(" 1000") or label.endswith(" 500")
+
+
+def _fetch_day_events(client: SofascoreMobileClient, match_date: str) -> list[dict]:
+    """赛程（含未开赛）：scheduled-tournaments → tournament/.../events（scheduled-events 已 404）。"""
+    horizon = read_collect_horizon_days()
     out: list[dict] = []
-    for page in range(max_pages):
-        data = client._api_get(f"sport/tennis/{match_date}/events/{page}")
-        batch = data.get("events") or []
-        if not batch:
-            break
-        out.extend(batch)
-        if not data.get("hasNextPage"):
-            break
+    seen: set[int] = set()
+    tour_seen: set[Any] = set()
+    for d in collect_date_list(match_date, horizon):
+        try:
+            listed, _pages = list_scheduled_tournaments(client, d)
+        except Exception as exc:
+            print(f"[board] schedule list {d} failed: {exc}")
+            continue
+        for tournament in listed:
+            tid = tournament.get("id")
+            if tid is None or tid in tour_seen:
+                continue
+            if not _want_board_tournament(tournament):
+                continue
+            tour_seen.add(tid)
+            try:
+                evs = fetch_tournament_events(client, tournament)
+            except Exception as exc:
+                name = (tournament.get("uniqueTournament") or {}).get("name") or tournament.get("name")
+                print(f"[board] tournament events skip {name}: {exc}")
+                continue
+            for ev in evs:
+                eid = ev.get("id")
+                if eid is None:
+                    continue
+                iid = int(eid)
+                if iid in seen:
+                    continue
+                seen.add(iid)
+                out.append(ev)
+    print(f"[board] schedule 500/1000 tournaments={len(tour_seen)} events={len(out)} horizon={horizon}d")
     return out
 
 
@@ -346,7 +421,7 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
 
         live_slim: list[dict[str, Any]] = []
         for ev in live_raw:
-            if not event_matches_board(ev, filter_board):
+            if not _is_unfinished(ev) or not _is_500_1000_event(ev):
                 continue
             slim = slim_event(ev)
             slim["scoreText"] = _event_score(ev)
@@ -357,7 +432,10 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
         by_id: dict[int, dict[str, Any]] = {
             int(e["id"]): e
             for e in (base.get("events") or [])
-            if e.get("id") is not None and not _is_live(e)
+            if e.get("id") is not None
+            and not _is_live(e)
+            and _is_unfinished(e)
+            and _is_500_1000_event(e)
         }
         for ev in live_slim:
             by_id[int(ev["id"])] = ev
@@ -366,6 +444,7 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
             key=lambda e: (0 if _is_live(e) else 1, e.get("startTimestamp") or 0, e.get("id") or 0),
         )
         live_events = [e for e in events if _is_live(e)]
+        upcoming = len(events) - len(live_events)
 
         updated = copy.deepcopy(base)
         updated["events"] = events
@@ -377,6 +456,7 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
         updated["summary"] = {
             **(updated.get("summary") or {}),
             "live_events": len(live_events),
+            "upcoming_events": upcoming,
             "total_events": len(events),
         }
         updated["live_refreshed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -411,14 +491,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
         except Exception as exc:
             error = f"ranks: {exc}"
             board = {"atp": [], "wta": [], "player_ids": set(), "name_exact": set(), "name_keys": set()}
-        try:
-            for ev in client.get_live_tennis_events().get("events") or []:
-                eid = ev.get("id")
-                if eid is not None:
-                    raw_by_id[int(eid)] = ev
-        except Exception as exc:
-            msg = f"live: {exc}"
-            error = f"{error}; {msg}" if error else msg
+        # 先赛程后 live，live 覆盖同场状态
         try:
             for ev in _fetch_day_events(client, match_date):
                 eid = ev.get("id")
@@ -427,8 +500,20 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
         except Exception as exc:
             msg = f"schedule: {exc}"
             error = f"{error}; {msg}" if error else msg
+        try:
+            for ev in client.get_live_tennis_events().get("events") or []:
+                eid = ev.get("id")
+                if eid is not None:
+                    raw_by_id[int(eid)] = ev
+        except Exception as exc:
+            msg = f"live: {exc}"
+            error = f"{error}; {msg}" if error else msg
 
-        filtered = [ev for ev in raw_by_id.values() if event_matches_board(ev, board)]
+        filtered = [
+            ev
+            for ev in raw_by_id.values()
+            if _is_unfinished(ev) and _is_500_1000_event(ev)
+        ]
         slim_events: list[dict] = []
         for ev in filtered:
             slim = slim_event(ev)
@@ -452,6 +537,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
         _apply_best_from_board(board, slim_events)
 
     live_events = [e for e in slim_events if _is_live(e)]
+    upcoming = len(slim_events) - len(live_events)
 
     return _json_safe(
         {
@@ -459,9 +545,9 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
             "date": match_date,
             "fetched_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "elapsed_sec": round(time.time() - started, 2),
-            "filter": "top100_any",
+            "filter": "atp_wta_500_1000_unfinished",
             "top_rank_max": TOP_N,
-            "filter_note": "至少一方在 ATP/WTA 前100",
+            "filter_note": "ATP/WTA 500·1000；仅未开赛+进行中",
             "ranks_refreshed": ranks_refreshed,
             "rank_cache_sec": RANK_CACHE_SEC,
             "error": error,
@@ -470,6 +556,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
                 "wta_players": len(board.get("wta") or []),
                 "total_events": len(slim_events),
                 "live_events": len(live_events),
+                "upcoming_events": upcoming,
             },
             "atp": board.get("atp") or [],
             "wta": board.get("wta") or [],
@@ -553,6 +640,83 @@ def warm_startup() -> None:
     threading.Thread(target=refresh_board_async, daemon=True).start()
 
 
+def _board_to_collect(board: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "date": board.get("date") or today_bj(),
+        "events": list(board.get("events") or []),
+        "top100": False,
+        "rankingsBoard": {
+            "atp": board.get("atp") or [],
+            "wta": board.get("wta") or [],
+            "summary": board.get("summary") or {},
+        },
+        "top_rank_max": TOP_N,
+        "filter_conditions": {"tier": "500_1000", "unfinished": True},
+    }
+
+
+def sync_full_to_redis(*, force_ranks: bool = False) -> dict[str, Any]:
+    """全量：拉 500/1000 未结束 → 写 tennis:bundle:full + 三桶。"""
+    board = get_board(force=True, force_ranks=force_ranks)
+    if not board.get("ok"):
+        return {"ok": False, "error": board.get("error") or "board failed", "board": board}
+    collect = _board_to_collect(board)
+    redis_out = persist_collect_bundle(collect)
+    return {
+        "ok": bool((redis_out.get("redis") or {}).get("ok")),
+        "mode": "full",
+        "date": collect.get("date"),
+        "events": len(collect.get("events") or []),
+        "summary": board.get("summary"),
+        "redis": redis_out.get("redis"),
+        "bundle_file": redis_out.get("bundle_file"),
+        "redis_url_host": _redis_host_public(),
+    }
+
+
+def sync_live_to_redis(*, force: bool = True) -> dict[str, Any]:
+    """高频：只刷新进行中比分 → 写 tennis:bundle:inplay。"""
+    live_res = refresh_live_board(force=force)
+    if not live_res.get("ok"):
+        return {"ok": False, "error": live_res.get("error") or "live refresh failed", "live": live_res}
+    with _cache_lock:
+        board = _cache.get("data") or {}
+    live_events = list(live_res.get("live") or board.get("live") or [])
+    collect = {
+        "date": board.get("date") or today_bj(),
+        "events": live_events,
+        "top100": False,
+        "top_rank_max": TOP_N,
+        "filter_conditions": {"tier": "500_1000", "live_only": True},
+    }
+    redis_out = persist_live_collect(collect)
+    return {
+        "ok": bool((redis_out.get("redis") or {}).get("ok")),
+        "mode": "live",
+        "date": collect.get("date"),
+        "events": len(live_events),
+        "summary": live_res.get("summary") or board.get("summary"),
+        "redis": redis_out.get("redis"),
+        "bundle_file": redis_out.get("bundle_file"),
+        "live_refreshed_at": live_res.get("live_refreshed_at"),
+        "redis_url_host": _redis_host_public(),
+    }
+
+
+def _redis_host_public() -> str:
+    url = (os.environ.get("REDIS_URL") or "").strip()
+    if not url:
+        return ""
+    # redis://host:port/... → host:port
+    try:
+        from urllib.parse import urlparse as _up
+
+        u = _up(url)
+        return f"{u.hostname}:{u.port}" if u.hostname else url.split("@")[-1][:80]
+    except Exception:
+        return url[:80]
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args: Any) -> None:
         print(f"[board] {self.address_string()} {fmt % args}")
@@ -566,10 +730,43 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _check_sync_token(self) -> bool:
+        if not SYNC_TOKEN:
+            return True
+        qs = parse_qs(urlparse(self.path).query)
+        got = (qs.get("token") or [""])[0].strip()
+        if not got:
+            got = (self.headers.get("X-Board-Token") or "").strip()
+        return got == SYNC_TOKEN
+
+    def _json_handler(self, fn: Any) -> None:
+        try:
+            data = fn()
+            payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            code = 200 if data.get("ok") else 503
+            self._send(code, payload, "application/json; charset=utf-8")
+        except Exception as exc:
+            err = json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False).encode("utf-8")
+            self._send(500, err, "application/json; charset=utf-8")
+
     def do_GET(self) -> None:
         path = urlparse(self.path).path
         if path in {"/api/health", "/api/health/"}:
             self._send(200, b'{"ok":true}', "application/json; charset=utf-8")
+            return
+        if path in {"/api/sync/full", "/api/sync/full/"}:
+            if not self._check_sync_token():
+                self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json; charset=utf-8")
+                return
+            qs = parse_qs(urlparse(self.path).query)
+            force_ranks = (qs.get("ranks") or [""])[0] in {"1", "true", "yes"}
+            self._json_handler(lambda: sync_full_to_redis(force_ranks=force_ranks))
+            return
+        if path in {"/api/sync/live", "/api/sync/live/"}:
+            if not self._check_sync_token():
+                self._send(401, b'{"ok":false,"error":"unauthorized"}', "application/json; charset=utf-8")
+                return
+            self._json_handler(lambda: sync_live_to_redis(force=True))
             return
         if path in {"/api/live", "/api/live/"}:
             qs = parse_qs(urlparse(self.path).query)
@@ -610,11 +807,22 @@ class Handler(BaseHTTPRequestHandler):
             ctype = "text/css; charset=utf-8"
         self._send(200, data, ctype)
 
+    def do_POST(self) -> None:
+        """全量/高频同步也支持 POST。"""
+        path = urlparse(self.path).path
+        if path in {"/api/sync/full", "/api/sync/full/", "/api/sync/live", "/api/sync/live/"}:
+            self.do_GET()
+            return
+        self._send(404, b"not found", "text/plain; charset=utf-8")
+
 
 def main() -> None:
     warm_startup()
+    redis_host = _redis_host_public() or "(未配置 REDIS_URL)"
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"tennis-live-board http://{HOST}:{PORT}")
+    print(f"  sync full → GET/POST /api/sync/full  → Redis {redis_host} tennis:bundle:full")
+    print(f"  sync live → GET/POST /api/sync/live  → Redis {redis_host} tennis:bundle:inplay")
     server.serve_forever()
 
 

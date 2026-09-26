@@ -142,8 +142,10 @@ class SofascoreMobileClient:
             return self._token
         raise RuntimeError(str(last_err) if last_err else "token/init failed")
 
-    def _api_get(self, path: str) -> dict[str, Any]:
-        """GET 相对路径，如 rankings/type/7、sport/tennis/events/live。"""
+    def _api_get(self, path: str, **_kwargs: Any) -> dict[str, Any]:
+        """GET 相对路径，如 rankings/type/7、sport/tennis/events/live。
+        额外 kwargs（如 referer）忽略，便于复用 collectors 里的 SofascoreClient 调用方式。
+        """
         url = f"{API_BASE}/{path.lstrip('/')}"
         last_err: Exception | None = None
         for attempt in range(MAX_RETRIES):
