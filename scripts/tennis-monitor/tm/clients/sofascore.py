@@ -27,13 +27,13 @@ def _event_score(ev: dict) -> str | None:
 
 
 class SofascoreClient(SofascoreMobileClient):
-    """采集器用：强制代理 + 兼容旧接口；实际请求走 mobile API（api.sofascore.com）。"""
+    """采集器用：按 COLLECT_*_USE_PROXY 决定是否挂代理；实际请求走 mobile API。"""
 
     def __init__(self, *, skip_warm: bool = False) -> None:
         super().__init__()
+        self.session.proxies.clear()
         proxies = proxies_for("Sofascore")
         if proxies:
-            self.session.proxies.clear()
             self.session.proxies.update(proxies)
             safe = (proxies.get("https") or proxies.get("http") or "").split("@")[-1]
             print(f"[sofascore] mobile-api proxy {safe}", flush=True)

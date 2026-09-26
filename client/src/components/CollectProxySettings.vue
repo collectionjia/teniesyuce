@@ -8,8 +8,8 @@ const error = ref('')
 const notice = ref('')
 
 const form = reactive({
-  top100: true,
-  inplay_tick: true,
+  top100: false,
+  inplay_tick: false,
   host: 'us.ipwo.net',
   port: '7878',
   user: '',
@@ -20,8 +20,8 @@ const form = reactive({
 
 function applyFromCfg(cfg) {
   const p = cfg?.collect?.proxy || {}
-  form.top100 = p.top100 !== false
-  form.inplay_tick = p.inplay_tick !== false
+  form.top100 = p.top100 === true
+  form.inplay_tick = p.inplay_tick === true
   form.host = String(p.host || 'us.ipwo.net')
   form.port = String(p.port || '7878')
   form.user = String(p.user || '')
@@ -93,7 +93,8 @@ onMounted(load)
       <template v-if="!loading">
         <div class="grid gap-3 sm:grid-cols-2">
           <p class="text-xs text-slate-500 sm:col-span-2">
-            Sofascore 采集统一经 IPWO 代理；Polymarket 仍直连。
+            Sofascore（Top100 / 盘中）走 mobile API 直连，不经 IPWO。Polymarket 直连。
+            若以后要开代理，Port 须为 1–65535（错误如 78781 会导致 curl 失败）。
           </p>
         </div>
 

@@ -490,13 +490,17 @@ async function ensureProxyEnv(job = 'top100') {
   const cfg = await tennisEngines.getConfig();
   const env = tennisEngines.buildProxyProcessEnv(cfg, job);
   Object.assign(process.env, env);
-  // Sofascore 段统一走 IPWO（PM 段仍 scope=Polymarket 直连）
-  process.env.COLLECT_TOP100_USE_PROXY = '1';
   const p = cfg?.collect?.proxy || {};
-  const user = String(p.user || process.env.IPWO_PROXY_USER || '').trim();
-  const pass = String(p.pass || process.env.IPWO_PROXY_PASS || '').trim();
-  if (!user || !pass) {
-    throw new Error('IPWO 代理未配置账号/密码，请到管理中心「采集代理」填写后重试');
+  const isInplay = String(job).toLowerCase().includes('inplay');
+  const useProxy = isInplay
+    ? String(process.env.COLLECT_INPLAY_USE_PROXY || '0') === '1'
+    : String(process.env.COLLECT_TOP100_USE_PROXY || '0') === '1';
+  if (useProxy) {
+    const user = String(p.user || process.env.IPWO_PROXY_USER || '').trim();
+    const pass = String(p.pass || process.env.IPWO_PROXY_PASS || '').trim();
+    if (!user || !pass) {
+      throw new Error('IPWO 代理未配置账号/密码，请到管理中心「采集代理」填写后重试');
+    }
   }
   const sofaCurl = require('./tennisSofascoreCurl');
   sofaCurl.closeWorker();

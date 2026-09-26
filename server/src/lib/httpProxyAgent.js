@@ -123,14 +123,17 @@ function bumpSofaIpwo() {
 
 function jobWantsProxy() {
   const job = String(process.env.COLLECT_PROXY_JOB || 'top100').toLowerCase();
-  const key = job.includes('inplay') ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
-  const v = String(process.env[key] || '1').trim().toLowerCase();
-  return !['0', 'false', 'no', 'off'].includes(v);
+  const isInplay = job.includes('inplay');
+  const key = isInplay ? 'COLLECT_INPLAY_USE_PROXY' : 'COLLECT_TOP100_USE_PROXY';
+  // Sofascore 默认直连（mobile API）；仅显式设为 1 时走代理
+  const v = String(process.env[key] || '0').trim().toLowerCase();
+  return ['1', 'true', 'yes', 'on'].includes(v);
 }
 
 function requireProxyAgent(scope = '外网') {
   const scopeStr = String(scope);
-  if (scopeStr !== SOFA_SCOPE && !jobWantsProxy()) {
+  // Top100 / 盘中关代理时 Sofascore 允许直连（mobile API）
+  if (!jobWantsProxy()) {
     const key = `${scope}|forced-direct`;
     _agents.set(key, undefined);
     return undefined;

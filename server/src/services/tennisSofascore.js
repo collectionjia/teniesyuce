@@ -209,14 +209,11 @@ async function fetchEvent(eventId) {
   return inner;
 }
 
-/** 每次刷新前从引擎库加载 IPWO，避免后台循环丢代理配置 */
+/** 每次刷新前从引擎库加载代理开关（盘中 Sofascore 默认直连） */
 async function ensureInplayProxyEnv() {
   const tennisEngines = require('./tennisEngines');
   const cfg = await tennisEngines.getConfig();
   Object.assign(process.env, tennisEngines.buildProxyProcessEnv(cfg, 'inplay'));
-  process.env.COLLECT_PROXY_JOB = 'inplay';
-  // Sofascore 统一走 IPWO；不被盘中 PM 直连 tick 的 COLLECT_INPLAY_USE_PROXY=0 污染
-  process.env.COLLECT_INPLAY_USE_PROXY = '1';
   sofaCurl.closeWorker();
   sofaCurl.resetProbe();
 }

@@ -11,8 +11,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from tm.clients.proxy import optional_proxy
-
 # 移动端 API 根地址（APK 内为 api.sofascore.com）
 API_BASE = (os.environ.get("SOFA_MOBILE_API_BASE") or "https://api.sofascore.com/api/v1").rstrip("/")
 # curl_cffi 模拟 Chrome TLS 指纹，避免直连被 403
@@ -50,9 +48,7 @@ class SofascoreMobileClient:
 
         self._curl = curl_requests
         self.session = curl_requests.Session(impersonate=IMPERSONATE)
-        proxies = optional_proxy()  # IPWO_PROXY_* 等，服务器 IP 被拦时可开
-        if proxies:
-            self.session.proxies.update(proxies)
+        # 代理由 SofascoreClient / 调用方按 COLLECT_*_USE_PROXY 决定，此处不自动挂 IPWO
         self._token: str | None = None  # 进程内缓存，首次 _api_get 时 lazy init
         self._device_uuid_cache: str | None = None
         self._last_request_at = 0.0

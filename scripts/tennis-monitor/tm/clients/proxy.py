@@ -28,7 +28,15 @@ def ipwo_username(base: str | None = None, *, zone: str | None = None, session: 
 
 def ipwo_proxy_urls(*, username: str | None = None, password: str | None = None) -> dict[str, str]:
     host = (_env("IPWO_PROXY_HOST") or "us.ipwo.net").strip()
-    port = (_env("IPWO_PROXY_PORT") or "7878").strip()
+    port_raw = (_env("IPWO_PROXY_PORT") or "7878").strip()
+    try:
+        port_n = int(port_raw)
+    except ValueError:
+        port_n = -1
+    if not (0 < port_n <= 65535):
+        # 坏端口（如 78781）直接当未配置，避免 curl (5)
+        return {}
+    port = str(port_n)
     user = username or ipwo_username()
     passwd = (password or _env("IPWO_PROXY_PASS") or _env("IPWO_PASSWORD")).strip()
     if not user or not passwd:
@@ -64,11 +72,11 @@ def proxy_job() -> str:
 
 
 def use_proxy_for_job(job: str | None = None) -> bool:
-    """管理员可关：Top100 / 盘中刷新是否走代理。"""
+    """Sofascore 采集统一直连（mobile API）；开关保留兼容，默认关。"""
     j = (job or proxy_job()).strip().lower()
     if j in {"inplay", "inplay_tick", "refresh"}:
-        return _env_flag("COLLECT_INPLAY_USE_PROXY", True)
-    return _env_flag("COLLECT_TOP100_USE_PROXY", True)
+        return _env_flag("COLLECT_INPLAY_USE_PROXY", False)
+    return _env_flag("COLLECT_TOP100_USE_PROXY", False)
 
 
 def optional_proxy() -> dict[str, str]:
@@ -77,14 +85,10 @@ def optional_proxy() -> dict[str, str]:
 
 
 def proxies_for(scope: str = "Sofascore", *, job: str | None = None) -> dict[str, str] | None:
-    """
-    Sofascore 统一经 IPWO；Polymarket 有代理则用、否则直连。
-    """
+    """Sofascore / 其它：按 COLLECT_*_USE_PROXY；关则直连。Polymarket 有代理才用。"""
     scope_l = str(scope).lower()
     if scope_l == "polymarket":
         return optional_proxy() or None
-    if scope_l == "sofascore":
-        return require_proxy(scope)
     if not use_proxy_for_job(job):
         return None
     return require_proxy(scope)

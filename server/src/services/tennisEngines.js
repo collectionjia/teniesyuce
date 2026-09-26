@@ -704,8 +704,9 @@ function normalizeCollect(c = {}) {
       odds: fields.odds !== false,
     },
     proxy: {
-      top100: proxyIn.top100 !== false,
-      inplay_tick: proxyIn.inplay_tick !== false,
+      // Sofascore（Top100 / 盘中）默认直连 mobile API；开关保留兼容 UI
+      top100: proxyIn.top100 === true,
+      inplay_tick: proxyIn.inplay_tick === true,
       host: String(proxyIn.host != null ? proxyIn.host : baseProxy.host || 'us.ipwo.net').trim() || 'us.ipwo.net',
       port: String(proxyIn.port != null ? proxyIn.port : baseProxy.port || '7878').trim() || '7878',
       user: String(proxyIn.user != null ? proxyIn.user : baseProxy.user || '').trim(),
@@ -731,22 +732,33 @@ function toPublicConfig(cfg) {
 function buildProxyProcessEnv(cfg, job = 'top100') {
   const p = cfg?.collect?.proxy || {};
   const isInplay = String(job).toLowerCase().includes('inplay');
+  const top100Use = false; // Top100 / 立即采集：mobile API 直连，不走 IPWO
+  const inplayUse = false; // 盘中 Sofascore 同样直连
+  const useProxy = isInplay ? inplayUse : top100Use;
   const env = {
     COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-    // Sofascore 采集统一经 IPWO；开关仅保留兼容旧配置/UI，不再关闭代理
-    COLLECT_TOP100_USE_PROXY: '1',
-    COLLECT_INPLAY_USE_PROXY: '1',
+    COLLECT_TOP100_USE_PROXY: top100Use ? '1' : '0',
+    COLLECT_INPLAY_USE_PROXY: inplayUse ? '1' : '0',
   };
+  // 清掉可能覆盖的直连代理 env
+  env.SOFA_HTTP_PROXY = '';
+  env.SOFA_HTTPS_PROXY = '';
+  env.HTTP_PROXY = '';
+  env.HTTPS_PROXY = '';
+  if (!useProxy) {
+    // 本任务直连：勿注入坏端口的 IPWO，避免 curl (5)
+    env.IPWO_PROXY_HOST = '';
+    env.IPWO_PROXY_PORT = '';
+    env.IPWO_PROXY_USER = '';
+    env.IPWO_PROXY_PASS = '';
+    env.IPWO_PROXY_ZONE = '';
+    return env;
+  }
   if (p.host) env.IPWO_PROXY_HOST = String(p.host);
   if (p.port) env.IPWO_PROXY_PORT = String(p.port);
   if (p.user) env.IPWO_PROXY_USER = String(p.user);
   if (p.pass) env.IPWO_PROXY_PASS = String(p.pass);
   if (p.zone) env.IPWO_PROXY_ZONE = String(p.zone);
-  // 清掉可能覆盖 IPWO 的直连代理 env，避免和库配置打架
-  env.SOFA_HTTP_PROXY = '';
-  env.SOFA_HTTPS_PROXY = '';
-  env.HTTP_PROXY = '';
-  env.HTTPS_PROXY = '';
   return env;
 }
 

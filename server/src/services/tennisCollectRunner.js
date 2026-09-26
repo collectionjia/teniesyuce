@@ -236,8 +236,8 @@ async function proxyEnvForJob(job = 'top100') {
     const isInplay = String(job).toLowerCase().includes('inplay');
     return {
       COLLECT_PROXY_JOB: isInplay ? 'inplay' : 'top100',
-      COLLECT_TOP100_USE_PROXY: '1',
-      COLLECT_INPLAY_USE_PROXY: '1',
+      COLLECT_TOP100_USE_PROXY: '0',
+      COLLECT_INPLAY_USE_PROXY: '0',
     };
   }
 }
