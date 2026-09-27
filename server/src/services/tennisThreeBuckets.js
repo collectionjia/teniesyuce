@@ -429,6 +429,73 @@ async function admitLiveFromFull() {
   return { admitted, refreshed: candidates.length };
 }
 
+/** collect_live 推送的 finishedMatches → 并入 settled（并从 inplay 移除） */
+async function mergeFinishedMatchesToSettled(finishedMatches, fromBundle = {}) {
+  const list = Array.isArray(finishedMatches) ? finishedMatches.filter((m) => m && m.id != null) : [];
+  if (!list.length) return { moved: 0, skipped: true };
+
+  const settled = (await tennisSettledCache.getBundle()) || {
+    ok: true,
+    live: { matches: [] },
+    rankingsByPlayer: fromBundle.rankingsByPlayer || {},
+    polymarketByEvent: fromBundle.polymarketByEvent || {},
+  };
+  const byId = new Map((settled.live?.matches || []).map((m) => [String(m.id), m]));
+  for (const m of list) {
+    applyPhaseMark(m, 'ended');
+    m.statusType = 'finished';
+    m.inPlay = false;
+    m.status = m.status && /ended|finished/i.test(String(m.status)) ? m.status : 'Ended';
+    byId.set(String(m.id), m);
+  }
+  const settledList = [...byId.values()];
+  const g = groupScheduled(settledList);
+  settled.live = {
+    matches: settledList,
+    tournaments: g.tournaments,
+    tournamentCount: g.tournamentCount,
+    eventCount: settledList.length,
+  };
+  settled.events = settledList.length;
+  settled.fetched_at = new Date().toISOString();
+  settled.tick_at = settled.fetched_at;
+  settled.serverTime = Math.floor(Date.now() / 1000);
+  settled.source = 'tennis-settled';
+  settled.collectScript = fromBundle.collectScript || 'collect_live';
+  settled.rankingsByPlayer = {
+    ...(fromBundle.rankingsByPlayer || {}),
+    ...(settled.rankingsByPlayer || {}),
+  };
+  settled.polymarketByEvent = {
+    ...(fromBundle.polymarketByEvent || {}),
+    ...(settled.polymarketByEvent || {}),
+  };
+  settled.oddsByEvent = {
+    ...(fromBundle.oddsByEvent || {}),
+    ...(settled.oddsByEvent || {}),
+  };
+  settled.message = `settled · ${settledList.length}`;
+  await tennisSettledCache.setCachedBundle(settled);
+
+  const inplay = await tennisInplayCache.getBundle();
+  if (inplay?.live?.matches?.length) {
+    const finishedIds = new Set(list.map((m) => String(m.id)));
+    const still = (inplay.live.matches || []).filter((m) => !finishedIds.has(String(m.id)));
+    inplay.live = {
+      matches: still,
+      tournaments: [],
+      tournamentCount: 0,
+      eventCount: still.length,
+    };
+    inplay.events = still.length;
+    inplay.fetched_at = new Date().toISOString();
+    inplay.tick_at = inplay.fetched_at;
+    await tennisInplayCache.setCachedBundle(inplay);
+  }
+
+  return { moved: list.length, settled_matches: settledList.length };
+}
+
 /** 盘中已结束 → 立即迁 settled 并删 inplay */
 async function migrateInplayEnded() {
   const inplay = await tennisInplayCache.getBundle();
@@ -773,6 +840,7 @@ async function writeAllTennisBuckets(buckets, opts = {}) {
 module.exports = {
   splitFullToThreeBuckets,
   migratePrematchByStartTime,
+  mergeFinishedMatchesToSettled,
   migrateInplayEnded,
   admitLiveFromFull,
   seedVirtualPrematchInplay,

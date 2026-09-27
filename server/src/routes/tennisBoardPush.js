@@ -82,6 +82,22 @@ router.post('/live', requireToken, async (req, res) => {
     bundle.fetched_at = bundle.fetched_at || new Date().toISOString();
     bundle.source = bundle.source || 'tennis-live-board-live';
     bundle.dataSource = bundle.dataSource || 'board-push-live';
+    const finishedMatches = Array.isArray(bundle.finishedMatches)
+      ? bundle.finishedMatches
+      : Array.isArray(bundle.finished?.matches)
+        ? bundle.finished.matches
+        : [];
+    let settledMove = { moved: 0 };
+    if (finishedMatches.length) {
+      try {
+        settledMove = await tennisThreeBuckets.mergeFinishedMatchesToSettled(
+          finishedMatches,
+          bundle,
+        );
+      } catch (err) {
+        console.error('[tennis-board-push] merge finished failed:', err.message);
+      }
+    }
     const n = (bundle.live?.matches || []).length;
     const wrote = await tennisInplayCache.setCachedBundle(bundle, bundle.fetched_at);
     if (!wrote) {
@@ -97,6 +113,7 @@ router.post('/live', requireToken, async (req, res) => {
       mode: 'live',
       key: 'tennis:bundle:inplay',
       events: n,
+      ended: settledMove.moved || 0,
       fetched_at: bundle.fetched_at,
     });
   } catch (err) {
