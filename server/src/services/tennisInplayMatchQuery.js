@@ -129,6 +129,9 @@ function buildPublicMatchPayload(row) {
     birthYearByPlayer: pickDictByKeys(bundle.birthYearByPlayer, playerIds),
     odds: bundle.oddsByEvent?.[eid] || null,
     polymarket: bundle.polymarketByEvent?.[eid] || null,
+    tick_at: bundle.tick_at || null,
+    odds_updated_at: bundle.odds_updated_at || null,
+    score_updated_at: bundle.score_updated_at || null,
   };
 }
 

@@ -15,16 +15,12 @@ const {
   listInplayEligibleEvents,
   enrichEvent,
 } = require('../services/tennisInplayMatchQuery');
-const tennisSofascore = require('../services/tennisSofascore');
+const tennisPolymarket = require('../services/tennisPolymarket');
 
-function matchNeedsScore(event) {
-  if (!event || typeof event !== 'object') return false;
-  if (event.scoreText || event.score_text) return false;
-  const hs = event.homeScore;
-  const as = event.awayScore;
-  if (hs && typeof hs === 'object' && Object.keys(hs).length) return false;
-  if (as && typeof as === 'object' && Object.keys(as).length) return false;
-  return true;
+/** 详情页轮询：仅拉 CLOB 赔率；比分始终读 Redis（后台采集写入） */
+function wantPolyRefresh(req) {
+  const v = String(req.query?.refresh ?? '').trim().toLowerCase();
+  return v === 'poly' || v === 'clob' || v === '1' || v === 'true';
 }
 
 const router = Router();
@@ -148,13 +144,19 @@ router.get('/match/:eventId', async (req, res) => {
       row.inPlay = tagged.inPlay;
       row.pastStart = tagged.pastStart;
     }
-    if (matchNeedsScore(row.event) && (row.inPlay || row.pastStart)) {
-      try {
-        await tennisSofascore.refreshInplayScoresByEventId(eventId);
+    if (wantPolyRefresh(req) && (row.inPlay || row.pastStart)) {
+      const eid = String(eventId);
+      const poly = row.bundle?.polymarketByEvent?.[eid]
+        || row.bundle?.polymarketByEvent?.[Number(eid)]
+        || null;
+      if (poly?.slug || poly?.url) {
+        try {
+          await tennisPolymarket.refreshInplayOddsByEventId(eventId, { clobOnly: true });
+        } catch (err) {
+          console.warn('[tennis-inplay/match] poly clob refresh', eventId, err.message || err);
+        }
         const refreshed = await lookupMatchByEventId(eventId);
         if (refreshed) row = refreshed;
-      } catch (err) {
-        console.warn('[tennis-inplay/match] score refresh', eventId, err.message || err);
       }
     }
     res.json({

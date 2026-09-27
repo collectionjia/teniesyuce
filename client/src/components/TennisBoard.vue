@@ -2178,7 +2178,8 @@ const collectNotice = ref('')
 const collectError = ref('')
 
 let detailOddsTimer = null
-let detailOddsInFlight = false
+const detailLiveRefreshing = ref(false)
+const detailRefreshAt = ref({ score: '', odds: '' })
 
 function applyPolyOddsToData(eventId, poly, oddsAt) {
   if (!poly || eventId == null) return
@@ -2201,58 +2202,71 @@ function stopDetailOddsRefresh() {
     clearInterval(detailOddsTimer)
     detailOddsTimer = null
   }
-  detailOddsInFlight = false
+  detailLiveRefreshing.value = false
 }
 
-async function refreshDetailPolyOddsOnce() {
+async function refreshDetailLiveOnce() {
   const m = detailMatch.value
-  if (!canDetailPolyOddsRefresh(m) || detailOddsInFlight) return
-  detailOddsInFlight = true
+  if (!canDetailLiveRefresh(m) || detailLiveRefreshing.value) return
+  detailLiveRefreshing.value = true
   try {
-    const r = await api.fetchTennisInplayMatch(m.id)
+    const r = await api.fetchTennisInplayMatch(m.id, { refreshPoly: true })
     if (!r?.found || String(detailMatch.value?.id) !== String(m.id)) return
     mergeScoreFields(detailMatch.value, r.event)
     const poly = r.polymarket || r.polymarketByEvent?.[String(m.id)] || r.polymarketByEvent?.[m.id]
     if (poly) {
-      applyPolyOddsToData(m.id, poly, r.odds_updated_at || r.fetched_at)
+      applyPolyOddsToData(m.id, poly, r.odds_updated_at || poly.pricesUpdatedAt || r.fetched_at)
+    }
+    detailRefreshAt.value = {
+      score: r.score_updated_at || r.event?.score_updated_at || detailRefreshAt.value.score,
+      odds: r.odds_updated_at || poly?.pricesUpdatedAt || detailRefreshAt.value.odds,
     }
   } catch {
-    /* 详情赔率异步失败不打断页面 */
+    /* 详情异步刷新失败不打断页面 */
   } finally {
-    detailOddsInFlight = false
+    detailLiveRefreshing.value = false
   }
 }
 
-/** 盘中产品，或「网球赛事推荐」mix 列表里的进行中场次 */
-function canDetailPolyOddsRefresh(m = detailMatch.value) {
-  if (!m?.id) return false
-  if (!isInplayMode.value && !isMixMode.value) return false
-  if (isMatchEnded(m)) return false
+/** 详情页异步刷新：比分读 Redis，Polymarket 拉 CLOB，2s 一轮 */
+function canDetailLiveRefresh(m = detailMatch.value) {
+  if (!m?.id || !props.isMember) return false
+  if (isSettledMode.value || isMatchEnded(m)) return false
   const poly = polyOf(m.id)
   if (poly?.closed) return false
-  if (isMixMode.value && !isInplayMode.value) {
+  if (isInplayMode.value) return isMatchLive(m) || m.inPlay === true || m.pastStart === true
+  if (isMixMode.value) {
     const ph = String(m.phaseMark || '').toLowerCase()
     const st = String(m.statusType || m.status || '').toLowerCase()
-    const live = ph === 'live'
+    return ph === 'live'
       || st === 'inprogress'
       || st === 'live'
       || isMatchLive(m)
-    if (!live) return false
+      || m.inPlay === true
   }
-  return !!(poly?.slug || poly?.url || polyUrlOf(m))
+  return false
 }
 
 function startDetailOddsRefresh() {
   stopDetailOddsRefresh()
-  if (!canDetailPolyOddsRefresh()) return
-  void refreshDetailPolyOddsOnce()
+  if (!canDetailLiveRefresh()) return
+  void refreshDetailLiveOnce()
   detailOddsTimer = setInterval(() => {
-    void refreshDetailPolyOddsOnce()
-  }, 1000)
+    void refreshDetailLiveOnce()
+  }, 2000)
 }
 
+const detailUpdatedText = computed(() => {
+  const parts = []
+  const scoreAt = fmtRefreshClock(detailRefreshAt.value.score)
+  const oddsAt = fmtRefreshClock(detailRefreshAt.value.odds)
+  if (scoreAt) parts.push(`比分 ${scoreAt}`)
+  if (oddsAt) parts.push(`赔率 ${oddsAt}`)
+  return parts.join(' · ')
+})
+
 watch([detailMatch, isInplayMode, isMixMode], () => {
-  if (canDetailPolyOddsRefresh()) startDetailOddsRefresh()
+  if (canDetailLiveRefresh()) startDetailOddsRefresh()
   else stopDetailOddsRefresh()
 })
 
@@ -2484,31 +2498,20 @@ function mergeScoreFields(target, source) {
   return target
 }
 
-async function refreshDetailMatchScores(m) {
-  if (!m?.id) return
-  try {
-    const r = await api.fetchTennisInplayMatch(m.id)
-    if (!r?.found || !r.event || String(detailMatch.value?.id) !== String(m.id)) return
-    mergeScoreFields(detailMatch.value, r.event)
-  } catch {
-    /* 详情比分异步失败不打断页面 */
-  }
-}
-
 function openDetail(m) {
   if (!props.isMember) {
     emit('need-subscribe')
     return
   }
   detailHelpOpen.value = false
+  detailRefreshAt.value = { score: '', odds: '' }
   detailMatch.value = m
-  if (isInplayMode.value || isMixMode.value || isSettledMode.value) {
-    void refreshDetailMatchScores(m)
-  }
+  if (canDetailLiveRefresh(m)) startDetailOddsRefresh()
 }
 function closeDetail() {
   detailMatch.value = null
   detailHelpOpen.value = false
+  detailRefreshAt.value = { score: '', odds: '' }
   stopDetailOddsRefresh()
 }
 function toggleDetailHelp(ev) {
@@ -3423,8 +3426,9 @@ defineExpose({
       :poly-url-of="polyUrlOf"
       :open-market="openMarket"
       :on-polymarket-action="onPolymarketAction"
-      :collect-updated-text="collectUpdatedText"
+      :collect-updated-text="detailUpdatedText || collectUpdatedText"
       :collect-refreshing="collectRefreshing"
+      :detail-live-refreshing="detailLiveRefreshing"
     />
   </div>
 </template>

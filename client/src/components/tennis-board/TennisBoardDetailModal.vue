@@ -41,6 +41,7 @@ defineProps({
   onPolymarketAction: { type: Function, default: null },
   collectUpdatedText: { type: String, default: '' },
   collectRefreshing: { type: Boolean, default: false },
+  detailLiveRefreshing: { type: Boolean, default: false },
 })
 
 /** Polymarket 隐含占比：&lt;50 红，&gt;50 绿，=50 默认 */
@@ -275,7 +276,8 @@ function polyCentsTone(v) {
                 </div>
                 <span class="s">
                   {{ polyOf(detailMatch.id)?.closed ? '已结算 · 隐含占比' : '隐含占比' }}
-                  <template v-if="(isInplayMode || isMixMode) && collectUpdatedText"> · 更新 {{ collectUpdatedText }}</template>
+                  <template v-if="collectUpdatedText"> · 更新 {{ collectUpdatedText }}</template>
+                  <template v-if="detailLiveRefreshing"> · 刷新中…</template>
                 </span>
               </div>
             </div>
@@ -297,7 +299,7 @@ function polyCentsTone(v) {
               :disabled="!polyUrlOf(detailMatch)"
               :title="polyUrlOf(detailMatch) ? '打开 Polymarket' : '暂无对应外链'"
               @click="(onPolymarketAction || openMarket)(detailMatch)"
-            >{{ collectRefreshing && isInplayMode ? '刷新中…' : 'polymarket赔率' }}</button>
+            >{{ (collectRefreshing && isInplayMode) || detailLiveRefreshing ? '刷新中…' : 'polymarket赔率' }}</button>
           </div>
         </div>
       </div>

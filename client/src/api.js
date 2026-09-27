@@ -598,10 +598,12 @@ export async function runTennisInplayTick() {
   return runCollectPartial({ sport: 'tennis' })
 }
 
-/** 盘中详情：从 Redis 读取单场（不写回、不拉 Polymarket） */
-export async function fetchTennisInplayMatch(eventId) {
+/** 盘中详情：比分读 Redis；refreshPoly 时拉 Polymarket CLOB 价并写回 */
+export async function fetchTennisInplayMatch(eventId, opts = {}) {
+  const params = { _: Date.now() }
+  if (opts.refreshPoly) params.refresh = 'poly'
   const { data } = await api.get(`/tennis-inplay/match/${encodeURIComponent(eventId)}`, {
-    params: { _: Date.now() },
+    params,
     headers: { 'Cache-Control': 'no-cache' },
   })
   return data
