@@ -39,6 +39,7 @@ defineProps({
   matchAwayName: { type: Function, required: true },
   liveSetCells: { type: Function, required: true },
   livePointText: { type: Function, required: true },
+  setScoreSummary: { type: Function, required: true },
   openDetail: { type: Function, required: true },
   openMarket: { type: Function, required: true },
   onPolymarketAction: { type: Function, default: null },
@@ -96,6 +97,7 @@ defineProps({
           :match-away-name="matchAwayName"
           :live-set-cells="liveSetCells"
           :live-point-text="livePointText"
+          :set-score-summary="setScoreSummary"
           :open-detail="openDetail"
           :open-market="openMarket"
           :on-polymarket-action="onPolymarketAction"

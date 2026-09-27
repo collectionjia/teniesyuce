@@ -21,8 +21,6 @@ def _event_score(ev: dict) -> str | None:
             parts.append(f"{hs[key]}-{as_[key]}")
     if parts:
         return " ".join(parts)
-    if hs.get("current") is not None and as_.get("current") is not None:
-        return f"{hs['current']}-{as_['current']}"
     return None
 
 

@@ -30,6 +30,7 @@ const props = defineProps({
   matchAwayName: { type: Function, required: true },
   liveSetCells: { type: Function, required: true },
   livePointText: { type: Function, required: true },
+  setScoreSummary: { type: Function, required: true },
   openDetail: { type: Function, required: true },
   openMarket: { type: Function, required: true },
   onPolymarketAction: { type: Function, default: null },
@@ -143,7 +144,7 @@ function handleUnlock(ev) {
                 <span v-if="livePointText(m, 'away')" class="live-point">{{ livePointText(m, 'away') }}</span>
               </div>
             </div>
-            <div v-if="m.scoreText || m.score_text" class="set-score-line">{{ m.scoreText || m.score_text }}</div>
+            <div v-if="setScoreSummary(m)" class="set-score-line">{{ setScoreSummary(m) }}</div>
           </div>
           <div v-else class="matchup is-stacked">
             <div class="matchup-line">

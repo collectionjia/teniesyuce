@@ -62,6 +62,14 @@ function filterScoreTargets(fetchIds) {
   return { targets, skippedNotStarted };
 }
 
+function isSetGamePair(home, away) {
+  const h = Number(home)
+  const a = Number(away)
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return false
+  if ([15, 30, 40, 50].includes(h) || [15, 30, 40, 50].includes(a)) return false
+  return h <= 12 && a <= 12
+}
+
 function eventScore(ev) {
   const hs = ev?.homeScore || {};
   const as_ = ev?.awayScore || {};
@@ -71,7 +79,6 @@ function eventScore(ev) {
     if (hs[key] != null && as_[key] != null) parts.push(`${hs[key]}-${as_[key]}`);
   }
   if (parts.length) return parts.join(' ');
-  if (hs.current != null && as_.current != null) return `${hs.current}-${as_.current}`;
   return null;
 }
 

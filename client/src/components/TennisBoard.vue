@@ -2589,6 +2589,7 @@ function parseScoreTextSides(text) {
   for (const part of sets) {
     const m = part.match(/^(\d+)-(\d+)$/)
     if (!m) continue
+    if (!isSetGamePair(Number(m[1]), Number(m[2]))) continue
     home.push(m[1])
     away.push(m[2])
   }
@@ -2600,6 +2601,14 @@ function parseScoreTextSides(text) {
   }
   if (!home.length) return null
   return { home: home.join(' '), away: away.join(' ') }
+}
+
+function isSetGamePair(home, away) {
+  const h = Number(home)
+  const a = Number(away)
+  if (!Number.isFinite(h) || !Number.isFinite(a)) return false
+  if ([15, 30, 40, 50].includes(h) || [15, 30, 40, 50].includes(a)) return false
+  return h <= 12 && a <= 12
 }
 
 function scoreSideRaw(m, side) {
@@ -2632,7 +2641,10 @@ function pairsFromScoreText(text) {
   for (const part of parts) {
     const hit = part.match(/^(\d+)-(\d+)$/)
     if (!hit) continue
-    pairs.push({ home: Number(hit[1]), away: Number(hit[2]) })
+    const home = Number(hit[1])
+    const away = Number(hit[2])
+    if (!isSetGamePair(home, away)) continue
+    pairs.push({ home, away })
   }
   return pairs
 }
@@ -2677,31 +2689,26 @@ function liveSetCells(m, side) {
   })
 }
 
-function livePointText(m, side) {
-  const raw = scoreSideRaw(m, side)
-  if (raw && typeof raw === 'object' && raw.point != null && raw.point !== '' && raw.point !== '0') {
-    return String(raw.point)
-  }
+function setScoreSummary(m) {
+  const pairs = liveSetPairs(m)
+  if (!pairs.length) return ''
+  return pairs.map((p) => `${p.home}-${p.away}`).join(' ')
+}
+
+function livePointText(_m, _side) {
   return ''
 }
 
 function playerLiveScoreText(m, side) {
   if (!isMatchLive(m) && !m?.pmSettled && !liveSetPairs(m).length) return ''
+  const periods = parsePeriodScoreSides(m)
+  if (periods?.[side]) return periods[side]
   const combined = m.scoreText || m.score_text || (typeof m.score === 'string' ? m.score : '')
   if (combined) {
     const parsed = parseScoreTextSides(combined)
     if (parsed?.[side]) return parsed[side]
   }
-  const periods = parsePeriodScoreSides(m)
-  if (periods?.[side]) return periods[side]
-  const raw = scoreSideRaw(m, side)
-  if (raw == null || raw === '') return ''
-  if (typeof raw === 'object') {
-    const cur = raw.current ?? raw.display ?? raw.score
-    if (cur != null && cur !== '') return String(cur)
-    return ''
-  }
-  return String(raw)
+  return ''
 }
 
 /** 打开页面时从 Redis 加载；quiet 时用于盘中自动轮询 */
@@ -3230,6 +3237,7 @@ defineExpose({
       :match-away-name="matchAwayName"
       :live-set-cells="liveSetCells"
       :live-point-text="livePointText"
+      :set-score-summary="setScoreSummary"
       :open-detail="openDetail"
       :open-market="openMarket"
       :on-polymarket-action="onPolymarketAction"
