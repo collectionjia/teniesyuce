@@ -290,7 +290,7 @@ async function listInplayEligibleEvents() {
         || bundle?.polymarketByEvent?.[raw.id]
         || null;
       const row = enrichEvent(raw, serverTime, poly);
-      if (!row.pastStart && !row.inPlay && !row.pmSettled) continue;
+      if (!row.inPlay) continue;
       const id = String(raw.id);
       const prev = byId.get(id);
       if (!prev || priority < prev.priority) {

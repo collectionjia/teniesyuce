@@ -81,12 +81,8 @@ async function stampPhaseMarks() {
         applyPhaseMark(m, 'ended');
         m.statusType = 'finished';
         m.status = m.status && /ended|finished/i.test(String(m.status)) ? m.status : 'Ended';
-      } else {
+      } else if (isLive(m)) {
         applyPhaseMark(m, 'live');
-        if (!isLive(m)) {
-          m.statusType = 'inprogress';
-          m.status = m.status || 'Live';
-        }
       }
       liveMarked += 1;
     }
@@ -315,68 +311,9 @@ async function splitFullToThreeBuckets(fullBundle) {
   };
 }
 
-/** 盘前开赛时间已过 → 立即迁 inplay */
-async function migratePrematchByStartTime(nowMs = Date.now()) {
-  const pre = await tennisPrematchCache.getBundle();
-  if (!pre) return { moved: 0 };
-  const rankings = pre.rankingsByPlayer || {};
-  const tournaments = pre.scheduled?.tournaments || [];
-  const keep = [];
-  const move = [];
-  for (const t of tournaments) {
-    for (const e of t.events || []) {
-      const ts = Number(e.startTimestamp || e.start_time || 0);
-      const startMs = ts > 1e12 ? ts : ts * 1000;
-      if (startMs > 0 && startMs <= nowMs && passesTop100(e, rankings)) {
-        move.push({
-          ...e,
-          tournament: e.tournament || t.name,
-          status: 'Live',
-          statusType: 'inprogress',
-          phaseMark: 'live',
-          phaseLabel: '进行中',
-        });
-      } else {
-        keep.push({
-          ...e,
-          tournament: e.tournament || t.name,
-          phaseMark: 'not_started',
-          phaseLabel: '未开赛',
-        });
-      }
-    }
-  }
-  if (!move.length) return { moved: 0 };
-
-  const inplay = (await tennisInplayCache.getBundle()) || {
-    ok: true,
-    live: { matches: [] },
-    rankingsByPlayer: rankings,
-    polymarketByEvent: pre.polymarketByEvent || {},
-    oddsByEvent: pre.oddsByEvent || {},
-  };
-  const byId = new Map((inplay.live?.matches || []).map((m) => [String(m.id), m]));
-  for (const m of move) byId.set(String(m.id), m);
-  inplay.live = {
-    matches: [...byId.values()],
-    tournaments: [],
-    tournamentCount: 0,
-    eventCount: byId.size,
-  };
-  inplay.events = byId.size;
-  inplay.fetched_at = new Date().toISOString();
-  inplay.tick_at = inplay.fetched_at;
-  inplay.rankingsByPlayer = { ...rankings, ...(inplay.rankingsByPlayer || {}) };
-  inplay.polymarketByEvent = { ...(pre.polymarketByEvent || {}), ...(inplay.polymarketByEvent || {}) };
-
-  const keepGrouped = groupScheduled(keep);
-  pre.scheduled = keepGrouped;
-  pre.events = keep.length;
-  pre.fetched_at = new Date().toISOString();
-
-  await tennisPrematchCache.setCachedBundle(pre);
-  await tennisInplayCache.setCachedBundle(inplay);
-  return { moved: move.length };
+/** 不再因开赛时间已过就迁入盘中或改状态；盘中场次以 Redis 源 status 为准 */
+async function migratePrematchByStartTime(_nowMs = Date.now()) {
+  return { moved: 0 };
 }
 
 /**

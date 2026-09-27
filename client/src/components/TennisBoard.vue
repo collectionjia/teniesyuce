@@ -676,26 +676,14 @@ function startTimestampSec(m) {
   return ts > 1e12 ? Math.floor(ts / 1000) : Math.floor(ts)
 }
 
-/** 开赛时间已到则视为进行中（与后端 serverTime 对齐）；仅对「未开赛」做超时兜底 */
+/** 状态以 Redis/源数据为准，不因开赛时间已过而改成进行中 */
 function effectiveStatus(m) {
   if (!m) return ''
   const raw = statusRawText(m.status)
-  const rawType = statusRawText(m.statusType || m.status?.type).toLowerCase().replace(/\s+/g, '')
-  if (isEndedStatus(raw) || rawType === 'finished' || isEndedStatus(rawType)) return raw || 'Ended'
-  // 源已标明进行中（含 1st/2nd set）→ 信任源数据，绝不用开赛时长强行改成结束（大满贯长盘会误伤比分）
-  if (isLiveStatus(raw) || isLiveStatus(rawType)) return raw || 'Live'
-  const ts = startTimestampSec(m)
-  const age = ts != null ? nowSec.value - ts : null
-  const notStarted =
-    /^not\s*started$/i.test(raw)
-    || rawType === 'notstarted'
-    || raw === '未开赛'
-    || (!raw && !rawType)
-  if (notStarted && ts != null && nowSec.value >= ts) {
-    if (age != null && age > 6 * 3600) return 'Ended'
-    return 'Live'
-  }
-  return raw || ''
+  const rawType = statusRawText(m.statusType || m.status?.type)
+  if (isEndedStatus(raw) || isEndedStatus(rawType)) return raw || rawType || 'Ended'
+  if (isLiveStatus(raw) || isLiveStatus(rawType)) return raw || rawType || 'Live'
+  return raw || rawType || ''
 }
 
 function pmUnit(v) {
@@ -732,8 +720,11 @@ function isMatchEnded(m) {
 
 function isMatchLive(m) {
   if (isMatchEnded(m)) return false
-  const s = effectiveStatus(m)
-  return isLiveStatus(s) || isLiveStatus(m?.statusType)
+  if (m?.inPlay === false) return false
+  if (m?.inPlay === true) return true
+  const raw = statusRawText(m.status)
+  const rawType = statusRawText(m.statusType || m.status?.type)
+  return isLiveStatus(raw) || isLiveStatus(rawType)
 }
 
 function isMatchNotStarted(m) {
@@ -882,7 +873,6 @@ function matchPassesFilter(m, statusFilter) {
   }
   // 盘前/盘中/盘后：排名类条件由产品挂载的条件组在服务端筛；列表仅保留巡回/PM（盘后另保留盈亏）
   if (isPrematchMode.value) {
-    // 盘前缓存里开赛时间已过的场次：状态显示「进行中」，仍留在本列表直至迁到盘中
     if (isMatchEnded(m)) return false
     return applyPrematchFilters([m], {
       tour: tour.value,

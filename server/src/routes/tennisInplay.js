@@ -166,7 +166,7 @@ router.get('/match/:eventId', async (req, res) => {
   }
 });
 
-/** 盘中列表：开赛已过均可列出；inPlay=true 才表示真正比赛中（无需 JWT） */
+/** 盘中列表：仅 inPlay=true（Redis 源状态为进行中） */
 router.get('/today', async (req, res) => {
   try {
     const raw = await tennisInplayCache.getBundle();
