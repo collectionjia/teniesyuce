@@ -17,9 +17,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-MONITOR = ROOT.parent / "scripts" / "tennis-monitor"
-sys.path.insert(0, str(MONITOR))
-sys.path.insert(0, str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 # 默认生产宿主机 Redis；可被环境变量覆盖
 os.environ.setdefault("REDIS_URL", "redis://127.0.0.1:9016")

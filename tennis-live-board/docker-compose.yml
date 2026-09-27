@@ -1,0 +1,17 @@
+services:
+  tennis-board:
+    build: .
+    container_name: tennis-live-board
+    restart: unless-stopped
+    ports:
+      - "9011:8765"
+    env_file:
+      - board.env
+    environment:
+      SOFA_BOARD_HOST: "0.0.0.0"
+      SOFA_BOARD_PORT: "8765"
+    volumes:
+      - board-cache:/app/.cache
+
+volumes:
+  board-cache:

@@ -33,6 +33,8 @@
 |----------|----------|
 | 健康检查 | 无需登录 |
 | 采集数据（盘前 / 盘中 / 盘后 / 单场进行中） | **无需 JWT**，公开读 Redis 快照 |
+| Dota2 / NFL 盘口（`GET /markets`） | **无需 JWT**，公开读 Redis；登录后附带 `placed` |
+| Dota2 / NFL 手动刷新（`POST /markets/refresh`） | **无需 JWT**，触发服务端重新采集 |
 | 单场 / 批量 / 限价 买入 / 卖出 | **无需 JWT**；请求体带 `email`（= `users.account`）定位钱包 |
 
 共性：
@@ -361,6 +363,142 @@ curl -s 'https://www.yuce.bid/api/tennis-settled/today'
 | `oddsByEvent` | 比赛 id | 全场欧赔 |
 | `polymarketByEvent` | 比赛 id | `home_price` / `away_price` / `url` |
 | `birthYearByPlayer` | 球员 id | 出生年 |
+
+### 3.5 Dota2 / NFL 采集数据（Polymarket + Elo）
+
+与网球不同，Dota2 / NFL **没有**外部推送接口；采集在服务端内部完成（Dota2 默认约 90s 循环，NFL 走调度器 `collect.nfl` / `collect.nfl_hf`），结果写入 Redis 后通过以下接口读取。
+
+| 运动 | 读数据 | 手动刷新 | Redis Key |
+|------|--------|----------|-----------|
+| Dota2 | `GET /api/dota2/markets` | `POST /api/dota2/markets/refresh` | `dota2:bundle:pm` |
+| NFL | `GET /api/nfl/markets` | `POST /api/nfl/markets/refresh` | `nfl:bundle:pm` |
+
+数据源：Polymarket Gamma；Dota2 经 dota2elo 匹配/预测，NFL 经 nflelo 预测（NFL 默认只保留 48h 内开赛窗口）。
+
+#### 3.5.1 读取盘口 · `GET /api/dota2/markets` / `GET /api/nfl/markets`
+
+```bash
+curl -s 'https://www.yuce.bid/api/dota2/markets'
+curl -s 'https://www.yuce.bid/api/nfl/markets'
+```
+
+读接口只取 Redis 快照，**不会在请求时再打 Polymarket**；未采集过则返回空列表。
+
+响应示例（字段以 Dota2 为例，NFL 结构相同，`sport` 为 `nfl`，另含 `horizonHours`）：
+
+```json
+{
+  "ok": true,
+  "sport": "dota2",
+  "source": "polymarket-gamma",
+  "fetched_at": "2026-03-27T04:00:00.000Z",
+  "thresholds": { "eloDiffMin": 150, "winProbMin": 0.65 },
+  "matchCount": 12,
+  "matchedCount": 10,
+  "edgeCount": 5,
+  "hcCount": 2,
+  "scanned": 20,
+  "matches": [
+    {
+      "slug": "dota2-match-xxx",
+      "title": "Team A vs Team B",
+      "url": "https://polymarket.com/event/...",
+      "sideA": "Team A",
+      "sideB": "Team B",
+      "prices": [0.62, 0.38],
+      "tokenIds": ["token_a", "token_b"],
+      "outcomes": ["Team A", "Team B"],
+      "startMs": 1743048000000,
+      "teamA": { "id": 1, "name": "Team A", "rating": 1850 },
+      "teamB": { "id": 2, "name": "Team B", "rating": 1680 },
+      "eloDiff": 170,
+      "pA": 0.72,
+      "strongProb": 0.72,
+      "pickSide": "a",
+      "pickName": "Team A",
+      "pickTokenId": "token_a",
+      "pickPrice": 0.62,
+      "matched": true,
+      "is_high_confidence": true,
+      "passList": true,
+      "passAutoBet": true,
+      "directionAligned": true
+    }
+  ],
+  "placed": [],
+  "member": false
+}
+```
+
+空数据：
+
+```json
+{
+  "ok": true,
+  "empty": true,
+  "sport": "dota2",
+  "matches": [],
+  "matchCount": 0,
+  "fetched_at": null,
+  "message": "盘口尚未采集，请刷新"
+}
+```
+
+`matches[]` 常用字段：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `slug` | string | Polymarket 赛事标识，**下单时用** |
+| `tokenIds` | string[] | CLOB token，`orders[].tokenId` 来源 |
+| `pickSide` | string | 模型建议侧：`a` / `b` |
+| `pickTokenId` | string | 建议侧对应 token |
+| `pickPrice` | number | 建议侧当前价（0～1） |
+| `prices` | number[] | 两侧市价 `[a, b]` |
+| `matched` | boolean | 是否成功匹配 Elo 战队/球队 |
+| `is_high_confidence` | boolean | 高置信（自动投注门槛） |
+| `passList` | boolean | 是否通过列表过滤阈值 |
+| `directionAligned` | boolean | 模型方向是否与盘口一致 |
+
+登录用户响应会额外带 `placed`（已下单 `slug:side` 列表）与 `member: true`。
+
+#### 3.5.2 手动触发采集 · `POST /api/dota2/markets/refresh` / `POST /api/nfl/markets/refresh`
+
+```bash
+curl -s -X POST 'https://www.yuce.bid/api/dota2/markets/refresh'
+curl -s -X POST 'https://www.yuce.bid/api/nfl/markets/refresh'
+```
+
+无请求体。成功时返回完整 bundle（同 `GET /markets`，不含 `placed` / `member`）。失败示例：
+
+```json
+{ "ok": false, "error": "collect returned empty" }
+```
+
+#### 3.5.3 Dota2 / NFL 批量下单
+
+从 `GET /markets` 取 `slug`、`tokenIds`、`pickSide` 后，调用：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/dota2/trade/batch` | Dota2 批量买入 |
+| POST | `/api/nfl/trade/batch` | NFL 批量买入 |
+
+鉴权与网球批量相同：body 带 `email`；`simulate` / `privateKey`+`address` 规则见 [§1](#1-鉴权说明)。`orders[].side` 为 `a` 或 `b`（对应 `sideA` / `sideB`），`orders[].tokenId` 取自 `tokenIds`。
+
+```bash
+curl -s -X POST 'https://www.yuce.bid/api/dota2/trade/batch' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "user@example.com",
+    "simulate": true,
+    "amountUsd": 5,
+    "orders": [
+      { "slug": "dota2-match-xxx", "side": "a", "tokenId": "token_a" }
+    ]
+  }'
+```
+
+单次最多 **20** 场；支持市价（`orderType: market`）与限价（`orderType: limit`，须 `shares` + `limitBuyPrice`），规则同网球 [§6](#6-限价单邮箱)。
 
 ---
 
@@ -1020,6 +1158,8 @@ print("home=", ev.get("home"), "away=", ev.get("away"))
 | 盘中批量 / 限价 | `server/src/routes/tennisInplay.js` → `/trade/batch` · `/trade/sell` |
 | 限价 CLOB | `server/src/services/polymarketTrade.js` → `placeLimitBuy` / `placeLimitSell` |
 | Python 采集（默认关） | `scripts/tennis-monitor/collect.py` 等，`TENNIS_PYTHON_COLLECT=0` |
+| Dota2 / NFL 采集与盘口 | `server/src/services/dota2PmCollect.js` → `GET/POST /api/{dota2,nfl}/markets` |
+| Dota2 / NFL 批量下单 | `server/src/routes/dota2.js` · `server/src/routes/nfl.js` → `/trade/batch` |
 | 内部流程说明 | [`网球数据采集流程.md`](./网球数据采集流程.md) |
 
 引擎调度 / API Key 见：[`引擎API对外中心-接口文档.md`](./引擎API对外中心-接口文档.md)（仍使用 API Key，与本文件无关）。

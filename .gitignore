@@ -2,6 +2,10 @@
 *.pem
 *.key
 tennis-live-board/config.local.js
+tennis-live-board/board.env
+tennis-live-board/.cache/
+tennis-live-board/_tmp_*.py
+tennis-live-board/deploy_remote.py
 .env
 .env.*
 !.env.example

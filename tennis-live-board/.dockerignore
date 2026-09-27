@@ -1,0 +1,8 @@
+.cache/
+__pycache__/
+*.pyc
+board.env
+venv/
+_tmp*
+*.local.js
+config.local.js

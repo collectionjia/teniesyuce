@@ -15,15 +15,14 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parent
-MONITOR = ROOT.parent / "scripts" / "tennis-monitor"
-if str(MONITOR) not in sys.path:
-    sys.path.insert(0, str(MONITOR))
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def _load_board_env() -> None:
-    """加载 monitor.env（REDIS_URL / IPWO 等），已有环境变量不覆盖。"""
-    for name in ("monitor.env", "monitor.env.prod"):
-        path = MONITOR / name
+    """加载本目录 board.env（兼容 monitor.env）；已有环境变量不覆盖。"""
+    for name in ("board.env", "monitor.env"):
+        path = ROOT / name
         if not path.is_file():
             continue
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -75,6 +74,7 @@ from tm.collectors.events import (  # noqa: E402
     list_scheduled_tournaments,
     read_collect_horizon_days,
     today_bj,
+    write_collect_horizon_days,
 )
 from tm.collectors.rankings import (  # noqa: E402
     RANK_PATHS,
@@ -289,9 +289,18 @@ def _is_500_1000_event(ev: dict) -> bool:
     return label.endswith(" 1000") or label.endswith(" 500")
 
 
-def _fetch_day_events(client: SofascoreMobileClient, match_date: str) -> list[dict]:
+def _fetch_day_events(
+    client: SofascoreMobileClient,
+    match_date: str,
+    *,
+    horizon_days: int | None = None,
+) -> list[dict]:
     """赛程（含未开赛）：scheduled-tournaments → tournament/.../events（scheduled-events 已 404）。"""
-    horizon = read_collect_horizon_days()
+    allowed = (1, 2, 3, 5)
+    if horizon_days is not None and int(horizon_days) in allowed:
+        horizon = int(horizon_days)
+    else:
+        horizon = read_collect_horizon_days()
     out: list[dict] = []
     seen: set[int] = set()
     tour_seen: set[Any] = set()
@@ -548,12 +557,17 @@ def refresh_live_board(*, force: bool = False) -> dict[str, Any]:
         )
 
 
-def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
+def build_board(*, force_ranks: bool = False, horizon_days: int | None = None) -> dict[str, Any]:
     started = time.time()
     match_date = today_bj()
     error: str | None = None
     raw_by_id: dict[int, dict] = {}
     ranks_refreshed = False
+    allowed = (1, 2, 3, 5)
+    if horizon_days is not None and int(horizon_days) in allowed:
+        horizon = write_collect_horizon_days(int(horizon_days))
+    else:
+        horizon = read_collect_horizon_days()
 
     with SofascoreMobileClient() as client:
         try:
@@ -563,7 +577,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
             board = {"atp": [], "wta": [], "player_ids": set(), "name_exact": set(), "name_keys": set()}
         # 先赛程后 live，live 覆盖同场状态
         try:
-            for ev in _fetch_day_events(client, match_date):
+            for ev in _fetch_day_events(client, match_date, horizon_days=horizon):
                 eid = ev.get("id")
                 if eid is not None:
                     raw_by_id[int(eid)] = ev
@@ -620,6 +634,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
             "filter_note": "ATP/WTA 500·1000；仅未开赛+进行中",
             "ranks_refreshed": ranks_refreshed,
             "rank_cache_sec": RANK_CACHE_SEC,
+            "horizon_days": horizon,
             "error": error,
             "summary": {
                 "atp_players": len(board.get("atp") or []),
@@ -627,6 +642,7 @@ def build_board(*, force_ranks: bool = False) -> dict[str, Any]:
                 "total_events": len(slim_events),
                 "live_events": len(live_events),
                 "upcoming_events": upcoming,
+                "horizon_days": horizon,
             },
             "atp": board.get("atp") or [],
             "wta": board.get("wta") or [],
@@ -677,7 +693,7 @@ def _schedule_auto_push(mode: str) -> None:
     threading.Thread(target=run, daemon=True, name=f"board-auto-push-{mode}").start()
 
 
-def refresh_board_async(*, force: bool = False, force_ranks: bool = False) -> None:
+def refresh_board_async(*, force: bool = False, force_ranks: bool = False, horizon_days: int | None = None) -> None:
     global _refreshing
     if not force:
         with _cache_lock:
@@ -690,7 +706,7 @@ def refresh_board_async(*, force: bool = False, force_ranks: bool = False) -> No
         _refreshing = True
     try:
         print("[board] refreshing…")
-        data = build_board(force_ranks=force_ranks)
+        data = build_board(force_ranks=force_ranks, horizon_days=horizon_days)
         _store_board(data)
         print(
             f"[board] ok · {data.get('summary')} · {data.get('elapsed_sec')}s"
@@ -703,7 +719,7 @@ def refresh_board_async(*, force: bool = False, force_ranks: bool = False) -> No
         _refreshing = False
 
 
-def get_board(*, force: bool = False, force_ranks: bool = False) -> dict[str, Any]:
+def get_board(*, force: bool = False, force_ranks: bool = False, horizon_days: int | None = None) -> dict[str, Any]:
     with _cache_lock:
         cached = _cache.get("data")
         age = time.time() - float(_cache.get("at") or 0)
@@ -725,7 +741,7 @@ def get_board(*, force: bool = False, force_ranks: bool = False) -> dict[str, An
             age = time.time() - float(_cache.get("at") or 0)
             if cached and not force and not force_ranks and age < CACHE_SEC:
                 return {**cached, "cached": True}
-        data = build_board(force_ranks=force_ranks)
+        data = build_board(force_ranks=force_ranks, horizon_days=horizon_days)
         _store_board(data)
         _schedule_auto_push("full")
         return data
@@ -1032,8 +1048,16 @@ class Handler(BaseHTTPRequestHandler):
             refresh = (qs.get("refresh") or [""])[0].lower()
             force = refresh in {"1", "true", "yes"}
             force_ranks = refresh in {"ranks", "full"}
+            days_raw = (qs.get("days") or [""])[0]
+            horizon_days = None
+            if days_raw.isdigit() and int(days_raw) in (2, 3, 5):
+                horizon_days = int(days_raw)
             try:
-                data = get_board(force=force or force_ranks, force_ranks=force_ranks)
+                data = get_board(
+                    force=force or force_ranks,
+                    force_ranks=force_ranks,
+                    horizon_days=horizon_days if force or force_ranks else None,
+                )
                 payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 self._send(200, payload, "application/json; charset=utf-8")
             except Exception as exc:
