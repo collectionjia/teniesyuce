@@ -7,6 +7,7 @@ const tennisCache = require('../services/tennisCache');
 const tennisInplayCache = require('../services/tennisInplayCache');
 const tennisThreeBuckets = require('../services/tennisThreeBuckets');
 const tennisRedis = require('../services/tennisRedis');
+const { sanitizeBundleScores } = require('../services/tennisInplayMatchQuery');
 
 const router = express.Router();
 router.use(express.json({ limit: '15mb' }));
@@ -31,6 +32,19 @@ function requireToken(req, res, next) {
   return next();
 }
 
+/** 写入前先清空 Redis 键与内存缓存，避免旧比分残留 */
+async function writeBoardBundle(cache, bundle, fetchedAt) {
+  try {
+    tennisRedis.invalidateMemCache();
+  } catch {
+    /* ignore */
+  }
+  if (cache.invalidateCache) {
+    await cache.invalidateCache();
+  }
+  return cache.setCachedBundle(bundle, fetchedAt);
+}
+
 router.post('/full', requireToken, async (req, res) => {
   try {
     const bundle = req.body?.bundle || req.body;
@@ -42,7 +56,8 @@ router.post('/full', requireToken, async (req, res) => {
     bundle.fetched_at = bundle.fetched_at || new Date().toISOString();
     bundle.source = bundle.source || 'tennis-live-board';
     bundle.dataSource = bundle.dataSource || 'board-push';
-    const wrote = await tennisCache.setCachedBundle(bundle, bundle.fetched_at);
+    sanitizeBundleScores(bundle);
+    const wrote = await writeBoardBundle(tennisCache, bundle, bundle.fetched_at);
     if (!wrote) {
       return res.status(503).json({ ok: false, error: 'redis write full failed' });
     }
@@ -51,11 +66,6 @@ router.post('/full', requireToken, async (req, res) => {
       split = await tennisThreeBuckets.splitFullToThreeBuckets(bundle);
     } catch (err) {
       console.error('[tennis-board-push] split failed:', err.message);
-    }
-    try {
-      tennisRedis.invalidateMemCache();
-    } catch {
-      /* ignore */
     }
     return res.json({
       ok: true,
@@ -98,15 +108,11 @@ router.post('/live', requireToken, async (req, res) => {
         console.error('[tennis-board-push] merge finished failed:', err.message);
       }
     }
+    sanitizeBundleScores(bundle);
     const n = (bundle.live?.matches || []).length;
-    const wrote = await tennisInplayCache.setCachedBundle(bundle, bundle.fetched_at);
+    const wrote = await writeBoardBundle(tennisInplayCache, bundle, bundle.fetched_at);
     if (!wrote) {
       return res.status(503).json({ ok: false, error: 'redis write inplay failed' });
-    }
-    try {
-      tennisRedis.invalidateMemCache();
-    } catch {
-      /* ignore */
     }
     return res.json({
       ok: true,

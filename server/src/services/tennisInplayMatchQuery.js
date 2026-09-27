@@ -205,6 +205,57 @@ function eventScore(ev) {
   return null;
 }
 
+/** 写入 Redis 前清洗比分：只保留盘分，去掉局分/误导性 current */
+function sanitizeMatchScores(match) {
+  if (!match || typeof match !== 'object') return match;
+  const hs = match.homeScore;
+  const as_ = match.awayScore;
+  if (hs && typeof hs === 'object' && as_ && typeof as_ === 'object') {
+    const hasPeriod = ['period1', 'period2', 'period3', 'period4', 'period5']
+      .some((k) => hs[k] != null && as_[k] != null);
+    if (hasPeriod) {
+      delete match.home_score;
+      delete match.away_score;
+    }
+  }
+  const computed = eventScore(match);
+  if (computed) {
+    match.scoreText = computed;
+    delete match.score_text;
+  } else if (match.scoreText || match.score_text) {
+    const raw = match.scoreText || match.score_text;
+    const parts = String(raw).trim().split(/\s+/).filter(Boolean);
+    const valid = parts.filter((p) => {
+      const m = p.match(/^(\d+)-(\d+)$/);
+      return m && isSetGamePair(Number(m[1]), Number(m[2]));
+    });
+    if (valid.length) {
+      match.scoreText = valid.join(' ');
+      delete match.score_text;
+    } else {
+      delete match.scoreText;
+      delete match.score_text;
+    }
+  }
+  for (const key of ['home_score', 'away_score']) {
+    const v = Number(match[key]);
+    if ([15, 30, 40, 50].includes(v)) delete match[key];
+  }
+  return match;
+}
+
+function sanitizeBundleScores(bundle) {
+  if (!bundle || typeof bundle !== 'object') return bundle;
+  const walk = (m) => sanitizeMatchScores(m);
+  for (const t of bundle.scheduled?.tournaments || []) {
+    for (const e of t.events || []) walk(e);
+  }
+  for (const m of bundle.live?.matches || []) walk(m);
+  for (const m of bundle.finishedMatches || []) walk(m);
+  for (const m of bundle.finished?.matches || []) walk(m);
+  return bundle;
+}
+
 function enrichEvent(event, serverTime = Math.floor(Date.now() / 1000), poly = null) {
   const pastStart = isPastStartTime(event, serverTime);
   let inPlay = resolveInPlay(event);
@@ -212,16 +263,8 @@ function enrichEvent(event, serverTime = Math.floor(Date.now() / 1000), poly = n
   if (!out.scoreText && !out.score_text) {
     const score = eventScore(out) || out.score;
     if (score) out.scoreText = score;
-  } else if (out.scoreText || out.score_text) {
-    const raw = out.scoreText || out.score_text;
-    const parts = String(raw).trim().split(/\s+/).filter(Boolean);
-    const valid = parts.filter((p) => {
-      const m = p.match(/^(\d+)-(\d+)$/);
-      return m && isSetGamePair(Number(m[1]), Number(m[2]));
-    });
-    out.scoreText = valid.length ? valid.join(' ') : '';
-    if (!out.scoreText) delete out.score_text;
   }
+  sanitizeMatchScores(out);
   if (poly) out = applyPmSettle(out, poly);
   if (out.pmSettled) {
     out.inPlay = false;
@@ -268,6 +311,8 @@ module.exports = {
   findEventInBundle,
   iterBundleEvents,
   enrichEvent,
+  sanitizeMatchScores,
+  sanitizeBundleScores,
   applyPmSettle,
   lookupMatchByEventId,
   buildPublicMatchPayload,

@@ -41,8 +41,19 @@ async function setCachedBundle(bundle, fetchedAt) {
   }
 }
 
+async function invalidateCache() {
+  const client = await redis.getClient();
+  if (!client) return;
+  try {
+    await client.del([BUNDLE_KEY, META_KEY]);
+  } catch (err) {
+    console.error('[tennis/inplay-cache] invalidate failed:', err.message);
+  }
+}
+
 module.exports = {
   getBundle,
   setCachedBundle,
+  invalidateCache,
   BUNDLE_KEY,
 };

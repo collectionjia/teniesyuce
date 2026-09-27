@@ -7,6 +7,7 @@ const tennisInplayCache = require('./tennisInplayCache');
 const tennisSettledCache = require('./tennisSettledCache');
 const redis = require('./redis');
 const { withBucketWrite } = require('./tennisBucketWrite');
+const { sanitizeMatchScores } = require('./tennisInplayMatchQuery');
 
 const META_TODAY_KEY = 'tennis:bundle:meta:today';
 const TTL_SEC = Number(process.env.TENNIS_CACHE_TTL_SEC || 86400);
@@ -255,7 +256,9 @@ async function splitFullToThreeBuckets(fullBundle) {
     inplayMatches = inplayMatches.map((m) => {
       const prev = prevById.get(String(m.id));
       if (!prev) return m;
-      const patch = pickScorePatch(prev);
+      const prevSanitized = { ...prev };
+      sanitizeMatchScores(prevSanitized);
+      const patch = pickScorePatch(prevSanitized);
       return patch ? applyScorePatch({ ...m }, patch) : m;
     });
   }
