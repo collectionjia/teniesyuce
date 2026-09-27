@@ -29,6 +29,11 @@ function matchNeedsScore(event) {
 
 const router = Router();
 
+function isBoardPushInplay(bundle) {
+  const ds = String(bundle?.dataSource || bundle?.source || '').toLowerCase();
+  return ds.includes('board-push') || ds.includes('tennis-live-board');
+}
+
 /** 仅保留 collect_live 写入的 live.matches，丢弃 scheduled 等其他来源 */
 function sanitizeCollectLiveBundle(bundle) {
   if (!bundle) return null;
@@ -186,17 +191,34 @@ router.get('/today', async (req, res) => {
       });
     }
     let full = raw ? sanitizeCollectLiveBundle(raw) : emptyInplayBundle();
+    const rawLive = Array.isArray(full.live?.matches) ? full.live.matches : [];
+    let matchList = eligible;
+    if (isBoardPushInplay(full) && rawLive.length) {
+      const byId = new Map();
+      for (const m of rawLive) {
+        if (m?.id == null) continue;
+        const id = String(m.id);
+        const poly = full.polymarketByEvent?.[id] || full.polymarketByEvent?.[m.id] || null;
+        byId.set(id, enrichEvent(m, serverTime, poly));
+      }
+      for (const m of eligible) {
+        if (m?.id == null) continue;
+        byId.set(String(m.id), m);
+      }
+      matchList = [...byId.values()];
+    }
     full.live = {
       ...(full.live || {}),
-      matches: eligible,
-      eventCount: eligible.length,
+      matches: matchList,
+      eventCount: matchList.length,
     };
-    full.events = eligible.length;
+    full.events = matchList.length;
     full.serverTime = serverTime;
-    full.inPlayCount = eligible.filter((e) => e.inPlay).length;
+    full.inPlayCount = matchList.filter((e) => e.inPlay).length;
     full = await bundleWithOptionalCondition(req, 'inplay', full);
     if (Array.isArray(full.live?.matches)) {
       full.live.matches = full.live.matches.map((m) => {
+        if (m?.pastStart != null && m?.inPlay != null) return m;
         const id = String(m.id);
         const poly = full.polymarketByEvent?.[id] || full.polymarketByEvent?.[m.id] || null;
         return enrichEvent(m, serverTime, poly);

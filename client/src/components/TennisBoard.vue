@@ -883,7 +883,11 @@ function matchPassesFilter(m, statusFilter) {
     }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
   }
   if (isInplayMode.value) {
-    if (!isMatchLive(m)) return false
+    if (isMatchEnded(m)) return false
+    const mode = STATUS_TABS.has(statusFilter) ? statusFilter : filter.value
+    if (mode === 'liveish' && !isMatchLive(m)) return false
+    if (mode === 'Not started' && !isMatchNotStarted(m)) return false
+    if (mode === 'all' && !isMatchLive(m) && !isMatchNotStarted(m)) return false
     return applyInplayFilters([m], {
       tour: tour.value,
       pm: pmFilter.value,
@@ -927,7 +931,7 @@ function matchPassesFilter(m, statusFilter) {
 
 function allMatches(bundle) {
   if (!bundle) return []
-  if (isInplayMode.value || isSettledMode.value) {
+  if (isSettledMode.value) {
     return (bundle.live?.matches || []).map((e) => ({ ...e }))
   }
   const tournaments = bundle.scheduled?.tournaments || []
@@ -2000,10 +2004,10 @@ const stats = computed(() => {
     total: pool.length,
     all: countTab('all'),
     shown: matches.value.length,
-    open: isMixMode.value
+    open: (isMixMode.value || isInplayMode.value)
       ? pool.filter((m) => !isMatchEnded(m) && isMatchNotStarted(m)).length
       : countTab('Not started'),
-    live: isMixMode.value
+    live: (isMixMode.value || isInplayMode.value)
       ? pool.filter((m) => !isMatchEnded(m) && isMatchLive(m)).length
       : countTab('liveish'),
     ended: countTab('ended'),
@@ -2776,6 +2780,57 @@ async function loadMixBundle() {
   )
 }
 
+function mergeInplayBundles(pre, live) {
+  const base = live || pre || {}
+  const tournaments = (pre?.scheduled?.tournaments || []).map((t) => ({
+    ...t,
+    events: tagBoardPhase(t.events, 'prematch'),
+  }))
+  const seen = new Set()
+  const liveMatches = []
+  for (const m of live?.live?.matches || []) {
+    if (m?.id == null) continue
+    const id = String(m.id)
+    if (seen.has(id)) continue
+    seen.add(id)
+    liveMatches.push({ ...m, boardPhase: 'inplay' })
+  }
+  const schedCount = tournaments.reduce((n, t) => n + (t.events?.length || 0), 0)
+  return {
+    ...base,
+    scheduled: {
+      ...(pre?.scheduled || {}),
+      tournaments,
+      tournamentCount: tournaments.length,
+      eventCount: schedCount,
+    },
+    live: {
+      ...(live?.live || {}),
+      matches: liveMatches,
+      eventCount: liveMatches.length,
+    },
+    rankingsByPlayer: { ...(pre?.rankingsByPlayer || {}), ...(live?.rankingsByPlayer || {}) },
+    polymarketByEvent: { ...(pre?.polymarketByEvent || {}), ...(live?.polymarketByEvent || {}) },
+    oddsByEvent: { ...(pre?.oddsByEvent || {}), ...(live?.oddsByEvent || {}) },
+    serverTime: live?.serverTime ?? pre?.serverTime ?? null,
+    condition_applied: !!(pre?.condition_applied || live?.condition_applied),
+    bettingEntry: live?.bettingEntry ?? base.bettingEntry,
+  }
+}
+
+async function loadInplayBundle() {
+  if (!props.isMember) return fetchTodayBundle('/api/tennis-inplay')
+  const [preR, liveR] = await Promise.allSettled([
+    fetchTodayBundle('/api/tennis-prematch'),
+    fetchTodayBundle('/api/tennis-inplay'),
+  ])
+  if (preR.status === 'rejected' && liveR.status === 'rejected') throw preR.reason
+  return mergeInplayBundles(
+    preR.status === 'fulfilled' ? preR.value : null,
+    liveR.status === 'fulfilled' ? liveR.value : null,
+  )
+}
+
 async function loadOnce({
   quiet = false,
   skipAutoBatch = false,
@@ -2790,7 +2845,9 @@ async function loadOnce({
   try {
     const bundle = isMixMode.value
       ? await loadMixBundle()
-      : await fetchTodayBundle(apiPath.value)
+      : isInplayMode.value
+        ? await loadInplayBundle()
+        : await fetchTodayBundle(apiPath.value)
     data.value = bundle
     if (isSettledMode.value && Array.isArray(bundle?.availableDates)) {
       availableSettledDates.value = bundle.availableDates

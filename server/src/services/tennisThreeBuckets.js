@@ -122,6 +122,19 @@ function passesTop100(m, rankingsByPlayer) {
   return r != null && r <= 100;
 }
 
+function isBoardPushBundle(bundle) {
+  const ds = String(bundle?.dataSource || bundle?.source || '').toLowerCase();
+  return ds.includes('board-push') || ds.includes('tennis-live-board');
+}
+
+function isSkipTop100Bundle(bundle) {
+  return bundle?.upstream === 'docks500'
+    || bundle?.dataSource === 'docks500'
+    || bundle?.source === 'docks500'
+    || !!bundle?.virtualSim
+    || isBoardPushBundle(bundle);
+}
+
 function flattenMatches(bundle) {
   if (!bundle) return [];
   const tournaments = bundle.scheduled?.tournaments || [];
@@ -232,31 +245,33 @@ async function splitFullToThreeBuckets(fullBundle) {
   if (!bundle) return { ok: false, error: 'no full bundle' };
   const all = flattenMatches(bundle);
   const rankings = bundle.rankingsByPlayer || {};
-  // 虚拟 txt 回放已按相位造好盘前/盘中/盘后，不再用 Top100 滤光
-  const skipTop = bundle?.upstream === 'docks500'
-    || bundle?.dataSource === 'docks500'
-    || bundle?.source === 'docks500'
-    || !!bundle?.virtualSim;
+  // 虚拟 txt / board-push：不按 Top100 裁剪，与 8899 推送一致
+  const skipTop = isSkipTop100Bundle(bundle);
   const top = skipTop ? all : all.filter((m) => passesTop100(m, rankings));
 
   const prematchMatches = top.filter((m) => phaseMarkOf(m) === 'not_started');
   let inplayMatches = top.filter((m) => phaseMarkOf(m) === 'live');
   const settledMatches = top.filter((m) => phaseMarkOf(m) === 'ended');
 
-  // full 推送拆桶时保留 inplay 桶已有比分，避免覆盖 collect_live 实时推送
+  // full 推送拆桶时合并 live 推送已写入的 inplay，避免 Top100/拆桶冲掉场次
   const existingInplay = await tennisInplayCache.getBundle();
   if (existingInplay?.live?.matches?.length) {
-    const prevById = new Map(
-      existingInplay.live.matches.filter((m) => m?.id != null).map((m) => [String(m.id), m]),
+    const byId = new Map(
+      inplayMatches.filter((m) => m?.id != null).map((m) => [String(m.id), m]),
     );
-    inplayMatches = inplayMatches.map((m) => {
-      const prev = prevById.get(String(m.id));
-      if (!prev) return m;
+    for (const prev of existingInplay.live.matches) {
+      if (prev?.id == null) continue;
+      const id = String(prev.id);
       const prevSanitized = { ...prev };
       sanitizeMatchScores(prevSanitized);
+      if (!byId.has(id)) {
+        if (isBoardPushBundle(bundle) || isLive(prevSanitized)) byId.set(id, prevSanitized);
+        continue;
+      }
       const patch = pickScorePatch(prevSanitized);
-      return patch ? applyScorePatch({ ...m }, patch) : m;
-    });
+      if (patch) applyScorePatch(byId.get(id), patch);
+    }
+    inplayMatches = [...byId.values()];
   }
 
   const prematch = {
@@ -270,7 +285,10 @@ async function splitFullToThreeBuckets(fullBundle) {
     ...baseShell(bundle, { source: 'tennis-inplay', matches: inplayMatches, liveOnly: true }),
     message: `inplay · ${inplayMatches.length}`,
   };
-  if (skipTop) {
+  if (skipTop && isBoardPushBundle(bundle)) {
+    inplay.dataSource = bundle.dataSource || 'board-push';
+    inplay.source = bundle.source || 'tennis-live-board';
+  } else if (skipTop) {
     inplay.upstream = 'docks500';
     inplay.dataSource = 'docks500';
     inplay.virtualSim = bundle.virtualSim || true;
@@ -332,8 +350,9 @@ async function admitLiveFromFull() {
     return { admitted: 0, skipped: true, reason: 'full is virtual' };
   }
   const rankings = full.rankingsByPlayer || {};
+  const skipTop = isSkipTop100Bundle(full);
   const candidates = flattenMatches(full).filter(
-    (m) => isLive(m) && passesTop100(m, rankings)
+    (m) => isLive(m) && (skipTop || passesTop100(m, rankings)),
   );
   if (!candidates.length) return { admitted: 0 };
 
