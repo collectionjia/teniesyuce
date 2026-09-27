@@ -72,6 +72,24 @@ defineProps({
             <b>{{ stats.live }}</b><span>进行</span>
           </div>
         </template>
+        <template v-else-if="isInplayMode">
+          <button
+            type="button"
+            class="stat stat-btn"
+            :class="{ active: filter === 'Not started' }"
+            @click="setStatusFilter('Not started')"
+          >
+            <b>{{ stats.open }}</b><span>未开</span>
+          </button>
+          <button
+            type="button"
+            class="stat stat-btn"
+            :class="{ active: filter === 'liveish' }"
+            @click="setStatusFilter('liveish')"
+          >
+            <b>{{ stats.live }}</b><span>进行</span>
+          </button>
+        </template>
         <button
           v-else-if="!isInplayMode"
           type="button"

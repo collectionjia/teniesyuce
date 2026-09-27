@@ -176,6 +176,9 @@ const {
   selectError,
   selectNotice,
   libraryGroups,
+  prematchLibraryGroups,
+  prematchBucketOn,
+  loadPrematchConditionLibrary,
   productSelectCond,
   conditionBucketLabel,
   canEditConditionRules,
@@ -863,6 +866,7 @@ function matchPassesFilter(m, statusFilter) {
     if (mode === 'Not started' && !isMatchNotStarted(m)) return false
     if (mode === 'liveish' && !isMatchLive(m)) return false
     if (mode === 'ended') return false
+    if (!passesBoardListCondition(m)) return false
     return applyPrematchFilters([m], {
       tour: tour.value,
       pm: pmFilter.value,
@@ -874,6 +878,7 @@ function matchPassesFilter(m, statusFilter) {
   // 盘前/盘中/盘后：排名类条件由产品挂载的条件组在服务端筛；列表仅保留巡回/PM（盘后另保留盈亏）
   if (isPrematchMode.value) {
     if (isMatchEnded(m)) return false
+    if (!passesBoardListCondition(m)) return false
     return applyPrematchFilters([m], {
       tour: tour.value,
       pm: pmFilter.value,
@@ -888,6 +893,16 @@ function matchPassesFilter(m, statusFilter) {
     if (mode === 'liveish' && !isMatchLive(m)) return false
     if (mode === 'Not started' && !isMatchNotStarted(m)) return false
     if (mode === 'all' && !isMatchLive(m) && !isMatchNotStarted(m)) return false
+    if (!passesBoardListCondition(m)) return false
+    if (isMatchNotStarted(m)) {
+      return applyPrematchFilters([m], {
+        tour: tour.value,
+        pm: pmFilter.value,
+        gapMin: 'all',
+        rankDiffMax: 'all',
+        strongRankMax: 'all',
+      }, { rankingsByPlayer: rankings, polymarketByEvent: poly }).length > 0
+    }
     return applyInplayFilters([m], {
       tour: tour.value,
       pm: pmFilter.value,
@@ -1303,43 +1318,107 @@ function resolveBatchStakeUsd() {
   return 1
 }
 
-function resolveAutoBetConditionGroups() {
-  const fromBundle = data.value?.admin_condition_rules?.groups
-  if (Array.isArray(fromBundle) && fromBundle.length) return fromBundle
-  // 盘前：勾选「关联未开赛」的组直接生效
-  if (isPrematchMode.value) {
-    const pool = libraryGroups.value?.length ? libraryGroups.value : (conditionGroups.value || [])
-    const linked = pool.filter((g) => g?.linkPrematch === true)
-    return linked.map((g, i) => ({
-      ...g,
-      joinPrev: i === 0 ? 'or' : (String(g?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'),
-    }))
-  }
-  if (props.productId != null && productSelectCond.value?.length && libraryGroups.value?.length) {
-    const byId = new Map(libraryGroups.value.filter((g) => g?.id).map((g) => [String(g.id), g]))
-    const out = []
-    productSelectCond.value.forEach((row, i) => {
-      const def = byId.get(String(row?.id))
-      if (!def) return
-      const join = String(row?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'
-      out.push({ ...def, joinPrev: i === 0 ? 'or' : join })
-    })
-    if (out.length) return out
-  }
-  if (conditionBucketOn.value && conditionGroups.value?.length) {
-    return conditionGroups.value
-  }
-  return []
+function mapLinkedConditionGroups(groups) {
+  const linked = (groups || []).filter((g) => g?.linkPrematch === true)
+  return linked.map((g, i) => ({
+    ...g,
+    joinPrev: i === 0 ? 'or' : (String(g?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'),
+  }))
 }
 
-function passesListConditionGroups(m) {
-  const groups = resolveAutoBetConditionGroups()
-  if (!groups.length) return true
-  const ctx = {
+function resolvePrematchLinkedGroups() {
+  const fromRules = data.value?.prematchAdminRules?.groups
+  if (Array.isArray(fromRules) && fromRules.length) {
+    const linked = mapLinkedConditionGroups(fromRules)
+    if (linked.length) return linked
+  }
+  const pool = prematchLibraryGroups.value?.length
+    ? prematchLibraryGroups.value
+    : (libraryGroups.value?.length ? libraryGroups.value : (conditionGroups.value || []))
+  return mapLinkedConditionGroups(pool)
+}
+
+function conditionCtx() {
+  return {
     rankingsByPlayer: data.value?.rankingsByPlayer || {},
     polymarketByEvent: data.value?.polymarketByEvent || {},
   }
-  return filterMatchesByConditionGroups([m], groups, ctx).length > 0
+}
+
+function resolveProductConditionGroups() {
+  if (props.productId == null || !productSelectCond.value?.length || !libraryGroups.value?.length) {
+    return []
+  }
+  const byId = new Map(libraryGroups.value.filter((g) => g?.id).map((g) => [String(g.id), g]))
+  const out = []
+  productSelectCond.value.forEach((row, i) => {
+    const def = byId.get(String(row?.id))
+    if (!def) return
+    const join = String(row?.joinPrev || 'or').toLowerCase() === 'and' ? 'and' : 'or'
+    out.push({ ...def, joinPrev: i === 0 ? 'or' : join })
+  })
+  return out
+}
+
+/** 当前列表生效的条件组（未开赛与进行中共用） */
+function resolveListConditionGroups() {
+  const fromProduct = resolveProductConditionGroups()
+  if (fromProduct.length) return fromProduct
+
+  if (isInplayMode.value || isMixMode.value) {
+    const fromLive = data.value?.liveAdminRules?.groups
+    if (Array.isArray(fromLive) && fromLive.length) return fromLive
+    if (conditionBucketOn.value && conditionGroups.value?.length) {
+      return conditionGroups.value
+    }
+  }
+
+  if (isPrematchMode.value || isMixMode.value || isInplayMode.value) {
+    const linked = resolvePrematchLinkedGroups()
+    if (linked.length) return linked
+  }
+
+  if (conditionBucketOn.value && conditionGroups.value?.length) {
+    return conditionGroups.value
+  }
+
+  const fromBundle = data.value?.admin_condition_rules?.groups
+  if (Array.isArray(fromBundle) && fromBundle.length) return fromBundle
+
+  return []
+}
+
+function isListConditionEnabled() {
+  if (props.productId != null && productSelectCond.value?.length) return true
+  if (isPrematchMode.value) return prematchBucketOn.value
+  if (isInplayMode.value) return conditionBucketOn.value || prematchBucketOn.value
+  if (isMixMode.value) return conditionBucketOn.value || prematchBucketOn.value
+  return conditionBucketOn.value
+}
+
+function isServerConditionFiltered(m) {
+  if (isPrematchMode.value && data.value?.condition_applied) return true
+  if (!isInplayMode.value && !isMixMode.value) return false
+  if (isMatchNotStarted(m) && data.value?.prematchConditionApplied) return true
+  if (isMatchLive(m) && data.value?.liveConditionApplied) return true
+  return false
+}
+
+/** 条件组对整表生效，不区分未开赛/进行中 */
+function passesBoardListCondition(m) {
+  if (isServerConditionFiltered(m)) return true
+  const groups = resolveListConditionGroups()
+  if (!groups.length) return true
+  if (!isListConditionEnabled()) return true
+  return filterMatchesByConditionGroups([m], groups, conditionCtx()).length > 0
+}
+
+function resolveAutoBetConditionGroups() {
+  return resolveListConditionGroups()
+}
+
+function passesListConditionGroups(m) {
+  return passesBoardListCondition(m)
 }
 
 /** 自动投注：仅当前列表内、满足条件组、未买过/未卖过的场次 */
@@ -2080,8 +2159,7 @@ const emptyListHint = computed(() => {
     ? data.value.admin_condition_rules.groups.map((g, i) => String(g?.name || '').trim() || `条件组 ${i + 1}`)
     : []
   // 回退：本地条件组名（服务端未带回时）
-  const localNames = (conditionGroups.value || [])
-    .filter((g) => !isPrematchMode.value || g?.linkPrematch === true)
+  const localNames = resolveListConditionGroups()
     .map((g, i) => String(g?.name || '').trim() || `条件组 ${i + 1}`)
   const groupNames = names.length ? names : (fromRules.length ? fromRules : localNames)
   const collected = Number.isFinite(poolN) && poolN >= 0
@@ -2764,6 +2842,11 @@ function mergeMixBundles(pre, live) {
     polymarketByEvent: { ...(pre?.polymarketByEvent || {}), ...(live?.polymarketByEvent || {}) },
     serverTime: live?.serverTime ?? pre?.serverTime ?? null,
     condition_applied: !!(pre?.condition_applied || live?.condition_applied),
+    prematchConditionApplied: pre?.condition_applied === true,
+    prematchAdminRules: pre?.admin_condition_rules || null,
+    liveConditionApplied: live?.condition_applied === true,
+    liveAdminRules: live?.admin_condition_rules || null,
+    admin_condition_rules: live?.admin_condition_rules || pre?.admin_condition_rules || null,
   }
 }
 
@@ -2814,6 +2897,11 @@ function mergeInplayBundles(pre, live) {
     oddsByEvent: { ...(pre?.oddsByEvent || {}), ...(live?.oddsByEvent || {}) },
     serverTime: live?.serverTime ?? pre?.serverTime ?? null,
     condition_applied: !!(pre?.condition_applied || live?.condition_applied),
+    prematchConditionApplied: pre?.condition_applied === true,
+    prematchAdminRules: pre?.admin_condition_rules || null,
+    liveConditionApplied: live?.condition_applied === true,
+    liveAdminRules: live?.admin_condition_rules || null,
+    admin_condition_rules: live?.admin_condition_rules || pre?.admin_condition_rules || null,
     bettingEntry: live?.bettingEntry ?? base.bettingEntry,
   }
 }
@@ -2931,6 +3019,7 @@ onMounted(() => {
     loadListPollIntervals(),
     loadBettingRules(),
     Promise.resolve().then(() => { loadConditionRules() }),
+    ...(isInplayMode.value || isMixMode.value ? [loadPrematchConditionLibrary()] : []),
   ]).catch(() => { /* 配置失败不挡列表 */ })
 
   void dataPromise.then(() => {

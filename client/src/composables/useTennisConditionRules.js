@@ -53,6 +53,8 @@ export function useTennisConditionRules({
   const selectError = ref('')
   const selectNotice = ref('')
   const libraryGroups = ref([])
+  const prematchLibraryGroups = ref([])
+  const prematchBucketOn = ref(false)
   const productSnapshot = ref(null)
   const productSelectCond = ref([])
   const productSelectBet = ref([])
@@ -69,9 +71,12 @@ export function useTennisConditionRules({
     () => props.canEditRules && props.productId != null && props.productId !== '' && isConditionBoard.value,
   )
   const linkedLibraryGroups = computed(() => {
-    // mix 与盘前一样：只把勾了「关联未开赛」的组用于列表筛选
-    if (!isPrematchMode.value && !isMixMode?.value) return libraryGroups.value
-    return libraryGroups.value.filter((g) => g?.linkPrematch === true)
+    // 盘前 / mix：产品选用时只展示勾了「关联未开赛」的组
+    const pool = (isMixMode?.value && !isInplayMode.value)
+      ? prematchLibraryGroups.value
+      : libraryGroups.value
+    if (!isPrematchMode.value && !isMixMode?.value) return pool
+    return pool.filter((g) => g?.linkPrematch === true)
   })
   const needsConditionGroupSelect = computed(() => linkedLibraryGroups.value.length > 0)
 
@@ -253,6 +258,19 @@ export function useTennisConditionRules({
     return true
   }
 
+  async function loadPrematchConditionLibrary() {
+    if (!isInplayMode.value && !isMixMode?.value) return
+    try {
+      const cfg = await api.fetchTennisEngines()
+      const bucket = cfg?.condition?.buckets?.prematch || {}
+      prematchBucketOn.value = !!bucket.enabled
+      prematchLibraryGroups.value = Array.isArray(bucket.groups) ? bucket.groups : []
+    } catch {
+      prematchBucketOn.value = false
+      prematchLibraryGroups.value = []
+    }
+  }
+
   async function loadConditionRules({ background = false } = {}) {
     if (!canEditConditionRules.value) return
     if (!background || !conditionGroups.value.length) rulesLoading.value = true
@@ -266,6 +284,8 @@ export function useTennisConditionRules({
       conditionGroups.value = groups.length
         ? groups.map((g) => ({ ...emptyConditionGroup(), ...g, strongRankMax: 'all' }))
         : [emptyConditionGroup()]
+      libraryGroups.value = groups
+      await loadPrematchConditionLibrary()
     } catch (e) {
       rulesError.value = e?.response?.data?.error || e?.message || `加载${conditionBucketLabel.value}规则失败`
     } finally {
@@ -345,6 +365,7 @@ export function useTennisConditionRules({
       void (async () => {
         await Promise.all([
           loadConditionRules({ background: hadCache }),
+          loadPrematchConditionLibrary(),
           loadProductSelect(),
         ])
       })()
@@ -366,6 +387,9 @@ export function useTennisConditionRules({
     selectError,
     selectNotice,
     libraryGroups,
+    prematchLibraryGroups,
+    prematchBucketOn,
+    loadPrematchConditionLibrary,
     linkedLibraryGroups,
     productSnapshot,
     productSelectCond,
