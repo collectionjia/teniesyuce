@@ -2181,19 +2181,30 @@ let detailOddsTimer = null
 const detailLiveRefreshing = ref(false)
 const detailRefreshAt = ref({ score: '', odds: '' })
 
-function applyPolyOddsToData(eventId, poly, oddsAt) {
-  if (!poly || eventId == null) return
-  if (!data.value) return
+function applyDetailBundleMeta(eventId, r, poly, scoreChanged = false) {
+  if (!data.value || eventId == null) return
   const key = String(eventId)
-  const prev = data.value.polymarketByEvent || {}
-  data.value = {
-    ...data.value,
-    odds_updated_at: oddsAt || data.value.odds_updated_at || new Date().toISOString(),
-    polymarketByEvent: {
+  const scoreAt = r?.score_updated_at
+    || (scoreChanged ? r?.tick_at : '')
+    || data.value.score_updated_at
+  const oddsAt = r?.odds_updated_at
+    || poly?.pricesUpdatedAt
+    || data.value.odds_updated_at
+  const next = { ...data.value }
+  if (scoreAt) next.score_updated_at = scoreAt
+  if (oddsAt) next.odds_updated_at = oddsAt
+  if (poly) {
+    const prev = next.polymarketByEvent || {}
+    next.polymarketByEvent = {
       ...prev,
       [key]: poly,
       [eventId]: poly,
-    },
+    }
+  }
+  data.value = next
+  detailRefreshAt.value = {
+    score: scoreAt || detailRefreshAt.value.score,
+    odds: oddsAt || detailRefreshAt.value.odds,
   }
 }
 
@@ -2212,15 +2223,9 @@ async function refreshDetailLiveOnce() {
   try {
     const r = await api.fetchTennisInplayMatch(m.id, { refreshPoly: true })
     if (!r?.found || String(detailMatch.value?.id) !== String(m.id)) return
-    mergeScoreFields(detailMatch.value, r.event)
+    const scoreChanged = mergeScoreFields(detailMatch.value, r.event)
     const poly = r.polymarket || r.polymarketByEvent?.[String(m.id)] || r.polymarketByEvent?.[m.id]
-    if (poly) {
-      applyPolyOddsToData(m.id, poly, r.odds_updated_at || poly.pricesUpdatedAt || r.fetched_at)
-    }
-    detailRefreshAt.value = {
-      score: r.score_updated_at || r.event?.score_updated_at || detailRefreshAt.value.score,
-      odds: r.odds_updated_at || poly?.pricesUpdatedAt || detailRefreshAt.value.odds,
-    }
+    applyDetailBundleMeta(m.id, r, poly, scoreChanged)
   } catch {
     /* 详情异步刷新失败不打断页面 */
   } finally {
@@ -2488,14 +2493,20 @@ const SCORE_DETAIL_KEYS = [
 ]
 
 function mergeScoreFields(target, source) {
-  if (!target || !source) return target
+  if (!target || !source) return false
+  let changed = false
   for (const key of SCORE_DETAIL_KEYS) {
     const val = source[key]
     if (val != null && val !== '' && !(typeof val === 'object' && !Object.keys(val).length)) {
+      const prev = target[key]
+      const same = typeof val === 'object'
+        ? JSON.stringify(prev) === JSON.stringify(val)
+        : prev === val
+      if (!same) changed = true
       target[key] = val
     }
   }
-  return target
+  return changed
 }
 
 function openDetail(m) {

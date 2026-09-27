@@ -144,6 +144,7 @@ router.get('/match/:eventId', async (req, res) => {
       row.inPlay = tagged.inPlay;
       row.pastStart = tagged.pastStart;
     }
+    let oddsRefreshedAt = null;
     if (wantPolyRefresh(req) && (row.inPlay || row.pastStart)) {
       const eid = String(eventId);
       const poly = row.bundle?.polymarketByEvent?.[eid]
@@ -151,16 +152,17 @@ router.get('/match/:eventId', async (req, res) => {
         || null;
       if (poly?.slug || poly?.url) {
         try {
-          await tennisPolymarket.refreshInplayOddsByEventId(eventId, { clobOnly: true });
+          const pr = await tennisPolymarket.refreshInplayOddsByEventId(eventId, { clobOnly: true });
+          if (pr?.odds_updated_at) oddsRefreshedAt = pr.odds_updated_at;
         } catch (err) {
           console.warn('[tennis-inplay/match] poly clob refresh', eventId, err.message || err);
         }
-        const refreshed = await lookupMatchByEventId(eventId);
-        if (refreshed) row = refreshed;
       }
     }
+    const latest = await lookupMatchByEventId(eventId);
+    if (latest) row = latest;
     res.json({
-      ...buildPublicMatchPayload(row),
+      ...buildPublicMatchPayload(row, { odds_updated_at: oddsRefreshedAt }),
       member: true,
       tradeSimulate: await tennisDataSource.shouldSimulateTrades(),
     });

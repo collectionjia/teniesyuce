@@ -96,7 +96,17 @@ async function lookupMatchByEventId(eventId) {
   return null;
 }
 
-function buildPublicMatchPayload(row) {
+function eventHasScore(event) {
+  if (!event || typeof event !== 'object') return false;
+  if (event.scoreText || event.score_text) return true;
+  const hs = event.homeScore;
+  const as = event.awayScore;
+  if (hs && typeof hs === 'object' && Object.keys(hs).length) return true;
+  if (as && typeof as === 'object' && Object.keys(as).length) return true;
+  return false;
+}
+
+function buildPublicMatchPayload(row, opts = {}) {
   const { bundle, event, bucket, pastStart, inPlay, serverTime } = row;
   const eid = String(event.id);
   const playerIds = playerIdsFromEvent(event);
@@ -130,8 +140,10 @@ function buildPublicMatchPayload(row) {
     odds: bundle.oddsByEvent?.[eid] || null,
     polymarket: bundle.polymarketByEvent?.[eid] || null,
     tick_at: bundle.tick_at || null,
-    odds_updated_at: bundle.odds_updated_at || null,
-    score_updated_at: bundle.score_updated_at || null,
+    odds_updated_at: opts.odds_updated_at || bundle.odds_updated_at || null,
+    score_updated_at: bundle.score_updated_at
+      || (eventHasScore(event) ? bundle.tick_at : null)
+      || null,
   };
 }
 
