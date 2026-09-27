@@ -15,6 +15,17 @@ const {
   listInplayEligibleEvents,
   enrichEvent,
 } = require('../services/tennisInplayMatchQuery');
+const tennisSofascore = require('../services/tennisSofascore');
+
+function matchNeedsScore(event) {
+  if (!event || typeof event !== 'object') return false;
+  if (event.scoreText || event.score_text) return false;
+  const hs = event.homeScore;
+  const as = event.awayScore;
+  if (hs && typeof hs === 'object' && Object.keys(hs).length) return false;
+  if (as && typeof as === 'object' && Object.keys(as).length) return false;
+  return true;
+}
 
 const router = Router();
 
@@ -131,6 +142,15 @@ router.get('/match/:eventId', async (req, res) => {
       row.event = tagged;
       row.inPlay = tagged.inPlay;
       row.pastStart = tagged.pastStart;
+    }
+    if (matchNeedsScore(row.event) && (row.inPlay || row.pastStart)) {
+      try {
+        await tennisSofascore.refreshInplayScoresByEventId(eventId);
+        const refreshed = await lookupMatchByEventId(eventId);
+        if (refreshed) row = refreshed;
+      } catch (err) {
+        console.warn('[tennis-inplay/match] score refresh', eventId, err.message || err);
+      }
     }
     res.json({
       ...buildPublicMatchPayload(row),

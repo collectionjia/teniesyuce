@@ -2139,6 +2139,7 @@ async function refreshDetailPolyOddsOnce() {
   try {
     const r = await api.fetchTennisInplayMatch(m.id)
     if (!r?.found || String(detailMatch.value?.id) !== String(m.id)) return
+    mergeScoreFields(detailMatch.value, r.event)
     const poly = r.polymarket || r.polymarketByEvent?.[String(m.id)] || r.polymarketByEvent?.[m.id]
     if (poly) {
       applyPolyOddsToData(m.id, poly, r.odds_updated_at || r.fetched_at)
@@ -2395,6 +2396,33 @@ function polyUrlOf(m) {
   const url = String(polyOf(m?.id)?.url || '')
   return /polymarket\.com\/event\//i.test(url) ? url : ''
 }
+const SCORE_DETAIL_KEYS = [
+  'scoreText', 'score_text', 'score', 'homeScore', 'awayScore', 'home_score', 'away_score',
+  'status', 'statusType', 'inPlay', 'pastStart',
+]
+
+function mergeScoreFields(target, source) {
+  if (!target || !source) return target
+  for (const key of SCORE_DETAIL_KEYS) {
+    const val = source[key]
+    if (val != null && val !== '' && !(typeof val === 'object' && !Object.keys(val).length)) {
+      target[key] = val
+    }
+  }
+  return target
+}
+
+async function refreshDetailMatchScores(m) {
+  if (!m?.id) return
+  try {
+    const r = await api.fetchTennisInplayMatch(m.id)
+    if (!r?.found || !r.event || String(detailMatch.value?.id) !== String(m.id)) return
+    mergeScoreFields(detailMatch.value, r.event)
+  } catch {
+    /* 详情比分异步失败不打断页面 */
+  }
+}
+
 function openDetail(m) {
   if (!props.isMember) {
     emit('need-subscribe')
@@ -2402,6 +2430,9 @@ function openDetail(m) {
   }
   detailHelpOpen.value = false
   detailMatch.value = m
+  if (isInplayMode.value || isMixMode.value || isSettledMode.value) {
+    void refreshDetailMatchScores(m)
+  }
 }
 function closeDetail() {
   detailMatch.value = null

@@ -243,8 +243,22 @@ async function splitFullToThreeBuckets(fullBundle) {
   const top = skipTop ? all : all.filter((m) => passesTop100(m, rankings));
 
   const prematchMatches = top.filter((m) => phaseMarkOf(m) === 'not_started');
-  const inplayMatches = top.filter((m) => phaseMarkOf(m) === 'live');
+  let inplayMatches = top.filter((m) => phaseMarkOf(m) === 'live');
   const settledMatches = top.filter((m) => phaseMarkOf(m) === 'ended');
+
+  // full 推送拆桶时保留 inplay 桶已有比分，避免覆盖 collect_live 实时推送
+  const existingInplay = await tennisInplayCache.getBundle();
+  if (existingInplay?.live?.matches?.length) {
+    const prevById = new Map(
+      existingInplay.live.matches.filter((m) => m?.id != null).map((m) => [String(m.id), m]),
+    );
+    inplayMatches = inplayMatches.map((m) => {
+      const prev = prevById.get(String(m.id));
+      if (!prev) return m;
+      const patch = pickScorePatch(prev);
+      return patch ? applyScorePatch({ ...m }, patch) : m;
+    });
+  }
 
   const prematch = {
     ...baseShell(bundle, { source: 'tennis-prematch', matches: prematchMatches }),

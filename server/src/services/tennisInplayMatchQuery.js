@@ -185,10 +185,27 @@ function applyPmSettle(event, poly) {
   };
 }
 
+function eventScore(ev) {
+  const hs = ev?.homeScore || {};
+  const as_ = ev?.awayScore || {};
+  if (typeof hs !== 'object' || typeof as_ !== 'object') return null;
+  const parts = [];
+  for (const key of ['period1', 'period2', 'period3', 'period4', 'period5']) {
+    if (hs[key] != null && as_[key] != null) parts.push(`${hs[key]}-${as_[key]}`);
+  }
+  if (parts.length) return parts.join(' ');
+  if (hs.current != null && as_.current != null) return `${hs.current}-${as_.current}`;
+  return null;
+}
+
 function enrichEvent(event, serverTime = Math.floor(Date.now() / 1000), poly = null) {
   const pastStart = isPastStartTime(event, serverTime);
   let inPlay = resolveInPlay(event);
   let out = { ...event, pastStart, inPlay };
+  if (!out.scoreText && !out.score_text) {
+    const score = eventScore(out) || out.score;
+    if (score) out.scoreText = score;
+  }
   if (poly) out = applyPmSettle(out, poly);
   if (out.pmSettled) {
     out.inPlay = false;
