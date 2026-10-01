@@ -2,6 +2,7 @@
  * Polymarket Dota2 盘口采集：Gamma → dota2elo 匹配/预测 → 阈值过滤 → Redis
  */
 const redis = require('./redis');
+const { pickMoneylineMarket } = require('./tennisPolymarket');
 
 const BUNDLE_KEY = 'dota2:bundle:pm';
 const GAMMA = 'https://gamma-api.polymarket.com';
@@ -97,14 +98,6 @@ function parseTokenIds(mkt) {
   return tokens.map(String).filter(Boolean);
 }
 
-function pickMoneylineMarket(markets) {
-  for (const mkt of markets || []) {
-    const outs = parseOutcomes(mkt.outcomes);
-    if (outs.length >= 2 && !/^(yes|no)$/i.test(outs[0])) return mkt;
-  }
-  return (markets || [])[0] || null;
-}
-
 function extractEventSides(ev) {
   const title = String(ev?.title || '');
   const chunks = [];
@@ -133,7 +126,7 @@ function parseTimeMs(raw) {
 }
 
 function slimGammaEvent(ev) {
-  const mk = pickMoneylineMarket(ev.markets || []);
+  const mk = pickMoneylineMarket(ev.markets || [], ev?.title || '');
   const prices = parsePrices(mk);
   const tokens = parseTokenIds(mk);
   const outcomes = parseOutcomes(mk?.outcomes);

@@ -28,8 +28,43 @@ function parseJsonField(v, fallback) {
   return v;
 }
 
-function pickMoneylineMarket(markets) {
+function isPolySubMarketQuestion(q) {
+  const text = String(q || '').toLowerCase();
+  if (/\bgame\s*\d+\b/.test(text)) return true;
+  if (/\b(o\/u|over\/under|handicap|spread|total|ends in|roshan|barracks|rampage|ultra kill|player props|more markets)\b/.test(text)) {
+    return true;
+  }
+  return false;
+}
+
+function scorePolyMoneylineMarket(mkt, eventTitle = '') {
+  const outs = parseJsonField(mkt?.outcomes, []).map(String);
+  if (outs.length < 2 || /^(yes|no|over|under)$/i.test(outs[0])) return -1;
+  const q = String(mkt?.question || mkt?.title || '');
+  if (isPolySubMarketQuestion(q)) return -1;
+  let score = 10;
+  if (/\(bo\d\)/i.test(q) || /\bbo[235]\b/i.test(q)) score += 40;
+  if (/\bvs\.?\b/i.test(q)) score += 20;
+  const et = String(eventTitle || '').toLowerCase();
+  const ql = q.toLowerCase();
+  if (et && (ql.includes(et.slice(0, 24)) || et.includes(ql.slice(0, 24)))) score += 25;
+  if (/\(bo\d\)/i.test(et) && /\(bo\d\)/i.test(q)) score += 15;
+  return score;
+}
+
+/** 优先系列赛主盘（BO2/BO3），避免 Dota 等电竞误选 Game 1 Winner。 */
+function pickMoneylineMarket(markets, eventTitle = '') {
   const list = markets || [];
+  let best = null;
+  let bestScore = -1;
+  for (const mkt of list) {
+    const score = scorePolyMoneylineMarket(mkt, eventTitle);
+    if (score > bestScore) {
+      bestScore = score;
+      best = mkt;
+    }
+  }
+  if (best) return best;
   for (const candidate of list) {
     const outs = parseJsonField(candidate.outcomes, []).map(String);
     if (outs.length >= 2 && !/^(yes|no)$/i.test(outs[0])) return candidate;
@@ -95,7 +130,7 @@ async function fetchEventBySlug(slug) {
 
 async function applyLivePrices(poly, ev, { clobOnly = false } = {}) {
   if (!poly || !ev) return poly;
-  const mkt = pickMoneylineMarket(ev.markets);
+  const mkt = pickMoneylineMarket(ev.markets, ev.title);
   let source = 'clob';
   let prices = await parsePricesFromClob(mkt);
   if (!prices) {
@@ -435,6 +470,7 @@ module.exports = {
   applyLivePrices,
   fetchEventBySlug,
   parsePrices,
+  pickMoneylineMarket,
 };
 
 function loadEnv() {
