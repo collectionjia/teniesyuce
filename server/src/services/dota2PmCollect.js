@@ -182,29 +182,36 @@ function isSportMatchEvent(item) {
   return true;
 }
 
-function isOpenPricedMatch(item, eps = 0.005) {
-  if (item.closed) return false;
-  const prices = item.prices;
+function isSettledPrices(prices, eps = 0.005) {
   if (!Array.isArray(prices) || prices.length < 2) return false;
   const a = Number(prices[0]);
   const b = Number(prices[1]);
   if (!Number.isFinite(a) || !Number.isFinite(b)) return false;
-  if (a <= eps || a >= 1 - eps || b <= eps || b >= 1 - eps) return false;
-  return true;
+  return a <= eps || a >= 1 - eps || b <= eps || b >= 1 - eps;
 }
 
-/** 未开赛盘：开赛未过太久，且结算截止未过（过滤卡在 Gamma 上的陈旧盘） */
+function isOpenPricedMatch(item, eps = 0.005) {
+  if (item.closed) return false;
+  return !isSettledPrices(item.prices, eps);
+}
+
+/** 已结束：closed / 过 endMs / 价格已结算 / 开赛过久且无 endMs（Gamma 陈旧盘） */
+function isEndedMatch(item, now = Date.now()) {
+  if (item.closed) return true;
+  if (item.endMs != null && Number.isFinite(item.endMs) && item.endMs <= now) return true;
+  if (isSettledPrices(item.prices)) return true;
+  const maxLiveMs = Number(process.env.DOTA2_MAX_LIVE_MS);
+  const maxLive = Number.isFinite(maxLiveMs) && maxLiveMs > 0 ? maxLiveMs : 8 * 60 * 60 * 1000;
+  if (item.startMs != null && Number.isFinite(item.startMs) && item.startMs <= now
+    && item.startMs < now - maxLive) {
+    return true;
+  }
+  return false;
+}
+
+/** 未结束：未开赛或进行中；结束后立即剔除 */
 function isUpcomingOrLiveMatch(item, now = Date.now()) {
-  const graceMs = Number(process.env.DOTA2_START_GRACE_MS);
-  // 默认开赛后仍保留 6 小时（BO3/BO5），更早的一律丢掉
-  const startGrace = Number.isFinite(graceMs) && graceMs >= 0 ? graceMs : 6 * 60 * 60 * 1000;
-  if (item.endMs != null && Number.isFinite(item.endMs) && item.endMs < now) {
-    return false;
-  }
-  if (item.startMs != null && Number.isFinite(item.startMs)) {
-    if (item.startMs < now - startGrace) return false;
-  }
-  return true;
+  return !isEndedMatch(item, now);
 }
 
 async function fetchPolymarketEventsByTag(tagSlug, tagId) {
@@ -240,11 +247,26 @@ async function fetchPolymarketEventsByTag(tagSlug, tagId) {
     .filter((x) => !x.closed && isSportMatchEvent(x) && isOpenPricedMatch(x) && isUpcomingOrLiveMatch(x));
 }
 
-async function fetchPolymarketDotaEvents() {
+function dotaHorizonMs() {
+  const h = Number(process.env.DOTA2_HORIZON_HOURS);
+  return (Number.isFinite(h) && h > 0 ? h : 48) * 60 * 60 * 1000;
+}
+
+function isWithinDotaHorizon(item, now = Date.now()) {
+  if (item.startMs == null || !Number.isFinite(item.startMs)) return false;
+  return item.startMs <= now + dotaHorizonMs();
+}
+
+async function fetchPolymarketDotaEventsRaw() {
   const tagSlug = (process.env.POLY_DOTA_TAG_SLUG || 'dota-2').trim() || 'dota-2';
   const tagIdRaw = (process.env.POLY_DOTA_TAG_ID || '').trim();
   const tagId = /^\d+$/.test(tagIdRaw) ? Number(tagIdRaw) : null;
   return fetchPolymarketEventsByTag(tagSlug, tagId);
+}
+
+async function fetchPolymarketDotaEvents() {
+  const all = await fetchPolymarketDotaEventsRaw();
+  return all.filter((ev) => isWithinDotaHorizon(ev));
 }
 
 /** 调度/刷新入口：Polymarket 采集后走 dota2elo 过滤。 */
@@ -486,7 +508,8 @@ async function collectOnce() {
   collectBusy = true;
   const thr = thresholds();
   try {
-    const events = await fetchPolymarketDotaEvents();
+    const all = await fetchPolymarketDotaEventsRaw();
+    const events = all.filter((ev) => isWithinDotaHorizon(ev));
     const matches = [];
     for (const ev of events) {
       try {
@@ -508,11 +531,12 @@ async function collectOnce() {
       matchedCount: matchedN,
       edgeCount: matches.filter((m) => m.passList).length,
       hcCount: matches.filter((m) => m.is_high_confidence).length,
-      scanned: events.length,
+      scanned: all.length,
+      horizonHours: dotaHorizonMs() / 3600000,
       matches,
     };
     await writeBundle(bundle);
-    console.log(`[dota2-pm] collected ${matches.length}/${events.length} (edge ${bundle.edgeCount} HC ${bundle.hcCount})`);
+    console.log(`[dota2-pm] collected ${matches.length}/${all.length} (≤${bundle.horizonHours}h, edge ${bundle.edgeCount} HC ${bundle.hcCount})`);
     return bundle;
   } catch (err) {
     console.error('[dota2-pm] collect failed', err.message || err);
@@ -917,7 +941,21 @@ async function refreshBundleOdds(sport = 'dota2', opts = {}) {
   const n = Math.max(1, Math.min(concurrency, targets.length || 1));
   await Promise.all(Array.from({ length: n }, () => worker()));
 
-  const now = new Date().toISOString();
+  const nowMs = Date.now();
+  if (!isNfl) {
+    bundle.matches = bundle.matches.filter((m) => !isEndedMatch({
+      closed: m.closed,
+      endMs: m.endMs,
+      startMs: m.startMs,
+      prices: m.prices,
+    }, nowMs));
+    bundle.matchCount = bundle.matches.length;
+    bundle.matchedCount = bundle.matches.filter((m) => m.matched).length;
+    bundle.edgeCount = bundle.matches.filter((m) => m.passList).length;
+    bundle.hcCount = bundle.matches.filter((m) => m.is_high_confidence).length;
+  }
+
+  const now = new Date(nowMs).toISOString();
   bundle.odds_updated_at = now;
   const written = isNfl ? await writeNflBundle(bundle) : await writeBundle(bundle);
   return {
