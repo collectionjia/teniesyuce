@@ -180,8 +180,11 @@ function isSportMatchEvent(item) {
   if (lowSlug.includes('more-markets') || lowTitle.includes('more markets')) return false;
   if (lowTitle.startsWith('will ') || lowSlug.startsWith('will-')) return false;
   if (lowSlug.includes('champion') && !lowSlug.includes('vs')) return false;
-  // 正赛 only：挡 props / 节分等附属盘（"Team vs Team - Player Props"）
-  if (/\s-\s/.test(String(item.title || ''))) return false;
+  // 正赛 only：挡 props 等附属盘；Polymarket 正赛标题常带 " - 联赛名"，不能整句拒掉
+  const propSuffix = String(item.title || '').match(/\s-\s(.+)$/);
+  if (propSuffix && /^(?:player\s*props|more\s*markets|spread|total|over\/under|1st\s*half|game\s*props|highest[\s-]*scoring)\b/i.test(propSuffix[1].trim())) {
+    return false;
+  }
   if (/-(?:player-props|highest-scoring|spread|total|ou|1h|props)\b/i.test(lowSlug)) return false;
   return true;
 }
