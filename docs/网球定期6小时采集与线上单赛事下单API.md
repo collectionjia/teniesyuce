@@ -17,6 +17,7 @@
 ## 目录
 
 1. [鉴权说明](#1-鉴权说明)
+   - [1.1 对外 API Key（/api/engine/*）](#11-对外-api-keyapiengine)
 2. [健康检查](#2-健康检查)
 3. [定期采集后的数据接口](#3-定期采集后的数据接口)
 4. [单场赛事下单（邮箱）](#4-单场赛事下单邮箱)
@@ -32,21 +33,147 @@
 | 接口类型 | 鉴权方式 |
 |----------|----------|
 | 健康检查 | 无需登录 |
-| 采集数据（盘前 / 盘中 / 盘后 / 单场进行中） | **无需 JWT**，公开读 Redis 快照 |
-| Dota2 / NFL 盘口（`GET /markets`） | **无需 JWT**，公开读 Redis；登录后附带 `placed` |
-| Dota2 / NFL 手动刷新（`POST /markets/refresh`） | **无需 JWT**，触发服务端重新采集 |
-| 单场 / 批量 / 限价 买入 / 卖出 | **无需 JWT**；请求体带 `email`（= `users.account`）定位钱包 |
+| 采集数据（盘前 / 盘中 / 盘后 / 单场进行中） | **无需 JWT / Key**，公开读 Redis 快照 |
+| Dota2 / NFL 盘口（`GET /markets`） | **无需 JWT / Key**，公开读 Redis；登录后附带 `placed` |
+| Dota2 / NFL 手动刷新（`POST /markets/refresh`） | **无需 JWT / Key**，触发服务端重新采集 |
+| 单场 / 批量 / 限价 买入 / 卖出（第 4～6 节） | **无需 JWT / Key**；请求体带 `email`（= `users.account`）定位钱包 |
+| 引擎对外中心（`/api/engine/*`） | **必须**带有效 **API Key**（见 [1.1](#11-对外-api-keyapiengine)） |
 
-共性：
+### 邮箱下单（第 3～6 节）共性
 
 - Header：`Content-Type: application/json`（POST 时）
-- **不要**带 `Authorization`（本文件所列接口均不需要 JWT）
+- **不要**带 JWT 的 `Authorization: Bearer <jwt>`（本文件第 3～6 节不需要登录）
 - `email` 须为已注册账号；也可用字段名 `account`
 - `simulate=false` 时该用户须已配置可用钱包；`simulate=true` 可跳过
 - 也可在请求体同时带 `privateKey`（或 `private_key`）和 `address`（或 `proxyAddress` / `proxy_address`）。两者都填时用这对凭证下单，不必预先保存钱包；只填一个返回 400。可选 `signatureType`（或 `signature_type`），默认 **`3`**（POLY_1271 / V2 存款钱包，新账户常用）；也可用 `0` EOA、`1` Proxy 旧、`2` Gnosis Safe。适用于本文买入 / 卖出 / 批量接口，以及 `POST /api/dota2/trade/batch`
 - 虚拟采集（docks500）时服务端会**强制模拟**
 
-> 生产环境建议限制来源 IP 或加网关密钥，避免接口被滥用。
+> 第 4～6 节下单接口目前**不校验 API Key**，仅靠 `email` 定位用户。生产环境建议限制来源 IP；程序化调用引擎/调度请走 `/api/engine/*` 并携带 Key。
+
+### 1.1 对外 API Key（/api/engine/*）
+
+面向自动化脚本、外部系统的 **引擎对外中心**，路径前缀 **`/api/engine/*`**。鉴权方式：**API Key**（不看 JWT、不看用户角色）。
+
+#### Key 格式
+
+- 明文前缀：`eng_`
+- 示例：`eng_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
+- 服务端只存 **SHA-256 哈希**，明文**仅在创建时返回一次**，之后无法再次查看
+
+#### 生成 Key（管理员）
+
+**方式 A · 管理后台（推荐）**
+
+1. 使用 **admin** 账号登录 [https://www.yuce.bid/](https://www.yuce.bid/)
+2. 进入 **管理中心 → 引擎 API Key**
+3. 填写名称 → **创建** → **立即复制** 弹窗中的 `apiKey` 并妥善保存
+
+**方式 B · HTTP（须 admin JWT）**
+
+```bash
+BASE='https://www.yuce.bid'
+ADMIN_JWT='你的管理员登录 token'
+
+curl -s -X POST "$BASE/api/admin/engine-api-keys" \
+  -H "Authorization: Bearer $ADMIN_JWT" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"my-bot"}'
+```
+
+**响应示例**
+
+```json
+{
+  "ok": true,
+  "key": {
+    "id": 1,
+    "name": "my-bot",
+    "keyPrefix": "eng_a1b2c3",
+    "ownerUserId": null
+  },
+  "apiKey": "eng_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+  "note": "请立即保存 apiKey，之后无法再次查看明文"
+}
+```
+
+**管理接口（均需 admin JWT，非 API Key）**
+
+| 操作 | Method | 路径 |
+|------|--------|------|
+| 列表 | `GET` | `/api/admin/engine-api-keys` |
+| 创建 | `POST` | `/api/admin/engine-api-keys` |
+| 吊销（禁用） | `POST` | `/api/admin/engine-api-keys/:id/revoke` |
+| 删除 | `DELETE` 或 `POST …/:id/delete` | `/api/admin/engine-api-keys/:id` |
+| 重新启用 | `POST` | `/api/admin/engine-api-keys/:id/enable` |
+
+#### 调用时如何带 Key
+
+以下三种方式**任选其一**（推荐 Header）：
+
+| 方式 | 示例 |
+|------|------|
+| Header（推荐） | `X-Api-Key: eng_你的密钥` |
+| Bearer（仅 `eng_` 前缀） | `Authorization: Bearer eng_你的密钥` |
+| Query | `?apiKey=eng_你的密钥` |
+
+```bash
+BASE='https://www.yuce.bid'
+API_KEY='eng_你的密钥'
+
+curl -s "$BASE/api/engine/collect/status" \
+  -H "X-Api-Key: $API_KEY"
+```
+
+#### `/api/engine/*` 主要能力（均需 Key）
+
+| 分类 | 示例路径 | 说明 |
+|------|----------|------|
+| 采集 | `GET /api/engine/collect/status` | 采集开关、三桶场次数量、最近全量/tick 运行 |
+| 采集 | `GET /api/engine/collect/health` | Redis 桶可读性粗检 |
+| 采集 | `POST /api/engine/collect/full/run` | 手动触发全量采集 |
+| 采集 | `POST /api/engine/collect/inplay-tick/run` | 手动触发盘中 tick |
+| 条件引擎 | `GET/PUT /api/engine/condition/rules` | 读/写条件规则 |
+| 投注引擎 | `GET /api/engine/betting/status` | 自动投注状态 |
+| 投注引擎 | `POST /api/engine/betting/scan/run` | 手动扫描下单 |
+| 调度 | `GET /api/engine/scheduler/jobs` | 任务列表 |
+| 调度 | `POST /api/engine/scheduler/jobs/:id/run` | 手动执行任务 |
+
+完整路由见 `server/src/routes/engineApi.js`。响应统一形如：
+
+```json
+{
+  "ok": true,
+  "data": { },
+  "meta": {
+    "requestId": "a1b2c3d4e5f67890",
+    "serverTime": "2026-09-28T23:00:00+08:00",
+    "keyId": 1
+  }
+}
+```
+
+#### Key 鉴权错误
+
+| HTTP | `code` | 含义 |
+|------|--------|------|
+| 401 | `INVALID_API_KEY` | 未带 Key、Key 无效、已吊销或已禁用 |
+
+```json
+{
+  "ok": false,
+  "error": "missing api key",
+  "code": "INVALID_API_KEY"
+}
+```
+
+#### 与本文下单 API 的关系
+
+| 能力 | 路径 | 鉴权 |
+|------|------|------|
+| 读赛程 / 下单 | `/api/tennis-prematch/*`、`/api/tennis/orders/*` 等 | **邮箱**（第 3～6 节），**不需要** API Key |
+| 引擎 / 调度 / 条件 / 自动投注 | `/api/engine/*` | **必须** API Key |
+
+实现位置：`server/src/middleware/engineApiKey.js`、`server/src/services/engineApiKeys.js`。
 
 ---
 
@@ -1034,6 +1161,7 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 |------|----------|
 | 200 | 业务结果（单场/批量条目可能 `ok: false`） |
 | 400 | 参数错误 / 未配钱包 / 批量超限 / 限价缺份额或目标价 |
+| 401 | `/api/engine/*` 缺少或无效 API Key（`code: INVALID_API_KEY`） |
 | 404 | 邮箱用户不存在 |
 | 500 | 服务端异常 |
 
@@ -1043,7 +1171,17 @@ curl -s -X POST 'https://www.yuce.bid/api/tennis-prematch/trade/sell' \
 
 ## 8. 完整调用样例
 
-### 8.1 读单场进行中
+### 8.1 用 API Key 查采集状态
+
+```bash
+BASE='https://www.yuce.bid'
+API_KEY='eng_你的密钥'
+
+curl -s "$BASE/api/engine/collect/status" \
+  -H "X-Api-Key: $API_KEY"
+```
+
+### 8.2 读单场进行中
 
 ```bash
 BASE='https://www.yuce.bid'
@@ -1052,7 +1190,7 @@ EVENT_ID='12345679'
 curl -s "$BASE/api/tennis-inplay/match/$EVENT_ID"
 ```
 
-### 8.2 读盘前 → 邮箱单场模拟买入
+### 8.3 读盘前 → 邮箱单场模拟买入
 
 ```bash
 BASE='https://www.yuce.bid'
@@ -1071,7 +1209,7 @@ curl -s -X POST "$BASE/api/tennis/orders/buy" \
   }'
 ```
 
-### 8.3 邮箱批量买入两场
+### 8.4 邮箱批量买入两场
 
 ```bash
 curl -s -X POST "$BASE/api/tennis/orders/batch" \
@@ -1088,7 +1226,7 @@ curl -s -X POST "$BASE/api/tennis/orders/batch" \
   }'
 ```
 
-### 8.4 限价买入（盘前，单场）
+### 8.5 限价买入（盘前，单场）
 
 ```bash
 curl -s -X POST "$BASE/api/tennis-prematch/trade/batch" \
@@ -1105,7 +1243,7 @@ curl -s -X POST "$BASE/api/tennis-prematch/trade/batch" \
   }'
 ```
 
-### 8.5 限价卖出（盘前）
+### 8.6 限价卖出（盘前）
 
 ```bash
 curl -s -X POST "$BASE/api/tennis-prematch/trade/sell" \
@@ -1121,7 +1259,7 @@ curl -s -X POST "$BASE/api/tennis-prematch/trade/sell" \
   }'
 ```
 
-### 8.6 从盘前响应取 eventId（Python）
+### 8.7 从盘前响应取 eventId（Python）
 
 ```python
 import json
