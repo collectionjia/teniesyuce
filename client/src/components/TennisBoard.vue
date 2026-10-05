@@ -94,8 +94,11 @@ const isVirtualDataSource = computed(() => {
 })
 const useSimulateOrders = computed(() => !!isVirtualDataSource.value)
 const apiPath = computed(() => {
-  // 未订阅：与经典「网球」同源数据与展示，不走盘前/盘中专用桶与条件筛选
-  if ((isPrematchMode.value || isInplayMode.value || isMixMode.value) && !props.isMember) return '/api/tennis'
+  // 未订阅：走公开 prematch/inplay 桶（/api/tennis 需登录，预览会空白）
+  if (!props.isMember) {
+    if (isInplayMode.value) return '/api/tennis-inplay'
+    if (isPrematchMode.value || isMixMode.value) return '/api/tennis-prematch'
+  }
   if (isPrematchMode.value) return '/api/tennis-prematch'
   if (isRangeMode.value) return '/api/tennis-range'
   if (isLiveMode.value) return '/api/tennis-live'
@@ -2864,13 +2867,17 @@ function mergeMixBundles(pre, live) {
   }
 }
 
-async function loadMixBundle() {
-  if (!props.isMember) return fetchTodayBundle('/api/tennis')
+async function loadPrematchInplayBundles() {
   const [preR, liveR] = await Promise.allSettled([
     fetchTodayBundle('/api/tennis-prematch'),
     fetchTodayBundle('/api/tennis-inplay'),
   ])
   if (preR.status === 'rejected' && liveR.status === 'rejected') throw preR.reason
+  return { preR, liveR }
+}
+
+async function loadMixBundle() {
+  const { preR, liveR } = await loadPrematchInplayBundles()
   return mergeMixBundles(
     preR.status === 'fulfilled' ? preR.value : null,
     liveR.status === 'fulfilled' ? liveR.value : null,

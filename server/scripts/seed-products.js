@@ -25,28 +25,6 @@ const ONLINE = [
     legacyNames: ['未开赛的网球比赛', '盘前网球'],
   },
   {
-    name: '网球',
-    tag: 'tennis',
-    gradient: 'linear-gradient(135deg,#a16207,#eab308)',
-    url: '#',
-    description: '网球赛事综合看板。',
-    price_month: 69,
-    price_week: 19,
-    price_day: 8.9,
-    default_plan: 'month',
-  },
-  {
-    name: 'BTC 持仓看板',
-    tag: 'crypto',
-    gradient: 'linear-gradient(135deg,#0e7490,#06b6d4)',
-    url: 'http://board:8890/',
-    description: '链上 UP/DOWN 持仓排行榜。',
-    price_month: 99,
-    price_week: 39,
-    price_day: 0.1,
-    default_plan: 'month',
-  },
-  {
     name: 'dota2赛事推荐',
     tag: 'dota2',
     gradient: 'linear-gradient(135deg,#b91c1c,#ea580c)',
@@ -83,7 +61,9 @@ const ONLINE = [
   },
 ];
 
-const OFFLINE_TAGS = ['tennis-inplay', 'tennis-settled', 'tennis-live'];
+const OFFLINE_TAGS = [
+  'tennis', 'tennis-inplay', 'tennis-settled', 'tennis-live', 'crypto',
+];
 
 async function findProduct(p) {
   const names = [p.name, ...(p.legacyNames || [])];
@@ -115,7 +95,7 @@ async function upsertOnline(p) {
   if (existing) {
     await pool.query(
       `UPDATE products SET name=?, tag=?, gradient=?, url=?, description=?,
-       price_month=?, price_week=?, price_day=?, default_plan=?, online=1 WHERE id=?`,
+       price_month=?, price_week=?, price_day=?, default_plan=?, online=? WHERE id=?`,
       [...vals, existing.id],
     );
     console.log(`更新 #${existing.id} ${p.name} (${p.tag})`);
@@ -130,21 +110,23 @@ async function upsertOnline(p) {
   console.log(`创建 #${r.insertId} ${p.name} (${p.tag})`);
 }
 
-async function offlineSplitProducts() {
+async function offlineProducts() {
   const [r1] = await pool.query(
     `UPDATE products SET online=0
      WHERE LOWER(COALESCE(tag,'')) IN (?)
         OR name LIKE '%比赛中的网球%'
         OR name LIKE '%比赛结束%网球%'
+        OR name = '网球'
+        OR name LIKE '%BTC%'
         OR name IN ('盘中网球', '盘后网球')`,
     [OFFLINE_TAGS],
   );
-  console.log(`下架盘中/盘后拆分产品: ${r1.affectedRows} 行`);
+  console.log(`下架网球/BTC 等: ${r1.affectedRows} 行`);
 }
 
 async function main() {
+  await offlineProducts();
   for (const p of ONLINE) await upsertOnline(p);
-  await offlineSplitProducts();
   const [rows] = await pool.query(
     `SELECT id, name, tag, online FROM products ORDER BY online DESC, id`,
   );
