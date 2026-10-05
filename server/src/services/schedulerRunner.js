@@ -98,6 +98,20 @@ async function executeJobType(job, params = {}) {
         },
       };
     }
+    case 'collect.nba':
+    case 'collect.nba_hf': {
+      const dota2PmCollect = require('./dota2PmCollect');
+      const bundle = await dota2PmCollect.collectNba();
+      if (bundle?.ok === false) throw new Error(bundle.error || 'nba polymarket collect failed');
+      return {
+        message: `nba polymarket ${bundle.matchCount ?? 0} matches`,
+        metrics: {
+          matchCount: bundle.matchCount ?? 0,
+          scanned: bundle.scanned ?? 0,
+          source: bundle.source || 'polymarket-gamma',
+        },
+      };
+    }
     case 'collect.top100': {
       if (isVirtual) {
         return { skipped: true, message: '虚拟(txt)模式跳过官网 Top100 采集' };

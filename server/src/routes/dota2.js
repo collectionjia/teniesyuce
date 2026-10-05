@@ -61,6 +61,24 @@ router.get('/players/:playerId', proxyJson);
 router.get('/calibration', proxyJson);
 router.get('/backtest', proxyJson);
 
+function boardSportOf(req) {
+  const s = String(req.boardSport || 'dota2').toLowerCase();
+  if (s === 'nfl' || s === 'nba') return s;
+  return 'dota2';
+}
+
+async function readBundleForSport(sport) {
+  if (sport === 'nfl') return dota2PmCollect.readNflBundle();
+  if (sport === 'nba') return dota2PmCollect.readNbaBundle();
+  return dota2PmCollect.readBundle();
+}
+
+async function collectForSport(sport) {
+  if (sport === 'nfl') return dota2PmCollect.collectNfl();
+  if (sport === 'nba') return dota2PmCollect.collectNba();
+  return dota2PmCollect.collectDirect();
+}
+
 const boardRouter = express.Router();
 boardRouter.use((req, _res, next) => {
   if (!req.boardSport) req.boardSport = 'dota2';
@@ -69,11 +87,9 @@ boardRouter.use((req, _res, next) => {
 
 /** Polymarket 过滤盘口（读 Redis bundle） */
 boardRouter.get('/markets', optionalAuth(), async (req, res) => {
-  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
+  const sport = boardSportOf(req);
   try {
-    let bundle = sport === 'nfl'
-      ? await dota2PmCollect.readNflBundle()
-      : await dota2PmCollect.readBundle();
+    let bundle = await readBundleForSport(sport);
     if (!bundle) {
       bundle = {
         ok: true,
@@ -99,11 +115,9 @@ boardRouter.get('/markets', optionalAuth(), async (req, res) => {
 });
 
 boardRouter.post('/markets/refresh', optionalAuth(), async (req, res) => {
-  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
+  const sport = boardSportOf(req);
   try {
-    const bundle = sport === 'nfl'
-      ? await dota2PmCollect.collectNfl()
-      : await dota2PmCollect.collectDirect();
+    const bundle = await collectForSport(sport);
     res.json(bundle || { ok: false, error: 'collect returned empty' });
   } catch (err) {
     console.error(`[${sport}/markets/refresh]`, err);
@@ -121,7 +135,7 @@ boardRouter.post('/markets/refresh', optionalAuth(), async (req, res) => {
  * }
  */
 boardRouter.post('/trade/batch', optionalAuth(), attachUserFromEmailBody, resolveTradeSimulatePublic, async (req, res) => {
-  const sport = req.boardSport === 'nfl' ? 'nfl' : 'dota2';
+  const sport = boardSportOf(req);
   try {
     const userId = req.tennisUser?.id;
     if (!userId) {

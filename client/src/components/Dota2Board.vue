@@ -17,7 +17,21 @@ const props = defineProps({
 
 const emit = defineEmits(['auto-bet-change', 'placed-orders-change', 'need-subscribe'])
 
-const sport = computed(() => (props.sport === 'nfl' ? 'nfl' : 'dota2'))
+const sport = computed(() => {
+  if (props.sport === 'nfl') return 'nfl'
+  if (props.sport === 'nba') return 'nba'
+  return 'dota2'
+})
+const sportLabel = computed(() => {
+  if (sport.value === 'nfl') return 'NFL'
+  if (sport.value === 'nba') return 'NBA'
+  return 'DOTA2'
+})
+const modelLabel = computed(() => {
+  if (sport.value === 'nfl') return 'nflelo'
+  if (sport.value === 'nba') return 'Polymarket'
+  return 'dota2elo'
+})
 const AUTO_BET_KEY = computed(() => `yuce.${sport.value}.autoBet.v1`)
 const BATCH_AMOUNT_KEY = computed(() => `yuce.${sport.value}.batchAmountUsd.v1`)
 const AUTO_PLACED_KEY = computed(() => `yuce.${sport.value}.autoPlaced.v1`)
@@ -268,7 +282,7 @@ const pageAllSelected = computed(() => {
 const selectedCount = computed(() => selectedIds.value.size)
 
 const emptyListHint = computed(() => {
-  const label = sport.value === 'nfl' ? 'NFL' : 'DOTA2'
+  const label = sportLabel.value
   // 有采集结果但被条件/筛选滤空
   if (marketRows.value.length && !filteredRows.value.length) {
     return condOn.value
@@ -815,7 +829,7 @@ defineExpose({
               <div class="modal-title">参数详情</div>
               <div class="modal-sub">{{ detailMatch.home }} vs {{ detailMatch.away }}</div>
               <div class="modal-meta">
-                <span>{{ detailMatch.title || (sport === 'nfl' ? 'NFL' : 'Dota2') }}</span>
+                <span>{{ detailMatch.title || sportLabel }}</span>
                 · <span :class="{ today: isStartSameDay(detailMatch.startTimestamp) }">{{ fmtTime(detailMatch.startTimestamp) }}</span>
                 · 未开
               </div>
@@ -892,7 +906,7 @@ defineExpose({
                 <span class="s">
                   {{ detailMatch.home }} {{ sideProb(detailMatch, 'a') }}
                   · {{ detailMatch.away }} {{ sideProb(detailMatch, 'b') }}
-                  · {{ sport === 'nfl' ? 'nflelo' : 'dota2elo' }}
+                  · {{ modelLabel }}
                 </span>
               </div>
               <div v-if="detailMatch.url" class="kv">
@@ -932,7 +946,7 @@ defineExpose({
           <div class="modal-head">
             <div class="modal-head-main">
               <div class="modal-title">条件设置</div>
-              <div class="modal-sub">{{ sport === 'nfl' ? 'NFL' : 'Dota2' }} · {{ condSummary }}</div>
+              <div class="modal-sub">{{ sportLabel }} · {{ condSummary }}</div>
             </div>
             <div class="modal-head-actions">
               <button type="button" class="modal-x" aria-label="关闭" @click="closeConditionModal">×</button>
@@ -941,7 +955,7 @@ defineExpose({
           <div class="modal-body cond-body">
             <p class="cond-hint">
               列表展示 Polymarket 采集赛事；匹配到
-              {{ sport === 'nfl' ? 'nflelo' : 'dota2elo' }}
+              {{ modelLabel }}
               API 后显示两侧胜率。启用条件后仅保留过线场次。
             </p>
             <label class="cond-toggle">

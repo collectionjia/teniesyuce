@@ -1,5 +1,5 @@
 /**
- * 后台刷新 Redis Polymarket 赔率：网球 inplay + Dota2 + NFL。
+ * 后台刷新 Redis Polymarket 赔率：网球 inplay + Dota2 + NFL + NBA。
  * 间隔：引擎配置 collect.background.odds_interval_sec（默认 1s）；POLY_ODDS_LOOP_MS 可覆盖。
  */
 const tennisPolymarket = require('./tennisPolymarket');
@@ -56,14 +56,14 @@ function clearLogs() {
 }
 
 /**
- * 一轮：网球 inplay + Dota2 + NFL
+ * 一轮：网球 inplay + Dota2 + NFL + NBA
  * @param {{ clobOnly?: boolean }} [opts]
  */
 async function refreshAllOnce(opts = {}) {
   const clobOnly = opts.clobOnly !== false;
   process.env.COLLECT_INPLAY_USE_PROXY = process.env.COLLECT_INPLAY_USE_PROXY || '0';
 
-  const [tennis, dota, nfl] = await Promise.all([
+  const [tennis, dota, nfl, nba] = await Promise.all([
     (async () => {
       if (require('./tennisBackgroundPause').isTennisBackgroundRefreshPaused()) {
         return { ok: true, skipped: true, updated: 0, failed: 0, scanned: 0, reason: 'full-collect pause' };
@@ -92,9 +92,17 @@ async function refreshAllOnce(opts = {}) {
       scanned: 0,
       error: e.message || String(e),
     })),
+    dota2PmCollect.refreshBundleOdds('nba', { clobOnly }).catch((e) => ({
+      ok: false,
+      sport: 'nba',
+      updated: 0,
+      failed: 0,
+      scanned: 0,
+      error: e.message || String(e),
+    })),
   ]);
 
-  return { tennis, dota, nfl };
+  return { tennis, dota, nfl, nba };
 }
 
 function fmtPart(label, r) {
@@ -116,7 +124,7 @@ async function tickOnce() {
   try {
     const r = await refreshAllOnce({ clobOnly: true });
     const ms = Date.now() - t0;
-    const line = `${fmtPart('tennis', r.tennis)} ${fmtPart('dota', r.dota)} ${fmtPart('nfl', r.nfl)} ${ms}ms`;
+    const line = `${fmtPart('tennis', r.tennis)} ${fmtPart('dota', r.dota)} ${fmtPart('nfl', r.nfl)} ${fmtPart('nba', r.nba)} ${ms}ms`;
     console.log(`[poly-odds] ${line}`);
     const tennisErr = r.tennis?.error;
     last = {
@@ -127,6 +135,7 @@ async function tickOnce() {
       tennis: r.tennis,
       dota: r.dota,
       nfl: r.nfl,
+      nba: r.nba,
     };
     pushLog(line);
     if (tennisErr) pushLog(`tennis error: ${tennisErr}`);

@@ -1004,6 +1004,11 @@ export async function fetchNflMarkets() {
   return data
 }
 
+export async function fetchNbaMarkets() {
+  const { data } = await api.get('/nba/markets')
+  return data
+}
+
 export async function refreshDota2Markets() {
   const { data } = await api.post('/dota2/markets/refresh')
   return data

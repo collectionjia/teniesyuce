@@ -47,6 +47,19 @@ const PRODUCTS = [
     online: 1,
     legacyNameLike: 'NFL',
   },
+  {
+    name: 'nba赛事推荐',
+    tag: 'nba',
+    gradient: 'linear-gradient(135deg,#c45c26,#ea580c)',
+    url: '#',
+    description: 'Polymarket NBA 未开赛对阵，订阅后可下单。',
+    price_month: Number(process.env.NBA_PRICE_MONTH || 2),
+    price_week: Number(process.env.NBA_PRICE_WEEK || 1),
+    price_day: Number(process.env.NBA_PRICE_DAY || 0.5),
+    default_plan: 'month',
+    online: 1,
+    legacyNameLike: '%篮球%',
+  },
 ];
 
 async function upsertOne(p) {

@@ -68,6 +68,7 @@ const shopProductStats = reactive({
     tennis_settled: null,
     dota2: null,
     nfl: null,
+    nba: null,
   },
 })
 const adminProducts = ref([])
@@ -525,6 +526,7 @@ function countPmMarkets(data) {
 
 function shopProductStatKey(product) {
   if (isNflProduct(product)) return 'nfl'
+  if (isNbaProduct(product)) return 'nba'
   if (isDota2Product(product)) return 'dota2'
   if (isTennisSettledProduct(product)) return 'tennis_settled'
   if (isTennisInplayProduct(product)) return 'tennis_inplay'
@@ -546,12 +548,13 @@ function shopProductShowWinRate(product) {
 
 async function loadShopProductStats() {
   try {
-    const [pre, inplay, settled, dota2, nfl] = await Promise.all([
+    const [pre, inplay, settled, dota2, nfl, nba] = await Promise.all([
       api.fetchTennisPrematchToday().catch(() => null),
       api.fetchTennisInplayToday().catch(() => null),
       api.fetchTennisSettledToday({}).catch(() => null),
       api.fetchDota2Markets().catch(() => null),
       api.fetchNflMarkets().catch(() => null),
+      api.fetchNbaMarkets().catch(() => null),
     ])
     shopProductStats.counts.tennis_prematch = countTennisMixMatches(pre, inplay)
     shopProductStats.counts.tennis_inplay = countTennisBundleMatches(inplay)
@@ -559,6 +562,7 @@ async function loadShopProductStats() {
     shopProductStats.counts.tennis_settled = settledMatches.length
     shopProductStats.counts.dota2 = countPmMarkets(dota2)
     shopProductStats.counts.nfl = countPmMarkets(nfl)
+    shopProductStats.counts.nba = countPmMarkets(nba)
     let win = 0
     let loss = 0
     for (const m of settledMatches) {
@@ -3109,17 +3113,29 @@ function isNflProduct(product) {
   return /nfl/i.test(String(product?.name || '').trim())
 }
 
-/** 前台展示：dota2 / nfl 统一大写 */
+function isNbaProduct(product) {
+  const tag = String(product?.tag || '').toLowerCase()
+  if (tag === 'nba' || tag === '篮球') return true
+  return /nba|篮球/i.test(String(product?.name || '').trim())
+}
+
+/** 前台展示：dota2 / nfl / nba 统一大写 */
 function productDisplayName(product) {
   let name = String(product?.name || '')
-  if (isDota2Product(product) || isNflProduct(product)) {
-    name = name.replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL')
+  if (isDota2Product(product) || isNflProduct(product) || isNbaProduct(product)) {
+    name = name.replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL').replace(/nba/gi, 'NBA')
   }
   return name
 }
 
+function pmBoardSport(product) {
+  if (isNflProduct(product)) return 'nfl'
+  if (isNbaProduct(product)) return 'nba'
+  return 'dota2'
+}
+
 function isPmListProduct(product) {
-  return isDota2Product(product) || isNflProduct(product)
+  return isDota2Product(product) || isNflProduct(product) || isNbaProduct(product)
 }
 
 function isNativeBoardProduct(product) {
@@ -3133,7 +3149,8 @@ function isNativeBoardProduct(product) {
     isTennisSettledProduct(product) ||
     isBtcBoardProduct(product) ||
     isDota2Product(product) ||
-    isNflProduct(product)
+    isNflProduct(product) ||
+    isNbaProduct(product)
   )
 }
 
@@ -3144,6 +3161,21 @@ function showSubscriptionInHeader(product) {
 
 /** 未订阅提示卡：开通后列表效果示例（示意数据） */
 function subscribePreviewSample(product) {
+  if (isNbaProduct(product)) {
+    return {
+      time: '今天 10:30',
+      meta: 'NBA · 差 142',
+      aRank: '1548',
+      aName: 'Lakers',
+      aProb: '62.4%',
+      aPm: '0.58',
+      bRank: '1406',
+      bName: 'Warriors',
+      bProb: '37.6%',
+      bPm: '0.42',
+      pick: 'a',
+    }
+  }
   if (isNflProduct(product)) {
     return {
       time: '周日 09:25',
@@ -3633,7 +3665,7 @@ function productEmbedUrl(product) {
                   class="shop-cat-chip"
                   :class="{ on: String(shopCategoryFilter) === String(c.id) }"
                   @click="shopCategoryFilter = String(c.id)"
-                >{{ String(c.name || '').replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL') }}</button>
+                >{{ String(c.name || '').replace(/dota2/gi, 'DOTA2').replace(/nfl/gi, 'NFL').replace(/nba/gi, 'NBA') }}</button>
                 <button
                   v-if="shopHasUncategorized"
                   type="button"
@@ -3944,7 +3976,7 @@ function productEmbedUrl(product) {
                 </div>
                 <div v-else-if="isPmListProduct(openedProduct)" class="p-0">
                   <Dota2Board
-                    :sport="isNflProduct(openedProduct) ? 'nfl' : 'dota2'"
+                    :sport="pmBoardSport(openedProduct)"
                     :is-member="canAccessProduct(openedProduct.id)"
                     :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
                     :is-admin="role === 'admin'"

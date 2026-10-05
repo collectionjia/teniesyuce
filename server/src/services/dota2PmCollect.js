@@ -558,7 +558,7 @@ async function collectOnce() {
 }
 
 function placedKey(userId, sport = 'dota2') {
-  const name = sport === 'nfl' ? 'nfl' : 'dota2';
+  const name = ['nfl', 'nba'].includes(sport) ? sport : 'dota2';
   return `${name}:betting:placed:${userId}`;
 }
 
@@ -865,6 +865,188 @@ async function readNflBundleRaw() {
   return nflMemory;
 }
 
+const NBA_BUNDLE_KEY = 'nba:bundle:pm';
+let nbaBusy = false;
+let nbaMemory = null;
+
+function nbaHorizonMs() {
+  const h = Number(process.env.NBA_HORIZON_HOURS);
+  return (Number.isFinite(h) && h > 0 ? h : 48) * 60 * 60 * 1000;
+}
+
+function isWithinNbaHorizon(item, now = Date.now()) {
+  if (item.startMs == null || !Number.isFinite(item.startMs)) return false;
+  return item.startMs <= now + nbaHorizonMs();
+}
+
+async function fetchPolymarketNbaEventsRaw() {
+  const tagSlug = (process.env.POLY_NBA_TAG_SLUG || 'nba').trim() || 'nba';
+  const tagIdRaw = (process.env.POLY_NBA_TAG_ID || '745').trim();
+  const tagId = /^\d+$/.test(tagIdRaw) ? Number(tagIdRaw) : null;
+  return fetchPolymarketEventsByTag(tagSlug, tagId);
+}
+
+/** ponytail: PM 隐含胜率作推荐，无独立 nbaelo；有模型服务后换 enrichNbaEvent 内 predict */
+function enrichNbaEvent(ev, thr) {
+  ev = alignQuoteToSides(ev);
+  const prices = Array.isArray(ev.prices) ? ev.prices : null;
+  if (!prices || prices.length < 2) return unmatchedRow(ev, 'price');
+  const pA = Number(prices[0]);
+  const pB = Number(prices[1]);
+  if (!Number.isFinite(pA) || !Number.isFinite(pB)) return unmatchedRow(ev, 'price');
+  const strongProb = Math.max(pA, pB);
+  const pickSide = pA >= 0.5 ? 'a' : 'b';
+  const eloSpan = 600;
+  const ratingA = Math.round(1500 + (pA - 0.5) * eloSpan);
+  const ratingB = Math.round(1500 + (pB - 0.5) * eloSpan);
+  const eloDiff = Math.abs(ratingA - ratingB);
+  const isHighConfidence = strongProb >= 0.75;
+  const passList = isHighConfidence
+    || eloDiff >= thr.eloDiffMin
+    || strongProb >= thr.winProbMin;
+  const tokens = ev.tokenIds || [];
+  const pickTokenId = pickSide === 'a' ? (tokens[0] || null) : (tokens[1] || null);
+  const pickName = pickSide === 'a' ? ev.sideA : ev.sideB;
+  const pickPrice = pickSide === 'a' ? pA : pB;
+  return {
+    slug: ev.slug,
+    title: ev.title,
+    url: ev.url,
+    sideA: ev.sideA,
+    sideB: ev.sideB,
+    prices,
+    tokenIds: tokens,
+    outcomes: ev.outcomes,
+    startMs: ev.startMs,
+    teamA: { id: null, name: ev.sideA, rating: ratingA },
+    teamB: { id: null, name: ev.sideB, rating: ratingB },
+    eloDiff: Math.round(eloDiff * 10) / 10,
+    pA: Math.round(pA * 10000) / 10000,
+    strongProb: Math.round(strongProb * 10000) / 10000,
+    pickSide,
+    pickName,
+    pickTokenId,
+    pickPrice,
+    matched: true,
+    modelSource: 'pm',
+    is_high_confidence: isHighConfidence,
+    passList,
+    passAutoBet: isHighConfidence,
+    ...directionAlign(pickSide, prices),
+  };
+}
+
+async function collectNba() {
+  if (nbaBusy) return nbaMemory;
+  nbaBusy = true;
+  const thr = thresholds();
+  try {
+    const all = await fetchPolymarketNbaEventsRaw();
+    const events = all.filter((ev) => isWithinNbaHorizon(ev));
+    const matches = [];
+    for (const ev of events) {
+      try {
+        matches.push(enrichNbaEvent(ev, thr));
+      } catch (err) {
+        console.warn('[nba-pm] enrich skip', ev?.slug, err.message || err);
+        matches.push(unmatchedRow(ev, 'error'));
+      }
+    }
+    sortEloMatches(matches);
+    const matchedN = matches.filter((m) => m.matched).length;
+    const bundle = {
+      ok: true,
+      sport: 'nba',
+      source: 'polymarket-gamma',
+      modelSource: 'pm',
+      fetched_at: new Date().toISOString(),
+      thresholds: thr,
+      matchCount: matches.length,
+      matchedCount: matchedN,
+      edgeCount: matches.filter((m) => m.passList).length,
+      hcCount: matches.filter((m) => m.is_high_confidence).length,
+      scanned: all.length,
+      horizonHours: nbaHorizonMs() / 3600000,
+      matches,
+    };
+    nbaMemory = bundle;
+    const client = await redis.getClient();
+    if (client) await client.set(NBA_BUNDLE_KEY, JSON.stringify(bundle));
+    console.log(`[nba-pm] collected ${matches.length}/${all.length} (≤${bundle.horizonHours}h)`);
+    return bundle;
+  } catch (err) {
+    console.error('[nba-pm] collect failed', err.message || err);
+    if (nbaMemory) return { ...nbaMemory, ok: false, error: err.message || String(err) };
+    return {
+      ok: false,
+      sport: 'nba',
+      source: 'polymarket-gamma',
+      matches: [],
+      matchCount: 0,
+      scanned: 0,
+      fetched_at: new Date().toISOString(),
+      error: err.message || String(err),
+    };
+  } finally {
+    nbaBusy = false;
+  }
+}
+
+function filterNbaBundleHorizon(bundle) {
+  if (!bundle?.matches?.length) return bundle;
+  const now = Date.now();
+  const matches = bundle.matches.filter((m) => isWithinNbaHorizon(m, now));
+  if (matches.length === bundle.matches.length) return bundle;
+  return {
+    ...bundle,
+    matches,
+    matchCount: matches.length,
+    matchedCount: matches.filter((m) => m.matched).length,
+    edgeCount: matches.filter((m) => m.passList).length,
+    hcCount: matches.filter((m) => m.is_high_confidence).length,
+  };
+}
+
+async function readNbaBundle() {
+  const client = await redis.getClient();
+  if (client) {
+    try {
+      const raw = await client.get(NBA_BUNDLE_KEY);
+      if (raw) {
+        nbaMemory = JSON.parse(raw);
+        return filterNbaBundleHorizon(nbaMemory);
+      }
+    } catch {
+      /* memory */
+    }
+  }
+  return filterNbaBundleHorizon(nbaMemory);
+}
+
+async function writeNbaBundle(bundle) {
+  nbaMemory = bundle;
+  const client = await redis.getClient();
+  if (!client) return false;
+  await client.set(NBA_BUNDLE_KEY, JSON.stringify(bundle));
+  return true;
+}
+
+async function readNbaBundleRaw() {
+  const client = await redis.getClient();
+  if (client) {
+    try {
+      const raw = await client.get(NBA_BUNDLE_KEY);
+      if (raw) {
+        nbaMemory = JSON.parse(raw);
+        return nbaMemory;
+      }
+    } catch {
+      /* memory */
+    }
+  }
+  return nbaMemory;
+}
+
 function extractMatchSlug(m) {
   const slug = String(m?.slug || '').trim();
   if (slug) return slug;
@@ -874,17 +1056,20 @@ function extractMatchSlug(m) {
 }
 
 /**
- * 刷新 Dota2 / NFL bundle 内有 slug 的赛事 Polymarket 赔率并写回 Redis。
- * @param {'dota2'|'nfl'} sport
+ * 刷新 Dota2 / NFL / NBA bundle 内有 slug 的赛事 Polymarket 赔率并写回 Redis。
+ * @param {'dota2'|'nfl'|'nba'} sport
  * @param {{ clobOnly?: boolean, concurrency?: number }} [opts]
  */
 async function refreshBundleOdds(sport = 'dota2', opts = {}) {
   const clobOnly = opts.clobOnly !== false;
   const concurrency = Math.max(1, Number(opts.concurrency) || 4);
   const isNfl = sport === 'nfl';
+  const isNba = sport === 'nba';
   const tennisPolymarket = require('./tennisPolymarket');
 
-  const bundle = isNfl ? await readNflBundleRaw() : await readBundle();
+  const bundle = isNfl
+    ? await readNflBundleRaw()
+    : (isNba ? await readNbaBundleRaw() : await readBundle());
   if (!bundle || !Array.isArray(bundle.matches) || !bundle.matches.length) {
     return { ok: false, sport, updated: 0, failed: 0, scanned: 0, error: 'empty bundle' };
   }
@@ -957,11 +1142,13 @@ async function refreshBundleOdds(sport = 'dota2', opts = {}) {
 
   const now = new Date(nowMs).toISOString();
   bundle.odds_updated_at = now;
-  const written = isNfl ? await writeNflBundle(bundle) : await writeBundle(bundle);
+  const written = isNfl
+    ? await writeNflBundle(bundle)
+    : (isNba ? await writeNbaBundle(bundle) : await writeBundle(bundle));
   return {
     ok: written && failed === 0,
     written,
-    sport: isNfl ? 'nfl' : 'dota2',
+    sport: isNfl ? 'nfl' : (isNba ? 'nba' : 'dota2'),
     updated,
     failed,
     scanned: targets.length,
@@ -972,12 +1159,15 @@ async function refreshBundleOdds(sport = 'dota2', opts = {}) {
 module.exports = {
   BUNDLE_KEY,
   NFL_BUNDLE_KEY,
+  NBA_BUNDLE_KEY,
   thresholds,
   collectOnce,
   collectDirect,
   collectNfl,
+  collectNba,
   readBundle,
   readNflBundle,
+  readNbaBundle,
   refreshBundleOdds,
   getPlacedSet,
   markPlaced,
