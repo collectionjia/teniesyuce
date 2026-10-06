@@ -3816,38 +3816,14 @@ function productEmbedUrl(product) {
                   </div>
                 </div>
                 <div
-                  v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || showBoardEngineButtons)"
+                  v-if="showSubscriptionInHeader(openedProduct) && showBoardEngineButtons"
                   class="flex flex-wrap items-center gap-1.5 w-full"
                 >
-                  <template v-if="showBoardEngineButtons">
-                    <button
-                      type="button"
-                      class="shrink-0 px-2.5 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 text-xs font-semibold hover:bg-sky-100"
-                      @click="openBoardConditionModal"
-                    >条件设置</button>
-                   
-                  </template>
                   <button
                     type="button"
-                    class="relative ml-auto inline-flex items-center justify-center w-8 h-8 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100"
-                    :title="boardPlacedBuyCount ? `买入持仓 ${boardPlacedBuyCount} 场` : '购物车（暂无买入）'"
-                    aria-label="已下单场次"
-                    @click="openPlacedCart"
-                  >
-                    <span class="w-3.5 h-3.5 block [&>svg]:w-full [&>svg]:h-full" v-html="icon('cart')"></span>
-                    <span
-                      v-if="boardPlacedBuyCount > 0"
-                      class="absolute -top-1 -right-1 min-w-[1rem] h-4 px-0.5 rounded-full bg-amber-600 text-white text-[10px] font-bold leading-4 text-center"
-                    >{{ boardPlacedBuyCount > 99 ? '99+' : boardPlacedBuyCount }}</span>
-                  </button>
-                  <button
-                    v-if="boardPlacedBuyCount > 0"
-                    type="button"
-                    class="shrink-0 px-2 py-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-700 text-xs font-semibold hover:bg-rose-100 disabled:opacity-45"
-                    :disabled="sellingAllPlaced || !!sellingPlacedId"
-                    title="按当前市价/限价设置一键平仓全部买入持仓"
-                    @click="sellAllBoardPlacedOrders"
-                  >{{ sellingAllPlaced ? '平仓中…' : '一键平仓' }}</button>
+                    class="shrink-0 px-2.5 py-1.5 rounded-lg border border-sky-200 bg-sky-50 text-sky-800 text-xs font-semibold hover:bg-sky-100"
+                    @click="openBoardConditionModal"
+                  >条件设置</button>
                 </div>
               </template>
               <div v-else class="flex items-center gap-2 min-h-0">
@@ -3893,7 +3869,7 @@ function productEmbedUrl(product) {
                     board-mode="mix"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisProductBoardMember(openedProduct)"
-                    :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     :can-edit-rules="role === 'admin'"
                     :is-admin="role === 'admin'"
                     :product-id="openedProduct.id"
@@ -3909,7 +3885,7 @@ function productEmbedUrl(product) {
                     board-mode="inplay"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisProductBoardMember(openedProduct)"
-                    :can-batch-trade="tennisProductBoardMember(openedProduct) && canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     :can-edit-rules="role === 'admin'"
                     :is-admin="role === 'admin'"
                     :product-id="openedProduct.id"
@@ -3927,7 +3903,7 @@ function productEmbedUrl(product) {
                     board-mode="live"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
                     @need-subscribe="onBoardNeedSubscribe"
@@ -3938,7 +3914,7 @@ function productEmbedUrl(product) {
                     board-mode="new"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
                     @need-subscribe="onBoardNeedSubscribe"
@@ -3949,7 +3925,7 @@ function productEmbedUrl(product) {
                     board-mode="range"
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
                     @need-subscribe="onBoardNeedSubscribe"
@@ -3959,7 +3935,7 @@ function productEmbedUrl(product) {
                   <TennisBoard
                     :show-filters="canShowTennisFilters"
                     :is-member="tennisBoardMember(openedProduct)"
-                    :can-batch-trade="canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"
                     @need-subscribe="onBoardNeedSubscribe"
@@ -3978,7 +3954,7 @@ function productEmbedUrl(product) {
                   <Dota2Board
                     :sport="pmBoardSport(openedProduct)"
                     :is-member="canAccessProduct(openedProduct.id)"
-                    :can-batch-trade="canAccessProduct(openedProduct.id) && canShowWallet && walletConfigured"
+                    :can-batch-trade="false"
                     :is-admin="role === 'admin'"
                     @auto-bet-change="onBoardAutoBetChange"
                     @placed-orders-change="onBoardPlacedOrdersChange"

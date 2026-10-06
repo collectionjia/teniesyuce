@@ -67,13 +67,7 @@ const hideEndedEvents = computed(() => {
   }
   return isClassicMode.value || isInplayMode.value || isPrematchMode.value || isMixMode.value
 })
-const allowBatchTrade = computed(() => {
-  if (isSettledMode.value) return false
-  if (props.canBatchTrade) return true
-  // 会员可看到开关；真正下单须自己打开「自动投注」
-  if (props.isMember && (isPrematchMode.value || isInplayMode.value || isMixMode.value)) return true
-  return false
-})
+const allowBatchTrade = computed(() => !isSettledMode.value && !!props.canBatchTrade)
 /** 批量操作行：仅手动下单（自动投注开关已隐藏） */
 const showAutoBetBar = computed(() => !isSettledMode.value && allowBatchTrade.value)
 /** 仅「虚拟/采集模拟」数据源下记账；真实采集时自动下单与止损均为实盘 */

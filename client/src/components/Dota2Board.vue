@@ -82,11 +82,7 @@ const manualLimitBuyPrice = ref('0.55')
 let pollTimer = null
 let autoBetRunning = false
 
-const allowBatchTrade = computed(() => {
-  if (props.canBatchTrade) return true
-  if (props.isMember) return true
-  return false
-})
+const allowBatchTrade = computed(() => !!props.canBatchTrade)
 
 const showManualTradeOpts = computed(() => allowBatchTrade.value)
 
