@@ -90,7 +90,7 @@ const allowBatchTrade = computed(() => {
 
 const showManualTradeOpts = computed(() => allowBatchTrade.value)
 
-const showAutoBetBar = computed(() => props.canBatchTrade || props.isMember)
+const showAutoBetBar = computed(() => allowBatchTrade.value)
 
 function pct(n) {
   if (n == null || !Number.isFinite(Number(n))) return '—'
@@ -160,7 +160,7 @@ function normalizeRows(raw) {
 
 function loadPersisted() {
   try {
-    autoSimBetEnabled.value = localStorage.getItem(AUTO_BET_KEY.value) === '1'
+    autoSimBetEnabled.value = false
     const amt = Number(localStorage.getItem(BATCH_AMOUNT_KEY.value))
     if (Number.isFinite(amt) && amt >= 1) batchAmountUsd.value = String(amt)
     const placed = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')

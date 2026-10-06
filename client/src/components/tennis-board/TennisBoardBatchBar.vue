@@ -15,6 +15,7 @@ defineProps({
   manualSide: { type: String, default: 'suggest' },
   manualShares: { type: [String, Number], default: '10' },
   manualLimitBuyPrice: { type: [String, Number], default: '0.55' },
+  showAutoBetToggle: { type: Boolean, default: false },
   toggleAutoBet: { type: Function, required: true },
   toggleSelectPage: { type: Function, required: true },
   submitBatchTrade: { type: Function, required: true },
@@ -33,7 +34,12 @@ const emit = defineEmits([
 <template>
 <div class="batch-bar">
       <div class="batch-bar-controls">
-        <label class="auto-bet-toggle" :class="{ on: autoSimBetEnabled }" title="默认关闭；打开后按当前列表条件自动下单。采集未开虚拟=真实交易；虚拟采集=仅记账">
+        <label
+          v-if="showAutoBetToggle"
+          class="auto-bet-toggle"
+          :class="{ on: autoSimBetEnabled }"
+          title="默认关闭；打开后按当前列表条件自动下单。采集未开虚拟=真实交易；虚拟采集=仅记账"
+        >
           <input type="checkbox" :checked="autoSimBetEnabled" @change="toggleAutoBet" />
           <span>自动投注</span>
         </label>

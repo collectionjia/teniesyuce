@@ -3816,7 +3816,7 @@ function productEmbedUrl(product) {
                   </div>
                 </div>
                 <div
-                  v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || boardAutoBetOn || showBoardEngineButtons)"
+                  v-if="showSubscriptionInHeader(openedProduct) && (boardPlacedOrders.length || showBoardEngineButtons)"
                   class="flex flex-wrap items-center gap-1.5 w-full"
                 >
                   <template v-if="showBoardEngineButtons">
@@ -3830,7 +3830,7 @@ function productEmbedUrl(product) {
                   <button
                     type="button"
                     class="relative ml-auto inline-flex items-center justify-center w-8 h-8 rounded-lg text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100"
-                    :title="boardPlacedBuyCount ? `买入持仓 ${boardPlacedBuyCount} 场` : (boardAutoBetOn ? '自动投注已开 · 暂无买入' : '购物车（暂无买入）')"
+                    :title="boardPlacedBuyCount ? `买入持仓 ${boardPlacedBuyCount} 场` : '购物车（暂无买入）'"
                     aria-label="已下单场次"
                     @click="openPlacedCart"
                   >

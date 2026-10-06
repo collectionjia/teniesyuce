@@ -74,13 +74,8 @@ const allowBatchTrade = computed(() => {
   if (props.isMember && (isPrematchMode.value || isInplayMode.value || isMixMode.value)) return true
   return false
 })
-/** 自动投注行：各产品（非盘后）无赛事/加载中/报错时也显示 */
-const showAutoBetBar = computed(() => {
-  if (isSettledMode.value) return false
-  if (props.canBatchTrade) return true
-  if (props.isMember) return true
-  return false
-})
+/** 批量操作行：仅手动下单（自动投注开关已隐藏） */
+const showAutoBetBar = computed(() => !isSettledMode.value && allowBatchTrade.value)
 /** 仅「虚拟/采集模拟」数据源下记账；真实采集时自动下单与止损均为实盘 */
 const isVirtualDataSource = computed(() => {
   if (data.value?.tradeSimulate === true) return true
@@ -497,8 +492,7 @@ function normalizePlacedRecords(raw) {
 
 function loadTennisAutoState() {
   try {
-    // 用户开启且未自行关闭时，刷新后保持勾选
-    autoSimBetEnabled.value = localStorage.getItem(AUTO_SIM_BET_KEY.value) === '1'
+    autoSimBetEnabled.value = false
     const raw = JSON.parse(localStorage.getItem(AUTO_PLACED_KEY.value) || '[]')
     placedOrders.value = normalizePlacedRecords(raw).slice(-200)
     autoPlacedIds.value = new Set(placedOrders.value.map((r) => r.id))
